@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SIA - Gerenciamento de Projetos</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="frontend/app/assets/stylesheets/application.css">
+</head>
+
+<body>
+  <div class="app-container">
+    <aside class="sidebar">
+      <div class="logo">SIA Gestão</div>
+      <ul class="nav">
+        <li class="active">Painel Kanban</li>
+        <li>Dashboards</li>
+        <li>Relatórios</li>
+      </ul>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <h1>Portfólio de Projetos</h1>
+        <div class="user-profile">
+          <span class="avatar">IA</span>
+        </div>
+      </header>
+
+      <div class="kanban-board">
+        <!-- Pendentes -->
+        <div class="kanban-column" id="col-pendente">
+          <h2>Pendentes</h2>
+          <div class="kanban-cards">
+            <!-- Cards gerados por JS -->
+          </div>
+        </div>
+
+        <!-- Em Andamento -->
+        <div class="kanban-column" id="col-andamento">
+          <h2>Em Andamento</h2>
+          <div class="kanban-cards">
+            <!-- Cards gerados por JS -->
+          </div>
+        </div>
+
+        <!-- Concluídos / Entregas -->
+        <div class="kanban-column" id="col-concluido">
+          <h2>Concluídos / Entregas</h2>
+          <div class="kanban-cards">
+            <!-- Cards gerados por JS -->
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const tasks = [
+      { category: "1. PACTO pela Economia", activity: "Registrar visitas realizadas", responsible: "Equipe", status: "Definir Status" },
+      { category: "1. PACTO pela Economia", activity: "Enviar relatório final para MV e Rebeca", responsible: "Gabriel", status: "Pendente" },
+      { category: "1. PACTO pela Economia", activity: "Encaminhar relatório para o Secretário", responsible: "Rebeca", status: "Depende do 1.2" },
+      { category: "1. PACTO pela Economia", activity: "Lembrar Secretário sobre visita a Campo Largo", responsible: "Rebeca", status: "Follow-up" },
+      { category: "2. TOOLKIT", activity: "Revisar textos do site (caixas de texto)", responsible: "Equipe", status: "Revisão Textual" },
+      { category: "2. TOOLKIT", activity: "Revisar guia explicativo", responsible: "Maria Victória", status: "Estratégico" },
+      { category: "2. TOOLKIT", activity: "Verificar documentos do pitch + hackathon", responsible: "Equipe", status: "Check-list" },
+      { category: "2. TOOLKIT", activity: "Reunião com Pierot (apresentação do toolkit)", responsible: "Equipe", status: "Agendar" },
+      { category: "3. APRESENTAÇÕES", activity: "Relatório de Gestão", responsible: "Ingrid", status: "Design/Conteúdo" },
+      { category: "3. APRESENTAÇÕES", activity: "Mais Inovação: Ajustar layout", responsible: "Ingrid", status: "Se necessário" },
+      { category: "3. APRESENTAÇÕES", activity: "Criar layout padrão de apresentações", responsible: "Ingrid", status: "Identidade Visual" },
+      { category: "3. APRESENTAÇÕES", activity: "Apresentação Gratty – CTD", responsible: "Ingrid", status: "Entrega" },
+      { category: "4. INDICADORES", activity: "Apresentar dashboard ao Secretário", responsible: "Gabriel", status: "Reunião" },
+      { category: "4. INDICADORES", activity: "Ajustar gráfico de linha e filtros", responsible: "Ingrid + Luís", status: "Técnico" },
+      { category: "4. INDICADORES", activity: "Agendar reunião com Secretário", responsible: "Rebeca", status: "Administrativo" },
+      { category: "5. MAIS INOVAÇÃO", activity: "Finalizar primeira versão (7 núcleos P&D)", responsible: "Equipe", status: "Redação" },
+      { category: "6. PIAUÍ MUNDO", activity: "Reunião com SEDUC (apresentação do evento)", responsible: "Equipe", status: "Alinhamento" },
+      { category: "7. EMPREENDEDOR", activity: "Confirmar stand na Feira", responsible: "Equipe", status: "Logística" },
+      { category: "7. EMPREENDEDOR", activity: "Testar IAI SIA", responsible: "Equipe", status: "Homologação" },
+      { category: "8. INPI", activity: "Reunião com INPI", responsible: "Equipe", status: "Hoje às 16h" }
+    ];
+
+    const generateCard = (task, badgeClass, statusClass) => `
+      <div class="kanban-card">
+        <span class="badge ${badgeClass}">${task.category}</span>
+        <p>${task.activity}</p>
+        <div class="card-footer">
+          <span class="responsible">${task.responsible}</span>
+          <span class="status ${statusClass}">${task.status}</span>
+        </div>
+      </div>
+    `;
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const colPendente = document.querySelector("#col-pendente .kanban-cards");
+      const colAndamento = document.querySelector("#col-andamento .kanban-cards");
+      const colConcluido = document.querySelector("#col-concluido .kanban-cards");
+
+      tasks.forEach(t => {
+        // Classifica os status em 3 colunas baseadas na semântica
+        if (["Definir Status", "Pendente", "Agendar", "Alinhamento", "Depende do 1.2", "Follow-up", "Hoje às 16h", "Reunião", "Administrativo", "Logística"].includes(t.status)) {
+          colPendente.innerHTML += generateCard(t, "", "status-pending");
+        } else if (["Revisão Textual", "Estratégico", "Check-list", "Design/Conteúdo", "Se necessário", "Identidade Visual", "Técnico", "Redação"].includes(t.status)) {
+          colAndamento.innerHTML += generateCard(t, "badge-warning", "status-progress");
+        } else {
+          colConcluido.innerHTML += generateCard(t, "badge-success", "status-done");
+        }
+      });
+    });
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,1377 @@
+Started GET "/" for ::1 at 2026-04-13 11:42:47 -0300
+  [1m[35m (4.0ms)[0m  [1m[35mCREATE TABLE "schema_migrations" ("version" varchar NOT NULL PRIMARY KEY)[0m
+  [1m[35m (0.4ms)[0m  [1m[35mCREATE TABLE "ar_internal_metadata" ("key" varchar NOT NULL PRIMARY KEY, "value" varchar, "created_at" datetime(6) NOT NULL, "updated_at" datetime(6) NOT NULL)[0m
+  [1m[36mActiveRecord::SchemaMigration Load (0.3ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC[0m
+Processing by DashboardController#index as HTML
+Completed 500 Internal Server Error in 615ms (ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+  
+LoadError (cannot load such file -- faraday):
+  
+app/services/api_client.rb:1:in `<top (required)>'
+app/controllers/dashboard_controller.rb:3:in `index'
+Started GET "/favicon.ico" for ::1 at 2026-04-13 11:42:52 -0300
+  
+ActionController::RoutingError (No route matches [GET] "/favicon.ico"):
+  
+Started GET "/" for ::1 at 2026-04-13 11:44:46 -0300
+Processing by DashboardController#index as HTML
+Completed 500 Internal Server Error in 16ms (ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+  
+LoadError (cannot load such file -- faraday):
+  
+app/services/api_client.rb:1:in `<top (required)>'
+app/controllers/dashboard_controller.rb:3:in `index'
+Started GET "/" for ::1 at 2026-04-13 11:47:24 -0300
+  [1m[36mActiveRecord::SchemaMigration Load (0.3ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC[0m
+Processing by DashboardController#index as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering dashboard/index.html.erb within layouts/application
+  Rendered dashboard/index.html.erb within layouts/application (Duration: 1.6ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 3.3ms | GC: 0.0ms)
+Completed 200 OK in 4329ms (Views: 29.9ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/dashboards" for ::1 at 2026-04-13 11:47:33 -0300
+Processing by MetricsController#index as HTML
+Started GET "/reports" for ::1 at 2026-04-13 11:47:34 -0300
+Processing by ReportsController#index as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering metrics/index.html.erb within layouts/application
+  Rendered metrics/index.html.erb within layouts/application (Duration: 1.4ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 2.0ms | GC: 0.0ms)
+Completed 200 OK in 4082ms (Views: 12.0ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+  Rendering layout layouts/application.html.erb
+  Rendering reports/index.html.erb within layouts/application
+  Rendered reports/index.html.erb within layouts/application (Duration: 1.5ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 2.4ms | GC: 0.0ms)
+Completed 200 OK in 4067ms (Views: 11.8ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/dashboards" for ::1 at 2026-04-13 11:47:46 -0300
+Processing by MetricsController#index as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering metrics/index.html.erb within layouts/application
+  Rendered metrics/index.html.erb within layouts/application (Duration: 0.2ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 1.2ms | GC: 0.0ms)
+Completed 200 OK in 4058ms (Views: 1.9ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/" for ::1 at 2026-04-13 11:48:00 -0300
+Processing by DashboardController#index as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering dashboard/index.html.erb within layouts/application
+  Rendered dashboard/index.html.erb within layouts/application (Duration: 0.3ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 1.2ms | GC: 0.0ms)
+Completed 200 OK in 4073ms (Views: 2.1ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/dashboards" for ::1 at 2026-04-13 11:48:09 -0300
+Processing by MetricsController#index as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering metrics/index.html.erb within layouts/application
+  Rendered metrics/index.html.erb within layouts/application (Duration: 0.3ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 1.5ms | GC: 0.0ms)
+Completed 200 OK in 4076ms (Views: 2.5ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/reports" for ::1 at 2026-04-13 11:48:18 -0300
+Processing by ReportsController#index as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering reports/index.html.erb within layouts/application
+  Rendered reports/index.html.erb within layouts/application (Duration: 0.1ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 0.7ms | GC: 0.0ms)
+Completed 200 OK in 4059ms (Views: 1.2ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/" for ::1 at 2026-04-13 11:50:25 -0300
+Processing by DashboardController#index as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering dashboard/index.html.erb within layouts/application
+  Rendered dashboard/index.html.erb within layouts/application (Duration: 0.4ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 1.6ms | GC: 0.0ms)
+Completed 200 OK in 4074ms (Views: 2.5ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/dashboards" for ::1 at 2026-04-13 11:52:18 -0300
+Processing by MetricsController#index as HTML
+Started GET "/dashboards" for ::1 at 2026-04-13 11:52:20 -0300
+Processing by MetricsController#index as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering metrics/index.html.erb within layouts/application
+  Rendered metrics/index.html.erb within layouts/application (Duration: 0.3ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 1.4ms | GC: 0.0ms)
+Completed 200 OK in 4060ms (Views: 2.3ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+  Rendering layout layouts/application.html.erb
+  Rendering metrics/index.html.erb within layouts/application
+  Rendered metrics/index.html.erb within layouts/application (Duration: 0.3ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 1.5ms | GC: 0.0ms)
+Completed 200 OK in 4058ms (Views: 2.2ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/reports" for ::1 at 2026-04-13 11:52:37 -0300
+Processing by ReportsController#index as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering reports/index.html.erb within layouts/application
+  Rendered reports/index.html.erb within layouts/application (Duration: 0.3ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 1.6ms | GC: 0.0ms)
+Completed 200 OK in 4090ms (Views: 2.8ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/" for ::1 at 2026-04-13 11:53:46 -0300
+Processing by DashboardController#index as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering dashboard/index.html.erb within layouts/application
+  Rendered dashboard/index.html.erb within layouts/application (Duration: 0.3ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 1.7ms | GC: 0.0ms)
+Completed 200 OK in 4052ms (Views: 2.7ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/" for ::1 at 2026-04-13 12:10:31 -0300
+Processing by DashboardController#index as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering dashboard/index.html.erb within layouts/application
+  Rendered dashboard/_card.html.erb (Duration: 1.7ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/index.html.erb within layouts/application (Duration: 15.6ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 21.0ms | GC: 0.0ms)
+Completed 200 OK in 4129ms (Views: 38.7ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/" for ::1 at 2026-04-13 12:12:58 -0300
+  [1m[36mActiveRecord::SchemaMigration Load (0.4ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC[0m
+Processing by DashboardController#index as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering dashboard/index.html.erb within layouts/application
+  Rendered dashboard/_card.html.erb (Duration: 0.8ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/index.html.erb within layouts/application (Duration: 6.8ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 8.8ms | GC: 0.0ms)
+Completed 200 OK in 4292ms (Views: 30.8ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/favicon.ico" for ::1 at 2026-04-13 12:13:03 -0300
+  
+ActionController::RoutingError (No route matches [GET] "/favicon.ico"):
+  
+Started GET "/dashboards" for ::1 at 2026-04-13 12:13:11 -0300
+Processing by MetricsController#index as HTML
+Started GET "/dashboards" for ::1 at 2026-04-13 12:13:14 -0300
+Processing by MetricsController#index as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering metrics/index.html.erb within layouts/application
+  Rendered metrics/index.html.erb within layouts/application (Duration: 53.4ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 55.9ms | GC: 0.0ms)
+Completed 200 OK in 4211ms (Views: 92.3ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+  Rendering layout layouts/application.html.erb
+  Rendering metrics/index.html.erb within layouts/application
+  Rendered metrics/index.html.erb within layouts/application (Duration: 0.3ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 1.7ms | GC: 0.0ms)
+Completed 200 OK in 4121ms (Views: 3.0ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/reports" for ::1 at 2026-04-13 12:13:31 -0300
+Processing by ReportsController#index as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering reports/index.html.erb within layouts/application
+  Rendered reports/index.html.erb within layouts/application (Duration: 75.2ms | GC: 0.5ms)
+  Rendered layout layouts/application.html.erb (Duration: 76.6ms | GC: 0.5ms)
+Completed 200 OK in 4189ms (Views: 101.9ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.5ms)
+
+
+Started GET "/" for ::1 at 2026-04-13 12:13:37 -0300
+Processing by DashboardController#index as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering dashboard/index.html.erb within layouts/application
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/index.html.erb within layouts/application (Duration: 3.6ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 4.7ms | GC: 0.0ms)
+Completed 200 OK in 4107ms (Views: 6.0ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/" for ::1 at 2026-04-13 12:13:46 -0300
+Processing by DashboardController#index as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering dashboard/index.html.erb within layouts/application
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 1.3ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/index.html.erb within layouts/application (Duration: 6.9ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 8.4ms | GC: 0.0ms)
+Completed 200 OK in 4105ms (Views: 9.4ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/dashboards" for ::1 at 2026-04-13 12:13:56 -0300
+Processing by MetricsController#index as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering metrics/index.html.erb within layouts/application
+  Rendered metrics/index.html.erb within layouts/application (Duration: 0.3ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 2.6ms | GC: 0.0ms)
+Completed 200 OK in 4116ms (Views: 7.6ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/reports" for ::1 at 2026-04-13 12:14:06 -0300
+Processing by ReportsController#index as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering reports/index.html.erb within layouts/application
+  Rendered reports/index.html.erb within layouts/application (Duration: 0.9ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 9.3ms | GC: 0.0ms)
+Completed 200 OK in 4102ms (Views: 11.1ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/" for ::1 at 2026-04-13 12:14:56 -0300
+Processing by DashboardController#index as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering dashboard/index.html.erb within layouts/application
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/index.html.erb within layouts/application (Duration: 4.8ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 6.2ms | GC: 0.0ms)
+Completed 200 OK in 4068ms (Views: 7.2ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/dashboards" for ::1 at 2026-04-13 12:15:07 -0300
+Processing by MetricsController#index as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering metrics/index.html.erb within layouts/application
+  Rendered metrics/index.html.erb within layouts/application (Duration: 0.4ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 1.8ms | GC: 0.0ms)
+Completed 200 OK in 4093ms (Views: 2.7ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/" for ::1 at 2026-04-13 12:15:21 -0300
+Processing by DashboardController#index as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering dashboard/index.html.erb within layouts/application
+  Rendered dashboard/_card.html.erb (Duration: 0.2ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 17.6ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 1.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 2.3ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/index.html.erb within layouts/application (Duration: 45.0ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 49.4ms | GC: 0.0ms)
+Completed 200 OK in 4169ms (Views: 51.0ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/reports" for ::1 at 2026-04-13 12:15:29 -0300
+Processing by ReportsController#index as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering reports/index.html.erb within layouts/application
+  Rendered reports/index.html.erb within layouts/application (Duration: 0.6ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 3.4ms | GC: 0.0ms)
+Completed 200 OK in 4106ms (Views: 4.4ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/" for ::1 at 2026-04-13 12:16:21 -0300
+Processing by DashboardController#index as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering dashboard/index.html.erb within layouts/application
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/index.html.erb within layouts/application (Duration: 3.6ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 4.8ms | GC: 0.0ms)
+Completed 200 OK in 4074ms (Views: 5.7ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/dashboards" for ::1 at 2026-04-13 12:16:40 -0300
+Processing by MetricsController#index as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering metrics/index.html.erb within layouts/application
+  Rendered metrics/index.html.erb within layouts/application (Duration: 0.6ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 2.7ms | GC: 0.0ms)
+Completed 200 OK in 4113ms (Views: 3.7ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/" for ::1 at 2026-04-13 12:16:54 -0300
+Processing by DashboardController#index as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering dashboard/index.html.erb within layouts/application
+  Rendered dashboard/_card.html.erb (Duration: 0.3ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/index.html.erb within layouts/application (Duration: 5.4ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 9.7ms | GC: 0.0ms)
+Completed 200 OK in 4191ms (Views: 14.8ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/dashboards" for ::1 at 2026-04-13 12:17:09 -0300
+Processing by MetricsController#index as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering metrics/index.html.erb within layouts/application
+  Rendered metrics/index.html.erb within layouts/application (Duration: 0.5ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 2.0ms | GC: 0.0ms)
+Completed 200 OK in 4101ms (Views: 4.5ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/reports" for ::1 at 2026-04-13 12:17:32 -0300
+Processing by ReportsController#index as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering reports/index.html.erb within layouts/application
+  Rendered reports/index.html.erb within layouts/application (Duration: 2.8ms | GC: 0.2ms)
+  Rendered layout layouts/application.html.erb (Duration: 6.7ms | GC: 0.2ms)
+Completed 200 OK in 4102ms (Views: 9.1ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.2ms)
+
+
+Started GET "/" for ::1 at 2026-04-13 12:18:21 -0300
+Processing by DashboardController#index as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering dashboard/index.html.erb within layouts/application
+  Rendered dashboard/_card.html.erb (Duration: 0.2ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/index.html.erb within layouts/application (Duration: 7.1ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 9.0ms | GC: 0.0ms)
+Completed 200 OK in 4084ms (Views: 10.7ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/dashboards" for ::1 at 2026-04-13 12:18:35 -0300
+Processing by MetricsController#index as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering metrics/index.html.erb within layouts/application
+  Rendered metrics/index.html.erb within layouts/application (Duration: 0.4ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 2.0ms | GC: 0.0ms)
+Completed 200 OK in 4095ms (Views: 3.6ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/reports" for ::1 at 2026-04-13 12:18:50 -0300
+Processing by ReportsController#index as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering reports/index.html.erb within layouts/application
+  Rendered reports/index.html.erb within layouts/application (Duration: 1.4ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 4.2ms | GC: 0.0ms)
+Completed 200 OK in 4130ms (Views: 6.6ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/" for ::1 at 2026-04-13 12:19:52 -0300
+Processing by DashboardController#index as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering dashboard/index.html.erb within layouts/application
+  Rendered dashboard/_card.html.erb (Duration: 0.2ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.2ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/index.html.erb within layouts/application (Duration: 26.2ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 29.3ms | GC: 0.0ms)
+Completed 200 OK in 4105ms (Views: 31.1ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/" for ::1 at 2026-04-13 12:20:40 -0300
+Processing by DashboardController#index as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering dashboard/index.html.erb within layouts/application
+  Rendered dashboard/_card.html.erb (Duration: 0.2ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 2.7ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/index.html.erb within layouts/application (Duration: 9.4ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 12.1ms | GC: 0.0ms)
+Completed 200 OK in 4078ms (Views: 13.7ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/dashboards" for ::1 at 2026-04-13 12:21:02 -0300
+Processing by MetricsController#index as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering metrics/index.html.erb within layouts/application
+  Rendered metrics/index.html.erb within layouts/application (Duration: 0.6ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 3.0ms | GC: 0.0ms)
+Completed 200 OK in 4142ms (Views: 19.6ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/" for ::1 at 2026-04-13 12:22:46 -0300
+Processing by DashboardController#index as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering dashboard/index.html.erb within layouts/application
+  Rendered dashboard/_card.html.erb (Duration: 0.4ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/index.html.erb within layouts/application (Duration: 7.8ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 11.3ms | GC: 0.0ms)
+Completed 200 OK in 4109ms (Views: 15.4ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/dashboards" for ::1 at 2026-04-13 12:23:06 -0300
+Processing by MetricsController#index as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering metrics/index.html.erb within layouts/application
+  Rendered metrics/index.html.erb within layouts/application (Duration: 5.4ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 22.5ms | GC: 0.0ms)
+Completed 200 OK in 4194ms (Views: 78.2ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.2ms)
+
+
+Started GET "/reports" for ::1 at 2026-04-13 12:23:20 -0300
+Processing by ReportsController#index as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering reports/index.html.erb within layouts/application
+  Rendered reports/index.html.erb within layouts/application (Duration: 1.9ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 19.2ms | GC: 0.0ms)
+Completed 200 OK in 4144ms (Views: 23.4ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/dashboards" for ::1 at 2026-04-13 12:23:37 -0300
+Processing by MetricsController#index as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering metrics/index.html.erb within layouts/application
+  Rendered metrics/index.html.erb within layouts/application (Duration: 0.6ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 11.7ms | GC: 0.0ms)
+Completed 200 OK in 4152ms (Views: 23.4ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/dashboards" for ::1 at 2026-04-13 12:24:00 -0300
+Processing by MetricsController#index as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering metrics/index.html.erb within layouts/application
+  Rendered metrics/index.html.erb within layouts/application (Duration: 0.4ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 10.0ms | GC: 0.0ms)
+Completed 200 OK in 4101ms (Views: 12.3ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/dashboards" for ::1 at 2026-04-13 12:24:06 -0300
+Processing by MetricsController#index as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering metrics/index.html.erb within layouts/application
+  Rendered metrics/index.html.erb within layouts/application (Duration: 0.5ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 2.9ms | GC: 0.0ms)
+Completed 200 OK in 4073ms (Views: 4.6ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/" for ::1 at 2026-04-13 12:24:15 -0300
+Processing by DashboardController#index as HTML
+Started GET "/" for ::1 at 2026-04-13 12:24:17 -0300
+Processing by DashboardController#index as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering dashboard/index.html.erb within layouts/application
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/index.html.erb within layouts/application (Duration: 6.6ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 8.5ms | GC: 0.0ms)
+Completed 200 OK in 4099ms (Views: 10.2ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/" for ::1 at 2026-04-13 12:24:21 -0300
+Processing by DashboardController#index as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering dashboard/index.html.erb within layouts/application
+  Rendered dashboard/_card.html.erb (Duration: 0.2ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/index.html.erb within layouts/application (Duration: 6.3ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 7.8ms | GC: 0.0ms)
+Completed 200 OK in 4100ms (Views: 8.9ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+  Rendering layout layouts/application.html.erb
+  Rendering dashboard/index.html.erb within layouts/application
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.2ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/index.html.erb within layouts/application (Duration: 7.2ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 9.4ms | GC: 0.0ms)
+Completed 200 OK in 4095ms (Views: 10.8ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/" for ::1 at 2026-04-13 12:24:27 -0300
+Processing by DashboardController#index as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering dashboard/index.html.erb within layouts/application
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.3ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.2ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.2ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.2ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.3ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.8ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/index.html.erb within layouts/application (Duration: 10.8ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 13.0ms | GC: 0.0ms)
+Completed 200 OK in 4103ms (Views: 14.3ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/" for ::1 at 2026-04-13 12:25:11 -0300
+Processing by DashboardController#index as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering dashboard/index.html.erb within layouts/application
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 1.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/index.html.erb within layouts/application (Duration: 5.6ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 7.2ms | GC: 0.0ms)
+Completed 200 OK in 4107ms (Views: 8.4ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/dashboards" for ::1 at 2026-04-13 12:25:28 -0300
+Processing by MetricsController#index as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering metrics/index.html.erb within layouts/application
+  Rendered metrics/index.html.erb within layouts/application (Duration: 7.4ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 12.0ms | GC: 0.0ms)
+Completed 200 OK in 4089ms (Views: 18.4ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/reports" for ::1 at 2026-04-13 12:25:45 -0300
+Processing by ReportsController#index as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering reports/index.html.erb within layouts/application
+  Rendered reports/index.html.erb within layouts/application (Duration: 16.8ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 20.9ms | GC: 0.0ms)
+Completed 200 OK in 4113ms (Views: 23.1ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/" for ::1 at 2026-04-13 12:26:34 -0300
+Processing by DashboardController#index as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering dashboard/index.html.erb within layouts/application
+  Rendered dashboard/_card.html.erb (Duration: 0.3ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/index.html.erb within layouts/application (Duration: 6.0ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 8.1ms | GC: 0.0ms)
+Completed 200 OK in 4083ms (Views: 9.8ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/" for ::1 at 2026-04-15 09:13:40 -0300
+  [1m[36mActiveRecord::SchemaMigration Load (0.2ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC[0m
+Processing by DashboardController#index as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering dashboard/index.html.erb within layouts/application
+  Rendered dashboard/_card.html.erb (Duration: 0.7ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/index.html.erb within layouts/application (Duration: 12.0ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 14.8ms | GC: 0.0ms)
+Completed 200 OK in 2734ms (Views: 89.0ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/favicon.ico" for ::1 at 2026-04-15 09:13:44 -0300
+  
+ActionController::RoutingError (No route matches [GET] "/favicon.ico"):
+  
+Started GET "/dashboards" for ::1 at 2026-04-15 09:14:01 -0300
+Processing by MetricsController#index as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering metrics/index.html.erb within layouts/application
+  Rendered metrics/index.html.erb within layouts/application (Duration: 30.0ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 34.4ms | GC: 0.0ms)
+Completed 200 OK in 2204ms (Views: 93.7ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/reports" for ::1 at 2026-04-15 09:14:19 -0300
+Processing by ReportsController#index as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering reports/index.html.erb within layouts/application
+  Rendered reports/index.html.erb within layouts/application (Duration: 24.4ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 36.3ms | GC: 0.0ms)
+Completed 200 OK in 2203ms (Views: 86.6ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/" for 127.0.0.1 at 2026-04-20 12:58:46 -0300
+  [1m[36mActiveRecord::SchemaMigration Load (0.5ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC[0m
+Processing by DashboardController#index as HTML
+Started GET "/api/tasks" for ::1 at 2026-04-20 12:58:48 -0300
+  
+ActionController::RoutingError (No route matches [GET] "/api/tasks"):
+  
+  Rendering layout layouts/application.html.erb
+  Rendering dashboard/index.html.erb within layouts/application
+  Rendered dashboard/_card.html.erb (Duration: 1.3ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.2ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.2ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.2ms | GC: 0.0ms)
+  Rendered dashboard/index.html.erb within layouts/application (Duration: 19.2ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 24.6ms | GC: 0.0ms)
+Completed 200 OK in 1209ms (Views: 37.8ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.6ms)
+
+
+Started GET "/favicon.ico" for 127.0.0.1 at 2026-04-20 12:58:50 -0300
+  
+ActionController::RoutingError (No route matches [GET] "/favicon.ico"):
+  
+Started GET "/dashboards" for 127.0.0.1 at 2026-04-20 12:58:54 -0300
+Processing by MetricsController#index as HTML
+Started GET "/api/tasks" for ::1 at 2026-04-20 12:58:54 -0300
+  
+ActionController::RoutingError (No route matches [GET] "/api/tasks"):
+  
+  Rendering layout layouts/application.html.erb
+  Rendering metrics/index.html.erb within layouts/application
+  Rendered metrics/index.html.erb within layouts/application (Duration: 2.6ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 4.8ms | GC: 0.0ms)
+Completed 200 OK in 287ms (Views: 12.2ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/reports" for 127.0.0.1 at 2026-04-20 12:58:56 -0300
+Processing by ReportsController#index as HTML
+Started GET "/api/tasks" for ::1 at 2026-04-20 12:58:56 -0300
+  
+ActionController::RoutingError (No route matches [GET] "/api/tasks"):
+  
+  Rendering layout layouts/application.html.erb
+  Rendering reports/index.html.erb within layouts/application
+  Rendered reports/index.html.erb within layouts/application (Duration: 1.4ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 2.4ms | GC: 0.0ms)
+Completed 200 OK in 222ms (Views: 8.4ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/" for 127.0.0.1 at 2026-04-20 13:00:00 -0300
+Processing by DashboardController#index as HTML
+Started GET "/api/tasks" for ::1 at 2026-04-20 13:00:00 -0300
+  
+ActionController::RoutingError (No route matches [GET] "/api/tasks"):
+  
+  Rendering layout layouts/application.html.erb
+  Rendering dashboard/index.html.erb within layouts/application
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/index.html.erb within layouts/application (Duration: 6.8ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 8.9ms | GC: 0.0ms)
+Completed 200 OK in 275ms (Views: 9.7ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.3ms)
+
+
+Started GET "/dashboards" for 127.0.0.1 at 2026-04-20 13:00:49 -0300
+Processing by MetricsController#index as HTML
+Started GET "/api/tasks" for ::1 at 2026-04-20 13:00:49 -0300
+  
+ActionController::RoutingError (No route matches [GET] "/api/tasks"):
+  
+  Rendering layout layouts/application.html.erb
+  Rendering metrics/index.html.erb within layouts/application
+  Rendered metrics/index.html.erb within layouts/application (Duration: 1.6ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 4.5ms | GC: 0.0ms)
+Completed 200 OK in 394ms (Views: 6.7ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/reports" for 127.0.0.1 at 2026-04-20 13:01:20 -0300
+Processing by ReportsController#index as HTML
+Started GET "/api/tasks" for ::1 at 2026-04-20 13:01:20 -0300
+  
+ActionController::RoutingError (No route matches [GET] "/api/tasks"):
+  
+  Rendering layout layouts/application.html.erb
+  Rendering reports/index.html.erb within layouts/application
+  Rendered reports/index.html.erb within layouts/application (Duration: 1.0ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 2.7ms | GC: 0.0ms)
+Completed 200 OK in 275ms (Views: 4.0ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.3ms)
+
+
+Started GET "/" for 127.0.0.1 at 2026-04-20 13:02:20 -0300
+Processing by DashboardController#index as HTML
+Started GET "/api/tasks" for ::1 at 2026-04-20 13:02:20 -0300
+  
+ActionController::RoutingError (No route matches [GET] "/api/tasks"):
+  
+  Rendering layout layouts/application.html.erb
+  Rendering dashboard/index.html.erb within layouts/application
+  Rendered dashboard/_card.html.erb (Duration: 0.2ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.2ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/index.html.erb within layouts/application (Duration: 14.0ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 15.6ms | GC: 0.0ms)
+Completed 200 OK in 268ms (Views: 17.0ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/" for 127.0.0.1 at 2026-04-20 13:48:14 -0300
+Processing by DashboardController#index as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering dashboard/index.html.erb within layouts/application
+  Rendered dashboard/_card.html.erb (Duration: 8.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.2ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.2ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.2ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.2ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.6ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.2ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.3ms | GC: 0.0ms)
+  Rendered dashboard/index.html.erb within layouts/application (Duration: 76.4ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 99.9ms | GC: 0.0ms)
+Completed 200 OK in 1433ms (Views: 135.2ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/dashboards" for 127.0.0.1 at 2026-04-20 13:48:25 -0300
+Processing by MetricsController#index as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering metrics/index.html.erb within layouts/application
+  Rendered metrics/index.html.erb within layouts/application (Duration: 10.0ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 22.6ms | GC: 0.0ms)
+Completed 200 OK in 456ms (Views: 40.5ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/reports" for 127.0.0.1 at 2026-04-20 13:48:29 -0300
+Processing by ReportsController#index as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering reports/index.html.erb within layouts/application
+  Rendered reports/index.html.erb within layouts/application (Duration: 12.6ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 14.6ms | GC: 0.0ms)
+Completed 200 OK in 381ms (Views: 25.8ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/dashboards" for 127.0.0.1 at 2026-04-20 13:49:58 -0300
+Processing by MetricsController#index as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering metrics/index.html.erb within layouts/application
+  Rendered metrics/index.html.erb within layouts/application (Duration: 34.1ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 119.5ms | GC: 0.0ms)
+Completed 200 OK in 1974ms (Views: 147.2ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.3ms)
+
+
+Started GET "/" for 127.0.0.1 at 2026-04-20 13:50:08 -0300
+Processing by DashboardController#index as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering dashboard/index.html.erb within layouts/application
+  Rendered dashboard/_card.html.erb (Duration: 0.8ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.2ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.2ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.2ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.3ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/index.html.erb within layouts/application (Duration: 81.6ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 106.0ms | GC: 0.0ms)
+Completed 200 OK in 447ms (Views: 112.3ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/dashboards" for 127.0.0.1 at 2026-04-20 13:51:33 -0300
+Processing by MetricsController#index as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering metrics/index.html.erb within layouts/application
+  Rendered metrics/index.html.erb within layouts/application (Duration: 6.4ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 15.1ms | GC: 0.0ms)
+Completed 200 OK in 329ms (Views: 19.8ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/reports" for 127.0.0.1 at 2026-04-20 13:51:35 -0300
+Processing by ReportsController#index as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering reports/index.html.erb within layouts/application
+  Rendered reports/index.html.erb within layouts/application (Duration: 1.1ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 6.1ms | GC: 0.0ms)
+Completed 200 OK in 334ms (Views: 8.8ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/api/tasks" for ::1 at 2026-04-20 13:52:20 -0300
+  
+ActionController::RoutingError (No route matches [GET] "/api/tasks"):
+  
+Started GET "/api/tasks" for ::1 at 2026-04-20 13:52:34 -0300
+  
+ActionController::RoutingError (No route matches [GET] "/api/tasks"):
+  
+Started GET "/api/tasks" for ::1 at 2026-04-20 13:52:57 -0300
+  
+ActionController::RoutingError (No route matches [GET] "/api/tasks"):
+  
+Started GET "/" for 127.0.0.1 at 2026-04-20 13:57:19 -0300
+Processing by DashboardController#index as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering dashboard/index.html.erb within layouts/application
+  Rendered dashboard/_card.html.erb (Duration: 2.2ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.2ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.2ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.2ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.2ms | GC: 0.0ms)
+  Rendered dashboard/index.html.erb within layouts/application (Duration: 58.0ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 73.9ms | GC: 0.0ms)
+Completed 200 OK in 1404ms (Views: 85.3ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/dashboards" for 127.0.0.1 at 2026-04-20 13:57:25 -0300
+Processing by MetricsController#index as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering metrics/index.html.erb within layouts/application
+  Rendered metrics/index.html.erb within layouts/application (Duration: 2.1ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 5.4ms | GC: 0.0ms)
+Completed 200 OK in 363ms (Views: 12.1ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/reports" for 127.0.0.1 at 2026-04-20 13:57:28 -0300
+Processing by ReportsController#index as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering reports/index.html.erb within layouts/application
+  Rendered reports/index.html.erb within layouts/application (Duration: 7.1ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 8.9ms | GC: 0.0ms)
+Completed 200 OK in 371ms (Views: 9.9ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/dashboards" for 127.0.0.1 at 2026-04-20 13:57:31 -0300
+Processing by MetricsController#index as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering metrics/index.html.erb within layouts/application
+  Rendered metrics/index.html.erb within layouts/application (Duration: 1.1ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 2.1ms | GC: 0.0ms)
+Completed 200 OK in 2107ms (Views: 4.3ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/" for 127.0.0.1 at 2026-04-20 13:57:40 -0300
+Processing by DashboardController#index as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering dashboard/index.html.erb within layouts/application
+  Rendered dashboard/_card.html.erb (Duration: 0.2ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.6ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/index.html.erb within layouts/application (Duration: 70.4ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 73.0ms | GC: 0.0ms)
+Completed 200 OK in 349ms (Views: 80.1ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/dashboards" for 127.0.0.1 at 2026-04-20 13:57:49 -0300
+Processing by MetricsController#index as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering metrics/index.html.erb within layouts/application
+  Rendered metrics/index.html.erb within layouts/application (Duration: 0.9ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 2.6ms | GC: 0.0ms)
+Completed 200 OK in 286ms (Views: 3.5ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/reports" for 127.0.0.1 at 2026-04-20 13:57:50 -0300
+Processing by ReportsController#index as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering reports/index.html.erb within layouts/application
+  Rendered reports/index.html.erb within layouts/application (Duration: 1.5ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 4.7ms | GC: 0.0ms)
+Completed 200 OK in 358ms (Views: 7.2ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/" for 127.0.0.1 at 2026-04-22 13:06:21 -0300
+Processing by DashboardController#index as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering dashboard/index.html.erb within layouts/application
+  Rendered dashboard/_card.html.erb (Duration: 0.2ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/index.html.erb within layouts/application (Duration: 11.6ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 15.8ms | GC: 0.0ms)
+Completed 200 OK in 636ms (Views: 20.0ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/reports" for 127.0.0.1 at 2026-04-22 13:06:39 -0300
+Processing by ReportsController#index as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering reports/index.html.erb within layouts/application
+  Rendered reports/index.html.erb within layouts/application (Duration: 3.0ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 5.5ms | GC: 0.0ms)
+Completed 200 OK in 259ms (Views: 6.5ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/" for 127.0.0.1 at 2026-04-22 13:07:17 -0300
+Processing by DashboardController#index as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering dashboard/index.html.erb within layouts/application
+  Rendered dashboard/_card.html.erb (Duration: 0.9ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.2ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.2ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/index.html.erb within layouts/application (Duration: 24.1ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 35.2ms | GC: 0.0ms)
+Completed 200 OK in 960ms (Views: 58.9ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/dashboards" for 127.0.0.1 at 2026-04-22 13:07:21 -0300
+Processing by MetricsController#index as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering metrics/index.html.erb within layouts/application
+  Rendered metrics/index.html.erb within layouts/application (Duration: 6.2ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 8.6ms | GC: 0.0ms)
+Completed 200 OK in 519ms (Views: 12.8ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/" for 127.0.0.1 at 2026-04-22 13:07:24 -0300
+Processing by DashboardController#index as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering dashboard/index.html.erb within layouts/application
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.2ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered dashboard/index.html.erb within layouts/application (Duration: 10.8ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 12.1ms | GC: 0.0ms)
+Completed 200 OK in 297ms (Views: 12.8ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/dashboards" for 127.0.0.1 at 2026-04-22 13:07:40 -0300
+Processing by MetricsController#index as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering metrics/index.html.erb within layouts/application
+  Rendered metrics/index.html.erb within layouts/application (Duration: 3.0ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 8.1ms | GC: 0.0ms)
+Completed 200 OK in 742ms (Views: 11.7ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/reports" for 127.0.0.1 at 2026-04-22 13:07:44 -0300
+Processing by ReportsController#index as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering reports/index.html.erb within layouts/application
+  Rendered reports/index.html.erb within layouts/application (Duration: 0.9ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 10.4ms | GC: 0.0ms)
+Completed 200 OK in 1277ms (Views: 12.2ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/" for 127.0.0.1 at 2026-04-22 13:08:18 -0300
+Processing by DashboardController#index as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering dashboard/index.html.erb within layouts/application
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.2ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.2ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.2ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.2ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.3ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.2ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 2.7ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/index.html.erb within layouts/application (Duration: 28.4ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 35.1ms | GC: 0.0ms)
+Completed 200 OK in 895ms (Views: 44.0ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/reports" for 127.0.0.1 at 2026-04-22 13:09:06 -0300
+Processing by ReportsController#index as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering reports/index.html.erb within layouts/application
+  Rendered reports/index.html.erb within layouts/application (Duration: 127.7ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 137.8ms | GC: 0.0ms)
+Completed 200 OK in 1824ms (Views: 142.6ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/" for 127.0.0.1 at 2026-04-22 13:16:40 -0300
+Processing by DashboardController#index as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering dashboard/index.html.erb within layouts/application
+  Rendered dashboard/_card.html.erb (Duration: 8.0ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.3ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 1.4ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.4ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.2ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.2ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.7ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.2ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.4ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.3ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.3ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.2ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.3ms | GC: 0.0ms)
+  Rendered dashboard/index.html.erb within layouts/application (Duration: 119.4ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 360.4ms | GC: 0.3ms)
+Completed 200 OK in 2627ms (Views: 392.1ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.3ms)
+
+
+Started GET "/" for 127.0.0.1 at 2026-04-22 13:30:26 -0300
+Processing by DashboardController#index as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering dashboard/index.html.erb within layouts/application
+  Rendered dashboard/_card.html.erb (Duration: 2.4ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.2ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.6ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.2ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.2ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.3ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.3ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.2ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.2ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.3ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.2ms | GC: 0.0ms)
+  Rendered dashboard/_card.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered dashboard/index.html.erb within layouts/application (Duration: 127.9ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 173.7ms | GC: 0.0ms)
+Completed 200 OK in 5202ms (Views: 204.1ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/api/tasks" for ::1 at 2026-04-22 13:30:38 -0300
+  
+ActionController::RoutingError (No route matches [GET] "/api/tasks"):
+  
+Started GET "/api/tasks" for ::1 at 2026-04-22 13:30:44 -0300
+  
+ActionController::RoutingError (No route matches [GET] "/api/tasks"):
+  
+Started GET "/" for 127.0.0.1 at 2026-04-22 18:13:47 -0300
+  [1m[36mActiveRecord::SchemaMigration Load (0.4ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC[0m
+Processing by DashboardController#index as HTML
+Started GET "/api/tasks" for ::1 at 2026-04-22 18:13:50 -0300
+  
+ActionController::RoutingError (No route matches [GET] "/api/tasks"):
+  
+  Rendering layout layouts/application.html.erb
+  Rendering dashboard/index.html.erb within layouts/application
+  Rendered dashboard/index.html.erb within layouts/application (Duration: 6.4ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 14.0ms | GC: 0.0ms)
+Completed 200 OK in 2843ms (Views: 42.1ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.2ms)
+
+
+Started GET "/" for ::1 at 2026-04-22 18:14:06 -0300
+Processing by DashboardController#index as HTML
+Started GET "/api/tasks" for ::1 at 2026-04-22 18:14:06 -0300
+  
+ActionController::RoutingError (No route matches [GET] "/api/tasks"):
+  
+  Rendering layout layouts/application.html.erb
+  Rendering dashboard/index.html.erb within layouts/application
+  Rendered dashboard/index.html.erb within layouts/application (Duration: 1.0ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 3.8ms | GC: 0.0ms)
+Completed 200 OK in 747ms (Views: 4.8ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.3ms)
+
+
+Started GET "/" for ::1 at 2026-04-22 18:14:37 -0300
+Processing by DashboardController#index as HTML
+Started GET "/api/tasks" for ::1 at 2026-04-22 18:14:37 -0300
+  
+ActionController::RoutingError (No route matches [GET] "/api/tasks"):
+  
+  Rendering layout layouts/application.html.erb
+  Rendering dashboard/index.html.erb within layouts/application
+  Rendered dashboard/index.html.erb within layouts/application (Duration: 1.2ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 3.9ms | GC: 0.0ms)
+Completed 200 OK in 717ms (Views: 6.3ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.2ms)
+
+
+Started GET "/reports" for 127.0.0.1 at 2026-04-22 18:15:37 -0300
+Started GET "/reports" for 127.0.0.1 at 2026-04-22 18:15:38 -0300
+Processing by ReportsController#index as HTML
+Started GET "/api/tasks" for ::1 at 2026-04-22 18:15:41 -0300
+  
+ActionController::RoutingError (No route matches [GET] "/api/tasks"):
+  
+Processing by ReportsController#index as HTML
+Started GET "/api/tasks" for ::1 at 2026-04-22 18:15:46 -0300
+  Rendering layout layouts/application.html.erb
+  Rendering reports/index.html.erb within layouts/application
+  Rendered reports/index.html.erb within layouts/application (Duration: 75.5ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 168.7ms | GC: 0.0ms)
+Completed 200 OK in 5113ms (Views: 385.3ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.3ms)
+
+
+  
+ActionController::RoutingError (No route matches [GET] "/api/tasks"):
+  
+  Rendering layout layouts/application.html.erb
+  Rendering reports/index.html.erb within layouts/application
+  Rendered reports/index.html.erb within layouts/application (Duration: 28.8ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 438.7ms | GC: 0.0ms)
+Completed 200 OK in 11067ms (Views: 526.5ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.5ms)
+
+
+Started GET "/" for 127.0.0.1 at 2026-04-22 18:18:19 -0300
+Started GET "/" for 127.0.0.1 at 2026-04-22 18:18:25 -0300
+Processing by DashboardController#index as HTML
+Started GET "/api/tasks" for ::1 at 2026-04-22 18:18:36 -0300
+Processing by DashboardController#index as HTML
+  
+ActionController::RoutingError (No route matches [GET] "/api/tasks"):
+  
+Started GET "/api/tasks" for ::1 at 2026-04-22 18:18:47 -0300
+  Rendering layout layouts/application.html.erb
+  Rendering dashboard/index.html.erb within layouts/application
+  Rendered dashboard/index.html.erb within layouts/application (Duration: 149.6ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 4189.7ms | GC: 0.0ms)
+Completed 200 OK in 17545ms (Views: 4352.7ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.9ms)
+
+
+  
+ActionController::RoutingError (No route matches [GET] "/api/tasks"):
+  
+  Rendering layout layouts/application.html.erb
+  Rendering dashboard/index.html.erb within layouts/application
+  Rendered dashboard/index.html.erb within layouts/application (Duration: 74.3ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 425.9ms | GC: 0.0ms)
+Completed 200 OK in 19985ms (Views: 720.3ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 1.3ms)
+
+
+Started GET "/reports" for ::1 at 2026-04-22 18:20:51 -0300
+Processing by ReportsController#index as HTML
+Started GET "/api/tasks" for ::1 at 2026-04-22 18:20:52 -0300
+  
+ActionController::RoutingError (No route matches [GET] "/api/tasks"):
+  
+  Rendering layout layouts/application.html.erb
+  Rendering reports/index.html.erb within layouts/application
+  Rendered reports/index.html.erb within layouts/application (Duration: 9.6ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 43.7ms | GC: 0.0ms)
+Completed 200 OK in 2016ms (Views: 54.9ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+

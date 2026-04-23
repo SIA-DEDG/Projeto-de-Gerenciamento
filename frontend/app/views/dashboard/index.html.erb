@@ -1,0 +1,540 @@
+<% content_for(:page_title, "Board") %>
+
+<!-- Board Toolbar -->
+<div class="board-toolbar">
+  <div class="board-filters">
+    <div style="position: relative; display: inline-block;">
+      <select id="user-filter" class="filter-btn" style="appearance: none; padding-right: 28px; padding-left: 12px; cursor: pointer; color: #42526e; outline: none; border-color: #dfe1E6;">
+        <option value="">Filtrar: Todos</option>
+      </select>
+      <svg viewBox="0 0 24 24" style="position: absolute; right: 8px; top: 12px; pointer-events: none; width: 14px; height: 14px; fill: #42526e;"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+    </div>
+
+    <button id="add-team-member" class="filter-btn" style="color: #42526e; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+      <svg viewBox="0 0 24 24" style="width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
+      Equipe
+    </button>
+    
+    <button id="manage-categories" class="filter-btn" style="color: #42526e; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+      <svg viewBox="0 0 24 24" style="width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+      Categorias
+    </button>
+    
+    <div style="position: relative; display: inline-flex; align-items: center;">
+      <svg viewBox="0 0 24 24" style="position: absolute; left: 8px; width: 14px; height: 14px; stroke: #42526e; fill: none; stroke-width: 2;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+      <input type="date" id="date-filter" class="filter-btn" style="color: #42526e; cursor: pointer; padding-left: 28px; height: 32px; font-family: inherit; font-size: 0.9rem;">
+    </div>
+  </div>
+
+  <div class="avatar-cluster" id="avatar-cluster">
+    <!-- populated by JS -->
+  </div>
+</div>
+
+<!-- Kanban Board -->
+<div class="kanban-board">
+
+  <!-- COLUNA: PENDENTES -->
+  <div class="kanban-column" id="pendentes">
+    <div class="column-header">
+      <div class="column-header-left">
+        <div class="column-status-dot dot-todo"></div>
+        <span class="column-title">Pendentes</span>
+        <span class="column-count">0</span>
+      </div>
+      <div class="column-actions">
+        <button class="column-action-btn" title="Mais opções">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle></svg>
+        </button>
+      </div>
+    </div>
+    <div class="kanban-cards" id="cards-pendentes"></div>
+    <button class="add-card-btn" data-col="pendentes">
+      <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+      Criar atividade
+    </button>
+  </div>
+
+  <!-- COLUNA: EM ANDAMENTO -->
+  <div class="kanban-column" id="em-andamento">
+    <div class="column-header">
+      <div class="column-header-left">
+        <div class="column-status-dot dot-progress"></div>
+        <span class="column-title">Em Andamento</span>
+        <span class="column-count">0</span>
+      </div>
+      <div class="column-actions">
+        <button class="column-action-btn" title="Mais opções">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle></svg>
+        </button>
+      </div>
+    </div>
+    <div class="kanban-cards" id="cards-em-andamento"></div>
+    <button class="add-card-btn" data-col="em-andamento">
+      <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+      Criar atividade
+    </button>
+  </div>
+
+  <!-- COLUNA: CONCLUÍDOS -->
+  <div class="kanban-column" id="concluidos">
+    <div class="column-header">
+      <div class="column-header-left">
+        <div class="column-status-dot dot-done"></div>
+        <span class="column-title">Concluídos</span>
+        <span class="column-count">0</span>
+      </div>
+      <div class="column-actions">
+        <button class="column-action-btn" title="Mais opções">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle></svg>
+        </button>
+      </div>
+    </div>
+    <div class="kanban-cards" id="cards-concluidos"></div>
+    <button class="add-card-btn" data-col="concluidos">
+      <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+      Criar atividade
+    </button>
+  </div>
+</div>
+
+<!-- ===== MODAL: EQUIPE ===== -->
+<div id="team-modal" style="display:none; position:fixed; inset:0; background:rgba(9,30,66,0.54); z-index:300; align-items:center; justify-content:center;">
+  <div style="background:#fff; width:400px; max-width:95vw; padding:28px; border-radius:10px; box-shadow:0 8px 32px rgba(0,0,0,0.22);">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+      <h3 style="margin:0; font-size:1.15rem; color:#172b4d; font-weight:700;">Adicionar Membro da Equipe</h3>
+      <button type="button" id="close-team-modal" style="background:none; border:none; cursor:pointer; font-size:1.6rem; color:#6b778c; line-height:1;">&times;</button>
+    </div>
+    <div id="team-members-list" style="margin-bottom:16px; display:flex; flex-wrap:wrap; gap:8px;"></div>
+    <form id="team-form" style="display:flex; flex-direction:column; gap:14px;">
+      <div>
+        <label style="font-size:0.82rem; color:#5e6c84; font-weight:600; display:block; margin-bottom:5px;">Nome do Membro</label>
+        <input type="text" id="team-name" required placeholder="Ex: Carlos Silva" style="width:100%; padding:9px 10px; border:1px solid #dfe1e6; border-radius:4px; font-family:inherit;">
+      </div>
+      <div>
+        <label style="font-size:0.82rem; color:#5e6c84; font-weight:600; display:block; margin-bottom:5px;">Função</label>
+        <input type="text" id="team-role" placeholder="Ex: Designer" style="width:100%; padding:9px 10px; border:1px solid #dfe1e6; border-radius:4px; font-family:inherit;">
+      </div>
+      <button type="submit" style="background:#0052cc; color:white; border:none; padding:11px; border-radius:4px; cursor:pointer; font-weight:600;">Cadastrar Membro</button>
+    </form>
+  </div>
+</div>
+
+<!-- ===== MODAL: ATIVIDADE ===== -->
+<div id="activity-modal" style="display:none; position:fixed; inset:0; background:rgba(9,30,66,0.54); z-index:300; align-items:center; justify-content:center;">
+  <div style="background:#fff; width:500px; max-width:95vw; padding:28px; border-radius:10px; box-shadow:0 8px 32px rgba(0,0,0,0.22);">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+      <h3 id="activity-modal-title" style="margin:0; font-size:1.15rem; color:#172b4d; font-weight:700;">Nova Atividade</h3>
+      <button type="button" id="close-activity-modal" style="background:none; border:none; cursor:pointer; font-size:1.6rem; color:#6b778c; line-height:1;">&times;</button>
+    </div>
+    <form id="activity-form" style="display:flex; flex-direction:column; gap:14px;">
+      <input type="hidden" id="act-id">
+      <div>
+        <label style="font-size:0.82rem; color:#5e6c84; font-weight:600; display:block; margin-bottom:5px;">Título da Atividade *</label>
+        <input type="text" id="act-title" required placeholder="O que precisa ser feito?" style="width:100%; padding:9px 10px; border:1px solid #dfe1e6; border-radius:4px; font-family:inherit; font-size:0.9rem;">
+      </div>
+      <div style="display:flex; gap:12px;">
+        <div style="flex:1;">
+          <label style="font-size:0.82rem; color:#5e6c84; font-weight:600; display:block; margin-bottom:5px;">Categoria</label>
+          <select id="act-category" style="width:100%; padding:9px 10px; border:1px solid #dfe1e6; border-radius:4px; font-family:inherit;"></select>
+        </div>
+        <div style="flex:1;">
+          <label style="font-size:0.82rem; color:#5e6c84; font-weight:600; display:block; margin-bottom:5px;">Pipeline</label>
+          <select id="act-status" style="width:100%; padding:9px 10px; border:1px solid #dfe1e6; border-radius:4px; font-family:inherit;">
+            <option value="pending">Pendente</option>
+            <option value="in_progress">Em Andamento</option>
+            <option value="done">Concluído</option>
+          </select>
+        </div>
+      </div>
+      <div style="display:flex; gap:12px;">
+        <div style="flex:1;">
+          <label style="font-size:0.82rem; color:#5e6c84; font-weight:600; display:block; margin-bottom:5px;">Responsável</label>
+          <input type="text" id="act-responsible" placeholder="Ex: Ingrid" style="width:100%; padding:9px 10px; border:1px solid #dfe1e6; border-radius:4px; font-family:inherit;">
+        </div>
+        <div style="flex:1;">
+          <label style="font-size:0.82rem; color:#5e6c84; font-weight:600; display:block; margin-bottom:5px;">Data</label>
+          <input type="date" id="act-date" style="width:100%; padding:9px 10px; border:1px solid #dfe1e6; border-radius:4px; font-family:inherit;">
+        </div>
+      </div>
+      <div style="display:flex; gap:8px; margin-top:4px;">
+        <button type="submit" style="flex:1; background:#0052cc; color:white; border:none; padding:11px; border-radius:4px; cursor:pointer; font-weight:600; font-size:0.9rem;">Salvar</button>
+        <button type="button" id="cancel-activity-modal" style="padding:11px 16px; background:#f4f5f7; color:#42526e; border:1px solid #dfe1e6; border-radius:4px; cursor:pointer; font-size:0.9rem;">Cancelar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ===== MODAL: CATEGORIAS ===== -->
+<div id="category-modal" style="display:none; position:fixed; inset:0; background:rgba(9,30,66,0.54); z-index:300; align-items:center; justify-content:center;">
+  <div style="background:#fff; width:420px; max-width:95vw; padding:28px; border-radius:10px; box-shadow:0 8px 32px rgba(0,0,0,0.22);">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+      <h3 style="margin:0; font-size:1.15rem; color:#172b4d; font-weight:700;">Gerenciar Categorias</h3>
+      <button type="button" id="close-category-modal" style="background:none; border:none; cursor:pointer; font-size:1.6rem; color:#6b778c; line-height:1;">&times;</button>
+    </div>
+    <div id="category-list" style="margin-bottom:16px; max-height:240px; overflow-y:auto; display:flex; flex-direction:column; gap:6px;"></div>
+    <form id="category-form" style="display:flex; gap:8px; flex-wrap:wrap;">
+      <input type="text" id="cat-new-name" required placeholder="Nome da categoria..." style="flex:1; min-width:120px; padding:9px 10px; border:1px solid #dfe1e6; border-radius:4px; font-family:inherit;">
+      <select id="cat-new-color" style="padding:9px 10px; border:1px solid #dfe1e6; border-radius:4px; font-family:inherit;">
+        <option value="blue">Azul</option>
+        <option value="green">Verde</option>
+        <option value="orange">Laranja</option>
+        <option value="red">Vermelho</option>
+        <option value="purple">Roxo</option>
+        <option value="teal">Turquesa</option>
+        <option value="yellow">Amarelo</option>
+      </select>
+      <button type="submit" style="background:#0052cc; color:white; border:none; padding:9px 14px; border-radius:4px; cursor:pointer; font-weight:600;">+ Adicionar</button>
+    </form>
+  </div>
+</div>
+
+<script>
+// =============================================
+// KANBAN BOARD - Client-Side Logic
+// Runs immediately (no DOMContentLoaded needed
+// because this script tag is at bottom of body yield)
+// =============================================
+(function initBoard() {
+  // Wait for DOM to be ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupBoard);
+  } else {
+    setupBoard();
+  }
+
+  function setupBoard() {
+    var COL_MAP = { 'pendentes': 'pending', 'em-andamento': 'in_progress', 'concluidos': 'done' };
+    var REV_MAP = { 'pending': 'cards-pendentes', 'in_progress': 'cards-em-andamento', 'done': 'cards-concluidos' };
+    var MEMBER_KEY = 'sia_team_members_v1';
+
+    // ---- Helpers ----
+    function avatarColor(name) {
+      if (!name) return '#6B778C';
+      var colors = ['#0052cc','#36b37e','#ff5630','#ffab00','#6554c0','#00b8d9'];
+      var sum = 0;
+      for (var i = 0; i < name.length; i++) sum += name.charCodeAt(i);
+      return colors[sum % colors.length];
+    }
+
+    function initials(name) {
+      if (!name) return '??';
+      var parts = name.trim().split(' ');
+      if (parts.length >= 2) return (parts[0][0] + parts[parts.length-1][0]).toUpperCase();
+      return name.substring(0, 2).toUpperCase();
+    }
+
+    // ---- Render avatar cluster ----
+    function renderAvatarCluster() {
+      var members = getTeamMembers();
+      var cluster = document.getElementById('avatar-cluster');
+      if (!cluster) return;
+      cluster.innerHTML = members.map(function(m) {
+        return '<div class="jira-avatar" style="background:' + avatarColor(m.name) + '; border:2px solid #fff;" title="' + m.name + (m.role ? ' (' + m.role + ')' : '') + '">' + initials(m.name) + '</div>';
+      }).join('');
+    }
+
+    // ---- Team members ----
+    function getTeamMembers() {
+      var raw = localStorage.getItem(MEMBER_KEY);
+      var defaults = [
+        {name:'Ingrid', role:'Coordenadora'},
+        {name:'Gabriel', role:'Analista'},
+        {name:'Luís', role:'Técnico'},
+        {name:'Rebeca', role:'Comunicação'}
+      ];
+      return raw ? JSON.parse(raw) : defaults;
+    }
+
+    function saveTeamMembers(list) {
+      localStorage.setItem(MEMBER_KEY, JSON.stringify(list));
+    }
+
+    function renderTeamMembersList() {
+      var members = getTeamMembers();
+      var el = document.getElementById('team-members-list');
+      if (!el) return;
+      el.innerHTML = members.map(function(m, i) {
+        return '<div style="display:flex;align-items:center;gap:6px;background:#f4f5f7;border-radius:20px;padding:4px 10px;">'
+          + '<div style="width:22px;height:22px;border-radius:50%;background:' + avatarColor(m.name) + ';color:#fff;display:flex;align-items:center;justify-content:center;font-size:0.6rem;font-weight:700;">' + initials(m.name) + '</div>'
+          + '<span style="font-size:0.82rem;">' + m.name + '</span>'
+          + '<button onclick="removeTeamMember(' + i + ')" style="background:none;border:none;cursor:pointer;color:#de350b;font-size:0.9rem;font-weight:700;line-height:1;">×</button>'
+          + '</div>';
+      }).join('');
+
+      // Update filter select
+      var filterSel = document.getElementById('user-filter');
+      if (filterSel) {
+        var currentVal = filterSel.value;
+        filterSel.innerHTML = '<option value="">Filtrar: Todos</option>'
+          + members.map(function(m) { return '<option value="' + m.name + '">' + m.name + '</option>'; }).join('');
+        filterSel.value = currentVal;
+      }
+    }
+
+    window.removeTeamMember = function(index) {
+      var members = getTeamMembers();
+      members.splice(index, 1);
+      saveTeamMembers(members);
+      renderTeamMembersList();
+      renderAvatarCluster();
+    };
+
+    renderAvatarCluster();
+    renderTeamMembersList();
+
+    // ---- Render card HTML ----
+    function renderCard(task) {
+      var inits = initials(task.responsible);
+      var color = avatarColor(task.responsible);
+      return '<div class="kanban-card" data-id="' + task.id + '" data-category="' + (task.category || '') + '" data-responsible="' + (task.responsible || '') + '" data-date="' + (task.date || '') + '">'
+        + '<div class="drag-handle">'
+        + '<svg viewBox="0 0 24 24" width="10" height="20" fill="currentColor"><circle cx="9" cy="5" r="1.5"></circle><circle cx="15" cy="5" r="1.5"></circle><circle cx="9" cy="12" r="1.5"></circle><circle cx="15" cy="12" r="1.5"></circle><circle cx="9" cy="19" r="1.5"></circle><circle cx="15" cy="19" r="1.5"></circle></svg>'
+        + '</div>'
+        + '<div class="card-content" onclick="openTaskModal(this.closest(\'.kanban-card\'))">'
+        + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">'
+        + '<p class="card-title" style="flex:1;">' + (task.activity || '') + '</p>'
+        + '<button class="delete-btn" onclick="event.stopPropagation();deleteTaskUI(\'' + task.id + '\')" style="background:none;border:none;cursor:pointer;color:#a1aeb7;font-size:1.1rem;line-height:1;flex-shrink:0;">&times;</button>'
+        + '</div>'
+        + '<span class="jira-badge jira-badge-' + (task.badge_color || 'blue') + '">' + (task.category || '') + '</span>'
+        + '</div>'
+        + '<div class="card-footer" style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;">'
+        + '<span style="font-size:0.7rem;color:#6b778c;">SIA-' + task.id + '</span>'
+        + '<div style="display:flex;align-items:center;gap:8px;">'
+        + '<span style="font-size:0.75rem;color:#6b778c;">' + (task.date || '') + '</span>'
+        + '<div style="width:24px;height:24px;border-radius:50%;background:' + color + ';color:#fff;display:flex;align-items:center;justify-content:center;font-size:0.6rem;font-weight:700;" title="' + (task.responsible || '') + '">' + inits + '</div>'
+        + '</div></div>'
+        + '</div>';
+    }
+
+    // ---- Render full board ----
+    function renderBoard() {
+      document.getElementById('cards-pendentes').innerHTML = '';
+      document.getElementById('cards-em-andamento').innerHTML = '';
+      document.getElementById('cards-concluidos').innerHTML = '';
+
+      var tasks = AppStore.getTasks();
+      tasks.forEach(function(task) {
+        var colId = REV_MAP[task.status_group] || 'cards-pendentes';
+        var col = document.getElementById(colId);
+        if (col) col.insertAdjacentHTML('beforeend', renderCard(task));
+      });
+      updateColumnCounts();
+    }
+
+    function updateColumnCounts() {
+      document.querySelectorAll('.kanban-column').forEach(function(col) {
+        var count = col.querySelectorAll('.kanban-card').length;
+        var badge = col.querySelector('.column-count');
+        if (badge) badge.textContent = count;
+      });
+    }
+    window.updateColumnCounts = updateColumnCounts;
+
+    // ---- Drag & Drop ----
+    if (typeof Sortable !== 'undefined') {
+      ['cards-pendentes', 'cards-em-andamento', 'cards-concluidos'].forEach(function(colId) {
+        var el = document.getElementById(colId);
+        if (el) {
+          new Sortable(el, {
+            group: 'kanban',
+            animation: 150,
+            handle: '.drag-handle',
+            ghostClass: 'sortable-ghost',
+            onEnd: function(evt) {
+              var id = evt.item.getAttribute('data-id');
+              var toColEl = evt.to;
+              var toColId = toColEl.id; // e.g. cards-pendentes
+              // Map cards-xxx to pending/in_progress/done
+              var statusMap = {'cards-pendentes':'pending','cards-em-andamento':'in_progress','cards-concluidos':'done'};
+              var newStatus = statusMap[toColId] || 'pending';
+              AppStore.updateTask(id, {status_group: newStatus});
+              updateColumnCounts();
+            }
+          });
+        }
+      });
+    }
+
+    // ---- Delete task ----
+    window.deleteTaskUI = function(id) {
+      if (confirm('Excluir esta atividade?')) {
+        AppStore.deleteTask(id);
+        renderBoard();
+      }
+    };
+
+    // ---- Category helpers ----
+    function populateCategorySelect() {
+      var sel = document.getElementById('act-category');
+      if (!sel) return;
+      sel.innerHTML = AppStore.getCategories().map(function(c) {
+        return '<option value="' + c.name + '">' + c.name + '</option>';
+      }).join('');
+    }
+
+    function renderCategoryList() {
+      var list = document.getElementById('category-list');
+      if (!list) return;
+      var cats = AppStore.getCategories();
+      list.innerHTML = cats.length === 0
+        ? '<p style="color:#6b778c;font-size:0.85rem;">Nenhuma categoria.</p>'
+        : cats.map(function(c) {
+          return '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border:1px solid #dfe1e6;border-radius:4px;background:#fafbfc;">'
+            + '<span class="jira-badge jira-badge-' + c.color + '">' + c.name + '</span>'
+            + '<button type="button" onclick="deleteCategoryUI(\'' + c.name.replace(/'/g,"&#39;") + '\')" style="background:#ffebe6;border:none;color:#de350b;padding:4px 8px;border-radius:3px;cursor:pointer;font-size:0.75rem;font-weight:700;">Excluir</button>'
+            + '</div>';
+        }).join('');
+    }
+
+    window.deleteCategoryUI = function(name) {
+      if (confirm('Excluir categoria "' + name + '"?')) {
+        AppStore.deleteCategory(name);
+        renderCategoryList();
+        renderBoard();
+      }
+    };
+
+    // ---- Modal: Activity ----
+    window.openTaskModal = function(cardNode) {
+      populateCategorySelect();
+      document.getElementById('activity-form').reset();
+      document.getElementById('act-id').value = '';
+
+      if (cardNode) {
+        document.getElementById('activity-modal-title').textContent = 'Editar Atividade';
+        var id = cardNode.getAttribute('data-id');
+        var task = AppStore.getTasks().find(function(t) { return t.id == id; });
+        if (task) {
+          document.getElementById('act-id').value = task.id;
+          document.getElementById('act-title').value = task.activity || '';
+          document.getElementById('act-responsible').value = task.responsible || '';
+          document.getElementById('act-date').value = task.date || '';
+          document.getElementById('act-category').value = task.category || '';
+          document.getElementById('act-status').value = task.status_group || 'pending';
+        }
+      } else {
+        document.getElementById('activity-modal-title').textContent = 'Nova Atividade';
+      }
+      document.getElementById('activity-modal').style.display = 'flex';
+    };
+
+    function closeActivityModal() {
+      document.getElementById('activity-modal').style.display = 'none';
+    }
+
+    document.getElementById('close-activity-modal').addEventListener('click', closeActivityModal);
+    document.getElementById('cancel-activity-modal').addEventListener('click', closeActivityModal);
+
+    document.getElementById('activity-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      var id = document.getElementById('act-id').value;
+      var catName = document.getElementById('act-category').value;
+      var cat = AppStore.getCategories().find(function(c) { return c.name === catName; }) || {color:'blue'};
+      var statusGroup = document.getElementById('act-status').value;
+      var statusLabelMap = {pending:'Pendente', in_progress:'Em Andamento', done:'Concluído'};
+
+      var payload = {
+        activity: document.getElementById('act-title').value.trim(),
+        responsible: document.getElementById('act-responsible').value.trim(),
+        date: document.getElementById('act-date').value,
+        category: catName,
+        badge_color: cat.color,
+        status_group: statusGroup,
+        status: statusLabelMap[statusGroup] || 'Pendente'
+      };
+
+      if (id) {
+        AppStore.updateTask(id, payload);
+      } else {
+        AppStore.addTask(payload);
+      }
+      closeActivityModal();
+      renderBoard();
+    });
+
+    // ---- Modal: Categorias ----
+    document.getElementById('manage-categories').addEventListener('click', function() {
+      renderCategoryList();
+      document.getElementById('category-modal').style.display = 'flex';
+    });
+
+    document.getElementById('close-category-modal').addEventListener('click', function() {
+      document.getElementById('category-modal').style.display = 'none';
+    });
+
+    document.getElementById('category-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      var name = document.getElementById('cat-new-name').value.trim();
+      var color = document.getElementById('cat-new-color').value;
+      if (!name) return;
+      AppStore.addCategory(name, color);
+      document.getElementById('cat-new-name').value = '';
+      renderCategoryList();
+    });
+
+    // ---- Modal: Equipe ----
+    document.getElementById('add-team-member').addEventListener('click', function() {
+      renderTeamMembersList();
+      document.getElementById('team-modal').style.display = 'flex';
+    });
+
+    document.getElementById('close-team-modal').addEventListener('click', function() {
+      document.getElementById('team-modal').style.display = 'none';
+    });
+
+    document.getElementById('team-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      var name = document.getElementById('team-name').value.trim();
+      var role = document.getElementById('team-role').value.trim();
+      if (!name) return;
+      var members = getTeamMembers();
+      members.push({name: name, role: role});
+      saveTeamMembers(members);
+      document.getElementById('team-form').reset();
+      renderTeamMembersList();
+      renderAvatarCluster();
+    });
+
+    // ---- Add card buttons ----
+    document.querySelectorAll('.add-card-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var colId = btn.getAttribute('data-col');
+        var statusMap = {'pendentes':'pending','em-andamento':'in_progress','concluidos':'done'};
+        window.openTaskModal(null);
+        document.getElementById('act-status').value = statusMap[colId] || 'pending';
+      });
+    });
+
+    // ---- Filters ----
+    document.getElementById('user-filter').addEventListener('change', runFilters);
+    document.getElementById('date-filter').addEventListener('change', runFilters);
+
+    function runFilters() {
+      var user = (document.getElementById('user-filter').value || '').toLowerCase();
+      var date = document.getElementById('date-filter').value || '';
+      document.querySelectorAll('.kanban-card').forEach(function(card) {
+        var cUser = (card.getAttribute('data-responsible') || '').toLowerCase();
+        var cDate = card.getAttribute('data-date') || '';
+        var show = (!user || cUser.includes(user)) && (!date || cDate === date);
+        card.style.display = show ? '' : 'none';
+      });
+      updateColumnCounts();
+    }
+
+    // ---- Close modals on backdrop click ----
+    document.getElementById('activity-modal').addEventListener('click', function(e) {
+      if (e.target === this) closeActivityModal();
+    });
+    document.getElementById('team-modal').addEventListener('click', function(e) {
+      if (e.target === this) this.style.display = 'none';
+    });
+    document.getElementById('category-modal').addEventListener('click', function(e) {
+      if (e.target === this) this.style.display = 'none';
+    });
+
+    // ---- Init ----
+    renderBoard();
+  }
+})();
+</script>
