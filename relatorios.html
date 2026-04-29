@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <title>SIA Gestão - Gerenciamento de Projetos</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="description" content="Sistema de Gerenciamento de Projetos da Secretaria de Inteligência Artificial">
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="./application.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="./sortable.min.js"></script>
+    <script src="./store.js"></script>
+    <script>
+      // Auto re-render when Supabase sync completes
+      window.addEventListener('appstore:synced', function(e) {
+        // If renderBoard is defined (dashboard page), call it
+        if (typeof window.__renderBoard === 'function') window.__renderBoard();
+        // If renderReports is defined (reports page), call it
+        if (typeof window.__renderReports === 'function') window.__renderReports();
+      });
+    </script>
+  </head>
+  <body>
+    <div class="app-container">
+      <aside class="sidebar">
+        <div class="logo">
+          <div class="logo-icon">SIA</div>
+          <div class="logo-text">
+            <span class="logo-title">SIA Gestão</span>
+            <span class="logo-subtitle">Portfólio de Projetos</span>
+          </div>
+        </div>
+
+        <div class="sidebar-divider"></div>
+
+        <div class="sidebar-section">
+          <div class="sidebar-section-title">Planejamento</div>
+          <ul class="nav">
+            <li class="">
+              <a href="index.html" class="nav-link">
+                <span class="nav-icon">
+                  <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                </span>
+                Board
+              </a>
+            </li>
+            <li class="">
+              <a href="dashboards.html" class="nav-link">
+                <span class="nav-icon">
+                  <svg viewBox="0 0 24 24"><path d="M18 20V10"></path><path d="M12 20V4"></path><path d="M6 20v-6"></path></svg>
+                </span>
+                Dashboards
+              </a>
+            </li>
+            <li class="active">
+              <a href="relatorios.html" class="nav-link">
+                <span class="nav-icon">
+                  <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                </span>
+                Relatórios
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        <div class="sidebar-divider"></div>
+
+        <div class="sidebar-section">
+          <div class="sidebar-section-title">Configuração</div>
+          <ul class="nav">
+            <li>
+              <span class="nav-link" id="nav-config" style="cursor: pointer;">
+                <span class="nav-icon">
+                  <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                </span>
+                Configurações
+              </span>
+            </li>
+          </ul>
+        </div>
+
+        <div class="sidebar-footer">
+          <div class="sidebar-user">
+            <div class="sidebar-avatar">IA</div>
+            <div class="sidebar-user-info">
+              <span class="sidebar-user-name">Equipe SIA</span>
+              <span class="sidebar-user-role">Administrador</span>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <main class="main-content">
+        <header class="topbar">
+          <div class="topbar-left">
+            <h1>Relatórios</h1>
+          </div>
+          <div class="topbar-right">
+            <div class="topbar-search">
+              <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+              <input type="text" placeholder="Pesquisar atividades...">
+            </div>
+            <div class="user-profile">
+              <span class="avatar" title="Equipe SIA">IA</span>
+            </div>
+          </div>
+        </header>
+
+        
+<div class="page-content">
+  <div class="dashboard-header">
+    <h2>Relatório Completo de Atividades</h2>
+    <p class="subtitle">Gerencie a descrição do projeto e valide as entregas com evidências por atividade.</p>
+  </div>
+
+  <section class="project-panel" aria-labelledby="project-panel-title">
+    <div class="project-panel-head">
+      <h3 id="project-panel-title">Projeto</h3>
+      <span class="project-panel-hint">As informações abaixo serão usadas como base oficial do relatório.</span>
+    </div>
+    <form id="project-form" class="project-form">
+      <div class="project-grid">
+        <label>
+          Nome do Projeto
+          <input id="project-name" type="text" placeholder="Ex: Modernização do Portal SIA" required>
+        </label>
+        <label>
+          Categoria Principal
+          <input id="project-category" type="text" placeholder="Ex: Comunicação">
+        </label>
+        <label>
+          Responsável do Projeto
+          <input id="project-owner" type="text" placeholder="Ex: Ingrid">
+        </label>
+        <label>
+          Prazo Final
+          <input id="project-deadline" type="date">
+        </label>
+        <label>
+          Status Executivo
+          <select id="project-status">
+            <option value="planejamento">Planejamento</option>
+            <option value="execucao">Execução</option>
+            <option value="validacao">Validação</option>
+            <option value="concluido">Concluído</option>
+          </select>
+        </label>
+      </div>
+      <label>
+        Objetivo
+        <textarea id="project-objective" rows="2" placeholder="Descreva o objetivo principal do projeto..."></textarea>
+      </label>
+      <label>
+        Escopo e Entregáveis
+        <textarea id="project-scope" rows="3" placeholder="Liste escopo, entregáveis e critérios de aceite..."></textarea>
+      </label>
+      <label>
+        Resumo Executivo
+        <textarea id="project-summary" rows="3" placeholder="Contexto geral para leitura da alta gestão..."></textarea>
+      </label>
+      <div class="project-form-actions">
+        <button type="submit" class="btn-primary">Salvar Dados do Projeto</button>
+      </div>
+    </form>
+  </section>
+
+  <section class="project-panel" aria-labelledby="project-expand-title">
+    <div class="project-panel-head">
+      <h3 id="project-expand-title">Projetos e Entregas</h3>
+      <span class="project-panel-hint">Clique em um projeto para expandir as atividades relacionadas.</span>
+    </div>
+    <div id="reports-accordion-container">
+      <!-- accordion populated by js -->
+    </div>
+  </section>
+
+  <div class="table-container">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+      <h3 style="font-size:1rem; font-weight:700; color:#172b4d;">Todas as Atividades</h3>
+      <div style="display:flex; gap:8px;">
+        <button class="btn-primary" onclick="openReportTaskModal(null)" style="font-size:0.8rem; padding:8px 14px;">+ Nova Atividade</button>
+        <button class="btn-primary" onclick="openReportCategoryModal()" style="font-size:0.8rem; padding:8px 14px; background:#6554c0;">Categorias</button>
+      </div>
+    </div>
+    <table class="modern-table">
+      <thead>
+        <tr>
+          <th>Projeto / Categoria</th>
+          <th>Atividade</th>
+          <th>Responsável</th>
+          <th>Status</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody id="reports-table-body">
+        <!-- table rows populated by js -->
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ===== MODAL: EVIDÊNCIAS ===== -->
+<div id="evidence-modal" class="settings-modal-backdrop" style="display:none;">
+  <div class="settings-modal-card">
+    <div class="settings-modal-head">
+      <h3>Evidências da Entrega</h3>
+      <button type="button" class="settings-close-btn" onclick="closeEvidenceModal()">&times;</button>
+    </div>
+    <p id="evidence-modal-activity" class="settings-modal-subtitle"></p>
+    <form id="evidence-form" class="settings-form-grid">
+      <input id="evidence-activity-key" type="hidden">
+      <label class="settings-label">
+        Tipo da Evidência
+        <select id="evidence-type" required>
+          <option value="Documento">Documento</option>
+          <option value="Imagem">Imagem</option>
+          <option value="Vídeo">Vídeo</option>
+          <option value="Áudio">Áudio</option>
+          <option value="Planilha">Planilha</option>
+          <option value="Apresentação">Apresentação</option>
+          <option value="Outro">Outro</option>
+        </select>
+      </label>
+      <label class="settings-label">
+        Arquivo da Evidência
+        <input id="evidence-file" type="file" required accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.ppt,.pptx,.jpg,.jpeg,.png,.gif,.webp,.mp4,.mov,.avi,.mp3,.wav,.zip,.rar,.txt,.json,.xml">
+      </label>
+      <label class="settings-label">
+        Observação
+        <textarea id="evidence-note" rows="2" placeholder="Opcional: detalhe o que o arquivo comprova."></textarea>
+      </label>
+      <div class="settings-form-actions">
+        <button type="submit" class="btn-primary">Salvar Evidência</button>
+      </div>
+    </form>
+    <div class="settings-divider"></div>
+    <div id="evidence-list" class="evidence-list"></div>
+  </div>
+</div>
+
+<!-- ===== MODAL: EDITAR/CRIAR ATIVIDADE (REPORTS) ===== -->
+<div id="report-activity-modal" style="display:none; position:fixed; inset:0; background:rgba(9,30,66,0.54); z-index:300; align-items:center; justify-content:center;">
+  <div style="background:#fff; width:500px; max-width:95vw; padding:28px; border-radius:10px; box-shadow:0 8px 32px rgba(0,0,0,0.22);">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+      <h3 id="report-activity-modal-title" style="margin:0; font-size:1.15rem; color:#172b4d; font-weight:700;">Atividade</h3>
+      <button type="button" onclick="closeReportTaskModal()" style="background:none; border:none; cursor:pointer; font-size:1.6rem; color:#6b778c; line-height:1;">&times;</button>
+    </div>
+    <form id="report-activity-form" style="display:flex; flex-direction:column; gap:14px;">
+      <input type="hidden" id="report-act-id">
+      <div>
+        <label style="font-size:0.82rem; color:#5e6c84; font-weight:600; display:block; margin-bottom:5px;">Título da Atividade *</label>
+        <input type="text" id="report-act-title" required placeholder="O que precisa ser feito?" style="width:100%; padding:9px 10px; border:1px solid #dfe1e6; border-radius:4px; font-family:inherit; font-size:0.9rem;">
+      </div>
+      <div style="display:flex; gap:12px;">
+        <div style="flex:1;">
+          <label style="font-size:0.82rem; color:#5e6c84; font-weight:600; display:block; margin-bottom:5px;">Categoria</label>
+          <select id="report-act-category" style="width:100%; padding:9px 10px; border:1px solid #dfe1e6; border-radius:4px; font-family:inherit;"></select>
+        </div>
+        <div style="flex:1;">
+          <label style="font-size:0.82rem; color:#5e6c84; font-weight:600; display:block; margin-bottom:5px;">Pipeline / Status</label>
+          <select id="report-act-status" style="width:100%; padding:9px 10px; border:1px solid #dfe1e6; border-radius:4px; font-family:inherit;">
+            <option value="pending">Pendente</option>
+            <option value="in_progress">Em Andamento</option>
+            <option value="done">Concluído</option>
+          </select>
+        </div>
+      </div>
+      <div style="display:flex; gap:12px;">
+        <div style="flex:1;">
+          <label style="font-size:0.82rem; color:#5e6c84; font-weight:600; display:block; margin-bottom:5px;">Responsável</label>
+          <input type="text" id="report-act-responsible" placeholder="Ex: Ingrid" style="width:100%; padding:9px 10px; border:1px solid #dfe1e6; border-radius:4px; font-family:inherit;">
+        </div>
+        <div style="flex:1;">
+          <label style="font-size:0.82rem; color:#5e6c84; font-weight:600; display:block; margin-bottom:5px;">Data</label>
+          <input type="date" id="report-act-date" style="width:100%; padding:9px 10px; border:1px solid #dfe1e6; border-radius:4px; font-family:inherit;">
+        </div>
+      </div>
+      <div style="display:flex; gap:8px; margin-top:4px;">
+        <button type="submit" style="flex:1; background:#0052cc; color:white; border:none; padding:11px; border-radius:4px; cursor:pointer; font-weight:600; font-size:0.9rem;">Salvar</button>
+        <button type="button" onclick="closeReportTaskModal()" style="padding:11px 16px; background:#f4f5f7; color:#42526e; border:1px solid #dfe1e6; border-radius:4px; cursor:pointer; font-size:0.9rem;">Cancelar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ===== MODAL: GERENCIAR CATEGORIAS (REPORTS) ===== -->
+<div id="report-category-modal" style="display:none; position:fixed; inset:0; background:rgba(9,30,66,0.54); z-index:300; align-items:center; justify-content:center;">
+  <div style="background:#fff; width:420px; max-width:95vw; padding:28px; border-radius:10px; box-shadow:0 8px 32px rgba(0,0,0,0.22);">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+      <h3 style="margin:0; font-size:1.15rem; color:#172b4d; font-weight:700;">Gerenciar Categorias</h3>
+      <button type="button" onclick="closeReportCategoryModal()" style="background:none; border:none; cursor:pointer; font-size:1.6rem; color:#6b778c; line-height:1;">&times;</button>
+    </div>
+    <div id="report-category-list" style="margin-bottom:16px; max-height:240px; overflow-y:auto; display:flex; flex-direction:column; gap:6px;"></div>
+    <form id="report-category-form" style="display:flex; gap:8px; flex-wrap:wrap;">
+      <input type="text" id="report-cat-name" required placeholder="Nome da categoria..." style="flex:1; min-width:120px; padding:9px 10px; border:1px solid #dfe1e6; border-radius:4px; font-family:inherit;">
+      <select id="report-cat-color" style="padding:9px 10px; border:1px solid #dfe1e6; border-radius:4px; font-family:inherit;">
+        <option value="blue">Azul</option>
+        <option value="green">Verde</option>
+        <option value="orange">Laranja</option>
+        <option value="red">Vermelho</option>
+        <option value="purple">Roxo</option>
+        <option value="teal">Turquesa</option>
+        <option value="yellow">Amarelo</option>
+      </select>
+      <button type="submit" style="background:#0052cc; color:white; border:none; padding:9px 14px; border-radius:4px; cursor:pointer; font-weight:600;">+ Adicionar</button>
+    </form>
+  </div>
+</div>
+
+<script>
+// =============================================
+// REPORTS PAGE - Client-Side Logic
+// =============================================
+(function() {
+  var PROJECT_KEY = 'sia_project_profile_v1';
+  var EVIDENCE_KEY = 'sia_project_evidence_v1';
+
+  // ---- Helpers ----
+  function avatarColor(name) {
+    if (!name) return '#6B778C';
+    var colors = ['#ff5630','#36b37e','#0052cc','#ffab00','#6554c0'];
+    return colors[name.length % colors.length];
+  }
+
+  function initials(name) {
+    return name ? name.substring(0, 2).toUpperCase() : '??';
+  }
+
+  function statusGroupLabel(g) {
+    if (g === 'done') return 'Concluído';
+    if (g === 'in_progress') return 'Em Andamento';
+    return 'Pendente';
+  }
+
+  function statusClass(g) {
+    if (g === 'done') return 'status-tag status-done';
+    if (g === 'in_progress') return 'status-tag status-progress';
+    return 'status-tag status-todo';
+  }
+
+  // ---- Project Profile ----
+  function loadProjectProfile() {
+    var raw = localStorage.getItem(PROJECT_KEY);
+    if (!raw) return;
+    var d = JSON.parse(raw);
+    document.getElementById('project-name').value = d.name || '';
+    document.getElementById('project-category').value = d.category || '';
+    document.getElementById('project-owner').value = d.owner || '';
+    document.getElementById('project-deadline').value = d.deadline || '';
+    document.getElementById('project-status').value = d.status || 'planejamento';
+    document.getElementById('project-objective').value = d.objective || '';
+    document.getElementById('project-scope').value = d.scope || '';
+    document.getElementById('project-summary').value = d.summary || '';
+  }
+
+  document.getElementById('project-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    var p = {
+      name: document.getElementById('project-name').value.trim(),
+      category: document.getElementById('project-category').value.trim(),
+      owner: document.getElementById('project-owner').value.trim(),
+      deadline: document.getElementById('project-deadline').value,
+      status: document.getElementById('project-status').value,
+      objective: document.getElementById('project-objective').value.trim(),
+      scope: document.getElementById('project-scope').value.trim(),
+      summary: document.getElementById('project-summary').value.trim()
+    };
+    localStorage.setItem(PROJECT_KEY, JSON.stringify(p));
+    alert('Dados do projeto salvos com sucesso.');
+  });
+
+  // ---- Evidence ----
+  function loadEvidence() { return JSON.parse(localStorage.getItem(EVIDENCE_KEY) || '{}'); }
+  function saveEvidence(d) { localStorage.setItem(EVIDENCE_KEY, JSON.stringify(d)); }
+
+  function updateBadges() {
+    var ev = loadEvidence();
+    document.querySelectorAll('[data-evidence-count]').forEach(function(el) {
+      var key = el.getAttribute('data-evidence-count');
+      var n = (ev[key] || []).length;
+      el.textContent = n + (n === 1 ? ' evidência' : ' evidências');
+    });
+  }
+
+  function renderEvidenceList(key) {
+    var ev = loadEvidence();
+    var list = ev[key] || [];
+    var c = document.getElementById('evidence-list');
+    if (list.length === 0) {
+      c.innerHTML = '<p class="settings-modal-subtitle">Nenhuma evidência cadastrada.</p>';
+      return;
+    }
+    c.innerHTML = list.map(function(item, i) {
+      return '<div class="evidence-item">'
+        + '<div><strong>' + item.fileName + '</strong>'
+        + '<div class="evidence-meta">' + item.type + ' • ' + item.createdAt + '</div>'
+        + (item.note ? '<div class="evidence-note">' + item.note + '</div>' : '')
+        + '</div>'
+        + '<button type="button" class="evidence-delete" onclick="deleteEvidenceItem(\'' + key + '\',' + i + ')">Excluir</button>'
+        + '</div>';
+    }).join('');
+  }
+
+  window.openEvidenceModal = function(key, name) {
+    document.getElementById('evidence-activity-key').value = key;
+    document.getElementById('evidence-modal-activity').textContent = 'Atividade: ' + name;
+    document.getElementById('evidence-form').reset();
+    renderEvidenceList(key);
+    document.getElementById('evidence-modal').style.display = 'flex';
+  };
+
+  window.closeEvidenceModal = function() {
+    document.getElementById('evidence-modal').style.display = 'none';
+  };
+
+  window.deleteEvidenceItem = function(key, idx) {
+    var ev = loadEvidence();
+    ev[key] = ev[key] || [];
+    ev[key].splice(idx, 1);
+    saveEvidence(ev);
+    renderEvidenceList(key);
+    updateBadges();
+  };
+
+  document.getElementById('evidence-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    var key = document.getElementById('evidence-activity-key').value;
+    var fi = document.getElementById('evidence-file');
+    if (!fi.files || !fi.files[0]) return;
+    var file = fi.files[0];
+    var ev = loadEvidence();
+    ev[key] = ev[key] || [];
+    ev[key].push({
+      type: document.getElementById('evidence-type').value,
+      fileName: file.name,
+      note: document.getElementById('evidence-note').value.trim(),
+      createdAt: new Date().toLocaleString('pt-BR')
+    });
+    saveEvidence(ev);
+    renderEvidenceList(key);
+    updateBadges();
+    document.getElementById('evidence-form').reset();
+  });
+
+  // ---- Accordion ----
+  window.toggleAccordion = function(id) {
+    var el = document.getElementById(id);
+    if (el) el.style.display = el.style.display === 'none' ? 'grid' : 'none';
+  };
+
+  // ---- Render Board ----
+  function renderReports() {
+    var tasks = AppStore.getTasks() || [];
+
+    // Accordion por categoria
+    var grouped = tasks.reduce(function(acc, t) {
+      var cat = t.category || 'Sem Categoria';
+      if (!acc[cat]) acc[cat] = [];
+      acc[cat].push(t);
+      return acc;
+    }, {});
+
+    var accHtml = '';
+    Object.keys(grouped).forEach(function(cat, idx) {
+      var items = grouped[cat];
+      var color = (items[0] && items[0].badge_color) ? items[0].badge_color : 'blue';
+      var rowsHtml = items.map(function(t) {
+        var lbl = t.status || statusGroupLabel(t.status_group);
+        return '<div class="project-accordion-row">'
+          + '<div><strong>' + (t.activity || '') + '</strong>'
+          + '<div class="evidence-meta">' + (t.responsible || '') + '</div></div>'
+          + '<span class="' + statusClass(t.status_group) + '">' + lbl + '</span>'
+          + '</div>';
+      }).join('');
+
+      accHtml += '<article class="project-accordion-item">'
+        + '<button type="button" class="project-accordion-trigger" onclick="toggleAccordion(\'acc-' + idx + '\')">'
+        + '<span class="jira-badge jira-badge-' + color + '">' + cat + '</span>'
+        + '<span class="project-accordion-meta">' + items.length + ' atividade(s)</span>'
+        + '</button>'
+        + '<div id="acc-' + idx + '" class="project-accordion-content" style="display:none;">'
+        + rowsHtml
+        + '</div></article>';
+    });
+    document.getElementById('reports-accordion-container').innerHTML = accHtml;
+
+    // Tabela
+    var tableHtml = '';
+    tasks.forEach(function(t) {
+      var eKey = 'task-' + t.id;
+      var lbl = t.status || statusGroupLabel(t.status_group);
+      tableHtml += '<tr>'
+        + '<td><span class="jira-badge jira-badge-' + (t.badge_color || 'blue') + '">' + (t.category || '') + '</span></td>'
+        + '<td class="task-activity">' + (t.activity || '') + '</td>'
+        + '<td>'
+        + '<div style="display:flex;align-items:center;gap:8px;">'
+        + '<div class="jira-avatar" style="background:' + avatarColor(t.responsible) + ';width:26px;height:26px;font-size:0.62rem;color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;">' + initials(t.responsible) + '</div>'
+        + '<span class="task-responsible">' + (t.responsible || '') + '</span>'
+        + '</div></td>'
+        + '<td><span class="' + statusClass(t.status_group) + '">' + lbl + '</span></td>'
+        + '<td>'
+        + '<div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;">'
+        + '<button class="evidence-btn" onclick="openEvidenceModal(\'' + eKey + '\',\'' + (t.activity || '').replace(/'/g, "\\'") + '\')">Evidências</button>'
+        + '<button class="evidence-btn" style="background:#e3f2fd;border-color:#0052cc;color:#0052cc;" onclick="openReportTaskModal(\'' + t.id + '\')">Editar</button>'
+        + '<button class="evidence-btn" style="background:#ffebe6;border-color:#de350b;color:#de350b;" onclick="deleteReportTask(\'' + t.id + '\')">Excluir</button>'
+        + '<span data-evidence-count="' + eKey + '" style="font-size:0.72rem;color:#6b778c;">0 evidências</span>'
+        + '</div></td>'
+        + '</tr>';
+    });
+    document.getElementById('reports-table-body').innerHTML = tableHtml;
+    updateBadges();
+  }
+
+  // ---- CRUD Atividades (Reports) ----
+  window.deleteReportTask = function(id) {
+    if (confirm('Excluir esta atividade permanentemente?')) {
+      AppStore.deleteTask(id);
+      renderReports();
+    }
+  };
+
+  window.openReportTaskModal = function(id) {
+    // populate category select
+    var catSel = document.getElementById('report-act-category');
+    catSel.innerHTML = AppStore.getCategories().map(function(c) {
+      return '<option value="' + c.name + '">' + c.name + '</option>';
+    }).join('');
+
+    document.getElementById('report-activity-form').reset();
+    document.getElementById('report-act-id').value = '';
+
+    if (id) {
+      document.getElementById('report-activity-modal-title').textContent = 'Editar Atividade';
+      var task = AppStore.getTasks().find(function(t) { return t.id == id; });
+      if (task) {
+        document.getElementById('report-act-id').value = task.id;
+        document.getElementById('report-act-title').value = task.activity || '';
+        document.getElementById('report-act-responsible').value = task.responsible || '';
+        document.getElementById('report-act-date').value = task.date || '';
+        document.getElementById('report-act-category').value = task.category || '';
+        document.getElementById('report-act-status').value = task.status_group || 'pending';
+      }
+    } else {
+      document.getElementById('report-activity-modal-title').textContent = 'Nova Atividade';
+    }
+    document.getElementById('report-activity-modal').style.display = 'flex';
+  };
+
+  window.closeReportTaskModal = function() {
+    document.getElementById('report-activity-modal').style.display = 'none';
+  };
+
+  document.getElementById('report-activity-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    var id = document.getElementById('report-act-id').value;
+    var catName = document.getElementById('report-act-category').value;
+    var cat = AppStore.getCategories().find(function(c) { return c.name === catName; }) || { color: 'blue' };
+
+    var payload = {
+      activity: document.getElementById('report-act-title').value.trim(),
+      responsible: document.getElementById('report-act-responsible').value.trim(),
+      date: document.getElementById('report-act-date').value,
+      category: catName,
+      badge_color: cat.color,
+      status_group: document.getElementById('report-act-status').value,
+      status: statusGroupLabel(document.getElementById('report-act-status').value)
+    };
+
+    if (id) {
+      AppStore.updateTask(id, payload);
+    } else {
+      AppStore.addTask(payload);
+    }
+    closeReportTaskModal();
+    renderReports();
+  });
+
+  // ---- CRUD Categorias (Reports) ----
+  function renderCategoryModalList() {
+    var cats = AppStore.getCategories();
+    var html = cats.map(function(c) {
+      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border:1px solid #dfe1e6;border-radius:4px;background:#fafbfc;">'
+        + '<span class="jira-badge jira-badge-' + c.color + '">' + c.name + '</span>'
+        + '<button type="button" onclick="deleteReportCategory(\'' + c.name.replace(/'/g, "\\'") + '\')" style="background:#ffebe6;border:none;color:#de350b;padding:4px 8px;border-radius:3px;cursor:pointer;font-size:0.75rem;font-weight:700;">Excluir</button>'
+        + '</div>';
+    }).join('');
+    document.getElementById('report-category-list').innerHTML = html || '<p style="color:#6b778c;font-size:0.85rem;">Nenhuma categoria cadastrada.</p>';
+  }
+
+  window.openReportCategoryModal = function() {
+    renderCategoryModalList();
+    document.getElementById('report-category-modal').style.display = 'flex';
+  };
+
+  window.closeReportCategoryModal = function() {
+    document.getElementById('report-category-modal').style.display = 'none';
+  };
+
+  window.deleteReportCategory = function(name) {
+    if (confirm('Excluir categoria "' + name + '"? As atividades vinculadas ficarão sem categoria.')) {
+      AppStore.deleteCategory(name);
+      renderCategoryModalList();
+      renderReports();
+    }
+  };
+
+  document.getElementById('report-category-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    var name = document.getElementById('report-cat-name').value.trim();
+    var color = document.getElementById('report-cat-color').value;
+    if (!name) return;
+    AppStore.addCategory(name, color);
+    document.getElementById('report-cat-name').value = '';
+    renderCategoryModalList();
+    renderReports();
+  });
+
+  // ---- Close modals on backdrop click ----
+  window.addEventListener('click', function(e) {
+    if (e.target.id === 'report-activity-modal') closeReportTaskModal();
+    if (e.target.id === 'report-category-modal') closeReportCategoryModal();
+    if (e.target.id === 'evidence-modal') closeEvidenceModal();
+  });
+
+  // ---- Init ----
+  window.__renderReports = renderReports;
+  loadProjectProfile();
+  renderReports();
+})();
+</script>
+
+      </main>
+
+      <div id="settings-modal" class="settings-modal-backdrop" style="display: none;">
+        <div class="settings-modal-card">
+          <div class="settings-modal-head">
+            <h3>Configurações do Sistema</h3>
+            <button type="button" class="settings-close-btn" onclick="document.getElementById('settings-modal').style.display='none'">&times;</button>
+          </div>
+          <p class="settings-modal-subtitle">Defina padrões operacionais do ambiente e preferências da equipe.</p>
+
+          <form id="settings-form" class="settings-form-grid">
+            <label class="settings-label">
+              Tema da Interface
+              <select id="settings-theme">
+                <option value="claro">Claro</option>
+                <option value="escuro">Escuro</option>
+              </select>
+            </label>
+
+            <label class="settings-label">
+              Perfil de Notificação
+              <select id="settings-notification-profile">
+                <option value="completo">Completo</option>
+                <option value="somente_critico">Somente crítico</option>
+                <option value="silencioso">Silencioso</option>
+              </select>
+            </label>
+
+            <label class="settings-label">
+              Canal de Alertas
+              <select id="settings-alert-channel">
+                <option value="email">Email</option>
+                <option value="in_app">No sistema</option>
+                <option value="email_e_sistema">Email + sistema</option>
+              </select>
+            </label>
+
+            <label class="settings-label">
+              Atualização Automática
+              <select id="settings-refresh">
+                <option value="5">A cada 5 minutos</option>
+                <option value="15">A cada 15 minutos</option>
+                <option value="30">A cada 30 minutos</option>
+                <option value="manual">Manual</option>
+              </select>
+            </label>
+
+            <label class="settings-toggle">
+              <input type="checkbox" id="settings-email-enabled" checked>
+              <span>Habilitar notificações por email</span>
+            </label>
+
+            <div class="settings-form-actions">
+              <button type="submit" class="btn-primary">Salvar Alterações</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        const SETTINGS_KEY = 'sia_system_settings_v1';
+        const configBtn = document.getElementById('nav-config');
+        const settingsModal = document.getElementById('settings-modal');
+        const settingsForm = document.getElementById('settings-form');
+
+        function loadSettings() {
+          const raw = localStorage.getItem(SETTINGS_KEY);
+          if (!raw) return;
+          const settings = JSON.parse(raw);
+          document.getElementById('settings-theme').value = settings.theme || 'claro';
+          document.getElementById('settings-notification-profile').value = settings.notificationProfile || 'completo';
+          document.getElementById('settings-alert-channel').value = settings.alertChannel || 'email';
+          document.getElementById('settings-refresh').value = settings.refreshInterval || '15';
+          document.getElementById('settings-email-enabled').checked = settings.emailEnabled !== false;
+        }
+
+        function saveSettings(event) {
+          event.preventDefault();
+          const payload = {
+            theme: document.getElementById('settings-theme').value,
+            notificationProfile: document.getElementById('settings-notification-profile').value,
+            alertChannel: document.getElementById('settings-alert-channel').value,
+            refreshInterval: document.getElementById('settings-refresh').value,
+            emailEnabled: document.getElementById('settings-email-enabled').checked
+          };
+          localStorage.setItem(SETTINGS_KEY, JSON.stringify(payload));
+          settingsModal.style.display = 'none';
+          alert('Configurações salvas com sucesso.');
+        }
+
+        if (configBtn) {
+          configBtn.addEventListener('click', () => {
+            loadSettings();
+            settingsModal.style.display = 'flex';
+          });
+        }
+
+        if (settingsForm) {
+          settingsForm.addEventListener('submit', saveSettings);
+        }
+      });
+    </script>
+  </body>
+</html>
