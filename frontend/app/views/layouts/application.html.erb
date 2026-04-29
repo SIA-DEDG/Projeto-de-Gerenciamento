@@ -9,6 +9,15 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="/sortable.min.js"></script>
     <script src="/store.js"></script>
+    <script>
+      // Auto re-render when Supabase sync completes
+      window.addEventListener('appstore:synced', function(e) {
+        // If renderBoard is defined (dashboard page), call it
+        if (typeof window.__renderBoard === 'function') window.__renderBoard();
+        // If renderReports is defined (reports page), call it
+        if (typeof window.__renderReports === 'function') window.__renderReports();
+      });
+    </script>
   </head>
   <body>
     <div class="app-container">
