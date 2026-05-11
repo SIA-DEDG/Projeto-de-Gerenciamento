@@ -1,0 +1,38 @@
+# Dependências
+node_modules/
+vendor/bundle/
+
+# Build Rust
+backend/target/
+
+# Variáveis de ambiente
+.env
+.env.*
+!.env.example
+!backend/.env.example
+
+# Rails - arquivos temporários e de cache
+frontend/tmp/cache/
+frontend/tmp/pids/
+frontend/tmp/storage/
+frontend/log/*.log
+frontend/storage/*.sqlite3
+
+# Supabase local
+supabase/.branches/
+supabase/.temp/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editores
+.vscode/
+.idea/
+*.swp
+*.swo

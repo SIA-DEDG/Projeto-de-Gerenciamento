@@ -45,7 +45,7 @@ async fn main() {
     let app_state = AppState { task_service };
     let app = create_router(app_state).layer(cors);
 
-    let port = env::var("BACKEND_PORT").unwrap_or_else(|_| "3001".to_string());
+    let port = env::var("PORT").unwrap_or_else(|_| "3001".to_string());
     let bind_addr = format!("0.0.0.0:{}", port);
     let listener = tokio::net::TcpListener::bind(&bind_addr).await.unwrap();
     println!("Backend Rust rodando em http://localhost:{}", port);
