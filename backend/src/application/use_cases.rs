@@ -1,5 +1,5 @@
-use crate::domain::entities::Task;
-use crate::domain::ports::TaskRepository;
+use crate::domain::entities::{Task, Project};
+use crate::domain::ports::{TaskRepository, ProjectRepository};
 use std::sync::Arc;
 
 pub struct TaskService {
@@ -29,5 +29,35 @@ impl TaskService {
 
     pub async fn delete_task(&self, id: i64) -> Result<(), String> {
         self.repository.delete_task(id).await
+    }
+}
+
+pub struct ProjectService {
+    repository: Arc<dyn ProjectRepository>,
+}
+
+impl ProjectService {
+    pub fn new(repository: Arc<dyn ProjectRepository>) -> Self {
+        Self { repository }
+    }
+
+    pub async fn fetch_all_projects(&self) -> Result<Vec<Project>, String> {
+        self.repository.get_all_projects().await
+    }
+
+    pub async fn create_project(&self, project: Project) -> Result<Project, String> {
+        self.repository.add_project(project).await
+    }
+
+    pub async fn get_project(&self, id: i64) -> Result<Option<Project>, String> {
+        self.repository.get_project_by_id(id).await
+    }
+
+    pub async fn update_project(&self, project: Project) -> Result<Project, String> {
+        self.repository.update_project(project).await
+    }
+
+    pub async fn delete_project(&self, id: i64) -> Result<(), String> {
+        self.repository.delete_project(id).await
     }
 }

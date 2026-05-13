@@ -1,5 +1,5 @@
-use crate::domain::entities::Task;
-use crate::domain::ports::TaskRepository;
+use crate::domain::entities::{Task, Project};
+use crate::domain::ports::{TaskRepository, ProjectRepository};
 use async_trait::async_trait;
 use sqlx::PgPool;
 use std::sync::Mutex;
@@ -70,8 +70,65 @@ impl TaskRepository for InMemoryTaskRepository {
     }
 }
 
+// ─── InMemoryProjectRepository ───────────────────────────────────────────────
+
+pub struct InMemoryProjectRepository {
+    projects: Mutex<Vec<Project>>,
+    next_id: Mutex<i64>,
+}
+
+impl InMemoryProjectRepository {
+    pub fn new() -> Self {
+        Self {
+            next_id: Mutex::new(1),
+            projects: Mutex::new(vec![]),
+        }
+    }
+}
+
+#[async_trait]
+impl ProjectRepository for InMemoryProjectRepository {
+    async fn get_all_projects(&self) -> Result<Vec<Project>, String> {
+        let projects = self.projects.lock().map_err(|e| e.to_string())?;
+        Ok(projects.clone())
+    }
+
+    async fn add_project(&self, mut project: Project) -> Result<Project, String> {
+        let mut next_id = self.next_id.lock().map_err(|e| e.to_string())?;
+        project.id = *next_id;
+        *next_id += 1;
+        let mut projects = self.projects.lock().map_err(|e| e.to_string())?;
+        projects.push(project.clone());
+        Ok(project)
+    }
+
+    async fn get_project_by_id(&self, id: i64) -> Result<Option<Project>, String> {
+        let projects = self.projects.lock().map_err(|e| e.to_string())?;
+        Ok(projects.iter().find(|p| p.id == id).cloned())
+    }
+
+    async fn update_project(&self, project: Project) -> Result<Project, String> {
+        let mut projects = self.projects.lock().map_err(|e| e.to_string())?;
+        if let Some(existing) = projects.iter_mut().find(|p| p.id == project.id) {
+            *existing = project.clone();
+            Ok(project)
+        } else {
+            Err(format!("Projeto com id {} não encontrado", project.id))
+        }
+    }
+
+    async fn delete_project(&self, id: i64) -> Result<(), String> {
+        let mut projects = self.projects.lock().map_err(|e| e.to_string())?;
+        let initial_len = projects.len();
+        projects.retain(|p| p.id != id);
+        if projects.len() < initial_len { Ok(()) } else { Err(format!("Projeto com id {} não encontrado", id)) }
+    }
+}
+
+// ─── PostgresTaskRepository ───────────────────────────────────────────────────
+
 pub struct PostgresTaskRepository {
-    pool: PgPool,
+    pub pool: PgPool,
 }
 
 impl PostgresTaskRepository {
@@ -149,5 +206,92 @@ impl TaskRepository for PostgresTaskRepository {
             .await
             .map_err(|e| e.to_string())?;
         if result.rows_affected() == 0 { Err(format!("Task com id {} não encontrada", id)) } else { Ok(()) }
+    }
+}
+
+// ─── PostgresProjectRepository ────────────────────────────────────────────────
+
+pub struct PostgresProjectRepository {
+    pool: PgPool,
+}
+
+impl PostgresProjectRepository {
+    pub fn new(pool: PgPool) -> Self {
+        Self { pool }
+    }
+}
+
+#[async_trait]
+impl ProjectRepository for PostgresProjectRepository {
+    async fn get_all_projects(&self) -> Result<Vec<Project>, String> {
+        sqlx::query_as::<_, Project>(
+            r#"SELECT id, name, category, owner, deadline::text, executive_status, objective, scope, summary
+               FROM projects ORDER BY id ASC"#
+        )
+        .fetch_all(&self.pool)
+        .await
+        .map_err(|e| e.to_string())
+    }
+
+    async fn add_project(&self, project: Project) -> Result<Project, String> {
+        sqlx::query_as::<_, Project>(
+            r#"INSERT INTO projects (name, category, owner, deadline, executive_status, objective, scope, summary)
+               VALUES ($1, $2, $3, $4::date, $5, $6, $7, $8)
+               RETURNING id, name, category, owner, deadline::text, executive_status, objective, scope, summary"#
+        )
+        .bind(project.name)
+        .bind(project.category)
+        .bind(project.owner)
+        .bind(project.deadline)
+        .bind(project.executive_status)
+        .bind(project.objective)
+        .bind(project.scope)
+        .bind(project.summary)
+        .fetch_one(&self.pool)
+        .await
+        .map_err(|e| e.to_string())
+    }
+
+    async fn get_project_by_id(&self, id: i64) -> Result<Option<Project>, String> {
+        sqlx::query_as::<_, Project>(
+            r#"SELECT id, name, category, owner, deadline::text, executive_status, objective, scope, summary
+               FROM projects WHERE id = $1"#
+        )
+        .bind(id)
+        .fetch_optional(&self.pool)
+        .await
+        .map_err(|e| e.to_string())
+    }
+
+    async fn update_project(&self, project: Project) -> Result<Project, String> {
+        sqlx::query_as::<_, Project>(
+            r#"UPDATE projects
+               SET name = $2, category = $3, owner = $4, deadline = $5::date,
+                   executive_status = $6, objective = $7, scope = $8, summary = $9,
+                   updated_at = NOW()
+               WHERE id = $1
+               RETURNING id, name, category, owner, deadline::text, executive_status, objective, scope, summary"#
+        )
+        .bind(project.id)
+        .bind(project.name)
+        .bind(project.category)
+        .bind(project.owner)
+        .bind(project.deadline)
+        .bind(project.executive_status)
+        .bind(project.objective)
+        .bind(project.scope)
+        .bind(project.summary)
+        .fetch_one(&self.pool)
+        .await
+        .map_err(|e| e.to_string())
+    }
+
+    async fn delete_project(&self, id: i64) -> Result<(), String> {
+        let result = sqlx::query("DELETE FROM projects WHERE id = $1")
+            .bind(id)
+            .execute(&self.pool)
+            .await
+            .map_err(|e| e.to_string())?;
+        if result.rows_affected() == 0 { Err(format!("Projeto com id {} não encontrado", id)) } else { Ok(()) }
     }
 }

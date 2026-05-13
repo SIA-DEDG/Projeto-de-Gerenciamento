@@ -8,8 +8,11 @@ use std::env;
 use std::sync::Arc;
 use tower_http::cors::{Any, CorsLayer};
 
-use application::use_cases::TaskService;
-use infrastructure::repositories::{InMemoryTaskRepository, PostgresTaskRepository};
+use application::use_cases::{TaskService, ProjectService};
+use infrastructure::repositories::{
+    InMemoryTaskRepository, InMemoryProjectRepository,
+    PostgresTaskRepository, PostgresProjectRepository,
+};
 use presentation::api::{create_router, AppState};
 
 #[tokio::main]
@@ -21,28 +24,32 @@ async fn main() {
         .allow_methods(Any)
         .allow_headers(Any);
 
-    let task_repository: Arc<dyn domain::ports::TaskRepository> =
-        if let Ok(database_url) = env::var("DATABASE_URL") {
-            match PostgresTaskRepository::new(&database_url).await {
-                Ok(repo) => {
-                    println!("Backend conectado ao Postgres/Supabase.");
-                    Arc::new(repo)
-                }
-                Err(err) => {
-                    println!(
-                        "Falha ao conectar no Postgres/Supabase: {}. Usando repositório em memória.",
-                        err
-                    );
-                    Arc::new(InMemoryTaskRepository::new())
-                }
+    let (task_repository, project_repository): (
+        Arc<dyn domain::ports::TaskRepository>,
+        Arc<dyn domain::ports::ProjectRepository>,
+    ) = if let Ok(database_url) = env::var("DATABASE_URL") {
+        match PostgresTaskRepository::new(&database_url).await {
+            Ok(task_repo) => {
+                println!("Backend conectado ao Postgres/Supabase.");
+                let project_repo = PostgresProjectRepository::new(task_repo.pool.clone());
+                (Arc::new(task_repo), Arc::new(project_repo))
             }
-        } else {
-            println!("DATABASE_URL não definido. Usando repositório em memória.");
-            Arc::new(InMemoryTaskRepository::new())
-        };
+            Err(err) => {
+                println!(
+                    "Falha ao conectar no Postgres/Supabase: {}. Usando repositório em memória.",
+                    err
+                );
+                (Arc::new(InMemoryTaskRepository::new()), Arc::new(InMemoryProjectRepository::new()))
+            }
+        }
+    } else {
+        println!("DATABASE_URL não definido. Usando repositório em memória.");
+        (Arc::new(InMemoryTaskRepository::new()), Arc::new(InMemoryProjectRepository::new()))
+    };
 
     let task_service = Arc::new(TaskService::new(task_repository));
-    let app_state = AppState { task_service };
+    let project_service = Arc::new(ProjectService::new(project_repository));
+    let app_state = AppState { task_service, project_service };
     let app = create_router(app_state).layer(cors);
 
     let port = env::var("PORT").unwrap_or_else(|_| "3001".to_string());
