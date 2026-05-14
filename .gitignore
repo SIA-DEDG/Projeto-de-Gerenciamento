@@ -10,8 +10,6 @@ backend/target/
 .env.*
 !.env.example
 !backend/.env.example
-!backend/.env.docker
-!backend/.env.supabase
 
 # Next.js
 frontend-next/.next/
