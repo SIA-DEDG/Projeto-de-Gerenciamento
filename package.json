@@ -7,7 +7,8 @@
     "build": "python scripts/build_static.py",
     "backend": "cd backend && cargo run",
     "frontend": "cd frontend && bundle exec rails server -p 3002",
-    "dev": "scripts\\start_all.bat"
+    "dev": "scripts\\start_all.bat",
+    "dev:next": "cd frontend-next && npm run dev"
   },
   "dependencies": {
     "pdf-parse": "^2.4.5"

@@ -135,7 +135,7 @@ impl PostgresTaskRepository {
     pub async fn new(database_url: &str) -> Result<Self, String> {
         let pool = PgPool::connect(database_url).await.map_err(|e| e.to_string())?;
         let schema = include_str!("../../sql/schema.sql");
-        sqlx::query(schema).execute(&pool).await.map_err(|e| e.to_string())?;
+        sqlx::raw_sql(schema).execute(&pool).await.map_err(|e| e.to_string())?;
         Ok(Self { pool })
     }
 }

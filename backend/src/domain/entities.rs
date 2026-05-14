@@ -3,6 +3,7 @@ use sqlx::FromRow;
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct Task {
+    #[serde(default)]
     pub id: i64,
     pub category: String,
     pub activity: String,
@@ -14,6 +15,7 @@ pub struct Task {
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct Project {
+    #[serde(default)]
     pub id: i64,
     pub name: String,
     pub category: Option<String>,
