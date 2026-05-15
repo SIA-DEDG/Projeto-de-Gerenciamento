@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import AppShell from '@/components/AppShell';
 import ActivityModal from '@/components/ActivityModal';
 import ProjectModal from '@/components/ProjectModal';
@@ -19,49 +19,54 @@ export default function RelatoriosPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const [openAccordions, setOpenAccordions] = useState<Set<number>>(new Set());
-  const [activeProjectId, setActiveProjectId] = useState<number | null>(null);
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
 
   const [projectModal, setProjectModal] = useState<{ open: boolean; project: Project | null }>({
     open: false, project: null,
   });
-  const [activityModal, setActivityModal] = useState<{ open: boolean; task: Task | null }>({
-    open: false, task: null,
+  const [activityModal, setActivityModal] = useState<{ open: boolean; task: Task | null; projectId: number | null }>({
+    open: false, task: null, projectId: null,
   });
 
-  useEffect(() => {
+  const load = useCallback(() => {
+    setLoading(true);
     Promise.all([fetchTasks(), fetchProjects(), fetchCategories()])
       .then(([t, p, c]) => { setTasks(t); setProjects(p); setCategories(c); })
-      .catch((e) => setError(`Erro: ${e?.message ?? e}`))
+      .catch((e) => setError(`Erro ao carregar dados: ${e?.message ?? e}`))
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => { load(); }, [load]);
 
   // ── Projects ────────────────────────────────────────────────────────────────
 
   async function handleSaveProject(data: Omit<Project, 'id'>) {
     const { project } = projectModal;
     setProjectModal({ open: false, project: null });
-    if (project) {
-      const updated = await updateProject(project, data);
-      setProjects((ps) => ps.map((p) => (p.id === updated.id ? updated : p)));
-    } else {
-      const created = await createProject(data);
-      setProjects((ps) => [...ps, created]);
+    try {
+      if (project) {
+        const updated = await updateProject(project, data);
+        setProjects((ps) => ps.map((p) => (p.id === updated.id ? updated : p)));
+        if (selectedProject?.id === updated.id) setSelectedProject(updated);
+      } else {
+        const created = await createProject(data);
+        setProjects((ps) => [...ps, created]);
+      }
+    } catch (e: unknown) {
+      setError(`Erro ao salvar projeto: ${e instanceof Error ? e.message : e}`);
     }
   }
 
-  async function handleDeleteProject(id: number) {
+  async function handleDeleteProject(id: number, e?: React.MouseEvent) {
+    e?.stopPropagation();
     if (!confirm('Excluir este projeto permanentemente?')) return;
-    await deleteProject(id);
-    setProjects((ps) => ps.filter((p) => p.id !== id));
-  }
-
-  function toggleAccordion(id: number) {
-    setOpenAccordions((prev) => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
+    try {
+      await deleteProject(id);
+      setProjects((ps) => ps.filter((p) => p.id !== id));
+      if (selectedProject?.id === id) setSelectedProject(null);
+    } catch (err: unknown) {
+      setError(`Erro ao excluir projeto: ${err instanceof Error ? err.message : err}`);
+    }
   }
 
   // ── Activities ───────────────────────────────────────────────────────────────
@@ -73,26 +78,39 @@ export default function RelatoriosPage() {
     responsible: string;
     date: string;
   }) {
-    const { task } = activityModal;
-    setActivityModal({ open: false, task: null });
-    if (task) {
-      const updated = await updateTask(task, data);
-      setTasks((ts) => ts.map((t) => (t.id === task.id ? updated : t)));
-    } else {
-      const created = await createTask({
-        ...data,
-        project_id: activeProjectId ?? undefined,
-      });
-      setTasks((ts) => [...ts, created]);
+    const { task, projectId } = activityModal;
+    setActivityModal({ open: false, task: null, projectId: null });
+    try {
+      if (task) {
+        const updated = await updateTask(task, data);
+        setTasks((ts) => ts.map((t) => (t.id === task.id ? updated : t)));
+      } else {
+        const created = await createTask({
+          ...data,
+          project_id: projectId ?? undefined,
+        });
+        setTasks((ts) => [...ts, created]);
+      }
+    } catch (err: unknown) {
+      setError(`Erro ao salvar atividade: ${err instanceof Error ? err.message : err}`);
     }
-    setActiveProjectId(null);
   }
 
   async function handleDeleteTask(id: number) {
     if (!confirm('Excluir esta atividade?')) return;
-    await deleteTask(id);
-    setTasks((ts) => ts.filter((t) => t.id !== id));
+    try {
+      await deleteTask(id);
+      setTasks((ts) => ts.filter((t) => t.id !== id));
+    } catch (err: unknown) {
+      setError(`Erro ao excluir atividade: ${err instanceof Error ? err.message : err}`);
+    }
   }
+
+  // ── Derived ──────────────────────────────────────────────────────────────────
+
+  const linkedTasks = selectedProject
+    ? tasks.filter((t) => t.project_id === selectedProject.id)
+    : [];
 
   return (
     <AppShell>
@@ -108,10 +126,14 @@ export default function RelatoriosPage() {
       </header>
 
       <div className="page-content">
-        <div className="dashboard-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        {/* Page header */}
+        <div
+          className="dashboard-header"
+          style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}
+        >
           <div>
-            <h2>Projetos e Atividades</h2>
-            <p className="subtitle">Crie projetos e gerencie as atividades vinculadas a cada um.</p>
+            <h2>Projetos</h2>
+            <p className="subtitle">Clique em um projeto para ver detalhes e atividades.</p>
           </div>
           <button
             type="button"
@@ -123,43 +145,70 @@ export default function RelatoriosPage() {
         </div>
 
         {error && (
-          <p style={{ color: '#de350b', padding: '12px', background: '#ffebe6', borderRadius: '4px', marginBottom: '16px' }}>
-            {error}
-          </p>
+          <div style={{ margin: '0 32px 16px', padding: '12px 16px', background: '#ffebe6', borderRadius: '4px', color: '#de350b', fontSize: '0.88rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span>{error}</span>
+            <button type="button" onClick={() => setError('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#de350b', fontWeight: 700, fontSize: '1rem' }}>×</button>
+          </div>
         )}
 
-        <div id="reports-accordion-container">
-          {loading ? (
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Carregando...</p>
-          ) : projects.length === 0 ? (
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-              Nenhum projeto cadastrado. Clique em &ldquo;+ Novo Projeto&rdquo; para adicionar.
+        {/* Cards grid */}
+        {loading ? (
+          <div className="loading-state">
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Carregando projetos...</p>
+          </div>
+        ) : projects.length === 0 ? (
+          <div style={{ padding: '48px 32px', textAlign: 'center' }}>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', marginBottom: '16px' }}>
+              Nenhum projeto cadastrado ainda.
             </p>
-          ) : (
-            projects.map((p) => {
-              const linked = tasks.filter((t) => t.project_id === p.id);
-              const isOpen = openAccordions.has(p.id);
-
+            <button
+              type="button"
+              className="btn-primary"
+              onClick={() => setProjectModal({ open: true, project: null })}
+            >
+              + Criar primeiro projeto
+            </button>
+          </div>
+        ) : (
+          <div className="project-cards-grid">
+            {projects.map((p) => {
+              const count = tasks.filter((t) => t.project_id === p.id).length;
               return (
-                <article key={p.id} className="project-accordion-item">
-                  <button
-                    type="button"
-                    className="project-accordion-trigger"
-                    onClick={() => toggleAccordion(p.id)}
-                  >
-                    <span style={{ fontWeight: 600, color: '#172b4d', fontSize: '0.95rem' }}>{p.name}</span>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      {p.owner && (
-                        <span style={{ fontSize: '0.78rem', color: '#6b778c' }}>{p.owner}</span>
-                      )}
-                      <span className="project-accordion-meta">
-                        {linked.length} atividade(s) &nbsp;{isOpen ? '▲' : '▼'}
-                      </span>
+                <article
+                  key={p.id}
+                  className="project-card"
+                  onClick={() => setSelectedProject(p)}
+                  title={`Abrir ${p.name}`}
+                >
+                  <div className="project-card-name">{p.name}</div>
+
+                  <div className="project-card-meta">
+                    {p.owner && (
+                      <div className="project-card-meta-row">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+                        {p.owner}
+                      </div>
+                    )}
+                    {p.deadline && (
+                      <div className="project-card-meta-row">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+                        {p.deadline}
+                      </div>
+                    )}
+                  </div>
+
+                  {p.executive_status && (
+                    <span className="project-card-status">{p.executive_status}</span>
+                  )}
+
+                  <div className="project-card-footer">
+                    <span className="project-card-task-count">{count} atividade{count !== 1 ? 's' : ''}</span>
+                    <div className="project-card-actions" onClick={(e) => e.stopPropagation()}>
                       <button
                         type="button"
                         className="evidence-btn"
                         style={{ background: '#e3f2fd', borderColor: '#0052cc', color: '#0052cc' }}
-                        onClick={(e) => { e.stopPropagation(); setProjectModal({ open: true, project: p }); }}
+                        onClick={() => setProjectModal({ open: true, project: p })}
                       >
                         Editar
                       </button>
@@ -167,70 +216,148 @@ export default function RelatoriosPage() {
                         type="button"
                         className="evidence-btn"
                         style={{ background: '#ffebe6', borderColor: '#de350b', color: '#de350b' }}
-                        onClick={(e) => { e.stopPropagation(); handleDeleteProject(p.id); }}
+                        onClick={(e) => handleDeleteProject(p.id, e)}
                       >
                         Excluir
                       </button>
                     </div>
-                  </button>
-
-                  {isOpen && (
-                    <div className="project-accordion-content">
-                      <div style={{ marginBottom: '14px' }}>
-                        <button
-                          type="button"
-                          className="btn-primary"
-                          style={{ fontSize: '0.8rem', padding: '6px 14px' }}
-                          onClick={() => {
-                            setActiveProjectId(p.id);
-                            setActivityModal({ open: true, task: null });
-                          }}
-                        >
-                          + Nova Atividade
-                        </button>
-                      </div>
-
-                      {linked.length === 0 ? (
-                        <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', padding: '4px 0 8px' }}>
-                          Nenhuma atividade vinculada. Clique em &ldquo;+ Nova Atividade&rdquo; para adicionar.
-                        </p>
-                      ) : (
-                        linked.map((t) => (
-                          <div key={t.id} className="project-accordion-row">
-                            <div>
-                              <strong style={{ fontSize: '0.9rem' }}>{t.activity}</strong>
-                              {t.responsible && (
-                                <div className="evidence-meta">{t.responsible}</div>
-                              )}
-                            </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                              <span className={statusClass(t.status_group)}>{t.status}</span>
-                              <button
-                                className="evidence-btn"
-                                style={{ background: '#e3f2fd', borderColor: '#0052cc', color: '#0052cc' }}
-                                onClick={() => setActivityModal({ open: true, task: t })}
-                              >
-                                Editar
-                              </button>
-                              <button
-                                className="evidence-btn"
-                                style={{ background: '#ffebe6', borderColor: '#de350b', color: '#de350b' }}
-                                onClick={() => handleDeleteTask(t.id)}
-                              >
-                                Excluir
-                              </button>
-                            </div>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  )}
+                  </div>
                 </article>
               );
-            })
-          )}
-        </div>
+            })}
+          </div>
+        )}
       </div>
+
+      {/* ── Project detail overlay ─────────────────────────────────── */}
+      {selectedProject && (
+        <div
+          className="project-detail-overlay"
+          onClick={(e) => { if (e.target === e.currentTarget) setSelectedProject(null); }}
+        >
+          <div className="project-detail-panel">
+            {/* Header */}
+            <div className="project-detail-header">
+              <div>
+                <div className="project-detail-title">{selectedProject.name}</div>
+                {selectedProject.category && (
+                  <div style={{ fontSize: '0.78rem', color: '#6b778c', marginTop: '4px' }}>{selectedProject.category}</div>
+                )}
+              </div>
+              <button
+                type="button"
+                className="project-detail-close"
+                onClick={() => setSelectedProject(null)}
+                aria-label="Fechar"
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Meta */}
+            {(selectedProject.owner || selectedProject.deadline || selectedProject.executive_status) && (
+              <div className="project-detail-meta">
+                {selectedProject.owner && (
+                  <div className="project-detail-meta-item">
+                    <span className="project-detail-meta-label">Responsável</span>
+                    <span className="project-detail-meta-value">{selectedProject.owner}</span>
+                  </div>
+                )}
+                {selectedProject.deadline && (
+                  <div className="project-detail-meta-item">
+                    <span className="project-detail-meta-label">Prazo</span>
+                    <span className="project-detail-meta-value">{selectedProject.deadline}</span>
+                  </div>
+                )}
+                {selectedProject.executive_status && (
+                  <div className="project-detail-meta-item">
+                    <span className="project-detail-meta-label">Status Executivo</span>
+                    <span className="project-detail-meta-value">{selectedProject.executive_status}</span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Body */}
+            <div className="project-detail-body">
+              {/* Narrative fields */}
+              {selectedProject.objective && (
+                <div>
+                  <div className="project-detail-section-title">Objetivo</div>
+                  <p style={{ fontSize: '0.875rem', color: '#344563', lineHeight: 1.6 }}>{selectedProject.objective}</p>
+                </div>
+              )}
+              {selectedProject.scope && (
+                <div>
+                  <div className="project-detail-section-title">Escopo</div>
+                  <p style={{ fontSize: '0.875rem', color: '#344563', lineHeight: 1.6 }}>{selectedProject.scope}</p>
+                </div>
+              )}
+              {selectedProject.summary && (
+                <div>
+                  <div className="project-detail-section-title">Resumo</div>
+                  <p style={{ fontSize: '0.875rem', color: '#344563', lineHeight: 1.6 }}>{selectedProject.summary}</p>
+                </div>
+              )}
+
+              {/* Activities section */}
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                  <div className="project-detail-section-title" style={{ marginBottom: 0 }}>
+                    Atividades ({linkedTasks.length})
+                  </div>
+                  <button
+                    type="button"
+                    className="btn-primary"
+                    style={{ fontSize: '0.78rem', padding: '5px 12px' }}
+                    onClick={() => setActivityModal({ open: true, task: null, projectId: selectedProject.id })}
+                  >
+                    + Nova Atividade
+                  </button>
+                </div>
+
+                {linkedTasks.length === 0 ? (
+                  <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textAlign: 'center', padding: '24px 0' }}>
+                    Nenhuma atividade vinculada. Clique em &ldquo;+ Nova Atividade&rdquo; para adicionar.
+                  </p>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {linkedTasks.map((t) => (
+                      <div key={t.id} className="project-task-row">
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div className="project-task-name">{t.activity}</div>
+                          {t.responsible && (
+                            <div className="project-task-responsible">{t.responsible}</div>
+                          )}
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+                          <span className={statusClass(t.status_group)}>{t.status}</span>
+                          <button
+                            type="button"
+                            className="evidence-btn"
+                            style={{ background: '#e3f2fd', borderColor: '#0052cc', color: '#0052cc' }}
+                            onClick={() => setActivityModal({ open: true, task: t, projectId: selectedProject.id })}
+                          >
+                            Editar
+                          </button>
+                          <button
+                            type="button"
+                            className="evidence-btn"
+                            style={{ background: '#ffebe6', borderColor: '#de350b', color: '#de350b' }}
+                            onClick={() => handleDeleteTask(t.id)}
+                          >
+                            Excluir
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <ProjectModal
         open={projectModal.open}
@@ -243,10 +370,7 @@ export default function RelatoriosPage() {
         open={activityModal.open}
         task={activityModal.task}
         categories={categories}
-        onClose={() => {
-          setActivityModal({ open: false, task: null });
-          setActiveProjectId(null);
-        }}
+        onClose={() => setActivityModal({ open: false, task: null, projectId: null })}
         onSave={handleSaveActivity}
       />
     </AppShell>
