@@ -26,17 +26,19 @@ export async function fetchTasks(): Promise<Task[]> {
 export async function createTask(payload: {
   category: string;
   activity: string;
+  description?: string;
   responsible: string;
   status: string;
   priority?: string;
   date?: string;
   project_id?: number;
 }): Promise<Task> {
-  const { date, priority, project_id, ...rest } = payload;
+  const { date, priority, project_id, description, ...rest } = payload;
   const { data, error } = await supabase
     .from('tasks')
     .insert({
       ...rest,
+      ...(description ? { description } : {}),
       priority: priority || 'Média',
       created_at: date || new Date().toISOString().split('T')[0],
       ...(project_id ? { project_id } : {}),
@@ -54,23 +56,27 @@ export async function updateTask(
     status_group?: StatusGroup;
     category?: string;
     activity?: string;
+    description?: string;
     responsible?: string;
     priority?: string;
     date?: string;
+    project_id?: number | null;
   },
 ): Promise<Task> {
   const status = updates.status_group
     ? statusLabelToDb(updates.status_group)
     : (updates.status ?? existing.status);
 
-  const payload = {
+  const payload: Record<string, unknown> = {
     category: updates.category ?? existing.category,
     activity: updates.activity ?? existing.activity,
+    description: updates.description ?? existing.description ?? null,
     responsible: updates.responsible ?? existing.responsible,
     status,
     priority: updates.priority ?? existing.priority,
     created_at: updates.date ?? existing.created_at,
   };
+  if (updates.project_id !== undefined) payload.project_id = updates.project_id;
 
   const { data, error } = await supabase
     .from('tasks')

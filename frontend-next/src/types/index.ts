@@ -4,6 +4,7 @@ export interface Task {
   id: number;
   category: string;
   activity: string;
+  description?: string;
   responsible: string;
   status: string;
   priority: string;

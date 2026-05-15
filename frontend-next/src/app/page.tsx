@@ -11,14 +11,13 @@ import {
 import AppShell from '@/components/AppShell';
 import ActivityModal from '@/components/ActivityModal';
 import TeamModal from '@/components/TeamModal';
-import CategoryModal from '@/components/CategoryModal';
 import {
   fetchTasks, createTask, updateTask, deleteTask,
-  fetchCategories, createCategory, deleteCategory,
+  fetchProjects,
   fetchTeamMembers, createTeamMember, deleteTeamMember,
 } from '@/lib/api';
 import { avatarColor, initials } from '@/lib/utils';
-import type { Task, StatusGroup, Category, TeamMember } from '@/types';
+import type { Task, StatusGroup, Project, TeamMember } from '@/types';
 
 const COLUMNS: { id: StatusGroup; title: string; dotClass: string }[] = [
   { id: 'pending',    title: 'Pendentes',   dotClass: 'dot-todo'     },
@@ -179,7 +178,7 @@ export default function BoardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
 
   const [search, setSearch] = useState('');
@@ -192,13 +191,13 @@ export default function BoardPage() {
     defaultStatus?: string;
   }>({ open: false, task: null });
   const [teamModal, setTeamModal] = useState(false);
-  const [categoryModal, setCategoryModal] = useState(false);
+  const [projectsModal, setProjectsModal] = useState(false);
 
   useEffect(() => {
-    Promise.all([fetchTasks(), fetchCategories(), fetchTeamMembers()])
-      .then(([tasks, cats, members]) => {
+    Promise.all([fetchTasks(), fetchProjects(), fetchTeamMembers()])
+      .then(([tasks, projs, members]) => {
         setTasks(tasks);
-        setCategories(cats);
+        setProjects(projs);
         setTeamMembers(members);
       })
       .catch((e) => setError(`Erro: ${e?.message ?? e}`))
@@ -222,18 +221,21 @@ export default function BoardPage() {
 
   async function handleSaveActivity(data: {
     activity: string;
+    description: string;
     category: string;
+    project_id: number | null;
     status: string;
     responsible: string;
     date: string;
   }) {
     const { task } = activityModal;
     setActivityModal({ open: false, task: null });
+    const payload = { ...data, project_id: data.project_id ?? undefined };
     if (task) {
-      const updated = await updateTask(task, data);
+      const updated = await updateTask(task, payload);
       setTasks((ts) => ts.map((t) => (t.id === task.id ? updated : t)));
     } else {
-      const created = await createTask(data);
+      const created = await createTask(payload);
       setTasks((ts) => [...ts, created]);
     }
   }
@@ -255,16 +257,6 @@ export default function BoardPage() {
     await Promise.all([
       ...added.map((m) => createTeamMember(m.name, m.role)),
       ...removed.map((m) => deleteTeamMember(m.name)),
-    ]);
-  }
-
-  async function handleCategoryChange(newCats: Category[]) {
-    const added = newCats.filter((c) => !categories.find((old) => old.name === c.name));
-    const removed = categories.filter((c) => !newCats.find((n) => n.name === c.name));
-    setCategories(newCats);
-    await Promise.all([
-      ...added.map((c) => createCategory(c.name, c.color)),
-      ...removed.map((c) => deleteCategory(c.name)),
     ]);
   }
 
@@ -343,14 +335,13 @@ export default function BoardPage() {
           <button
             className="filter-btn"
             style={{ color: '#42526e', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
-            onClick={() => setCategoryModal(true)}
+            onClick={() => setProjectsModal(true)}
           >
             <svg viewBox="0 0 24 24" style={{ width: 14, height: 14, stroke: 'currentColor', fill: 'none', strokeWidth: 2 }}>
-              <circle cx="12" cy="12" r="10" />
-              <line x1="12" y1="8" x2="12" y2="16" />
-              <line x1="8" y1="12" x2="16" y2="12" />
+              <rect x="2" y="7" width="20" height="14" rx="2" />
+              <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" />
             </svg>
-            Categorias
+            Projetos
           </button>
 
           <input
@@ -401,7 +392,7 @@ export default function BoardPage() {
         open={activityModal.open}
         task={activityModal.task}
         defaultStatus={activityModal.defaultStatus}
-        categories={categories}
+        projects={projects}
         onClose={() => setActivityModal({ open: false, task: null })}
         onSave={handleSaveActivity}
       />
@@ -413,12 +404,29 @@ export default function BoardPage() {
         onChange={handleTeamChange}
       />
 
-      <CategoryModal
-        open={categoryModal}
-        categories={categories}
-        onClose={() => setCategoryModal(false)}
-        onChange={handleCategoryChange}
-      />
+      {projectsModal && (
+        <div className="modal-backdrop" onClick={() => setProjectsModal(false)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-head">
+              <h3>Projetos</h3>
+              <button type="button" className="modal-close-btn" onClick={() => setProjectsModal(false)}>&times;</button>
+            </div>
+            <p style={{ fontSize: '0.82rem', color: '#6b778c', marginBottom: '12px' }}>
+              Gerencie projetos na aba <strong>Relatórios</strong>.
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '300px', overflowY: 'auto' }}>
+              {projects.length === 0 ? (
+                <p style={{ color: '#6b778c', fontSize: '0.85rem' }}>Nenhum projeto cadastrado.</p>
+              ) : projects.map((p) => (
+                <div key={p.id} style={{ padding: '8px 12px', border: '1px solid #dfe1e6', borderRadius: '4px', background: '#fafbfc' }}>
+                  <span style={{ fontSize: '0.88rem', fontWeight: 600, color: '#172b4d' }}>{p.name}</span>
+                  {p.owner && <span style={{ fontSize: '0.78rem', color: '#6b778c', marginLeft: '8px' }}>{p.owner}</span>}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </AppShell>
   );
 }

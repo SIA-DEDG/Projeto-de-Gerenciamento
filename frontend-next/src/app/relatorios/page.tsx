@@ -7,15 +7,13 @@ import ProjectModal from '@/components/ProjectModal';
 import {
   fetchTasks, createTask, updateTask, deleteTask,
   fetchProjects, createProject, updateProject, deleteProject,
-  fetchCategories,
 } from '@/lib/api';
 import { statusClass } from '@/lib/utils';
-import type { Task, Project, Category } from '@/types';
+import type { Task, Project } from '@/types';
 
 export default function RelatoriosPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -30,8 +28,8 @@ export default function RelatoriosPage() {
 
   const load = useCallback(() => {
     setLoading(true);
-    Promise.all([fetchTasks(), fetchProjects(), fetchCategories()])
-      .then(([t, p, c]) => { setTasks(t); setProjects(p); setCategories(c); })
+    Promise.all([fetchTasks(), fetchProjects()])
+      .then(([t, p]) => { setTasks(t); setProjects(p); })
       .catch((e) => setError(`Erro ao carregar dados: ${e?.message ?? e}`))
       .finally(() => setLoading(false));
   }, []);
@@ -73,22 +71,22 @@ export default function RelatoriosPage() {
 
   async function handleSaveActivity(data: {
     activity: string;
+    description: string;
     category: string;
+    project_id: number | null;
     status: string;
     responsible: string;
     date: string;
   }) {
-    const { task, projectId } = activityModal;
+    const { task } = activityModal;
     setActivityModal({ open: false, task: null, projectId: null });
     try {
+      const payload = { ...data, project_id: data.project_id ?? undefined };
       if (task) {
-        const updated = await updateTask(task, data);
+        const updated = await updateTask(task, payload);
         setTasks((ts) => ts.map((t) => (t.id === task.id ? updated : t)));
       } else {
-        const created = await createTask({
-          ...data,
-          project_id: projectId ?? undefined,
-        });
+        const created = await createTask(payload);
         setTasks((ts) => [...ts, created]);
       }
     } catch (err: unknown) {
@@ -369,7 +367,8 @@ export default function RelatoriosPage() {
       <ActivityModal
         open={activityModal.open}
         task={activityModal.task}
-        categories={categories}
+        projects={projects}
+        fixedProjectId={activityModal.projectId}
         onClose={() => setActivityModal({ open: false, task: null, projectId: null })}
         onSave={handleSaveActivity}
       />
