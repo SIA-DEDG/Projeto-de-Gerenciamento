@@ -12,11 +12,11 @@ import AppShell from '@/components/AppShell';
 import ActivityModal from '@/components/ActivityModal';
 import TeamModal from '@/components/TeamModal';
 import CategoryModal from '@/components/CategoryModal';
-import { fetchTasks, createTask, updateTask, deleteTask } from '@/lib/api';
 import {
-  getTeamMembers, saveTeamMembers,
-  getCategories, saveCategories,
-} from '@/lib/localStorage';
+  fetchTasks, createTask, updateTask, deleteTask,
+  fetchCategories, createCategory, deleteCategory,
+  fetchTeamMembers, createTeamMember, deleteTeamMember,
+} from '@/lib/api';
 import { avatarColor, initials } from '@/lib/utils';
 import type { Task, StatusGroup, Category, TeamMember } from '@/types';
 
@@ -177,10 +177,12 @@ export default function BoardPage() {
   const [categoryModal, setCategoryModal] = useState(false);
 
   useEffect(() => {
-    setCategories(getCategories());
-    setTeamMembers(getTeamMembers());
-    fetchTasks()
-      .then(setTasks)
+    Promise.all([fetchTasks(), fetchCategories(), fetchTeamMembers()])
+      .then(([tasks, cats, members]) => {
+        setTasks(tasks);
+        setCategories(cats);
+        setTeamMembers(members);
+      })
       .catch(() => setError('Não foi possível carregar as atividades.'))
       .finally(() => setLoading(false));
   }, []);
@@ -228,14 +230,24 @@ export default function BoardPage() {
     }
   }
 
-  function handleTeamChange(members: TeamMember[]) {
-    setTeamMembers(members);
-    saveTeamMembers(members);
+  async function handleTeamChange(newMembers: TeamMember[]) {
+    const added = newMembers.filter((m) => !teamMembers.find((old) => old.name === m.name));
+    const removed = teamMembers.filter((m) => !newMembers.find((n) => n.name === m.name));
+    setTeamMembers(newMembers);
+    await Promise.all([
+      ...added.map((m) => createTeamMember(m.name, m.role)),
+      ...removed.map((m) => deleteTeamMember(m.name)),
+    ]);
   }
 
-  function handleCategoryChange(cats: Category[]) {
-    setCategories(cats);
-    saveCategories(cats);
+  async function handleCategoryChange(newCats: Category[]) {
+    const added = newCats.filter((c) => !categories.find((old) => old.name === c.name));
+    const removed = categories.filter((c) => !newCats.find((n) => n.name === c.name));
+    setCategories(newCats);
+    await Promise.all([
+      ...added.map((c) => createCategory(c.name, c.color)),
+      ...removed.map((c) => deleteCategory(c.name)),
+    ]);
   }
 
   const filteredTasks = useMemo(
