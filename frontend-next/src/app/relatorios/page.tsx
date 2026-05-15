@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import AppShell from '@/components/AppShell';
 import ActivityModal from '@/components/ActivityModal';
 import ProjectModal from '@/components/ProjectModal';
+import TaskDetailModal from '@/components/TaskDetailModal';
 import {
   fetchTasks, createTask, updateTask, deleteTask,
   fetchProjects, createProject, updateProject, deleteProject,
@@ -25,6 +26,7 @@ export default function RelatoriosPage() {
   const [activityModal, setActivityModal] = useState<{ open: boolean; task: Task | null; projectId: number | null }>({
     open: false, task: null, projectId: null,
   });
+  const [taskDetail, setTaskDetail] = useState<{ open: boolean; task: Task | null }>({ open: false, task: null });
 
   const load = useCallback(() => {
     setLoading(true);
@@ -321,7 +323,12 @@ export default function RelatoriosPage() {
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     {linkedTasks.map((t) => (
-                      <div key={t.id} className="project-task-row">
+                      <div
+                        key={t.id}
+                        className="project-task-row"
+                        style={{ cursor: 'pointer' }}
+                        onClick={() => setTaskDetail({ open: true, task: t })}
+                      >
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div className="project-task-name">{t.activity}</div>
                           {t.responsible && (
@@ -334,7 +341,7 @@ export default function RelatoriosPage() {
                             type="button"
                             className="evidence-btn"
                             style={{ background: '#e3f2fd', borderColor: '#0052cc', color: '#0052cc' }}
-                            onClick={() => setActivityModal({ open: true, task: t, projectId: selectedProject.id })}
+                            onClick={(e) => { e.stopPropagation(); setActivityModal({ open: true, task: t, projectId: selectedProject.id }); }}
                           >
                             Editar
                           </button>
@@ -342,7 +349,7 @@ export default function RelatoriosPage() {
                             type="button"
                             className="evidence-btn"
                             style={{ background: '#ffebe6', borderColor: '#de350b', color: '#de350b' }}
-                            onClick={() => handleDeleteTask(t.id)}
+                            onClick={(e) => { e.stopPropagation(); handleDeleteTask(t.id); }}
                           >
                             Excluir
                           </button>
@@ -371,6 +378,21 @@ export default function RelatoriosPage() {
         fixedProjectId={activityModal.projectId}
         onClose={() => setActivityModal({ open: false, task: null, projectId: null })}
         onSave={handleSaveActivity}
+      />
+
+      <TaskDetailModal
+        open={taskDetail.open}
+        task={taskDetail.task}
+        projectName={selectedProject?.name}
+        onClose={() => setTaskDetail({ open: false, task: null })}
+        onEdit={(task) => {
+          setTaskDetail({ open: false, task: null });
+          setActivityModal({ open: true, task, projectId: selectedProject?.id ?? null });
+        }}
+        onDelete={(id) => {
+          setTaskDetail({ open: false, task: null });
+          handleDeleteTask(id);
+        }}
       />
     </AppShell>
   );

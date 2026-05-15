@@ -10,6 +10,7 @@ import {
 } from '@dnd-kit/core';
 import AppShell from '@/components/AppShell';
 import ActivityModal from '@/components/ActivityModal';
+import TaskDetailModal from '@/components/TaskDetailModal';
 import TeamModal from '@/components/TeamModal';
 import {
   fetchTasks, createTask, updateTask, deleteTask,
@@ -44,11 +45,11 @@ function DragDots() {
 // ── Kanban Card ───────────────────────────────────────────────────────────────
 function KanbanCard({
   task,
-  onEdit,
+  onView,
   onDelete,
 }: {
   task: Task;
-  onEdit: (t: Task) => void;
+  onView: (t: Task) => void;
   onDelete: (id: number) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
@@ -75,7 +76,7 @@ function KanbanCard({
         <DragDots />
       </div>
 
-      <div className="card-content" onClick={() => !isDragging && onEdit(task)}>
+      <div className="card-content" onClick={() => !isDragging && onView(task)}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
           <p className="card-title" style={{ flex: 1 }}>{task.activity}</p>
           <button
@@ -128,12 +129,12 @@ function KanbanCard({
 
 // ── Kanban Column ─────────────────────────────────────────────────────────────
 function KanbanColumn({
-  col, tasks, onAddCard, onEditCard, onDeleteCard,
+  col, tasks, onAddCard, onViewCard, onDeleteCard,
 }: {
   col: (typeof COLUMNS)[0];
   tasks: Task[];
   onAddCard: (sg: StatusGroup) => void;
-  onEditCard: (t: Task) => void;
+  onViewCard: (t: Task) => void;
   onDeleteCard: (id: number) => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: col.id });
@@ -157,7 +158,7 @@ function KanbanColumn({
 
       <div className="kanban-cards">
         {tasks.map((task) => (
-          <KanbanCard key={task.id} task={task} onEdit={onEditCard} onDelete={onDeleteCard} />
+          <KanbanCard key={task.id} task={task} onView={onViewCard} onDelete={onDeleteCard} />
         ))}
       </div>
 
@@ -190,6 +191,7 @@ export default function BoardPage() {
     task: Task | null;
     defaultStatus?: string;
   }>({ open: false, task: null });
+  const [taskDetail, setTaskDetail] = useState<{ open: boolean; task: Task | null }>({ open: false, task: null });
   const [teamModal, setTeamModal] = useState(false);
   const [projectsModal, setProjectsModal] = useState(false);
 
@@ -380,13 +382,22 @@ export default function BoardPage() {
                 col={col}
                 tasks={tasksByGroup(col.id)}
                 onAddCard={(sg) => setActivityModal({ open: true, task: null, defaultStatus: STATUS_MAP[sg] })}
-                onEditCard={(task) => setActivityModal({ open: true, task })}
+                onViewCard={(task) => setTaskDetail({ open: true, task })}
                 onDeleteCard={handleDeleteCard}
               />
             ))}
           </div>
         </DndContext>
       )}
+
+      <TaskDetailModal
+        open={taskDetail.open}
+        task={taskDetail.task}
+        projectName={taskDetail.task ? projects.find((p) => p.id === taskDetail.task!.project_id)?.name ?? taskDetail.task.category : undefined}
+        onClose={() => setTaskDetail({ open: false, task: null })}
+        onEdit={(task) => { setTaskDetail({ open: false, task: null }); setActivityModal({ open: true, task }); }}
+        onDelete={(id) => { setTaskDetail({ open: false, task: null }); handleDeleteCard(id); }}
+      />
 
       <ActivityModal
         open={activityModal.open}
