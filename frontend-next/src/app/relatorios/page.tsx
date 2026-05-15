@@ -2,26 +2,25 @@
 
 import { useState, useEffect } from 'react';
 import AppShell from '@/components/AppShell';
-import EvidenceModal from '@/components/EvidenceModal';
 import ActivityModal from '@/components/ActivityModal';
-import CategoryModal from '@/components/CategoryModal';
 import ProjectModal from '@/components/ProjectModal';
 import {
   fetchTasks, createTask, updateTask, deleteTask,
   fetchProjects, createProject, updateProject, deleteProject,
+  fetchCategories,
 } from '@/lib/api';
-import { getCategories, saveCategories, getEvidence, saveEvidence } from '@/lib/localStorage';
-import { avatarColor, initials, statusClass } from '@/lib/utils';
-import type { Task, Project, Category, EvidenceMap, Evidence } from '@/types';
+import { statusClass } from '@/lib/utils';
+import type { Task, Project, Category } from '@/types';
 
 export default function RelatoriosPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [evidenceMap, setEvidenceMap] = useState<EvidenceMap>({});
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   const [openAccordions, setOpenAccordions] = useState<Set<number>>(new Set());
+  const [activeProjectId, setActiveProjectId] = useState<number | null>(null);
 
   const [projectModal, setProjectModal] = useState<{ open: boolean; project: Project | null }>({
     open: false, project: null,
@@ -29,20 +28,16 @@ export default function RelatoriosPage() {
   const [activityModal, setActivityModal] = useState<{ open: boolean; task: Task | null }>({
     open: false, task: null,
   });
-  const [categoryModal, setCategoryModal] = useState(false);
-  const [evidenceModal, setEvidenceModal] = useState<{
-    open: boolean; taskId: string; taskTitle: string; evidence: Evidence[];
-  }>({ open: false, taskId: '', taskTitle: '', evidence: [] });
 
   useEffect(() => {
-    setCategories(getCategories());
-    setEvidenceMap(getEvidence());
-    Promise.all([fetchTasks(), fetchProjects()])
-      .then(([t, p]) => { setTasks(t); setProjects(p); })
+    Promise.all([fetchTasks(), fetchProjects(), fetchCategories()])
+      .then(([t, p, c]) => { setTasks(t); setProjects(p); setCategories(c); })
+      .catch((e) => setError(`Erro: ${e?.message ?? e}`))
       .finally(() => setLoading(false));
   }, []);
 
-  // ── Projects CRUD ──────────────────────────────────────────────────────────
+  // ── Projects ────────────────────────────────────────────────────────────────
+
   async function handleSaveProject(data: Omit<Project, 'id'>) {
     const { project } = projectModal;
     setProjectModal({ open: false, project: null });
@@ -61,7 +56,6 @@ export default function RelatoriosPage() {
     setProjects((ps) => ps.filter((p) => p.id !== id));
   }
 
-  // ── Accordion ──────────────────────────────────────────────────────────────
   function toggleAccordion(id: number) {
     setOpenAccordions((prev) => {
       const next = new Set(prev);
@@ -70,7 +64,8 @@ export default function RelatoriosPage() {
     });
   }
 
-  // ── Activities CRUD ────────────────────────────────────────────────────────
+  // ── Activities ───────────────────────────────────────────────────────────────
+
   async function handleSaveActivity(data: {
     activity: string;
     category: string;
@@ -84,34 +79,19 @@ export default function RelatoriosPage() {
       const updated = await updateTask(task, data);
       setTasks((ts) => ts.map((t) => (t.id === task.id ? updated : t)));
     } else {
-      const created = await createTask(data);
+      const created = await createTask({
+        ...data,
+        project_id: activeProjectId ?? undefined,
+      });
       setTasks((ts) => [...ts, created]);
     }
+    setActiveProjectId(null);
   }
 
   async function handleDeleteTask(id: number) {
-    if (!confirm('Excluir esta atividade permanentemente?')) return;
+    if (!confirm('Excluir esta atividade?')) return;
     await deleteTask(id);
     setTasks((ts) => ts.filter((t) => t.id !== id));
-  }
-
-  // ── Evidence ───────────────────────────────────────────────────────────────
-  function openEvidence(task: Task) {
-    const key = `task-${task.id}`;
-    setEvidenceModal({ open: true, taskId: key, taskTitle: task.activity, evidence: evidenceMap[key] ?? [] });
-  }
-
-  function handleEvidenceChange(taskId: string, evidence: Evidence[]) {
-    const next = { ...evidenceMap, [taskId]: evidence };
-    setEvidenceMap(next);
-    saveEvidence(next);
-    setEvidenceModal((p) => ({ ...p, evidence }));
-  }
-
-  // ── Categories ─────────────────────────────────────────────────────────────
-  function handleCategoryChange(cats: Category[]) {
-    setCategories(cats);
-    saveCategories(cats);
   }
 
   return (
@@ -121,13 +101,6 @@ export default function RelatoriosPage() {
           <h1>Relatórios</h1>
         </div>
         <div className="topbar-right">
-          <div className="topbar-search">
-            <svg viewBox="0 0 24 24">
-              <circle cx="11" cy="11" r="8" />
-              <line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
-            <input type="text" placeholder="Pesquisar atividades..." readOnly />
-          </div>
           <div className="user-profile">
             <span className="avatar" title="Equipe SIA">IA</span>
           </div>
@@ -135,198 +108,127 @@ export default function RelatoriosPage() {
       </header>
 
       <div className="page-content">
-        <div className="dashboard-header">
-          <h2>Relatório Completo de Atividades</h2>
-          <p className="subtitle">Gerencie a descrição do projeto e valide as entregas com evidências por atividade.</p>
+        <div className="dashboard-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div>
+            <h2>Projetos e Atividades</h2>
+            <p className="subtitle">Crie projetos e gerencie as atividades vinculadas a cada um.</p>
+          </div>
+          <button
+            type="button"
+            className="btn-primary"
+            onClick={() => setProjectModal({ open: true, project: null })}
+          >
+            + Novo Projeto
+          </button>
         </div>
 
-        {/* ── Projetos e Entregas ───────────────────────────────────────────── */}
-        <section className="project-panel" aria-labelledby="project-expand-title">
-          <div className="project-panel-head">
-            <h3 id="project-expand-title">Projetos e Entregas</h3>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <span className="project-panel-hint">Clique em um projeto para expandir as atividades vinculadas.</span>
-              <button
-                type="button"
-                className="btn-primary"
-                style={{ fontSize: '0.8rem', padding: '6px 12px', whiteSpace: 'nowrap' }}
-                onClick={() => setProjectModal({ open: true, project: null })}
-              >
-                + Novo Projeto
-              </button>
-            </div>
-          </div>
+        {error && (
+          <p style={{ color: '#de350b', padding: '12px', background: '#ffebe6', borderRadius: '4px', marginBottom: '16px' }}>
+            {error}
+          </p>
+        )}
 
-          <div id="reports-accordion-container">
-            {loading ? (
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Carregando...</p>
-            ) : projects.length === 0 ? (
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-                Nenhum projeto cadastrado. Clique em &ldquo;+ Novo Projeto&rdquo; para adicionar.
-              </p>
-            ) : (
-              projects.map((p) => {
-                const linked = tasks.filter((t) => t.category === p.name);
-                const isOpen = openAccordions.has(p.id);
-                const color = linked[0]?.badge_color ?? 'blue';
-                return (
-                  <article key={p.id} className="project-accordion-item">
-                    <button
-                      type="button"
-                      className="project-accordion-trigger"
-                      onClick={() => toggleAccordion(p.id)}
-                    >
-                      <span className={`jira-badge jira-badge-${color}`}>{p.name}</span>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <span className="project-accordion-meta">
-                          {linked.length} atividade(s) &nbsp;{isOpen ? '▲' : '▼'}
-                        </span>
+        <div id="reports-accordion-container">
+          {loading ? (
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Carregando...</p>
+          ) : projects.length === 0 ? (
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+              Nenhum projeto cadastrado. Clique em &ldquo;+ Novo Projeto&rdquo; para adicionar.
+            </p>
+          ) : (
+            projects.map((p) => {
+              const linked = tasks.filter((t) => t.project_id === p.id);
+              const isOpen = openAccordions.has(p.id);
+
+              return (
+                <article key={p.id} className="project-accordion-item">
+                  <button
+                    type="button"
+                    className="project-accordion-trigger"
+                    onClick={() => toggleAccordion(p.id)}
+                  >
+                    <span style={{ fontWeight: 600, color: '#172b4d', fontSize: '0.95rem' }}>{p.name}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      {p.owner && (
+                        <span style={{ fontSize: '0.78rem', color: '#6b778c' }}>{p.owner}</span>
+                      )}
+                      <span className="project-accordion-meta">
+                        {linked.length} atividade(s) &nbsp;{isOpen ? '▲' : '▼'}
+                      </span>
+                      <button
+                        type="button"
+                        className="evidence-btn"
+                        style={{ background: '#e3f2fd', borderColor: '#0052cc', color: '#0052cc' }}
+                        onClick={(e) => { e.stopPropagation(); setProjectModal({ open: true, project: p }); }}
+                      >
+                        Editar
+                      </button>
+                      <button
+                        type="button"
+                        className="evidence-btn"
+                        style={{ background: '#ffebe6', borderColor: '#de350b', color: '#de350b' }}
+                        onClick={(e) => { e.stopPropagation(); handleDeleteProject(p.id); }}
+                      >
+                        Excluir
+                      </button>
+                    </div>
+                  </button>
+
+                  {isOpen && (
+                    <div className="project-accordion-content">
+                      <div style={{ marginBottom: '14px' }}>
                         <button
                           type="button"
-                          className="evidence-btn"
-                          style={{ background: '#e3f2fd', borderColor: '#0052cc', color: '#0052cc' }}
-                          onClick={(e) => { e.stopPropagation(); setProjectModal({ open: true, project: p }); }}
+                          className="btn-primary"
+                          style={{ fontSize: '0.8rem', padding: '6px 14px' }}
+                          onClick={() => {
+                            setActiveProjectId(p.id);
+                            setActivityModal({ open: true, task: null });
+                          }}
                         >
-                          Editar
-                        </button>
-                        <button
-                          type="button"
-                          className="evidence-btn"
-                          style={{ background: '#ffebe6', borderColor: '#de350b', color: '#de350b' }}
-                          onClick={(e) => { e.stopPropagation(); handleDeleteProject(p.id); }}
-                        >
-                          Excluir
+                          + Nova Atividade
                         </button>
                       </div>
-                    </button>
 
-                    {isOpen && (
-                      <div className="project-accordion-content" style={{ display: 'grid' }}>
-                        {linked.length === 0 ? (
-                          <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', padding: '8px 0' }}>
-                            Nenhuma atividade vinculada. Crie uma atividade com categoria igual ao nome deste projeto.
-                          </p>
-                        ) : (
-                          linked.map((t) => (
-                            <div key={t.id} className="project-accordion-row">
-                              <div>
-                                <strong>{t.activity}</strong>
+                      {linked.length === 0 ? (
+                        <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', padding: '4px 0 8px' }}>
+                          Nenhuma atividade vinculada. Clique em &ldquo;+ Nova Atividade&rdquo; para adicionar.
+                        </p>
+                      ) : (
+                        linked.map((t) => (
+                          <div key={t.id} className="project-accordion-row">
+                            <div>
+                              <strong style={{ fontSize: '0.9rem' }}>{t.activity}</strong>
+                              {t.responsible && (
                                 <div className="evidence-meta">{t.responsible}</div>
-                              </div>
-                              <span className={statusClass(t.status_group)}>{t.status}</span>
+                              )}
                             </div>
-                          ))
-                        )}
-                      </div>
-                    )}
-                  </article>
-                );
-              })
-            )}
-          </div>
-        </section>
-
-        {/* ── Activities Table ─────────────────────────────────────────────── */}
-        <div className="table-container">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-            <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#172b4d' }}>Todas as Atividades</h3>
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <button
-                className="btn-primary"
-                onClick={() => setActivityModal({ open: true, task: null })}
-                style={{ fontSize: '0.8rem', padding: '8px 14px' }}
-              >
-                + Nova Atividade
-              </button>
-              <button
-                className="btn-primary"
-                onClick={() => setCategoryModal(true)}
-                style={{ fontSize: '0.8rem', padding: '8px 14px', background: '#6554c0' }}
-              >
-                Categorias
-              </button>
-            </div>
-          </div>
-
-          <table className="modern-table">
-            <thead>
-              <tr>
-                <th>Projeto / Categoria</th>
-                <th>Atividade</th>
-                <th>Responsável</th>
-                <th>Status</th>
-                <th>Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <tr>
-                  <td colSpan={5} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '20px' }}>
-                    Carregando...
-                  </td>
-                </tr>
-              ) : tasks.length === 0 ? (
-                <tr>
-                  <td colSpan={5} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '20px' }}>
-                    Nenhuma atividade cadastrada.
-                  </td>
-                </tr>
-              ) : (
-                tasks.map((task) => {
-                  const eKey = `task-${task.id}`;
-                  const evCount = (evidenceMap[eKey] ?? []).length;
-                  return (
-                    <tr key={task.id}>
-                      <td>
-                        <span className={`jira-badge jira-badge-${task.badge_color}`}>
-                          {task.category}
-                        </span>
-                      </td>
-                      <td className="task-activity">{task.activity}</td>
-                      <td>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <div
-                            className="jira-avatar"
-                            style={{ background: avatarColor(task.responsible), width: 26, height: 26, fontSize: '0.62rem', color: 'white', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
-                          >
-                            {initials(task.responsible)}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <span className={statusClass(t.status_group)}>{t.status}</span>
+                              <button
+                                className="evidence-btn"
+                                style={{ background: '#e3f2fd', borderColor: '#0052cc', color: '#0052cc' }}
+                                onClick={() => setActivityModal({ open: true, task: t })}
+                              >
+                                Editar
+                              </button>
+                              <button
+                                className="evidence-btn"
+                                style={{ background: '#ffebe6', borderColor: '#de350b', color: '#de350b' }}
+                                onClick={() => handleDeleteTask(t.id)}
+                              >
+                                Excluir
+                              </button>
+                            </div>
                           </div>
-                          <span className="task-responsible">{task.responsible}</span>
-                        </div>
-                      </td>
-                      <td>
-                        <span className={statusClass(task.status_group)}>{task.status}</span>
-                      </td>
-                      <td>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center' }}>
-                          <button className="evidence-btn" onClick={() => openEvidence(task)}>
-                            Evidências
-                          </button>
-                          <button
-                            className="evidence-btn"
-                            style={{ background: '#e3f2fd', borderColor: '#0052cc', color: '#0052cc' }}
-                            onClick={() => setActivityModal({ open: true, task })}
-                          >
-                            Editar
-                          </button>
-                          <button
-                            className="evidence-btn"
-                            style={{ background: '#ffebe6', borderColor: '#de350b', color: '#de350b' }}
-                            onClick={() => handleDeleteTask(task.id)}
-                          >
-                            Excluir
-                          </button>
-                          <span style={{ fontSize: '0.72rem', color: '#6b778c' }}>
-                            {evCount} {evCount === 1 ? 'evidência' : 'evidências'}
-                          </span>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
+                        ))
+                      )}
+                    </div>
+                  )}
+                </article>
+              );
+            })
+          )}
         </div>
       </div>
 
@@ -341,24 +243,11 @@ export default function RelatoriosPage() {
         open={activityModal.open}
         task={activityModal.task}
         categories={categories}
-        onClose={() => setActivityModal({ open: false, task: null })}
+        onClose={() => {
+          setActivityModal({ open: false, task: null });
+          setActiveProjectId(null);
+        }}
         onSave={handleSaveActivity}
-      />
-
-      <CategoryModal
-        open={categoryModal}
-        categories={categories}
-        onClose={() => setCategoryModal(false)}
-        onChange={handleCategoryChange}
-      />
-
-      <EvidenceModal
-        open={evidenceModal.open}
-        taskId={evidenceModal.taskId}
-        taskTitle={evidenceModal.taskTitle}
-        evidence={evidenceModal.evidence}
-        onClose={() => setEvidenceModal((p) => ({ ...p, open: false }))}
-        onChange={handleEvidenceChange}
       />
     </AppShell>
   );

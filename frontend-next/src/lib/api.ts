@@ -30,14 +30,16 @@ export async function createTask(payload: {
   status: string;
   priority?: string;
   date?: string;
+  project_id?: number;
 }): Promise<Task> {
-  const { date, priority, ...rest } = payload;
+  const { date, priority, project_id, ...rest } = payload;
   const { data, error } = await supabase
     .from('tasks')
     .insert({
       ...rest,
       priority: priority || 'Média',
       created_at: date || new Date().toISOString().split('T')[0],
+      ...(project_id ? { project_id } : {}),
     })
     .select()
     .single();

@@ -8,6 +8,7 @@ export interface Task {
   status: string;
   priority: string;
   created_at: string;
+  project_id?: number | null;
   // enriched client-side
   status_group: StatusGroup;
   badge_color: string;

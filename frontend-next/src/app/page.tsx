@@ -201,7 +201,7 @@ export default function BoardPage() {
         setCategories(cats);
         setTeamMembers(members);
       })
-      .catch(() => setError('Não foi possível carregar as atividades.'))
+      .catch((e) => setError(`Erro: ${e?.message ?? e}`))
       .finally(() => setLoading(false));
   }, []);
 
