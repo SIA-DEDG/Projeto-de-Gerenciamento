@@ -188,3 +188,43 @@ export async function deleteTeamMember(name: string): Promise<void> {
   const { error } = await supabase.from('team_members').delete().eq('name', name);
   if (error) throw new Error(error.message);
 }
+
+// ── Database Export ───────────────────────────────────────────────────────────
+
+export async function exportDatabase(): Promise<void> {
+  const [
+    { data: tasks, error: eTasks },
+    { data: projects, error: eProjects },
+    { data: evidences, error: eEvidences },
+    { data: categories, error: eCategories },
+    { data: teamMembers, error: eTeam },
+  ] = await Promise.all([
+    supabase.from('tasks').select('*').order('id'),
+    supabase.from('projects').select('*').order('id'),
+    supabase.from('evidences').select('*').order('id'),
+    supabase.from('categories').select('*').order('name'),
+    supabase.from('team_members').select('*').order('name'),
+  ]);
+
+  const firstError = eTasks ?? eProjects ?? eEvidences ?? eCategories ?? eTeam;
+  if (firstError) throw new Error(firstError.message);
+
+  const payload = {
+    exported_at: new Date().toISOString(),
+    tables: {
+      tasks: tasks ?? [],
+      projects: projects ?? [],
+      evidences: evidences ?? [],
+      categories: categories ?? [],
+      team_members: teamMembers ?? [],
+    },
+  };
+
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `sia-backup-${new Date().toISOString().split('T')[0]}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}

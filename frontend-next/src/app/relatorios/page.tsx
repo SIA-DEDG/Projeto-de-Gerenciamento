@@ -8,6 +8,7 @@ import TaskDetailModal from '@/components/TaskDetailModal';
 import {
   fetchTasks, createTask, updateTask, deleteTask,
   fetchProjects, createProject, updateProject, deleteProject,
+  exportDatabase,
 } from '@/lib/api';
 import { statusClass } from '@/lib/utils';
 import type { Task, Project } from '@/types';
@@ -19,6 +20,7 @@ export default function RelatoriosPage() {
   const [error, setError] = useState('');
 
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [exporting, setExporting] = useState(false);
 
   const [projectModal, setProjectModal] = useState<{ open: boolean; project: Project | null }>({
     open: false, project: null,
@@ -135,13 +137,33 @@ export default function RelatoriosPage() {
             <h2>Projetos</h2>
             <p className="subtitle">Clique em um projeto para ver detalhes e atividades.</p>
           </div>
-          <button
-            type="button"
-            className="btn-primary"
-            onClick={() => setProjectModal({ open: true, project: null })}
-          >
-            + Novo Projeto
-          </button>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button
+              type="button"
+              className="btn-primary"
+              disabled={exporting}
+              style={{ background: '#00875A', borderColor: '#00875A', opacity: exporting ? 0.7 : 1 }}
+              onClick={async () => {
+                setExporting(true);
+                try {
+                  await exportDatabase();
+                } catch (e: unknown) {
+                  setError(`Erro ao exportar: ${e instanceof Error ? e.message : e}`);
+                } finally {
+                  setExporting(false);
+                }
+              }}
+            >
+              {exporting ? 'Exportando...' : 'Exportar BD'}
+            </button>
+            <button
+              type="button"
+              className="btn-primary"
+              onClick={() => setProjectModal({ open: true, project: null })}
+            >
+              + Novo Projeto
+            </button>
+          </div>
         </div>
 
         {error && (
