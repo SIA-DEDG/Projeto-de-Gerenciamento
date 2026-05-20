@@ -1,215 +1,266 @@
-use crate::domain::entities::{Task, Project};
-use crate::domain::ports::{TaskRepository, ProjectRepository};
+use crate::domain::entities::{Absence, ActivityLog, Event, Project, Task, User, UserPublic};
+use crate::domain::ports::{
+    AbsenceRepository, ActivityLogRepository, EventRepository, ProjectRepository, TaskRepository,
+    UserRepository,
+};
 use async_trait::async_trait;
 use sqlx::PgPool;
-use std::sync::Mutex;
+use uuid::Uuid;
 
-pub struct InMemoryTaskRepository {
-    tasks: Mutex<Vec<Task>>,
-    next_id: Mutex<i64>,
-}
 
-impl InMemoryTaskRepository {
-    pub fn new() -> Self {
-        let initial_tasks = vec![
-            Task { id: 100, category: "1. PACTO pela Economia".to_string(), activity: "Registrar visitas realizadas".to_string(), responsible: "Equipe".to_string(), status: "Definir Status".to_string(), priority: "Média".to_string(), created_at: "2026-04-01".to_string() },
-            Task { id: 101, category: "1. PACTO pela Economia".to_string(), activity: "Enviar relatório final para MV e Rebeca".to_string(), responsible: "Gabriel".to_string(), status: "Pendente".to_string(), priority: "Alta".to_string(), created_at: "2026-04-02".to_string() },
-            Task { id: 102, category: "5. PROJETOS INTERNOS".to_string(), activity: "Revisar cronograma de entregas Q2".to_string(), responsible: "Luís".to_string(), status: "Agendar".to_string(), priority: "Alta".to_string(), created_at: "2026-04-03".to_string() },
-            Task { id: 103, category: "6. COMUNICAÇÃO".to_string(), activity: "Preparar material para reunião de alinhamento".to_string(), responsible: "Rebeca".to_string(), status: "Pendente".to_string(), priority: "Média".to_string(), created_at: "2026-04-04".to_string() },
-            Task { id: 104, category: "2. TOOLKIT".to_string(), activity: "Revisar textos do site (caixas de texto)".to_string(), responsible: "Equipe".to_string(), status: "Revisão Textual".to_string(), priority: "Média".to_string(), created_at: "2026-03-25".to_string() },
-            Task { id: 105, category: "3. APRESENTAÇÕES".to_string(), activity: "Relatório de Gestão".to_string(), responsible: "Ingrid".to_string(), status: "Design/Conteúdo".to_string(), priority: "Alta".to_string(), created_at: "2026-03-28".to_string() },
-            Task { id: 106, category: "4. INDICADORES".to_string(), activity: "Ajustar gráfico de linha e filtros".to_string(), responsible: "Ingrid + Luís".to_string(), status: "Técnico".to_string(), priority: "Alta".to_string(), created_at: "2026-03-30".to_string() },
-            Task { id: 107, category: "6. COMUNICAÇÃO".to_string(), activity: "Atualizar identidade visual das redes sociais".to_string(), responsible: "Ingrid".to_string(), status: "Identidade Visual".to_string(), priority: "Média".to_string(), created_at: "2026-04-01".to_string() },
-            Task { id: 108, category: "2. TOOLKIT".to_string(), activity: "Desenvolver módulo de exportação de dados".to_string(), responsible: "Luís".to_string(), status: "Técnico".to_string(), priority: "Alta".to_string(), created_at: "2026-04-05".to_string() },
-            Task { id: 109, category: "3. APRESENTAÇÕES".to_string(), activity: "Apresentação Gratty - CTD".to_string(), responsible: "Ingrid".to_string(), status: "Entrega".to_string(), priority: "Alta".to_string(), created_at: "2026-03-20".to_string() },
-            Task { id: 110, category: "7. EMPREENDEDOR".to_string(), activity: "Testar IAI SIA".to_string(), responsible: "Equipe".to_string(), status: "Homologação".to_string(), priority: "Crítica".to_string(), created_at: "2026-03-22".to_string() },
-            Task { id: 111, category: "5. PROJETOS INTERNOS".to_string(), activity: "Migração do banco de dados legado".to_string(), responsible: "Gabriel".to_string(), status: "Entrega".to_string(), priority: "Crítica".to_string(), created_at: "2026-03-15".to_string() },
-            Task { id: 112, category: "4. INDICADORES".to_string(), activity: "Dashboard de métricas mensais".to_string(), responsible: "Ingrid + Luís".to_string(), status: "Entrega".to_string(), priority: "Alta".to_string(), created_at: "2026-03-18".to_string() },
-        ];
+const TASK_SELECT: &str = r#"
+    SELECT
+      t.id, t.category, t.activity, t.status, t.priority,
+      to_char(t.created_at, 'YYYY-MM-DD') AS created_at,
+      t.description, t.project_id,
+      t.responsible_id,
+      COALESCE(u.name, '') AS responsible,
+      t.external_collaborators,
+      t.deadline::text AS deadline,
+      (SELECT json_agg(u2.name ORDER BY u2.name)::text
+       FROM task_co_responsibles tcr
+       JOIN users u2 ON u2.id = tcr.user_id
+       WHERE tcr.task_id = t.id) AS co_responsibles
+    FROM tasks t
+    LEFT JOIN users u ON u.id = t.responsible_id
+"#;
 
-        Self { next_id: Mutex::new(113), tasks: Mutex::new(initial_tasks) }
-    }
-}
+const PROJECT_SELECT: &str = r#"
+    SELECT
+      p.id, p.name, p.category,
+      p.owner_id,
+      u.name AS owner,
+      p.deadline::text AS deadline,
+      p.executive_status, p.objective, p.scope, p.summary
+    FROM projects p
+    LEFT JOIN users u ON u.id = p.owner_id
+"#;
 
-#[async_trait]
-impl TaskRepository for InMemoryTaskRepository {
-    async fn get_all_tasks(&self) -> Result<Vec<Task>, String> {
-        let tasks = self.tasks.lock().map_err(|e| e.to_string())?;
-        Ok(tasks.clone())
-    }
+const ABSENCE_SELECT: &str = r#"
+    SELECT
+      a.id, a.user_id,
+      COALESCE(u.name, '') AS employee_name,
+      a.reason, a.justification, a.file_name, a.file_data,
+      to_char(a.start_date, 'YYYY-MM-DD') AS start_date,
+      to_char(a.end_date,   'YYYY-MM-DD') AS end_date,
+      to_char(a.created_at - INTERVAL '3 hours', 'DD/MM/YYYY HH24:MI') AS created_at
+    FROM absences a
+    LEFT JOIN users u ON u.id = a.user_id
+"#;
 
-    async fn add_task(&self, mut task: Task) -> Result<Task, String> {
-        let mut next_id = self.next_id.lock().map_err(|e| e.to_string())?;
-        task.id = *next_id;
-        *next_id += 1;
-        let mut tasks = self.tasks.lock().map_err(|e| e.to_string())?;
-        tasks.push(task.clone());
-        Ok(task)
-    }
+const EVENT_SELECT: &str = r#"
+    SELECT
+      e.id, e.name, e.event_type, e.attendees, e.start_time,
+      to_char(e.start_date, 'YYYY-MM-DD') AS start_date,
+      to_char(e.end_date,   'YYYY-MM-DD') AS end_date,
+      to_char(e.created_at - INTERVAL '3 hours', 'DD/MM/YYYY HH24:MI') AS created_at,
+      COALESCE(
+        (SELECT json_agg(u.name ORDER BY u.name)::text
+         FROM event_responsibles er
+         JOIN users u ON u.id = er.user_id
+         WHERE er.event_id = e.id),
+        '[]'
+      ) AS responsibles
+    FROM events e
+"#;
 
-    async fn get_task_by_id(&self, id: i64) -> Result<Option<Task>, String> {
-        let tasks = self.tasks.lock().map_err(|e| e.to_string())?;
-        Ok(tasks.iter().find(|t| t.id == id).cloned())
-    }
-
-    async fn update_task(&self, task: Task) -> Result<Task, String> {
-        let mut tasks = self.tasks.lock().map_err(|e| e.to_string())?;
-        if let Some(existing) = tasks.iter_mut().find(|t| t.id == task.id) {
-            *existing = task.clone();
-            Ok(task)
-        } else {
-            Err(format!("Task com id {} não encontrada", task.id))
-        }
-    }
-
-    async fn delete_task(&self, id: i64) -> Result<(), String> {
-        let mut tasks = self.tasks.lock().map_err(|e| e.to_string())?;
-        let initial_len = tasks.len();
-        tasks.retain(|t| t.id != id);
-        if tasks.len() < initial_len { Ok(()) } else { Err(format!("Task com id {} não encontrada", id)) }
-    }
-}
-
-// ─── InMemoryProjectRepository ───────────────────────────────────────────────
-
-pub struct InMemoryProjectRepository {
-    projects: Mutex<Vec<Project>>,
-    next_id: Mutex<i64>,
-}
-
-impl InMemoryProjectRepository {
-    pub fn new() -> Self {
-        Self {
-            next_id: Mutex::new(1),
-            projects: Mutex::new(vec![]),
-        }
-    }
-}
-
-#[async_trait]
-impl ProjectRepository for InMemoryProjectRepository {
-    async fn get_all_projects(&self) -> Result<Vec<Project>, String> {
-        let projects = self.projects.lock().map_err(|e| e.to_string())?;
-        Ok(projects.clone())
-    }
-
-    async fn add_project(&self, mut project: Project) -> Result<Project, String> {
-        let mut next_id = self.next_id.lock().map_err(|e| e.to_string())?;
-        project.id = *next_id;
-        *next_id += 1;
-        let mut projects = self.projects.lock().map_err(|e| e.to_string())?;
-        projects.push(project.clone());
-        Ok(project)
-    }
-
-    async fn get_project_by_id(&self, id: i64) -> Result<Option<Project>, String> {
-        let projects = self.projects.lock().map_err(|e| e.to_string())?;
-        Ok(projects.iter().find(|p| p.id == id).cloned())
-    }
-
-    async fn update_project(&self, project: Project) -> Result<Project, String> {
-        let mut projects = self.projects.lock().map_err(|e| e.to_string())?;
-        if let Some(existing) = projects.iter_mut().find(|p| p.id == project.id) {
-            *existing = project.clone();
-            Ok(project)
-        } else {
-            Err(format!("Projeto com id {} não encontrado", project.id))
-        }
-    }
-
-    async fn delete_project(&self, id: i64) -> Result<(), String> {
-        let mut projects = self.projects.lock().map_err(|e| e.to_string())?;
-        let initial_len = projects.len();
-        projects.retain(|p| p.id != id);
-        if projects.len() < initial_len { Ok(()) } else { Err(format!("Projeto com id {} não encontrado", id)) }
-    }
-}
-
-// ─── PostgresTaskRepository ───────────────────────────────────────────────────
 
 pub struct PostgresTaskRepository {
     pub pool: PgPool,
 }
 
 impl PostgresTaskRepository {
-    pub async fn new(database_url: &str) -> Result<Self, String> {
-        let pool = PgPool::connect(database_url).await.map_err(|e| e.to_string())?;
-        let schema = include_str!("../../sql/schema.sql");
-        sqlx::raw_sql(schema).execute(&pool).await.map_err(|e| e.to_string())?;
-        Ok(Self { pool })
+    pub fn new(pool: PgPool) -> Self {
+        Self { pool }
     }
 }
 
 #[async_trait]
 impl TaskRepository for PostgresTaskRepository {
     async fn get_all_tasks(&self) -> Result<Vec<Task>, String> {
-        sqlx::query_as::<_, Task>(
-            r#"SELECT id, category, activity, responsible, status, priority, to_char(created_at, 'YYYY-MM-DD') AS created_at
-               FROM tasks ORDER BY id ASC"#
-        )
-        .fetch_all(&self.pool)
-        .await
-        .map_err(|e| e.to_string())
+        let sql = format!("{} ORDER BY t.created_at ASC", TASK_SELECT);
+        sqlx::query_as::<_, Task>(&sql)
+            .fetch_all(&self.pool)
+            .await
+            .map_err(|e| e.to_string())
     }
 
-    async fn add_task(&self, task: Task) -> Result<Task, String> {
-        sqlx::query_as::<_, Task>(
-            r#"INSERT INTO tasks (category, activity, responsible, status, priority, created_at)
-               VALUES ($1, $2, $3, $4, $5, COALESCE(NULLIF($6, ''), to_char(now(), 'YYYY-MM-DD'))::date)
-               RETURNING id, category, activity, responsible, status, priority, to_char(created_at, 'YYYY-MM-DD') AS created_at"#
+    async fn add_task(&self, task: Task, co_responsible_ids: Vec<Uuid>) -> Result<Task, String> {
+        let mut tx = self.pool.begin().await.map_err(|e| e.to_string())?;
+
+        let inserted_id: Uuid = sqlx::query_scalar(
+            r#"INSERT INTO tasks
+               (category, activity, responsible_id, status, priority, created_at, description, project_id, external_collaborators, deadline)
+               VALUES ($1, $2, $3, $4, $5,
+                       COALESCE(NULLIF($6, ''), to_char(now(), 'YYYY-MM-DD'))::date,
+                       $7, $8, $9, NULLIF($10, '')::date)
+               RETURNING id"#,
         )
-        .bind(task.category)
-        .bind(task.activity)
-        .bind(task.responsible)
-        .bind(task.status)
-        .bind(task.priority)
-        .bind(task.created_at)
-        .fetch_one(&self.pool)
+        .bind(&task.category)
+        .bind(&task.activity)
+        .bind(task.responsible_id)
+        .bind(&task.status)
+        .bind(&task.priority)
+        .bind(&task.created_at)
+        .bind(&task.description)
+        .bind(task.project_id)
+        .bind(&task.external_collaborators)
+        .bind(&task.deadline)
+        .fetch_one(&mut *tx)
         .await
-        .map_err(|e| e.to_string())
+        .map_err(|e| e.to_string())?;
+
+        for uid in &co_responsible_ids {
+            sqlx::query(
+                "INSERT INTO task_co_responsibles (task_id, user_id) VALUES ($1, $2) ON CONFLICT DO NOTHING",
+            )
+            .bind(inserted_id)
+            .bind(uid)
+            .execute(&mut *tx)
+            .await
+            .map_err(|e| e.to_string())?;
+        }
+
+        tx.commit().await.map_err(|e| e.to_string())?;
+
+        self.get_task_by_id(inserted_id)
+            .await
+            .map(|task| task.expect("just inserted"))
     }
 
-    async fn get_task_by_id(&self, id: i64) -> Result<Option<Task>, String> {
-        sqlx::query_as::<_, Task>(
-            r#"SELECT id, category, activity, responsible, status, priority, to_char(created_at, 'YYYY-MM-DD') AS created_at
-               FROM tasks WHERE id = $1"#
-        )
-        .bind(id)
-        .fetch_optional(&self.pool)
-        .await
-        .map_err(|e| e.to_string())
+    async fn add_tasks_batch(&self, tasks: Vec<Task>, co_ids: Vec<Vec<Uuid>>) -> Result<Vec<Task>, String> {
+        if tasks.is_empty() {
+            return Ok(vec![]);
+        }
+        let mut tx = self.pool.begin().await.map_err(|e| e.to_string())?;
+        let mut ids: Vec<Uuid> = Vec::with_capacity(tasks.len());
+
+        for (i, task) in tasks.iter().enumerate() {
+            let id: Uuid = sqlx::query_scalar(
+                r#"INSERT INTO tasks
+                   (category, activity, responsible_id, status, priority, created_at, description, project_id, external_collaborators, deadline)
+                   VALUES ($1, $2, $3, $4, $5,
+                           COALESCE(NULLIF($6, ''), to_char(now(), 'YYYY-MM-DD'))::date,
+                           $7, $8, $9, NULLIF($10, '')::date)
+                   RETURNING id"#,
+            )
+            .bind(&task.category)
+            .bind(&task.activity)
+            .bind(task.responsible_id)
+            .bind(&task.status)
+            .bind(&task.priority)
+            .bind(&task.created_at)
+            .bind(&task.description)
+            .bind(task.project_id)
+            .bind(&task.external_collaborators)
+            .bind(&task.deadline)
+            .fetch_one(&mut *tx)
+            .await
+            .map_err(|e| e.to_string())?;
+
+            if let Some(uids) = co_ids.get(i) {
+                for uid in uids {
+                    sqlx::query(
+                        "INSERT INTO task_co_responsibles (task_id, user_id) VALUES ($1, $2) ON CONFLICT DO NOTHING",
+                    )
+                    .bind(id)
+                    .bind(uid)
+                    .execute(&mut *tx)
+                    .await
+                    .map_err(|e| e.to_string())?;
+                }
+            }
+
+            ids.push(id);
+        }
+
+        tx.commit().await.map_err(|e| e.to_string())?;
+
+        let sql = format!("{} WHERE t.id = ANY($1::uuid[]) ORDER BY t.created_at ASC", TASK_SELECT);
+        sqlx::query_as::<_, Task>(&sql)
+            .bind(&ids)
+            .fetch_all(&self.pool)
+            .await
+            .map_err(|e| e.to_string())
     }
 
-    async fn update_task(&self, task: Task) -> Result<Task, String> {
-        sqlx::query_as::<_, Task>(
+    async fn get_task_by_id(&self, id: Uuid) -> Result<Option<Task>, String> {
+        let sql = format!("{} WHERE t.id = $1", TASK_SELECT);
+        sqlx::query_as::<_, Task>(&sql)
+            .bind(id)
+            .fetch_optional(&self.pool)
+            .await
+            .map_err(|e| e.to_string())
+    }
+
+    async fn update_task(&self, task: Task, co_responsible_ids: Vec<Uuid>) -> Result<Task, String> {
+        let mut tx = self.pool.begin().await.map_err(|e| e.to_string())?;
+
+        let rows = sqlx::query(
             r#"UPDATE tasks
-               SET category = $2, activity = $3, responsible = $4, status = $5, priority = $6, created_at = COALESCE(NULLIF($7, ''), to_char(now(), 'YYYY-MM-DD'))::date
-               WHERE id = $1
-               RETURNING id, category, activity, responsible, status, priority, to_char(created_at, 'YYYY-MM-DD') AS created_at"#
+               SET category = $2, activity = $3, responsible_id = $4, status = $5, priority = $6,
+                   created_at = COALESCE(NULLIF($7, ''), to_char(now(), 'YYYY-MM-DD'))::date,
+                   description = $8, project_id = $9, external_collaborators = $10,
+                   deadline = NULLIF($11, '')::date
+               WHERE id = $1"#,
         )
         .bind(task.id)
-        .bind(task.category)
-        .bind(task.activity)
-        .bind(task.responsible)
-        .bind(task.status)
-        .bind(task.priority)
-        .bind(task.created_at)
-        .fetch_one(&self.pool)
+        .bind(&task.category)
+        .bind(&task.activity)
+        .bind(task.responsible_id)
+        .bind(&task.status)
+        .bind(&task.priority)
+        .bind(&task.created_at)
+        .bind(&task.description)
+        .bind(task.project_id)
+        .bind(&task.external_collaborators)
+        .bind(&task.deadline)
+        .execute(&mut *tx)
         .await
-        .map_err(|e| e.to_string())
+        .map_err(|e| e.to_string())?;
+
+        if rows.rows_affected() == 0 {
+            return Err(format!("Task {} não encontrada", task.id));
+        }
+
+        sqlx::query("DELETE FROM task_co_responsibles WHERE task_id = $1")
+            .bind(task.id)
+            .execute(&mut *tx)
+            .await
+            .map_err(|e| e.to_string())?;
+
+        for uid in &co_responsible_ids {
+            sqlx::query(
+                "INSERT INTO task_co_responsibles (task_id, user_id) VALUES ($1, $2) ON CONFLICT DO NOTHING",
+            )
+            .bind(task.id)
+            .bind(uid)
+            .execute(&mut *tx)
+            .await
+            .map_err(|e| e.to_string())?;
+        }
+
+        tx.commit().await.map_err(|e| e.to_string())?;
+
+        self.get_task_by_id(task.id)
+            .await
+            .map(|task| task.expect("just updated"))
     }
 
-    async fn delete_task(&self, id: i64) -> Result<(), String> {
+    async fn delete_task(&self, id: Uuid) -> Result<(), String> {
         let result = sqlx::query("DELETE FROM tasks WHERE id = $1")
             .bind(id)
             .execute(&self.pool)
             .await
             .map_err(|e| e.to_string())?;
-        if result.rows_affected() == 0 { Err(format!("Task com id {} não encontrada", id)) } else { Ok(()) }
+        if result.rows_affected() == 0 {
+            Err(format!("Task {} não encontrada", id))
+        } else {
+            Ok(())
+        }
     }
 }
 
-// ─── PostgresProjectRepository ────────────────────────────────────────────────
 
 pub struct PostgresProjectRepository {
     pool: PgPool,
@@ -224,38 +275,136 @@ impl PostgresProjectRepository {
 #[async_trait]
 impl ProjectRepository for PostgresProjectRepository {
     async fn get_all_projects(&self) -> Result<Vec<Project>, String> {
-        sqlx::query_as::<_, Project>(
-            r#"SELECT id, name, category, owner, deadline::text, executive_status, objective, scope, summary
-               FROM projects ORDER BY id ASC"#
-        )
-        .fetch_all(&self.pool)
-        .await
-        .map_err(|e| e.to_string())
+        let sql = format!("{} ORDER BY p.name ASC", PROJECT_SELECT);
+        sqlx::query_as::<_, Project>(&sql)
+            .fetch_all(&self.pool)
+            .await
+            .map_err(|e| e.to_string())
     }
 
     async fn add_project(&self, project: Project) -> Result<Project, String> {
-        sqlx::query_as::<_, Project>(
-            r#"INSERT INTO projects (name, category, owner, deadline, executive_status, objective, scope, summary)
-               VALUES ($1, $2, $3, $4::date, $5, $6, $7, $8)
-               RETURNING id, name, category, owner, deadline::text, executive_status, objective, scope, summary"#
+        let id: Uuid = sqlx::query_scalar(
+            r#"INSERT INTO projects (name, category, owner_id, deadline, executive_status, objective, scope, summary)
+               VALUES ($1, $2, $3, NULLIF($4, '')::date, $5, $6, $7, $8)
+               RETURNING id"#,
         )
-        .bind(project.name)
-        .bind(project.category)
-        .bind(project.owner)
-        .bind(project.deadline)
-        .bind(project.executive_status)
-        .bind(project.objective)
-        .bind(project.scope)
-        .bind(project.summary)
+        .bind(&project.name)
+        .bind(&project.category)
+        .bind(project.owner_id)
+        .bind(&project.deadline)
+        .bind(&project.executive_status)
+        .bind(&project.objective)
+        .bind(&project.scope)
+        .bind(&project.summary)
+        .fetch_one(&self.pool)
+        .await
+        .map_err(|e| e.to_string())?;
+
+        self.get_project_by_id(id)
+            .await
+            .map(|project| project.expect("projeto recém-inserido"))
+    }
+
+    async fn get_project_by_id(&self, id: Uuid) -> Result<Option<Project>, String> {
+        let sql = format!("{} WHERE p.id = $1", PROJECT_SELECT);
+        sqlx::query_as::<_, Project>(&sql)
+            .bind(id)
+            .fetch_optional(&self.pool)
+            .await
+            .map_err(|e| e.to_string())
+    }
+
+    async fn update_project(&self, project: Project) -> Result<Project, String> {
+        let rows = sqlx::query(
+            r#"UPDATE projects
+               SET name = $2, category = $3, owner_id = $4, deadline = NULLIF($5, '')::date,
+                   executive_status = $6, objective = $7, scope = $8, summary = $9,
+                   updated_at = NOW()
+               WHERE id = $1"#,
+        )
+        .bind(project.id)
+        .bind(&project.name)
+        .bind(&project.category)
+        .bind(project.owner_id)
+        .bind(&project.deadline)
+        .bind(&project.executive_status)
+        .bind(&project.objective)
+        .bind(&project.scope)
+        .bind(&project.summary)
+        .execute(&self.pool)
+        .await
+        .map_err(|e| e.to_string())?;
+
+        if rows.rows_affected() == 0 {
+            return Err(format!("Projeto {} não encontrado", project.id));
+        }
+
+        self.get_project_by_id(project.id)
+            .await
+            .map(|project| project.expect("projeto recém-atualizado"))
+    }
+
+    async fn delete_project(&self, id: Uuid) -> Result<(), String> {
+        let result = sqlx::query("DELETE FROM projects WHERE id = $1")
+            .bind(id)
+            .execute(&self.pool)
+            .await
+            .map_err(|e| e.to_string())?;
+        if result.rows_affected() == 0 {
+            Err(format!("Projeto {} não encontrado", id))
+        } else {
+            Ok(())
+        }
+    }
+}
+
+
+pub struct PostgresUserRepository {
+    pool: PgPool,
+}
+
+impl PostgresUserRepository {
+    pub fn new(pool: PgPool) -> Self {
+        Self { pool }
+    }
+}
+
+#[async_trait]
+impl UserRepository for PostgresUserRepository {
+    async fn create(&self, user: User) -> Result<User, String> {
+        sqlx::query_as::<_, User>(
+            r#"INSERT INTO users (name, username, password_hash, role, must_change_password)
+               VALUES ($1, $2, $3, $4, $5)
+               RETURNING id, name, username, password_hash, role, must_change_password,
+                         to_char(created_at, 'YYYY-MM-DD') AS created_at"#,
+        )
+        .bind(user.name)
+        .bind(user.username)
+        .bind(user.password_hash)
+        .bind(user.role)
+        .bind(user.must_change_password)
         .fetch_one(&self.pool)
         .await
         .map_err(|e| e.to_string())
     }
 
-    async fn get_project_by_id(&self, id: i64) -> Result<Option<Project>, String> {
-        sqlx::query_as::<_, Project>(
-            r#"SELECT id, name, category, owner, deadline::text, executive_status, objective, scope, summary
-               FROM projects WHERE id = $1"#
+    async fn find_by_username(&self, username: &str) -> Result<Option<User>, String> {
+        sqlx::query_as::<_, User>(
+            r#"SELECT id, name, username, password_hash, role, must_change_password,
+                      to_char(created_at, 'YYYY-MM-DD') AS created_at
+               FROM users WHERE username = $1"#,
+        )
+        .bind(username)
+        .fetch_optional(&self.pool)
+        .await
+        .map_err(|e| e.to_string())
+    }
+
+    async fn find_by_id(&self, id: Uuid) -> Result<Option<User>, String> {
+        sqlx::query_as::<_, User>(
+            r#"SELECT id, name, username, password_hash, role, must_change_password,
+                      to_char(created_at, 'YYYY-MM-DD') AS created_at
+               FROM users WHERE id = $1"#,
         )
         .bind(id)
         .fetch_optional(&self.pool)
@@ -263,35 +412,357 @@ impl ProjectRepository for PostgresProjectRepository {
         .map_err(|e| e.to_string())
     }
 
-    async fn update_project(&self, project: Project) -> Result<Project, String> {
-        sqlx::query_as::<_, Project>(
-            r#"UPDATE projects
-               SET name = $2, category = $3, owner = $4, deadline = $5::date,
-                   executive_status = $6, objective = $7, scope = $8, summary = $9,
-                   updated_at = NOW()
-               WHERE id = $1
-               RETURNING id, name, category, owner, deadline::text, executive_status, objective, scope, summary"#
+    async fn find_all(&self) -> Result<Vec<User>, String> {
+        sqlx::query_as::<_, User>(
+            r#"SELECT id, name, username, password_hash, role, must_change_password,
+                      to_char(created_at, 'YYYY-MM-DD') AS created_at
+               FROM users ORDER BY name ASC"#,
         )
-        .bind(project.id)
-        .bind(project.name)
-        .bind(project.category)
-        .bind(project.owner)
-        .bind(project.deadline)
-        .bind(project.executive_status)
-        .bind(project.objective)
-        .bind(project.scope)
-        .bind(project.summary)
+        .fetch_all(&self.pool)
+        .await
+        .map_err(|e| e.to_string())
+    }
+
+    async fn find_all_public(&self) -> Result<Vec<UserPublic>, String> {
+        sqlx::query_as::<_, UserPublic>(
+            r#"SELECT id, name, username, role, must_change_password,
+                      to_char(created_at, 'YYYY-MM-DD') AS created_at
+               FROM users ORDER BY name ASC"#,
+        )
+        .fetch_all(&self.pool)
+        .await
+        .map_err(|e| e.to_string())
+    }
+
+    async fn update_password(&self, id: Uuid, new_hash: &str) -> Result<(), String> {
+        let rows = sqlx::query("UPDATE users SET password_hash = $1 WHERE id = $2")
+            .bind(new_hash)
+            .bind(id)
+            .execute(&self.pool)
+            .await
+            .map_err(|e| e.to_string())?;
+        if rows.rows_affected() == 0 {
+            Err("Usuário não encontrado".to_string())
+        } else {
+            Ok(())
+        }
+    }
+
+    async fn set_must_change_password(&self, id: Uuid, value: bool) -> Result<(), String> {
+        sqlx::query("UPDATE users SET must_change_password = $1 WHERE id = $2")
+            .bind(value)
+            .bind(id)
+            .execute(&self.pool)
+            .await
+            .map(|_| ())
+            .map_err(|e| e.to_string())
+    }
+
+    async fn update_name(&self, id: Uuid, name: String) -> Result<(), String> {
+        sqlx::query("UPDATE users SET name = $1 WHERE id = $2")
+            .bind(&name)
+            .bind(id)
+            .execute(&self.pool)
+            .await
+            .map(|_| ())
+            .map_err(|e| e.to_string())
+    }
+
+    async fn delete_user(&self, id: Uuid) -> Result<(), String> {
+        // FK ON DELETE SET NULL handles tasks/projects/absences automatically.
+        // FK ON DELETE CASCADE handles activity_logs and junction tables.
+        let result = sqlx::query("DELETE FROM users WHERE id = $1")
+            .bind(id)
+            .execute(&self.pool)
+            .await
+            .map_err(|e| e.to_string())?;
+        if result.rows_affected() == 0 {
+            Err(format!("Usuário {} não encontrado", id))
+        } else {
+            Ok(())
+        }
+    }
+
+    async fn update_role(&self, id: Uuid, role: String) -> Result<(), String> {
+        let result = sqlx::query("UPDATE users SET role = $1 WHERE id = $2")
+            .bind(&role)
+            .bind(id)
+            .execute(&self.pool)
+            .await
+            .map_err(|e| e.to_string())?;
+        if result.rows_affected() == 0 {
+            Err(format!("Usuário {} não encontrado", id))
+        } else {
+            Ok(())
+        }
+    }
+}
+
+
+pub struct PostgresActivityLogRepository {
+    pool: PgPool,
+}
+
+impl PostgresActivityLogRepository {
+    pub fn new(pool: PgPool) -> Self {
+        Self { pool }
+    }
+}
+
+#[async_trait]
+impl ActivityLogRepository for PostgresActivityLogRepository {
+    async fn add(&self, log: ActivityLog) -> Result<ActivityLog, String> {
+        sqlx::query_as::<_, ActivityLog>(
+            r#"INSERT INTO activity_logs (user_id, user_name, action, entity_type, entity_id, details)
+               VALUES ($1, $2, $3, $4, $5, $6)
+               RETURNING id, user_id, user_name, action, entity_type, entity_id, details,
+                         to_char(created_at - INTERVAL '3 hours', 'DD/MM/YYYY HH24:MI') AS created_at"#,
+        )
+        .bind(log.user_id)
+        .bind(log.user_name)
+        .bind(log.action)
+        .bind(log.entity_type)
+        .bind(log.entity_id)
+        .bind(log.details)
         .fetch_one(&self.pool)
         .await
         .map_err(|e| e.to_string())
     }
 
-    async fn delete_project(&self, id: i64) -> Result<(), String> {
-        let result = sqlx::query("DELETE FROM projects WHERE id = $1")
+    async fn get_all(&self) -> Result<Vec<ActivityLog>, String> {
+        sqlx::query_as::<_, ActivityLog>(
+            r#"SELECT id, user_id, user_name, action, entity_type, entity_id, details,
+                      to_char(created_at - INTERVAL '3 hours', 'DD/MM/YYYY HH24:MI') AS created_at
+               FROM activity_logs ORDER BY activity_logs.created_at DESC LIMIT 500"#,
+        )
+        .fetch_all(&self.pool)
+        .await
+        .map_err(|e| e.to_string())
+    }
+
+    async fn get_by_entity_type(&self, entity_type: &str) -> Result<Vec<ActivityLog>, String> {
+        sqlx::query_as::<_, ActivityLog>(
+            r#"SELECT id, user_id, user_name, action, entity_type, entity_id, details,
+                      to_char(created_at - INTERVAL '3 hours', 'DD/MM/YYYY HH24:MI') AS created_at
+               FROM activity_logs WHERE entity_type = $1 ORDER BY activity_logs.created_at DESC LIMIT 500"#,
+        )
+        .bind(entity_type)
+        .fetch_all(&self.pool)
+        .await
+        .map_err(|e| e.to_string())
+    }
+
+    async fn get_by_user(&self, user_id: Uuid) -> Result<Vec<ActivityLog>, String> {
+        sqlx::query_as::<_, ActivityLog>(
+            r#"SELECT id, user_id, user_name, action, entity_type, entity_id, details,
+                      to_char(created_at - INTERVAL '3 hours', 'DD/MM/YYYY HH24:MI') AS created_at
+               FROM activity_logs WHERE user_id = $1 ORDER BY activity_logs.created_at DESC LIMIT 500"#,
+        )
+        .bind(user_id)
+        .fetch_all(&self.pool)
+        .await
+        .map_err(|e| e.to_string())
+    }
+
+    async fn clear_all(&self) -> Result<(), String> {
+        sqlx::query("DELETE FROM activity_logs")
+            .execute(&self.pool)
+            .await
+            .map(|_| ())
+            .map_err(|e| e.to_string())
+    }
+}
+
+
+pub struct PostgresAbsenceRepository {
+    pool: PgPool,
+}
+
+impl PostgresAbsenceRepository {
+    pub fn new(pool: PgPool) -> Self {
+        Self { pool }
+    }
+
+    async fn get_absence_by_id(&self, id: Uuid) -> Result<Option<Absence>, String> {
+        let sql = format!("{} WHERE a.id = $1", ABSENCE_SELECT);
+        sqlx::query_as::<_, Absence>(&sql)
+            .bind(id)
+            .fetch_optional(&self.pool)
+            .await
+            .map_err(|e| e.to_string())
+    }
+}
+
+#[async_trait]
+impl AbsenceRepository for PostgresAbsenceRepository {
+    async fn add(&self, absence: Absence) -> Result<Absence, String> {
+        let id: Uuid = sqlx::query_scalar(
+            r#"INSERT INTO absences (user_id, reason, justification, file_name, file_data, start_date, end_date)
+               VALUES ($1, $2, $3, $4, $5, $6::date, $7::date)
+               RETURNING id"#,
+        )
+        .bind(absence.user_id)
+        .bind(absence.reason)
+        .bind(absence.justification)
+        .bind(absence.file_name)
+        .bind(absence.file_data)
+        .bind(absence.start_date)
+        .bind(absence.end_date)
+        .fetch_one(&self.pool)
+        .await
+        .map_err(|e| e.to_string())?;
+
+        self.get_absence_by_id(id)
+            .await
+            .map(|absence| absence.expect("falta recém-inserida"))
+    }
+
+    async fn get_all(&self) -> Result<Vec<Absence>, String> {
+        let sql = format!("{} ORDER BY a.start_date DESC", ABSENCE_SELECT);
+        sqlx::query_as::<_, Absence>(&sql)
+            .fetch_all(&self.pool)
+            .await
+            .map_err(|e| e.to_string())
+    }
+
+    async fn delete(&self, id: Uuid) -> Result<(), String> {
+        let delete_result = sqlx::query("DELETE FROM absences WHERE id = $1")
             .bind(id)
             .execute(&self.pool)
             .await
             .map_err(|e| e.to_string())?;
-        if result.rows_affected() == 0 { Err(format!("Projeto com id {} não encontrado", id)) } else { Ok(()) }
+        if delete_result.rows_affected() == 0 {
+            Err(format!("Falta {} não encontrada", id))
+        } else {
+            Ok(())
+        }
+    }
+}
+
+
+pub struct PostgresEventRepository {
+    pool: PgPool,
+}
+
+impl PostgresEventRepository {
+    pub fn new(pool: PgPool) -> Self {
+        Self { pool }
+    }
+
+    async fn get_event_by_id(&self, id: Uuid) -> Result<Option<Event>, String> {
+        let sql = format!("{} WHERE e.id = $1", EVENT_SELECT);
+        sqlx::query_as::<_, Event>(&sql)
+            .bind(id)
+            .fetch_optional(&self.pool)
+            .await
+            .map_err(|e| e.to_string())
+    }
+}
+
+#[async_trait]
+impl EventRepository for PostgresEventRepository {
+    async fn add(&self, event: Event, responsible_ids: Vec<Uuid>) -> Result<Event, String> {
+        let mut tx = self.pool.begin().await.map_err(|e| e.to_string())?;
+
+        let inserted_id: Uuid = sqlx::query_scalar(
+            r#"INSERT INTO events (name, event_type, attendees, start_date, end_date, start_time)
+               VALUES ($1, $2, $3, $4::date, $5::date, $6)
+               RETURNING id"#,
+        )
+        .bind(&event.name)
+        .bind(&event.event_type)
+        .bind(&event.attendees)
+        .bind(&event.start_date)
+        .bind(&event.end_date)
+        .bind(&event.start_time)
+        .fetch_one(&mut *tx)
+        .await
+        .map_err(|e| e.to_string())?;
+
+        for uid in &responsible_ids {
+            sqlx::query(
+                "INSERT INTO event_responsibles (event_id, user_id) VALUES ($1, $2) ON CONFLICT DO NOTHING",
+            )
+            .bind(inserted_id)
+            .bind(uid)
+            .execute(&mut *tx)
+            .await
+            .map_err(|e| e.to_string())?;
+        }
+
+        tx.commit().await.map_err(|e| e.to_string())?;
+
+        self.get_event_by_id(inserted_id)
+            .await
+            .map(|event| event.expect("just inserted"))
+    }
+
+    async fn get_all(&self) -> Result<Vec<Event>, String> {
+        let sql = format!("{} ORDER BY e.start_date DESC", EVENT_SELECT);
+        sqlx::query_as::<_, Event>(&sql)
+            .fetch_all(&self.pool)
+            .await
+            .map_err(|e| e.to_string())
+    }
+
+    async fn update(&self, event: Event, responsible_ids: Vec<Uuid>) -> Result<Event, String> {
+        let mut tx = self.pool.begin().await.map_err(|e| e.to_string())?;
+
+        let rows = sqlx::query(
+            r#"UPDATE events
+               SET name=$2, event_type=$3, attendees=$4,
+                   start_date=$5::date, end_date=$6::date, start_time=$7
+               WHERE id=$1"#,
+        )
+        .bind(event.id)
+        .bind(&event.name)
+        .bind(&event.event_type)
+        .bind(&event.attendees)
+        .bind(&event.start_date)
+        .bind(&event.end_date)
+        .bind(&event.start_time)
+        .execute(&mut *tx)
+        .await
+        .map_err(|e| e.to_string())?;
+
+        if rows.rows_affected() == 0 {
+            return Err(format!("Evento {} não encontrado", event.id));
+        }
+
+        sqlx::query("DELETE FROM event_responsibles WHERE event_id = $1")
+            .bind(event.id)
+            .execute(&mut *tx)
+            .await
+            .map_err(|e| e.to_string())?;
+
+        for uid in &responsible_ids {
+            sqlx::query(
+                "INSERT INTO event_responsibles (event_id, user_id) VALUES ($1, $2) ON CONFLICT DO NOTHING",
+            )
+            .bind(event.id)
+            .bind(uid)
+            .execute(&mut *tx)
+            .await
+            .map_err(|e| e.to_string())?;
+        }
+
+        tx.commit().await.map_err(|e| e.to_string())?;
+
+        self.get_event_by_id(event.id)
+            .await
+            .map(|event| event.expect("just updated"))
+    }
+
+    async fn delete(&self, id: Uuid) -> Result<(), String> {
+        let delete_result = sqlx::query("DELETE FROM events WHERE id = $1")
+            .bind(id)
+            .execute(&self.pool)
+            .await
+            .map_err(|e| e.to_string())?;
+        if delete_result.rows_affected() == 0 {
+            Err(format!("Evento {} não encontrado", id))
+        } else {
+            Ok(())
+        }
     }
 }
