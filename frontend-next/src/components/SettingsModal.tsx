@@ -11,7 +11,6 @@ interface SettingsModalProps {
 
 export default function SettingsModal({ open, onClose }: SettingsModalProps) {
   const [s, setS] = useState<Settings>({
-    theme: 'claro',
     notificationProfile: 'completo',
     alertChannel: 'email',
     refreshInterval: '15',
@@ -44,13 +43,6 @@ export default function SettingsModal({ open, onClose }: SettingsModalProps) {
         <p className="settings-modal-subtitle">Defina padrões operacionais do ambiente e preferências da equipe.</p>
 
         <form className="settings-form-grid" onSubmit={handleSubmit}>
-          <label className="settings-label">
-            Tema da Interface
-            <select value={s.theme} onChange={(e) => setS({ ...s, theme: e.target.value })}>
-              <option value="claro">Claro</option>
-              <option value="escuro">Escuro</option>
-            </select>
-          </label>
           <label className="settings-label">
             Perfil de Notificação
             <select value={s.notificationProfile} onChange={(e) => setS({ ...s, notificationProfile: e.target.value })}>

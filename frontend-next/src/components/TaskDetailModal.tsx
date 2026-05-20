@@ -9,10 +9,10 @@ interface Props {
   projectName?: string;
   onClose: () => void;
   onEdit: (task: Task) => void;
-  onDelete: (id: number) => void;
+  onDelete: (id: string) => void;
 }
 
-const LABEL = 'font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#6b778c;margin-bottom:4px';
+const METADATA_LABEL_STYLE = 'font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#6b778c;margin-bottom:4px';
 
 function MetaLabel({ children }: { children: React.ReactNode }) {
   return (
@@ -30,8 +30,17 @@ function MetaValue({ children }: { children: React.ReactNode }) {
   );
 }
 
+function fmtDate(iso: string | null | undefined): string {
+  if (!iso) return '—';
+  const [y, m, d] = iso.split('-');
+  return `${d}/${m}/${y}`;
+}
+
 export default function TaskDetailModal({ open, task, projectName, onClose, onEdit, onDelete }: Props) {
   if (!open || !task) return null;
+
+  const today = new Date().toISOString().split('T')[0];
+  const deadlineOverdue = task.deadline && task.status_group !== 'done' && task.deadline < today;
 
   return (
     <div
@@ -63,9 +72,11 @@ export default function TaskDetailModal({ open, task, projectName, onClose, onEd
           {task.description ? (
             <div>
               <MetaLabel>Descrição</MetaLabel>
-              <p style={{ fontSize: '0.9rem', color: '#344563', lineHeight: 1.7, whiteSpace: 'pre-wrap', margin: 0, padding: '10px 12px', background: '#f4f5f7', borderRadius: '4px' }}>
-                {task.description}
-              </p>
+              <div
+                className="rich-content"
+                style={{ fontSize: '0.9rem', color: '#344563', lineHeight: 1.7, padding: '10px 12px', background: '#f4f5f7', borderRadius: '4px' }}
+                dangerouslySetInnerHTML={{ __html: task.description }}
+              />
             </div>
           ) : (
             <div>
@@ -88,16 +99,39 @@ export default function TaskDetailModal({ open, task, projectName, onClose, onEd
                 <MetaValue>{task.responsible}</MetaValue>
               </div>
             )}
-            {task.date && (
-              <div>
-                <MetaLabel>Data</MetaLabel>
-                <MetaValue>{task.date}</MetaValue>
-              </div>
-            )}
+            <div>
+              <MetaLabel>Data de criação</MetaLabel>
+              <MetaValue>{fmtDate(task.date)}</MetaValue>
+            </div>
+            <div>
+              <MetaLabel>Prazo de finalização</MetaLabel>
+              <MetaValue>
+                <span style={{ color: deadlineOverdue ? '#de350b' : undefined, fontWeight: deadlineOverdue ? 700 : undefined }}>
+                  {task.deadline ? fmtDate(task.deadline) : '—'}
+                  {deadlineOverdue && ' ⚠ Vencido'}
+                </span>
+              </MetaValue>
+            </div>
             {task.priority && (
               <div>
                 <MetaLabel>Prioridade</MetaLabel>
                 <MetaValue>{task.priority}</MetaValue>
+              </div>
+            )}
+            {(() => {
+              let coResponsibles: string[] = [];
+              try { coResponsibles = task.co_responsibles ? JSON.parse(task.co_responsibles) : []; } catch { coResponsibles = []; }
+              return coResponsibles.length > 0 ? (
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <MetaLabel>Co-responsáveis</MetaLabel>
+                  <MetaValue>{coResponsibles.join(', ')}</MetaValue>
+                </div>
+              ) : null;
+            })()}
+            {task.external_collaborators && (
+              <div style={{ gridColumn: '1 / -1' }}>
+                <MetaLabel>Colaboração externa</MetaLabel>
+                <MetaValue>{task.external_collaborators}</MetaValue>
               </div>
             )}
           </div>

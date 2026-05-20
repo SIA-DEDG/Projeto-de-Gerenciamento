@@ -88,7 +88,6 @@ export function saveEvidence(ev: EvidenceMap): void {
 // ── Settings ──────────────────────────────────────────────────────────────────
 
 const DEFAULT_SETTINGS: Settings = {
-  theme: 'claro',
   notificationProfile: 'completo',
   alertChannel: 'email',
   refreshInterval: '15',

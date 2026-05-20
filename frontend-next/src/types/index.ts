@@ -1,15 +1,19 @@
 export type StatusGroup = 'pending' | 'in_progress' | 'done';
 
 export interface Task {
-  id: number;
+  id: string;
   category: string;
   activity: string;
   description?: string;
-  responsible: string;
+  responsible_id?: string | null;   // UUID FK — used when sending to API
+  responsible: string;              // name from JOIN — used for display
   status: string;
   priority: string;
   created_at: string;
-  project_id?: number | null;
+  project_id?: string | null;
+  co_responsibles?: string | null;  // JSON array of names from junction — display only
+  external_collaborators?: string | null;
+  deadline?: string | null;
   // enriched client-side
   status_group: StatusGroup;
   badge_color: string;
@@ -17,10 +21,11 @@ export interface Task {
 }
 
 export interface Project {
-  id: number;
+  id: string;
   name: string;
   category?: string;
-  owner?: string;
+  owner_id?: string | null;   // UUID FK — used when sending to API
+  owner?: string | null;      // name from JOIN — used for display
   deadline?: string;
   executive_status?: string;
   objective?: string;
@@ -48,7 +53,6 @@ export interface Evidence {
 export type EvidenceMap = Record<string, Evidence[]>;
 
 export interface Settings {
-  theme: string;
   notificationProfile: string;
   alertChannel: string;
   refreshInterval: string;

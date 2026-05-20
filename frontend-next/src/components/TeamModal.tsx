@@ -25,7 +25,7 @@ export default function TeamModal({ open, members, onClose, onChange }: Props) {
   }
 
   function handleRemove(name: string) {
-    onChange(members.filter((m) => m.name !== name));
+    onChange(members.filter((member) => member.name !== name));
   }
 
   return (
@@ -37,16 +37,16 @@ export default function TeamModal({ open, members, onClose, onChange }: Props) {
         </div>
 
         <div className="manage-list">
-          {members.map((m) => (
-            <div key={m.name} className="manage-item">
+          {members.map((member) => (
+            <div key={member.name} className="manage-item">
               <div className="manage-item-info">
-                <span className="manage-item-name">{m.name}</span>
-                {m.role && <span className="manage-item-role">{m.role}</span>}
+                <span className="manage-item-name">{member.name}</span>
+                {member.role && <span className="manage-item-role">{member.role}</span>}
               </div>
               <button
                 type="button"
                 className="btn-danger btn-sm"
-                onClick={() => handleRemove(m.name)}
+                onClick={() => handleRemove(member.name)}
               >
                 Remover
               </button>
