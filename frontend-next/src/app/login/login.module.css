@@ -1,0 +1,247 @@
+.page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-image: url('/background.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  position: relative;
+  font-family: 'Inter', sans-serif;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(240, 243, 248, 0.55);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.card {
+  position: relative;
+  z-index: 1;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.04),
+    0 8px 24px rgba(0, 0, 0, 0.10),
+    0 20px 48px rgba(0, 0, 0, 0.08);
+  padding: 48px 52px 40px;
+  width: 100%;
+  max-width: 460px;
+  animation: cardFadeIn 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.25s both;
+}
+
+@keyframes cardFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Logo */
+.logo {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 32px;
+}
+
+.logo img {
+  max-height: 80px;
+  max-width: 320px;
+  width: auto;
+  object-fit: contain;
+}
+
+/* Heading */
+.title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #0d1b2a;
+  text-align: center;
+  margin: 0 0 8px;
+  letter-spacing: -0.02em;
+}
+
+.subtitle {
+  font-size: 0.875rem;
+  color: #637083;
+  text-align: center;
+  margin: 0 0 32px;
+  line-height: 1.5;
+}
+
+/* Form */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 20px;
+}
+
+.labelRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 7px;
+}
+
+.label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #344563;
+  letter-spacing: 0.01em;
+}
+
+.forgot {
+  font-size: 0.78rem;
+  color: #637083;
+  cursor: pointer;
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+.forgot:hover {
+  color: #0d1b2a;
+  text-decoration: underline;
+}
+
+.input {
+  width: 100%;
+  padding: 11px 14px;
+  border: 1.5px solid #dde2ea;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  color: #0d1b2a;
+  background: #f8f9fb;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.18s, background 0.18s, box-shadow 0.18s;
+}
+
+.input::placeholder {
+  color: #adb5bd;
+}
+
+.input:focus {
+  border-color: #1a1a3e;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(26, 26, 62, 0.08);
+}
+
+/* Checkbox */
+.checkboxRow {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 26px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.checkboxRow input[type='checkbox'] {
+  width: 16px;
+  height: 16px;
+  accent-color: #1a1a3e;
+  cursor: pointer;
+  flex-shrink: 0;
+  border-radius: 4px;
+}
+
+.checkboxLabel {
+  font-size: 0.855rem;
+  color: #344563;
+}
+
+/* Error */
+.error {
+  font-size: 0.82rem;
+  color: #c0392b;
+  background: #fff5f5;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  padding: 9px 12px;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+/* Button */
+.button {
+  width: 100%;
+  padding: 13px 24px;
+  background: #0f0f2d;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  font-family: inherit;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: background 0.18s, transform 0.1s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 46px;
+}
+
+.button:hover:not(:disabled) {
+  background: #1e1e4a;
+}
+
+.button:active:not(:disabled) {
+  transform: scale(0.99);
+}
+
+.button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+/* Spinner */
+.spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: spin 0.65s linear infinite;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Footer */
+.footer {
+  font-size: 0.78rem;
+  color: #8a94a6;
+  text-align: center;
+  margin-top: 28px;
+  margin-bottom: 0;
+}
+
+/* Responsive */
+@media (max-width: 520px) {
+  .card {
+    padding: 36px 28px 32px;
+    border-radius: 12px;
+    margin: 16px;
+  }
+  .title { font-size: 1.35rem; }
+}

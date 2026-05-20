@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'SIA Gestão - Portfólio de Projetos',
+  title: 'Gestor DEDG - Sistema de Gerenciamento de Atividades',
   description: 'Sistema de Gerenciamento de Atividades SIA',
 };
 
