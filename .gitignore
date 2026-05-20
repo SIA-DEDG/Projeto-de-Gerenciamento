@@ -3,7 +3,8 @@ node_modules/
 vendor/bundle/
 
 # Build Rust
-backend/target/
+/backend/target/
+/backend/.env
 
 # Variáveis de ambiente (NUNCA commitar .env com credenciais)
 .env
