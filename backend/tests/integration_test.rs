@@ -50,6 +50,7 @@ async fn integration_task_create_read_update_delete() {
         project_id: None,
         co_responsibles: None,
         external_collaborators: None,
+        deadline: None,
     };
     let created = repo.add_task(task, vec![]).await.unwrap();
     assert!(!created.id.is_nil());
@@ -91,6 +92,7 @@ async fn integration_task_get_all_includes_created() {
         project_id: None,
         co_responsibles: None,
         external_collaborators: None,
+        deadline: None,
     };
     let created = repo.add_task(task, vec![]).await.unwrap();
     let all = repo.get_all_tasks().await.unwrap();
