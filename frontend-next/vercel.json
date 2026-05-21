@@ -1,10 +1,4 @@
 {
   "framework": "nextjs",
-  "outputDirectory": ".next",
-  "build": {
-    "env": {
-      "NEXT_PUBLIC_SUPABASE_URL": "https://tvmbgcagmrzhqpdgwkur.supabase.co",
-      "NEXT_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR2bWJnY2FnbXJ6aHFwZGd3a3VyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY2NTQwNjgsImV4cCI6MjA5MjIzMDA2OH0.1qaqTaite0ehzZZUl86NNwkVoqdwdxtz5tDIb8lP7wc"
-    }
-  }
+  "outputDirectory": ".next"
 }
