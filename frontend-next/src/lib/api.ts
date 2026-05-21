@@ -41,23 +41,23 @@ async function fetchCached<T>(key: string, fetcher: () => Promise<T>): Promise<T
 type RawTask = Omit<Task, 'status_group' | 'badge_color' | 'date'>;
 
 export interface UserPublic {
-  id:                   string;
-  name:                 string;
-  username:             string;
-  role:                 string;
+  id: string;
+  name: string;
+  username: string;
+  role: string;
   must_change_password: boolean;
-  created_at:           string;
+  created_at: string;
 }
 
 export interface ActivityLog {
-  id:          string;
-  user_id:     string;
-  user_name:   string;
-  action:      string;
+  id: string;
+  user_id: string;
+  user_name: string;
+  action: string;
   entity_type: string;
-  entity_id:   string;
-  details:     string;
-  created_at:  string;
+  entity_id: string;
+  details: string;
+  created_at: string;
 }
 
 function enrichTask(rawTask: RawTask): Task {
@@ -65,7 +65,7 @@ function enrichTask(rawTask: RawTask): Task {
     ...rawTask,
     status_group: statusGroup(rawTask.status),
     badge_color: categoryColor(rawTask.category),
-    date: rawTask.created_at,
+    date: rawTask.created_at.slice(0, 10),
   };
 }
 
@@ -120,17 +120,17 @@ export async function createTask(payload: {
   const data = await apiFetch<RawTask>('/api/tasks', {
     method: 'POST',
     body: JSON.stringify({
-      category:               payload.category,
-      activity:               payload.activity,
-      description:            payload.description ?? null,
-      responsible_id:         payload.responsible_id ?? null,
-      status:                 payload.status,
-      priority:               payload.priority || 'Média',
-      created_at:             payload.date || new Date().toISOString().split('T')[0],
-      project_id:             payload.project_id ?? null,
-      co_responsible_ids:     payload.co_responsible_ids ?? null,
+      category: payload.category,
+      activity: payload.activity,
+      description: payload.description ?? null,
+      responsible_id: payload.responsible_id ?? null,
+      status: payload.status,
+      priority: payload.priority || 'Média',
+      created_at: payload.date || new Date().toISOString().split('T')[0],
+      project_id: payload.project_id ?? null,
+      co_responsible_ids: payload.co_responsible_ids ?? null,
       external_collaborators: payload.external_collaborators ?? null,
-      deadline:               payload.deadline ?? null,
+      deadline: payload.deadline ?? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     }),
   });
   cacheInvalidate('tasks');
@@ -162,21 +162,21 @@ export async function updateTask(
   const data = await apiFetch<RawTask>(`/api/tasks/${existing.id}`, {
     method: 'PUT',
     body: JSON.stringify({
-      category:               updates.category               ?? existing.category,
-      activity:               updates.activity               ?? existing.activity,
-      description:            updates.description !== undefined ? updates.description : existing.description,
-      responsible_id:         updates.responsible_id !== undefined ? updates.responsible_id : existing.responsible_id,
+      category: updates.category ?? existing.category,
+      activity: updates.activity ?? existing.activity,
+      description: updates.description !== undefined ? updates.description : existing.description,
+      responsible_id: updates.responsible_id !== undefined ? updates.responsible_id : existing.responsible_id,
       status,
-      priority:               updates.priority               ?? existing.priority,
-      created_at:             updates.date                   ?? existing.created_at,
-      project_id:             updates.project_id !== undefined ? updates.project_id : existing.project_id,
-      co_responsible_ids:     updates.co_responsible_ids !== undefined
+      priority: updates.priority ?? existing.priority,
+      created_at: updates.date ?? existing.created_at,
+      project_id: updates.project_id !== undefined ? updates.project_id : existing.project_id,
+      co_responsible_ids: updates.co_responsible_ids !== undefined
         ? updates.co_responsible_ids
         : parseCoResponsibleIds(existing.co_responsibles),
       external_collaborators: updates.external_collaborators !== undefined
         ? updates.external_collaborators
         : existing.external_collaborators,
-      deadline:               updates.deadline !== undefined ? updates.deadline : existing.deadline,
+      deadline: updates.deadline !== undefined ? updates.deadline : existing.deadline,
     }),
   });
   cacheInvalidate('tasks');
@@ -339,16 +339,16 @@ export async function clearLogs(): Promise<void> {
 
 
 export interface Absence {
-  id:            string;
-  user_id:       string | null;
+  id: string;
+  user_id: string | null;
   employee_name: string;        // name from JOIN — display only
-  reason:        string;
+  reason: string;
   justification: string | null;
-  file_name:     string | null;
-  file_data:     string | null;
-  start_date:    string;
-  end_date:      string;
-  created_at:    string;
+  file_name: string | null;
+  file_data: string | null;
+  start_date: string;
+  end_date: string;
+  created_at: string;
 }
 
 export async function fetchAbsences(): Promise<Absence[]> {
@@ -376,15 +376,15 @@ export async function deleteAbsence(id: string): Promise<void> {
 
 
 export interface CalendarEvent {
-  id:              string;
-  name:            string;
-  responsibles:    string;      // JSON array of names from junction — display only
-  event_type:      string;
-  attendees:       string | null;
-  start_date:      string;
-  end_date:        string;
-  start_time:      string | null;
-  created_at:      string;
+  id: string;
+  name: string;
+  responsibles: string;      // JSON array of names from junction — display only
+  event_type: string;
+  attendees: string | null;
+  start_date: string;
+  end_date: string;
+  start_time: string | null;
+  created_at: string;
 }
 
 export async function fetchEvents(): Promise<CalendarEvent[]> {

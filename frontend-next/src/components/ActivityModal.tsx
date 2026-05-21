@@ -153,6 +153,7 @@ export default function ActivityModal({
   open, task, defaultStatus, defaultResponsible, projects, users, fixedProjectId, onClose, onSave,
 }: Props) {
   const [form, setForm] = useState(EMPTY);
+  const [noDeadline, setNoDeadline] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -161,6 +162,7 @@ export default function ActivityModal({
       const mapped = sg === 'done' ? 'Concluído' : sg === 'in_progress' ? 'Em Andamento' : 'Pendente';
       let coResponsibles: string[] = [];
       try { coResponsibles = task.co_responsibles ? JSON.parse(task.co_responsibles) : []; } catch { coResponsibles = []; }
+      setNoDeadline(!task.deadline);
       setForm({
         activity:               task.activity,
         description:            task.description ?? '',
@@ -175,6 +177,7 @@ export default function ActivityModal({
       });
     } else {
       const pid = fixedProjectId ?? projects[0]?.id ?? null;
+      setNoDeadline(false);
       setForm({ ...EMPTY, status: defaultStatus ?? 'Pendente', project_id: pid, responsible: defaultResponsible ?? '' });
     }
   }, [open, task, defaultStatus, defaultResponsible, projects, fixedProjectId]);
@@ -190,7 +193,7 @@ export default function ActivityModal({
       category:               project?.name ?? '',
       co_responsibles:        form.co_responsibles.length > 0 ? JSON.stringify(form.co_responsibles) : null,
       external_collaborators: form.external_collaborators.trim() || null,
-      deadline:               form.deadline.trim() || null,
+      deadline:               noDeadline ? null : (form.deadline.trim() || null),
     });
   }
 
@@ -296,10 +299,30 @@ export default function ActivityModal({
             </label>
           </div>
 
-          <label className="modal-field">
-            Prazo de Finalização
-            <input type="date" value={form.deadline} onChange={(e) => setForm({ ...form, deadline: e.target.value })} />
-          </label>
+          <div className="modal-field">
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+              <span>Prazo de Finalização</span>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.8rem', color: 'var(--text-muted)', cursor: 'pointer', fontWeight: 400 }}>
+                <input
+                  type="checkbox"
+                  checked={noDeadline}
+                  onChange={(e) => {
+                    setNoDeadline(e.target.checked);
+                    if (e.target.checked) setForm({ ...form, deadline: '' });
+                  }}
+                  style={{ cursor: 'pointer' }}
+                />
+                Indeterminado
+              </label>
+            </div>
+            <input
+              type="date"
+              value={form.deadline}
+              onChange={(e) => setForm({ ...form, deadline: e.target.value })}
+              disabled={noDeadline}
+              style={{ opacity: noDeadline ? 0.4 : 1, width: '100%' }}
+            />
+          </div>
 
           {/* Co-responsáveis */}
           <div className="modal-field">

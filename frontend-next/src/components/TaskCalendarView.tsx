@@ -21,6 +21,12 @@ function ymd(date: Date) {
   return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
 }
 
+function taskInDay(task: Task, dayStr: string): boolean {
+  const start = task.date;
+  const end = task.deadline ?? task.date;
+  return start <= dayStr && end >= dayStr;
+}
+
 function formatDayLabel(dayStr: string): string {
   const date = new Date(dayStr + 'T00:00:00');
   return `${WEEKDAYS_LONG[date.getDay()]}, ${date.getDate()} de ${MONTHS[date.getMonth()]} de ${date.getFullYear()}`;
@@ -55,7 +61,7 @@ function MonthView({ tasks, year, month, todayStr, selectedDay, onDayClick, onVi
           const dayStr = day ? `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}` : '';
           const isToday = dayStr === todayStr;
           const isSel = dayStr === selectedDay;
-          const dayTasks = dayStr ? tasks.filter((task) => task.date === dayStr) : [];
+          const dayTasks = dayStr ? tasks.filter((task) => taskInDay(task, dayStr)) : [];
           const hasPriority = (priorityLabel: string) => dayTasks.some((task) => task.priority === priorityLabel);
           return (
             <div
@@ -159,7 +165,7 @@ function WeekView({ tasks, weekStart, todayStr, onViewTask }: {
       {days.map((dayDate, idx) => {
         const dayStr = ymd(dayDate);
         const isToday = dayStr === todayStr;
-        const dayTasks = tasks.filter((task) => task.date === dayStr);
+        const dayTasks = tasks.filter((task) => taskInDay(task, dayStr));
         return (
           <div key={idx} style={{ borderRight: idx < 6 ? '1px solid var(--border-light)' : 'none', minHeight: 320 }}>
             <div style={{
@@ -254,7 +260,7 @@ function WeekView({ tasks, weekStart, todayStr, onViewTask }: {
 function DayPanel({ dayStr, tasks, onViewTask, onClose }: {
   dayStr: string; tasks: Task[]; onViewTask: (task: Task) => void; onClose: () => void;
 }) {
-  const dayTasks = tasks.filter((task) => task.date === dayStr);
+  const dayTasks = tasks.filter((task) => taskInDay(task, dayStr));
 
   return (
     <div style={{
@@ -422,12 +428,14 @@ export default function TaskCalendarView({ tasks, onViewTask }: Props) {
   const tasksWithDate = tasks.filter((task) => !!task.date);
   const totalInView = viewMode === 'month'
     ? tasksWithDate.filter((task) => {
-        const prefix = `${year}-${String(month+1).padStart(2,'0')}`;
-        return task.date?.startsWith(prefix);
+        const monthFirst = `${year}-${String(month+1).padStart(2,'0')}-01`;
+        const monthLast  = `${year}-${String(month+1).padStart(2,'0')}-${String(new Date(year, month+1, 0).getDate()).padStart(2,'0')}`;
+        const end = task.deadline ?? task.date;
+        return task.date <= monthLast && end >= monthFirst;
       }).length
     : tasksWithDate.filter((task) => {
-        const taskDate = task.date;
-        return taskDate >= ymd(weekStart) && taskDate <= ymd(weekEnd);
+        const end = task.deadline ?? task.date;
+        return task.date <= ymd(weekEnd) && end >= ymd(weekStart);
       }).length;
 
   return (

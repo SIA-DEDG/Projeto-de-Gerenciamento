@@ -8,8 +8,8 @@ import type { Task } from '@/types';
 
 const WEEK_DAYS = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
 const MONTHS = [
-  'Janeiro','Fevereiro','Março','Abril','Maio','Junho',
-  'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro',
+  'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+  'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
 ];
 
 function sameDay(a: Date, b: Date) {
@@ -18,15 +18,20 @@ function sameDay(a: Date, b: Date) {
     a.getDate() === b.getDate();
 }
 
-function parseDate(str: string): Date | null {
-  if (!str) return null;
-  const parsed = new Date(str.includes('T') ? str : str + 'T00:00:00');
-  return isNaN(parsed.getTime()) ? null : parsed;
+function dateToYmd(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
+function taskOnDate(task: Task, date: Date): boolean {
+  const dayStr = dateToYmd(date);
+  const start = task.date;
+  const end = task.deadline ?? task.date;
+  return !!start && start <= dayStr && end >= dayStr;
 }
 
 function priorityColor(priority: string) {
   const normalizedPriority = priority?.toLowerCase();
-  if (normalizedPriority === 'alta')  return '#ef4123';
+  if (normalizedPriority === 'alta') return '#ef4123';
   if (normalizedPriority === 'baixa') return '#007932';
   return '#c07800';
 }
@@ -105,15 +110,15 @@ function TaskQuickModal({ task, onClose }: { task: Task; onClose: () => void }) 
   );
 }
 
-export default function RightPanel({ open, onToggle, filterUser }: {
+export default function RightPanel({ open, onToggle, filterUser}: {
   open: boolean;
   onToggle: () => void;
   filterUser?: string;
 }) {
   const today = new Date();
-  const [selected, setSelected]   = useState(today);
+  const [selected, setSelected] = useState(today);
   const [viewMonth, setViewMonth] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
-  const [tasks, setTasks]         = useState<Task[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [quickTask, setQuickTask] = useState<Task | null>(null);
 
   const loadTasks = useCallback(() => {
@@ -123,9 +128,9 @@ export default function RightPanel({ open, onToggle, filterUser }: {
   useEffect(() => { loadTasks(); }, [loadTasks]);
   useRefetchOnFocus(loadTasks);
 
-  const year        = viewMonth.getFullYear();
-  const month       = viewMonth.getMonth();
-  const firstDOW    = new Date(year, month, 1).getDay();
+  const year = viewMonth.getFullYear();
+  const month = viewMonth.getMonth();
+  const firstDOW = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
 
   const cells: (number | null)[] = [
@@ -135,28 +140,22 @@ export default function RightPanel({ open, onToggle, filterUser }: {
 
   const visibleTasks = filterUser
     ? tasks.filter((task) => {
-        if (task.responsible === filterUser) return true;
-        try {
-          const coResponsibles: string[] = task.co_responsibles ? JSON.parse(task.co_responsibles) : [];
-          return coResponsibles.includes(filterUser);
-        } catch { return false; }
-      })
+      if (task.responsible === filterUser) return true;
+      try {
+        const coResponsibles: string[] = task.co_responsibles ? JSON.parse(task.co_responsibles) : [];
+        return coResponsibles.includes(filterUser);
+      } catch { return false; }
+    })
     : tasks;
 
-  const dayTasks = visibleTasks.filter((task) => {
-    const taskDate = parseDate(task.date);
-    return taskDate && sameDay(taskDate, selected);
-  });
+  const dayTasks = visibleTasks.filter((task) => taskOnDate(task, selected));
 
   function dayPriorities(day: number): string[] {
     const date = new Date(year, month, day);
-    const tasksOnDay = visibleTasks.filter((task) => {
-      const taskDate = parseDate(task.date);
-      return taskDate && sameDay(taskDate, date);
-    });
+    const tasksOnDay = visibleTasks.filter((task) => taskOnDate(task, date));
     const priorities = new Set(tasksOnDay.map((task) => task.priority?.toLowerCase()));
     const result: string[] = [];
-    if (priorities.has('alta'))  result.push('#dc2626');
+    if (priorities.has('alta')) result.push('#dc2626');
     if (priorities.has('média') || priorities.has('media')) result.push('#d97706');
     if (priorities.has('baixa')) result.push('#16a34a');
     if (result.length === 0 && tasksOnDay.length > 0) result.push('#6b778c');
@@ -195,10 +194,10 @@ export default function RightPanel({ open, onToggle, filterUser }: {
           <div className="rp-cal-grid">
             {cells.map((day, i) => {
               if (day === null) return <span key={i} />;
-              const date    = new Date(year, month, day);
+              const date = new Date(year, month, day);
               const isToday = sameDay(date, today);
-              const isSel   = sameDay(date, selected);
-              const dots    = dayPriorities(day);
+              const isSel = sameDay(date, selected);
+              const dots = dayPriorities(day);
               const hasDots = dots.length > 0;
               return (
                 <button

@@ -8,10 +8,11 @@ import RightPanel from './RightPanel';
 import { getUser } from '@/lib/auth';
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
-  const pathname        = usePathname();
-  const isBoard         = pathname === '/' || pathname === '/configuracoes';
-  const isMyActivities  = pathname === '/minhas-atividades';
-  const showPanel       = isBoard || isMyActivities;
+  const pathname = usePathname();
+  const isBoard = pathname === '/';
+  const isConfigurations = pathname === '/configuracoes';
+  const isMyActivities = pathname === '/minhas-atividades';
+  const showPanel = isBoard || isMyActivities;
   const [panelOpen, setPanelOpen] = useState(true);
 
   const filterUser = isMyActivities ? (getUser()?.name ?? undefined) : undefined;
@@ -24,7 +25,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         {children}
 
         {/* Logo no topbar — só em páginas que NÃO são o Board */}
-        {!isBoard && !isMyActivities && (
+        {!isBoard && !isMyActivities && !isConfigurations &&(
           <div className="app-logo-corner">
             <Image
               src="/logo-sia.svg"

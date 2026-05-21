@@ -383,6 +383,37 @@
   background: #ffebe6;
 }
 
+/* ── Name warning ──────────────────────────────────────────────────────────── */
+
+.nameWarning {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  background: #fffbeb;
+  border: 1.5px solid #fbbf24;
+  border-radius: var(--radius-md);
+  margin-top: 4px;
+}
+
+.nameWarningIcon {
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: #b45309;
+}
+
+.nameWarningText {
+  font-size: 0.8rem;
+  color: #78350f;
+  line-height: 1.55;
+}
+
+.nameWarningText strong {
+  font-weight: 700;
+  display: block;
+  margin-bottom: 2px;
+}
+
 /* ── Divider ───────────────────────────────────────────────────────────────── */
 
 .divider {

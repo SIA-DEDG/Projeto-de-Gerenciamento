@@ -26,15 +26,15 @@ import { useRefetchOnFocus } from '@/lib/useRefetchOnFocus';
 import type { Task, StatusGroup, Project } from '@/types';
 
 const COLUMNS: { id: StatusGroup; title: string; dotClass: string }[] = [
-  { id: 'pending',     title: 'Pendentes',    dotClass: 'dot-todo'     },
+  { id: 'pending', title: 'Pendentes', dotClass: 'dot-todo' },
   { id: 'in_progress', title: 'Em Andamento', dotClass: 'dot-progress' },
-  { id: 'done',        title: 'Concluídos',   dotClass: 'dot-done'     },
+  { id: 'done', title: 'Concluídos', dotClass: 'dot-done' },
 ];
 
 const STATUS_MAP: Record<StatusGroup, string> = {
-  pending:     'Pendente',
+  pending: 'Pendente',
   in_progress: 'Em Andamento',
-  done:        'Concluído',
+  done: 'Concluído',
 };
 
 // ── Kanban Column ─────────────────────────────────────────────────────────────
@@ -83,18 +83,18 @@ export default function MinhasAtividadesPage() {
   );
 
   const [currentUser, setCurrentUser] = useState<{ name: string; username: string } | null>(null);
-  const [tasks, setTasks]       = useState<Task[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
-  const [users, setUsers]       = useState<UserPublic[]>([]);
-  const [loading, setLoading]   = useState(true);
-  const [error, setError]       = useState('');
+  const [users, setUsers] = useState<UserPublic[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  const [search, setSearch]                 = useState('');
+  const [search, setSearch] = useState('');
   const [filterPriority, setFilterPriority] = useState('');
-  const [filterProject, setFilterProject]   = useState('');
+  const [filterProject, setFilterProject] = useState('');
   const [filterDateFrom, setFilterDateFrom] = useState('');
-  const [filterDateTo, setFilterDateTo]     = useState('');
-  const [filtersOpen, setFiltersOpen]       = useState(true);
+  const [filterDateTo, setFilterDateTo] = useState('');
+  const [filtersOpen, setFiltersOpen] = useState(true);
 
   const [viewMode, setViewMode] = useState<'kanban' | 'calendar'>('kanban');
 
@@ -119,7 +119,7 @@ export default function MinhasAtividadesPage() {
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
     if (!over) return;
-    const taskId   = active.id as string;
+    const taskId = active.id as string;
     const newGroup = over.id as StatusGroup;
     const draggedTask = tasks.find((existingTask) => existingTask.id === taskId);
     if (!draggedTask || draggedTask.status_group === newGroup) return;
@@ -242,7 +242,7 @@ export default function MinhasAtividadesPage() {
               }}
             >
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-                <rect x="3" y="3" width="7" height="18" rx="1"/><rect x="14" y="3" width="7" height="11" rx="1"/>
+                <rect x="3" y="3" width="7" height="18" rx="1" /><rect x="14" y="3" width="7" height="11" rx="1" />
               </svg>
               Quadro
             </button>
@@ -261,7 +261,7 @@ export default function MinhasAtividadesPage() {
               }}
             >
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-                <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                <rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
               </svg>
               Calendário
             </button>

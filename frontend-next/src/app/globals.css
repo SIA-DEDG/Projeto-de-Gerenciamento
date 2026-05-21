@@ -1016,6 +1016,7 @@ a {
   padding: 6px 8px 10px;
   overflow-y: auto;
   flex: 1;
+  height: auto;
   min-height: 100px;
 }
 
