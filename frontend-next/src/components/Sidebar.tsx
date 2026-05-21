@@ -25,7 +25,7 @@ export default function Sidebar() {
 
   const initials = user?.name
     ? user.name.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase()
-    : 'SIA';
+    : 'VY';
 
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -71,9 +71,9 @@ export default function Sidebar() {
   return (
     <aside className="sidebar">
       <div className="logo">
-        <div className="logo-icon">SIA</div>
+        <div className="logo-icon">VY</div>
         <div className="logo-text">
-          <span className="logo-title">SIA Gestão</span>
+          <span className="logo-title">Vyntra</span>
           <span className="logo-subtitle">Atividades e Projetos</span>
         </div>
       </div>

@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Gestor DEDG - Sistema de Gerenciamento de Atividades',
-  description: 'Sistema de Gerenciamento de Atividades SIA',
+  title: 'Vyntra',
+  description: 'Vyntra — Gestão de Atividades e Projetos',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
