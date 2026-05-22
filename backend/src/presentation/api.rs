@@ -28,30 +28,29 @@ pub struct AppState {
 }
 
 pub fn create_router(state: AppState) -> Router {
-    // Auth endpoints: 5 burst, then 1 request/second per IP (brute-force protection)
-    let auth_limiter = Arc::new(
-        GovernorConfigBuilder::default()
-            .per_second(1)
-            .burst_size(5)
-            .finish()
-            .unwrap(),
-    );
+    // let auth_limiter = Arc::new(
+    //     GovernorConfigBuilder::default()
+    //         .per_second(1)
+    //         .burst_size(5)
+    //         .finish()
+    //         .unwrap(),
+    // );
 
-    // General API: 100 burst, then 50 requests/second per IP
-    let api_limiter = Arc::new(
-        GovernorConfigBuilder::default()
-            .per_second(50)
-            .burst_size(100)
-            .finish()
-            .unwrap(),
-    );
+    // let api_limiter = Arc::new(
+    //     GovernorConfigBuilder::default()
+    //         .per_second(50)
+    //         .burst_size(100)
+    //         .finish()
+    //         .unwrap(),
+    // );
 
     let auth_routes = Router::new()
         .route("/api/auth/login", post(login_handler))
         .route("/api/auth/register", post(register_handler))
         .route("/api/auth/change-password", put(change_password_handler))
         .route("/api/auth/set-initial-password", put(set_initial_password_handler))
-        .layer(GovernorLayer::new(Arc::clone(&auth_limiter)));
+        // .layer(GovernorLayer::new(Arc::clone(&auth_limiter)))
+        ;
 
     let api_routes = Router::new()
         .route("/api/users", get(get_users_handler))
@@ -69,7 +68,8 @@ pub fn create_router(state: AppState) -> Router {
         .route("/api/absences/{id}", delete(delete_absence_handler))
         .route("/api/events", get(get_events_handler).post(create_event_handler))
         .route("/api/events/{id}", put(update_event_handler).delete(delete_event_handler))
-        .layer(GovernorLayer::new(Arc::clone(&api_limiter)));
+        // .layer(GovernorLayer::new(Arc::clone(&api_limiter)))
+        ;
 
     Router::new()
         .merge(auth_routes)

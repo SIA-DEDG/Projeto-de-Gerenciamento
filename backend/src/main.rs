@@ -87,7 +87,8 @@ async fn main() {
         .await
         .unwrap();
     println!("Backend rodando em http://localhost:{}", port);
-    axum::serve(listener, app.into_make_service_with_connect_info::<SocketAddr>())
+    // axum::serve(listener, app.into_make_service_with_connect_info::<SocketAddr>())
+    axum::serve(listener, app)
         .await
         .unwrap();
 }
