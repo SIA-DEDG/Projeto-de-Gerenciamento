@@ -16,30 +16,30 @@ services:
       timeout: 5s
       retries: 5
 
-  backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    environment:
-      HOST: 0.0.0.0
-      PORT: "3001"
-      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/sia_gestor
-    ports:
-      - "3001:3001"
-    depends_on:
-      postgres:
-        condition: service_healthy
+  # backend:
+  #   build:
+  #     context: ./backend
+  #     dockerfile: Dockerfile
+  #   environment:
+  #     HOST: 0.0.0.0
+  #     PORT: "3001"
+  #     DATABASE_URL: postgresql://postgres:postgres@postgres:5432/sia_gestor
+  #   ports:
+  #     - "3001:3001"
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
 
-  frontend:
-    build:
-      context: ./frontend-next
-      dockerfile: Dockerfile
-      args:
-        NEXT_PUBLIC_BACKEND_URL: http://localhost:3001
-    ports:
-      - "3000:3000"
-    depends_on:
-      - backend
+  # frontend:
+  #   build:
+  #     context: ./frontend-next
+  #     dockerfile: Dockerfile
+  #     args:
+  #       NEXT_PUBLIC_BACKEND_URL: http://localhost:3001
+  #   ports:
+  #     - "3000:3000"
+  #   depends_on:
+  #     - backend
 
 volumes:
   postgres_data:

@@ -7,6 +7,7 @@ use axum::{
 };
 use serde::Deserialize;
 use std::sync::Arc;
+use tower_governor::{GovernorLayer, governor::GovernorConfigBuilder};
 use uuid::Uuid;
 
 use crate::application::auth_use_case::AuthService;
@@ -27,57 +28,52 @@ pub struct AppState {
 }
 
 pub fn create_router(state: AppState) -> Router {
-    Router::new()
+    // Auth endpoints: 5 burst, then 1 request/second per IP (brute-force protection)
+    let auth_limiter = Arc::new(
+        GovernorConfigBuilder::default()
+            .per_second(1)
+            .burst_size(5)
+            .finish()
+            .unwrap(),
+    );
+
+    // General API: 100 burst, then 50 requests/second per IP
+    let api_limiter = Arc::new(
+        GovernorConfigBuilder::default()
+            .per_second(50)
+            .burst_size(100)
+            .finish()
+            .unwrap(),
+    );
+
+    let auth_routes = Router::new()
         .route("/api/auth/login", post(login_handler))
         .route("/api/auth/register", post(register_handler))
         .route("/api/auth/change-password", put(change_password_handler))
-        .route(
-            "/api/auth/set-initial-password",
-            put(set_initial_password_handler),
-        )
+        .route("/api/auth/set-initial-password", put(set_initial_password_handler))
+        .layer(GovernorLayer::new(Arc::clone(&auth_limiter)));
+
+    let api_routes = Router::new()
         .route("/api/users", get(get_users_handler))
         .route("/api/users/me", put(update_profile_handler))
         .route("/api/users/{id}", delete(delete_user_handler))
         .route("/api/users/{id}/role", put(update_user_role_handler))
         .route("/api/users/{id}/password", put(admin_reset_password_handler))
-        .route(
-            "/api/tasks",
-            get(get_tasks_handler).post(create_task_handler),
-        )
+        .route("/api/tasks", get(get_tasks_handler).post(create_task_handler))
         .route("/api/tasks/batch", post(create_tasks_batch_handler))
-        .route(
-            "/api/tasks/{id}",
-            get(get_task_handler)
-                .put(update_task_handler)
-                .delete(delete_task_handler),
-        )
-        .route(
-            "/api/projects",
-            get(get_projects_handler).post(create_project_handler),
-        )
-        .route(
-            "/api/projects/{id}",
-            get(get_project_handler)
-                .put(update_project_handler)
-                .delete(delete_project_handler),
-        )
-        .route(
-            "/api/logs",
-            get(get_logs_handler).delete(clear_logs_handler),
-        )
-        .route(
-            "/api/absences",
-            get(get_absences_handler).post(create_absence_handler),
-        )
+        .route("/api/tasks/{id}", get(get_task_handler).put(update_task_handler).delete(delete_task_handler))
+        .route("/api/projects", get(get_projects_handler).post(create_project_handler))
+        .route("/api/projects/{id}", get(get_project_handler).put(update_project_handler).delete(delete_project_handler))
+        .route("/api/logs", get(get_logs_handler).delete(clear_logs_handler))
+        .route("/api/absences", get(get_absences_handler).post(create_absence_handler))
         .route("/api/absences/{id}", delete(delete_absence_handler))
-        .route(
-            "/api/events",
-            get(get_events_handler).post(create_event_handler),
-        )
-        .route(
-            "/api/events/{id}",
-            put(update_event_handler).delete(delete_event_handler),
-        )
+        .route("/api/events", get(get_events_handler).post(create_event_handler))
+        .route("/api/events/{id}", put(update_event_handler).delete(delete_event_handler))
+        .layer(GovernorLayer::new(Arc::clone(&api_limiter)));
+
+    Router::new()
+        .merge(auth_routes)
+        .merge(api_routes)
         .with_state(state)
 }
 

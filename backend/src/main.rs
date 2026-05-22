@@ -1,6 +1,7 @@
 use dotenvy::dotenv;
 use sqlx::postgres::PgPoolOptions;
 use std::env;
+use std::net::SocketAddr;
 use std::sync::Arc;
 use tower_http::cors::{Any, CorsLayer};
 
@@ -86,5 +87,7 @@ async fn main() {
         .await
         .unwrap();
     println!("Backend rodando em http://localhost:{}", port);
-    axum::serve(listener, app).await.unwrap();
+    axum::serve(listener, app.into_make_service_with_connect_info::<SocketAddr>())
+        .await
+        .unwrap();
 }

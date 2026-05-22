@@ -37,7 +37,7 @@ fn secret_key() -> String {
 
 pub fn generate_token(user_id: &str, username: &str, role: &str) -> Result<String, String> {
     let exp = chrono::Utc::now()
-        .checked_add_signed(chrono::Duration::hours(24))
+        .checked_add_signed(chrono::Duration::days(7))
         .expect("overflow no tempo")
         .timestamp() as usize;
 
