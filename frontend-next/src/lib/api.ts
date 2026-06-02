@@ -395,6 +395,9 @@ export interface CalendarEvent {
   start_date: string;
   end_date: string;
   start_time: string | null;
+  is_private?: boolean;
+  is_company_wide?: boolean;
+  created_by_id?: string | null;
   created_at: string;
 }
 
