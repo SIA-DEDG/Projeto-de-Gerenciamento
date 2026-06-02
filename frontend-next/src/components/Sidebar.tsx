@@ -71,9 +71,9 @@ export default function Sidebar() {
   return (
     <aside className="sidebar">
       <div className="logo">
-        <div className="logo-icon">VY</div>
+        <div className="logo-icon">TS</div>
         <div className="logo-text">
-          <span className="logo-title">Vyntra</span>
+          <span className="logo-title">Tasks SIA</span>
           <span className="logo-subtitle">Atividades e Projetos</span>
         </div>
       </div>
