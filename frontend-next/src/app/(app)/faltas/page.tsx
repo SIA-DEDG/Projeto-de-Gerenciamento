@@ -496,7 +496,12 @@ export default function FaltasPage() {
       statsByUser[a.employee_name] = (statsByUser[a.employee_name] ?? 0) + 1;
   }
 
-  const calItems: CalendarItem[] = visibleAbsences.map(a => {
+  // Calendário filtra só por pessoa (sem limite de mês) para funcionar na navegação de meses
+  const calAbsences = filterUserId
+    ? baseAbsences.filter(a => a.user_id === filterUserId)
+    : baseAbsences;
+
+  const calItems: CalendarItem[] = calAbsences.map(a => {
     const rc = reasonColor(a.reason);
     return { id: a.id, label: a.employee_name, start_date: a.start_date, end_date: a.end_date, color: rc.color, bg: rc.bg, subtitle: a.reason };
   });
