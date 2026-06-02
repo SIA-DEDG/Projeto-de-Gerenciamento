@@ -65,7 +65,7 @@ pub fn create_router(state: AppState) -> Router {
         .route("/api/projects/{id}", get(get_project_handler).put(update_project_handler).delete(delete_project_handler))
         .route("/api/logs", get(get_logs_handler).delete(clear_logs_handler))
         .route("/api/absences", get(get_absences_handler).post(create_absence_handler))
-        .route("/api/absences/{id}", delete(delete_absence_handler))
+        .route("/api/absences/{id}", put(update_absence_handler).delete(delete_absence_handler))
         .route("/api/events", get(get_events_handler).post(create_event_handler))
         .route("/api/events/{id}", put(update_event_handler).delete(delete_event_handler))
         // .layer(GovernorLayer::new(Arc::clone(&api_limiter)))
@@ -114,6 +114,14 @@ struct AbsenceInputDto {
     justification: Option<String>,
     file_name: Option<String>,
     file_data: Option<String>,
+    start_date: String,
+    end_date: String,
+}
+
+#[derive(Deserialize)]
+struct AbsenceUpdateDto {
+    reason: String,
+    justification: Option<String>,
     start_date: String,
     end_date: String,
 }
@@ -805,6 +813,31 @@ async fn create_absence_handler(
         )
         .await;
     Ok((StatusCode::CREATED, Json(created)))
+}
+
+async fn update_absence_handler(
+    auth: AuthUser,
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+    Json(dto): Json<AbsenceUpdateDto>,
+) -> Result<Json<Absence>, (StatusCode, String)> {
+    let updated = state
+        .absence_service
+        .update(id, dto.reason, dto.justification, dto.start_date, dto.end_date)
+        .await
+        .map_err(|e| (StatusCode::NOT_FOUND, e))?;
+    let _ = state
+        .log_service
+        .add(
+            parse_uid(&auth.0.sub),
+            &auth.0.username,
+            "UPDATE",
+            "absence",
+            &id.to_string(),
+            "Atualizou justificativa de falta",
+        )
+        .await;
+    Ok(Json(updated))
 }
 
 async fn delete_absence_handler(

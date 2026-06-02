@@ -88,6 +88,9 @@ impl AbsenceService {
     pub async fn get_all(&self) -> Result<Vec<Absence>, String> {
         self.repository.get_all().await
     }
+    pub async fn update(&self, id: uuid::Uuid, reason: String, justification: Option<String>, start_date: String, end_date: String) -> Result<Absence, String> {
+        self.repository.update(id, reason, justification, start_date, end_date).await
+    }
     pub async fn delete(&self, id: uuid::Uuid) -> Result<(), String> {
         self.repository.delete(id).await
     }
@@ -269,6 +272,19 @@ mod tests {
         }
         async fn get_all(&self) -> Result<Vec<Absence>, String> {
             Ok(self.absences.lock().unwrap().clone())
+        }
+        async fn update(&self, id: Uuid, reason: String, justification: Option<String>, start_date: String, end_date: String) -> Result<Absence, String> {
+            let mut absences = self.absences.lock().unwrap();
+            match absences.iter_mut().find(|a| a.id == id) {
+                Some(a) => {
+                    a.reason = reason;
+                    a.justification = justification;
+                    a.start_date = start_date;
+                    a.end_date = end_date;
+                    Ok(a.clone())
+                }
+                None => Err(format!("Falta {} não encontrada", id)),
+            }
         }
         async fn delete(&self, id: Uuid) -> Result<(), String> {
             let mut absences = self.absences.lock().unwrap();

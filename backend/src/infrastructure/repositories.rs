@@ -625,6 +625,28 @@ impl AbsenceRepository for PostgresAbsenceRepository {
             .map_err(|e| e.to_string())
     }
 
+    async fn update(&self, id: Uuid, reason: String, justification: Option<String>, start_date: String, end_date: String) -> Result<Absence, String> {
+        let rows = sqlx::query(
+            r#"UPDATE absences
+               SET reason=$2, justification=$3, start_date=$4::date, end_date=$5::date
+               WHERE id=$1"#,
+        )
+        .bind(id)
+        .bind(&reason)
+        .bind(&justification)
+        .bind(&start_date)
+        .bind(&end_date)
+        .execute(&self.pool)
+        .await
+        .map_err(|e| e.to_string())?;
+        if rows.rows_affected() == 0 {
+            return Err(format!("Falta {} não encontrada", id));
+        }
+        self.get_absence_by_id(id)
+            .await
+            .map(|a| a.expect("falta recém-atualizada"))
+    }
+
     async fn delete(&self, id: Uuid) -> Result<(), String> {
         let delete_result = sqlx::query("DELETE FROM absences WHERE id = $1")
             .bind(id)

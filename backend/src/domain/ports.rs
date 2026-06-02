@@ -39,6 +39,7 @@ pub trait UserRepository: Send + Sync {
 pub trait AbsenceRepository: Send + Sync {
     async fn add(&self, absence: Absence) -> Result<Absence, String>;
     async fn get_all(&self) -> Result<Vec<Absence>, String>;
+    async fn update(&self, id: Uuid, reason: String, justification: Option<String>, start_date: String, end_date: String) -> Result<Absence, String>;
     async fn delete(&self, id: Uuid) -> Result<(), String>;
 }
 
