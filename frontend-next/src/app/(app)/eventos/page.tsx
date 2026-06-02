@@ -153,6 +153,7 @@ function EventPreview({
   const colorPalette = palette(calEvent.id);
   const responsibles = parseResps(calEvent.responsibles);
   const sameDay = calEvent.start_date === calEvent.end_date;
+  const isPast = calEvent.end_date < new Date().toISOString().slice(0, 10);
 
   // Adjust position so popup stays in viewport
   const [pos, setPos] = useState({ left: cursorX + 12, top: cursorY - 8 });
@@ -203,6 +204,7 @@ function EventPreview({
           <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
             <span style={{ background: colorPalette.bg, color: colorPalette.color, borderRadius: 4, padding: '2px 8px', fontSize: '0.72rem', fontWeight: 700 }}>{calEvent.event_type}</span>
             {calEvent.is_private && <span style={{ background: '#f3e8ff', color: '#7c3aed', borderRadius: 4, padding: '2px 8px', fontSize: '0.72rem', fontWeight: 700 }}>Privado</span>}
+            {isPast && <span style={{ background: '#f1f5f9', color: '#64748b', borderRadius: 4, padding: '2px 8px', fontSize: '0.72rem', fontWeight: 700 }}>Passado</span>}
           </div>
         </div>
         <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: '1.1rem', lineHeight: 1, padding: '0 0 0 8px', flexShrink: 0 }}>×</button>
@@ -267,17 +269,20 @@ function EventPreview({
 
 // ── EventChip (month view) ────────────────────────────────────────────────────
 
-function EventChip({ event: calEvent, onClick }: { event: CalendarEvent; onClick: (e: React.MouseEvent) => void }) {
+function EventChip({ event: calEvent, onClick, isPast }: { event: CalendarEvent; onClick: (e: React.MouseEvent) => void; isPast?: boolean }) {
   const colorPalette = palette(calEvent.id);
   const responsibles = parseResps(calEvent.responsibles);
   return (
     <div
       onClick={onClick}
-      style={{ background: colorPalette.bg, borderLeft: `3px solid ${colorPalette.color}`, borderRadius: 4, padding: '3px 6px', marginBottom: 2, cursor: 'pointer' }}
+      style={{ background: isPast ? '#f1f5f9' : colorPalette.bg, borderLeft: `3px solid ${isPast ? '#94a3b8' : colorPalette.color}`, borderRadius: 4, padding: '3px 6px', marginBottom: 2, cursor: 'pointer', opacity: isPast ? 0.75 : 1 }}
     >
-      {calEvent.start_time && <div style={{ fontSize: '0.6rem', color: colorPalette.color, fontWeight: 700, lineHeight: 1, marginBottom: 1 }}>{calEvent.start_time}</div>}
-      <div style={{ fontSize: '0.65rem', fontWeight: 600, color: colorPalette.color, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{calEvent.name}</div>
-      {responsibles.length > 0 && <div style={{ fontSize: '0.58rem', color: colorPalette.color, opacity: 0.8, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{responsibles[0]}{responsibles.length > 1 ? ` +${responsibles.length-1}` : ''}</div>}
+      {isPast
+        ? <div style={{ fontSize: '0.55rem', color: '#94a3b8', fontWeight: 700, lineHeight: 1, marginBottom: 1, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Passado</div>
+        : calEvent.start_time && <div style={{ fontSize: '0.6rem', color: colorPalette.color, fontWeight: 700, lineHeight: 1, marginBottom: 1 }}>{calEvent.start_time}</div>
+      }
+      <div style={{ fontSize: '0.65rem', fontWeight: 600, color: isPast ? '#64748b' : colorPalette.color, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{calEvent.name}</div>
+      {responsibles.length > 0 && <div style={{ fontSize: '0.58rem', color: isPast ? '#94a3b8' : colorPalette.color, opacity: 0.8, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{responsibles[0]}{responsibles.length > 1 ? ` +${responsibles.length-1}` : ''}</div>}
     </div>
   );
 }
@@ -335,7 +340,7 @@ function MonthView({ events, year, month, todayStr, onChipClick, onClickDay }: {
                   }}>{day}</div>
                   <div style={{ display:'flex', flexDirection:'column', gap:2 }}>
                     {dayEvs.slice(0,2).map((calEvent) => (
-                      <EventChip key={calEvent.id} event={calEvent} onClick={(e) => { e.stopPropagation(); onChipClick(calEvent, e); }} />
+                      <EventChip key={calEvent.id} event={calEvent} isPast={calEvent.end_date < todayStr} onClick={(e) => { e.stopPropagation(); onChipClick(calEvent, e); }} />
                     ))}
                     {dayEvs.length > 2 && <div style={{ fontSize:'0.6rem', color:'var(--primary)', fontWeight:600, paddingLeft:4 }}>+{dayEvs.length-2} mais</div>}
                   </div>
@@ -383,21 +388,28 @@ function WeekView({ events, weekStart, todayStr, onChipClick, onClickDay }: {
               {dayEvs.map((calEvent) => {
                 const colorPalette = palette(calEvent.id);
                 const responsibles = parseResps(calEvent.responsibles);
+                const isPast = calEvent.end_date < todayStr;
                 return (
                   <div key={calEvent.id}
                     onClick={(e) => { e.stopPropagation(); onChipClick(calEvent, e); }}
                     style={{
-                      background:colorPalette.bg, borderLeft:`4px solid ${colorPalette.color}`,
+                      background: isPast ? '#f1f5f9' : colorPalette.bg,
+                      borderLeft: `4px solid ${isPast ? '#94a3b8' : colorPalette.color}`,
                       borderRadius:6, padding:'8px 10px', marginBottom:6, cursor:'pointer',
-                      boxShadow:'0 1px 4px rgba(0,0,0,0.06)',
+                      boxShadow:'0 1px 4px rgba(0,0,0,0.06)', opacity: isPast ? 0.75 : 1,
                     }}
                   >
-                    {calEvent.start_time && <div style={{ fontSize:'0.68rem', color:colorPalette.color, fontWeight:700, marginBottom:2 }}>{calEvent.start_time}</div>}
-                    <div style={{ fontSize:'0.78rem', fontWeight:700, color:colorPalette.color, marginBottom:2 }}>{calEvent.name}</div>
-                    {responsibles.length > 0 && <div style={{ fontSize:'0.7rem', color:colorPalette.color, opacity:0.75 }}>{responsibles.slice(0,2).join(', ')}{responsibles.length>2?` +${responsibles.length-2}`:''}</div>}
-                    <div style={{ marginTop:4 }}>
-                      <span style={{ fontSize:'0.62rem', background:'rgba(255,255,255,0.7)', color:colorPalette.color, borderRadius:3, padding:'1px 6px', fontWeight:600 }}>{calEvent.event_type}</span>
-                    </div>
+                    {isPast
+                      ? <div style={{ fontSize:'0.6rem', color:'#94a3b8', fontWeight:700, marginBottom:2, textTransform:'uppercase', letterSpacing:'0.05em' }}>Passado</div>
+                      : calEvent.start_time && <div style={{ fontSize:'0.68rem', color:colorPalette.color, fontWeight:700, marginBottom:2 }}>{calEvent.start_time}</div>
+                    }
+                    <div style={{ fontSize:'0.78rem', fontWeight:700, color: isPast ? '#64748b' : colorPalette.color, marginBottom:2 }}>{calEvent.name}</div>
+                    {responsibles.length > 0 && <div style={{ fontSize:'0.7rem', color: isPast ? '#94a3b8' : colorPalette.color, opacity:0.75 }}>{responsibles.slice(0,2).join(', ')}{responsibles.length>2?` +${responsibles.length-2}`:''}</div>}
+                    {!isPast && (
+                      <div style={{ marginTop:4 }}>
+                        <span style={{ fontSize:'0.62rem', background:'rgba(255,255,255,0.7)', color:colorPalette.color, borderRadius:3, padding:'1px 6px', fontWeight:600 }}>{calEvent.event_type}</span>
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -581,6 +593,15 @@ export default function EventosPage() {
       .sort((a,b)=>a.start_date.localeCompare(b.start_date)).slice(0,5);
   }, [visibleEvents, todayStr]);
 
+  const pastEvents = useMemo(() =>
+    visibleEvents
+      .filter((calEvent) => calEvent.end_date < todayStr)
+      .sort((a, b) => b.end_date.localeCompare(a.end_date)),
+    [visibleEvents, todayStr],
+  );
+
+  const [pastOpen, setPastOpen] = useState(false);
+
   return (
     <>
       <div className="topbar">
@@ -670,6 +691,51 @@ export default function EventosPage() {
               })
             }
           </div>
+
+          {/* Passados */}
+          {pastEvents.length > 0 && (
+            <div style={{ background:'#fff', borderRadius:14, border:'1px solid #e2e8f0', overflow:'hidden', boxShadow:'0 2px 8px rgba(0,0,0,0.04)' }}>
+              <button
+                onClick={() => setPastOpen(o => !o)}
+                style={{ width:'100%', padding:'13px 16px', borderBottom: pastOpen ? '1px solid #e2e8f0' : 'none', display:'flex', alignItems:'center', gap:8, background:'none', border:'none', cursor:'pointer', fontFamily:'inherit', textAlign:'left' }}
+              >
+                <div style={{ width:28, height:28, borderRadius:7, background:'#f1f5f9', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 8 14"/></svg>
+                </div>
+                <span style={{ fontWeight:700, fontSize:'0.85rem', color:'#64748b' }}>Eventos passados</span>
+                <span style={{ marginLeft:'auto', background:'#f1f5f9', color:'#64748b', borderRadius:20, padding:'1px 8px', fontSize:'0.7rem', fontWeight:700 }}>{pastEvents.length}</span>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2.5" style={{ transition:'transform 0.15s', transform: pastOpen ? 'rotate(180deg)' : 'none', flexShrink:0 }}><polyline points="6 9 12 15 18 9"/></svg>
+              </button>
+              {pastOpen && (
+                <div style={{ maxHeight:280, overflowY:'auto' }}>
+                  {pastEvents.map((calEvent) => (
+                    <div key={calEvent.id}
+                      style={{ padding:'9px 14px', borderBottom:'1px solid #f1f5f9', display:'flex', alignItems:'center', gap:8, transition:'background 0.12s' }}
+                      onMouseEnter={e=>(e.currentTarget.style.background='#f8fafc')}
+                      onMouseLeave={e=>(e.currentTarget.style.background='')}>
+                      <div style={{ flex:1, minWidth:0, cursor:'pointer', opacity:0.75 }} onClick={(e)=>handleChipClick(calEvent,e)}>
+                        <div style={{ fontSize:'0.78rem', fontWeight:600, color:'#475569', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{calEvent.name}</div>
+                        <div style={{ fontSize:'0.68rem', color:'#94a3b8', marginTop:1 }}>{formatDateFull(calEvent.start_date)}{calEvent.start_date!==calEvent.end_date?` → ${formatDateFull(calEvent.end_date)}`:''}</div>
+                      </div>
+                      <button
+                        onClick={() => handleDelete(calEvent.id)}
+                        disabled={deleting === calEvent.id}
+                        style={{ background:'#fff5f5', border:'none', cursor:'pointer', color:'#ef4444', padding:'5px', borderRadius:6, display:'flex', flexShrink:0, transition:'background 0.15s' }}
+                        title="Excluir"
+                        onMouseEnter={e=>(e.currentTarget.style.background='#fee2e2')}
+                        onMouseLeave={e=>(e.currentTarget.style.background='#fff5f5')}
+                      >
+                        {deleting===calEvent.id
+                          ? <span style={{fontSize:'0.7rem'}}>…</span>
+                          : <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                        }
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Todos */}
           <div style={{ background:'#fff', borderRadius:14, border:'1px solid var(--border-light)', overflow:'hidden', boxShadow:'0 2px 8px rgba(3,78,162,0.05)' }}>
