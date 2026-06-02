@@ -377,7 +377,7 @@ export default function BoardPage() {
       ) : viewMode === 'calendar' ? (
         <div style={{ padding: '0 20px 20px' }}>
           <TaskCalendarView
-            tasks={tasks}
+            tasks={filteredTasks}
             onViewTask={(task) => setTaskDetail({ open: true, task })}
           />
         </div>
