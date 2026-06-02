@@ -92,9 +92,13 @@ export default function KanbanCard({
         <div className="card-footer-right">
           {task.deadline && (() => {
             const today = new Date().toISOString().split('T')[0];
-            const overdue = task.status_group !== 'done' && task.deadline < today;
+            const soon = new Date(Date.now() + 3 * 86400000).toISOString().split('T')[0];
+            const isDone = task.status_group === 'done';
+            const overdue = !isDone && task.deadline < today;
+            const dueSoon = !isDone && !overdue && task.deadline <= soon;
+            const color = overdue ? '#de350b' : dueSoon ? '#b45309' : undefined;
             return (
-              <span className="card-date" style={{ color: overdue ? '#de350b' : undefined }} title="Prazo de finalização">
+              <span className="card-date" style={{ color, fontWeight: (overdue || dueSoon) ? 700 : undefined }} title={overdue ? 'Atrasado' : dueSoon ? 'Vence em breve' : 'Prazo'}>
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="12" cy="12" r="10" />
                   <polyline points="12 6 12 12 16 14" />

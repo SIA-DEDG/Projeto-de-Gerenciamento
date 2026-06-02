@@ -374,6 +374,17 @@ export async function deleteAbsence(id: string): Promise<void> {
   await apiFetch<void>(`/api/absences/${id}`, { method: 'DELETE' });
 }
 
+export async function updateAbsence(id: string, payload: {
+  reason: string;
+  justification: string | null;
+  start_date: string;
+  end_date: string;
+}): Promise<Absence> {
+  return apiFetch<Absence>(`/api/absences/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  });
+}
 
 export interface CalendarEvent {
   id: string;

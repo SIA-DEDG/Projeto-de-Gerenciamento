@@ -14,30 +14,56 @@ export default function ConfirmModal({
   open, title, message, confirmLabel = 'Confirmar', danger = false, onConfirm, onClose,
 }: Props) {
   if (!open) return null;
+
+  const accentColor = danger ? '#e05c6a' : 'var(--primary)';
+  const accentBg    = danger ? '#fdecea' : '#e8f0fe';
+
   return (
     <div
-      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10000, padding: 16 }}
+      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10000, padding: 16 }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div style={{ background: '#fff', borderRadius: 12, width: '100%', maxWidth: 400, boxShadow: '0 20px 60px rgba(0,0,0,0.2)', overflow: 'hidden' }}>
-        <div style={{ padding: '20px 24px 16px', borderBottom: '1px solid #eef0f2' }}>
-          <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: '#172b4d' }}>{title}</h3>
-          {message && (
-            <p style={{ margin: '8px 0 0', fontSize: '0.875rem', color: '#6b778c', lineHeight: 1.5 }}>{message}</p>
-          )}
+      <div style={{ background: '#fff', borderRadius: 20, width: '100%', maxWidth: 420, boxShadow: '0 24px 64px rgba(0,0,0,0.18)', padding: '36px 32px 28px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0 }}>
+
+        {/* Ícone */}
+        <div style={{ width: 72, height: 72, borderRadius: '50%', background: accentBg, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}>
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke={accentColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2" />
+            <line x1="12" y1="8" x2="12" y2="12" />
+            <line x1="12" y1="16" x2="12.01" y2="16" />
+          </svg>
         </div>
-        <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', padding: '16px 24px' }}>
+
+        {/* Título */}
+        <h3 style={{ margin: '0 0 10px', fontSize: '1.2rem', fontWeight: 700, color: '#1a1a2e', textAlign: 'center' }}>
+          {title}
+        </h3>
+
+        {/* Mensagem */}
+        {message && (
+          <p style={{ margin: '0 0 28px', fontSize: '0.9rem', color: '#7a7f9a', lineHeight: 1.6, textAlign: 'center' }}>
+            {message}
+          </p>
+        )}
+        {!message && <div style={{ marginBottom: 28 }} />}
+
+        {/* Botões */}
+        <div style={{ display: 'flex', gap: 12, width: '100%' }}>
           <button
             type="button"
             onClick={onClose}
-            style={{ padding: '8px 18px', background: 'none', border: '1px solid #dfe1e6', borderRadius: 6, fontFamily: 'inherit', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer', color: '#344563' }}
+            style={{ flex: 1, padding: '13px 0', background: '#fff', border: '1.5px solid #d8dbe8', borderRadius: 12, fontFamily: 'inherit', fontWeight: 600, fontSize: '0.95rem', cursor: 'pointer', color: '#444', transition: 'background 0.15s' }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = '#f5f6fa')}
+            onMouseLeave={(e) => (e.currentTarget.style.background = '#fff')}
           >
             Cancelar
           </button>
           <button
             type="button"
             onClick={() => { onConfirm(); onClose(); }}
-            style={{ padding: '8px 20px', background: danger ? '#de350b' : 'var(--primary)', color: '#fff', border: 'none', borderRadius: 6, fontFamily: 'inherit', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer' }}
+            style={{ flex: 1, padding: '13px 0', background: accentColor, color: '#fff', border: 'none', borderRadius: 12, fontFamily: 'inherit', fontWeight: 600, fontSize: '0.95rem', cursor: 'pointer', transition: 'opacity 0.15s' }}
+            onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.88')}
+            onMouseLeave={(e) => (e.currentTarget.style.opacity = '1')}
           >
             {confirmLabel}
           </button>

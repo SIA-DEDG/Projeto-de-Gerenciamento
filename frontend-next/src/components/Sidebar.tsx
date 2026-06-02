@@ -38,7 +38,7 @@ export default function Sidebar() {
     if (!currentUser) return;
     fetchTasks().then((tasks) => {
       const mine = tasks.filter((task) => {
-        if (task.status_group !== 'pending') return false;
+        if (task.status_group == 'done') return false;
         if (task.responsible === currentUser.name) return true;
         try {
           const coResponsibles: string[] = task.co_responsibles ? JSON.parse(task.co_responsibles) : [];
@@ -109,21 +109,7 @@ export default function Sidebar() {
                 Minhas Atividades
               </span>
               {pendingCount > 0 && (
-                <span style={{
-                  background: '#ef4123',
-                  color: '#fff',
-                  fontSize: '0.65rem',
-                  fontWeight: 700,
-                  borderRadius: 20,
-                  minWidth: 18,
-                  height: 18,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  padding: '0 5px',
-                  flexShrink: 0,
-                  lineHeight: 1,
-                }}>
+                <span style={{ background: '#ef4123', color: '#fff', fontSize: '0.65rem', fontWeight: 700, borderRadius: 20, minWidth: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 5px', flexShrink: 0, lineHeight: 1 }}>
                   {pendingCount > 99 ? '99+' : pendingCount}
                 </span>
               )}

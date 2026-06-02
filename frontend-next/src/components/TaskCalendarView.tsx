@@ -340,7 +340,7 @@ function DayPanel({ dayStr, tasks, onViewTask, onClose }: {
                   </span>
                 </div>
 
-                <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#172b4d', lineHeight: 1.4, marginBottom: 8 }}>
+                <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#172b4d', lineHeight: 1.4, marginBottom: 8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {task.activity}
                 </div>
 
@@ -360,7 +360,7 @@ function DayPanel({ dayStr, tasks, onViewTask, onClose }: {
                     }}>
                       {initials(task.responsible)}
                     </div>
-                    <span style={{ fontSize: '0.75rem', color: '#344563', fontWeight: 500 }}>
+                    <span style={{ fontSize: '0.75rem', color: '#344563', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {task.responsible}
                     </span>
                   </div>

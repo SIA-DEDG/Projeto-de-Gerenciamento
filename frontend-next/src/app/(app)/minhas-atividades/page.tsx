@@ -14,6 +14,8 @@ import ActivityModal from '@/components/ActivityModal';
 import TaskDetailModal from '@/components/TaskDetailModal';
 import KanbanCard from '@/components/KanbanCard';
 import ConfirmModal from '@/components/ConfirmModal';
+import { useToast } from '@/hooks/useToast';
+import ToastContainer from '@/components/ToastContainer';
 import TaskCalendarView from '@/components/TaskCalendarView';
 import {
   fetchTasks, createTask, updateTask, deleteTask,
@@ -78,6 +80,7 @@ function KanbanColumn({
 
 // ── Minhas Atividades Page ────────────────────────────────────────────────────
 export default function MinhasAtividadesPage() {
+  const { toasts, addToast, dismissToast } = useToast();
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
   );
@@ -164,6 +167,7 @@ export default function MinhasAtividadesPage() {
     } else {
       const created = await createTask(payload);
       setTasks((currentTasks) => [...currentTasks, created]);
+      addToast('success', 'Atividade criada', `"${created.activity}" foi adicionada ao quadro.`);
     }
   }
 
@@ -392,6 +396,7 @@ export default function MinhasAtividadesPage() {
         onConfirm={() => confirmDialog?.onConfirm()}
         onClose={() => setConfirmDialog(null)}
       />
+      <ToastContainer toasts={toasts} onDismiss={dismissToast} />
     </>
   );
 }

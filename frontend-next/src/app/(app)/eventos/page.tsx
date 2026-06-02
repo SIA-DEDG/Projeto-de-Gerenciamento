@@ -5,6 +5,10 @@ import {
   fetchEvents, createEvent, updateEvent, deleteEvent, fetchUsers,
   type CalendarEvent, type UserPublic,
 } from '@/lib/api';
+import ConfirmModal from '@/components/ConfirmModal';
+import { useToast } from '@/hooks/useToast';
+import ToastContainer from '@/components/ToastContainer';
+import { getUser } from '@/lib/auth';
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -50,6 +54,81 @@ function parseResps(jsonStr: string): string[] {
 
 function eventsForDay(events: CalendarEvent[], day: string) {
   return events.filter((calEvent) => calEvent.start_date <= day && calEvent.end_date >= day);
+}
+
+const WEEKDAYS_MINI = ['D','S','T','Q','Q','S','S'];
+
+function EventDayPicker({ selected, onChange, initialDate }: {
+  selected: string[];
+  onChange: (days: string[]) => void;
+  initialDate?: string;
+}) {
+  const today = new Date();
+  const init = initialDate ? new Date(initialDate + 'T12:00:00') : today;
+  const [pickYear, setPickYear] = useState(init.getFullYear());
+  const [pickMonth, setPickMonth] = useState(init.getMonth());
+  const firstDOW = new Date(pickYear, pickMonth, 1).getDay();
+  const daysInMonth = new Date(pickYear, pickMonth + 1, 0).getDate();
+  const cells: (number|null)[] = [...Array(firstDOW).fill(null), ...Array.from({length: daysInMonth}, (_, i) => i+1)];
+  const todayStr = ymd(today);
+  function toggle(s: string) {
+    onChange(selected.includes(s) ? selected.filter(d => d !== s) : [...selected, s].sort());
+  }
+  return (
+    <div style={{ border:'1px solid var(--border-light)', borderRadius:7, overflow:'hidden', userSelect:'none', width:'100%', maxWidth:240 }}>
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'5px 8px', background:'var(--bg-subtle)', borderBottom:'1px solid var(--border-light)' }}>
+        <button type="button" onClick={() => { if(pickMonth===0){setPickYear(y=>y-1);setPickMonth(11);}else setPickMonth(m=>m-1); }}
+          style={{ background:'none', border:'none', cursor:'pointer', color:'var(--text-secondary)', fontSize:'0.9rem', lineHeight:1, padding:'2px 5px' }}>‹</button>
+        <span style={{ fontSize:'0.75rem', fontWeight:700, color:'var(--text-primary)' }}>{MONTHS[pickMonth]} {pickYear}</span>
+        <button type="button" onClick={() => { if(pickMonth===11){setPickYear(y=>y+1);setPickMonth(0);}else setPickMonth(m=>m+1); }}
+          style={{ background:'none', border:'none', cursor:'pointer', color:'var(--text-secondary)', fontSize:'0.9rem', lineHeight:1, padding:'2px 5px' }}>›</button>
+      </div>
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(7,1fr)', padding:'3px 6px 0' }}>
+        {WEEKDAYS_MINI.map((w,i) => (
+          <div key={i} style={{ textAlign:'center', fontSize:'0.6rem', fontWeight:700, color:'var(--text-muted)', padding:'2px 0' }}>{w}</div>
+        ))}
+      </div>
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(7,1fr)', padding:'0 6px 6px', gap:1 }}>
+        {cells.map((day, i) => {
+          if (!day) return <div key={i} />;
+          const s = `${pickYear}-${String(pickMonth+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+          const isSel = selected.includes(s);
+          const isToday = s === todayStr;
+          return (
+            <button key={i} type="button" onClick={() => toggle(s)}
+              style={{
+                aspectRatio:'1', borderRadius:'50%', border: isSel ? '2px solid var(--primary)' : '2px solid transparent',
+                cursor:'pointer', fontSize:'0.68rem', fontWeight: isSel||isToday ? 700 : 400,
+                background: isSel ? 'var(--primary)' : isToday ? 'var(--primary-light)' : 'transparent',
+                color: isSel ? '#fff' : isToday ? 'var(--primary)' : 'var(--text-primary)',
+                outline:'none', padding:0,
+              }}>{day}</button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function EventDateRangePicker({ from, to, onChange }: {
+  from: string; to: string;
+  onChange: (from: string, to: string) => void;
+}) {
+  return (
+    <div style={{ display:'flex', gap:10, alignItems:'center' }}>
+      <div style={{ flex:1 }}>
+        <div style={{ fontSize:'0.72rem', fontWeight:600, color:'var(--text-muted)', marginBottom:4 }}>Início</div>
+        <input type="date" value={from} onChange={e => onChange(e.target.value, to < e.target.value ? e.target.value : to)}
+          style={{ ...inp, padding:'7px 10px' }} />
+      </div>
+      <div style={{ fontSize:'0.8rem', color:'var(--text-muted)', marginTop:18 }}>→</div>
+      <div style={{ flex:1 }}>
+        <div style={{ fontSize:'0.72rem', fontWeight:600, color:'var(--text-muted)', marginBottom:4 }}>Fim</div>
+        <input type="date" value={to} min={from} onChange={e => onChange(from, e.target.value)}
+          style={{ ...inp, padding:'7px 10px' }} />
+      </div>
+    </div>
+  );
 }
 
 // ── Preview popup ─────────────────────────────────────────────────────────────
@@ -121,7 +200,10 @@ function EventPreview({
           <div style={{ fontSize: '0.92rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4, wordBreak: 'break-word' }}>
             {calEvent.name}
           </div>
-          <span style={{ background: colorPalette.bg, color: colorPalette.color, borderRadius: 4, padding: '2px 8px', fontSize: '0.72rem', fontWeight: 700 }}>{calEvent.event_type}</span>
+          <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
+            <span style={{ background: colorPalette.bg, color: colorPalette.color, borderRadius: 4, padding: '2px 8px', fontSize: '0.72rem', fontWeight: 700 }}>{calEvent.event_type}</span>
+            {calEvent.is_private && <span style={{ background: '#f3e8ff', color: '#7c3aed', borderRadius: 4, padding: '2px 8px', fontSize: '0.72rem', fontWeight: 700 }}>Privado</span>}
+          </div>
         </div>
         <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: '1.1rem', lineHeight: 1, padding: '0 0 0 8px', flexShrink: 0 }}>×</button>
       </div>
@@ -214,13 +296,15 @@ function MonthView({ events, year, month, todayStr, onChipClick, onClickDay }: {
 
   return (
     <>
-      <div style={{ display:'grid', gridTemplateColumns:'repeat(7,1fr)', borderBottom:'1px solid var(--border-light)' }}>
-        {WEEKDAYS_SHORT.map(w => (
-          <div key={w} style={{ padding:'8px 4px', textAlign:'center', fontSize:'0.72rem', fontWeight:700, color:'var(--text-muted)', textTransform:'uppercase', letterSpacing:'0.05em' }}>{w}</div>
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(7,1fr)', background:'var(--bg-app)', borderBottom:'1px solid var(--border-light)' }}>
+        {WEEKDAYS_SHORT.map((w, i) => (
+          <div key={w} style={{ padding:'10px 4px', textAlign:'center', fontSize:'0.68rem', fontWeight:700, color: i===0||i===6 ? '#94a3b8' : 'var(--text-muted)', textTransform:'uppercase', letterSpacing:'0.06em' }}>{w}</div>
         ))}
       </div>
       <div style={{ display:'grid', gridTemplateColumns:'repeat(7,1fr)' }}>
         {cells.map((day, idx) => {
+          const col = idx % 7;
+          const isWeekend = col === 0 || col === 6;
           const dayStr = day ? `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}` : '';
           const isToday = dayStr === todayStr;
           const dayEvs = dayStr ? eventsForDay(events, dayStr) : [];
@@ -229,27 +313,31 @@ function MonthView({ events, year, month, todayStr, onChipClick, onClickDay }: {
               key={idx}
               onClick={() => day && onClickDay(dayStr)}
               style={{
-                minHeight: 72, padding: '4px 5px',
-                borderRight: (idx+1)%7!==0 ? '1px solid var(--border-light)' : 'none',
+                minHeight: 86, padding: '6px 6px 4px',
+                borderRight: col!==6 ? '1px solid var(--border-light)' : 'none',
                 borderBottom: idx<cells.length-7 ? '1px solid var(--border-light)' : 'none',
-                background: day===null ? '#f8fafc' : '#fff',
+                background: day===null ? 'var(--bg-app)' : isWeekend ? '#fafbfc' : '#fff',
                 cursor: day ? 'pointer' : undefined,
+                transition: 'background 0.12s',
               }}
+              onMouseEnter={e => { if (day) (e.currentTarget as HTMLDivElement).style.background = 'var(--primary-light)'; }}
+              onMouseLeave={e => { if (day) (e.currentTarget as HTMLDivElement).style.background = day===null ? 'var(--bg-app)' : isWeekend ? '#fafbfc' : '#fff'; }}
             >
               {day && (
                 <>
                   <div style={{
-                    fontSize:'0.75rem', fontWeight:isToday?700:500,
-                    color:isToday?'#fff':'var(--text-secondary)',
+                    fontSize:'0.78rem', fontWeight:isToday?800:dayEvs.length>0?600:400,
+                    color:isToday?'#fff':isWeekend?'#94a3b8':'var(--text-secondary)',
                     background:isToday?'var(--primary)':'transparent',
-                    width:22, height:22, borderRadius:'50%',
-                    display:'flex', alignItems:'center', justifyContent:'center', marginBottom:3,
+                    width:26, height:26, borderRadius:'50%',
+                    display:'flex', alignItems:'center', justifyContent:'center', marginBottom:4,
+                    boxShadow: isToday ? '0 2px 6px rgba(3,78,162,0.35)' : 'none',
                   }}>{day}</div>
-                  <div>
+                  <div style={{ display:'flex', flexDirection:'column', gap:2 }}>
                     {dayEvs.slice(0,2).map((calEvent) => (
                       <EventChip key={calEvent.id} event={calEvent} onClick={(e) => { e.stopPropagation(); onChipClick(calEvent, e); }} />
                     ))}
-                    {dayEvs.length > 2 && <div style={{ fontSize:'0.6rem', color:'var(--text-muted)', paddingLeft:4 }}>+{dayEvs.length-2} mais</div>}
+                    {dayEvs.length > 2 && <div style={{ fontSize:'0.6rem', color:'var(--primary)', fontWeight:600, paddingLeft:4 }}>+{dayEvs.length-2} mais</div>}
                   </div>
                 </>
               )}
@@ -326,11 +414,16 @@ function WeekView({ events, weekStart, todayStr, onChipClick, onClickDay }: {
 export default function EventosPage() {
   const now = new Date();
   const todayStr = ymd(now);
+  const me = getUser();
+  const { toasts, addToast, dismissToast } = useToast();
+  const [confirmDialog, setConfirmDialog] = useState<{ title: string; message?: string; onConfirm: () => void } | null>(null);
 
   const [events, setEvents]     = useState<CalendarEvent[]>([]);
   const [users, setUsers]       = useState<UserPublic[]>([]);
   const [loading, setLoading]   = useState(true);
   const [viewMode, setViewMode] = useState<'month'|'week'>('month');
+
+  const visibleEvents = useMemo(() => events, [events]);
   const [year, setYear]         = useState(now.getFullYear());
   const [month, setMonth]       = useState(now.getMonth());
   const [weekStart, setWeekStart] = useState<Date>(() => {
@@ -352,7 +445,10 @@ export default function EventosPage() {
   const [attendees, setAttendees]   = useState('');
   const [startDate, setStartDate]   = useState('');
   const [endDate, setEndDate]       = useState('');
+  const [useRange, setUseRange]       = useState(false);
+  const [selectedDates, setSelectedDates] = useState<string[]>([todayStr]);
   const [startTime, setStartTime]   = useState('');
+  const [isPrivate, setIsPrivate]         = useState(false);
   const [saving, setSaving]         = useState(false);
   const [formErr, setFormErr]       = useState('');
   const [respSearch, setRespSearch] = useState('');
@@ -377,7 +473,10 @@ export default function EventosPage() {
     setPreview(null);
     setEditing(null);
     setEvName(''); setRespList([]); setEvType('Presencial'); setAttendees('');
-    setStartDate(prefDate); setEndDate(prefDate); setStartTime(''); setFormErr('');
+    setSelectedDates([prefDate || todayStr]);
+    setUseRange(false);
+    setStartDate(prefDate || todayStr); setEndDate(prefDate || todayStr);
+    setStartTime(''); setIsPrivate(false); setFormErr('');
     setRespSearch(''); setRespOpen(false);
     setShowModal(true);
   }
@@ -387,30 +486,47 @@ export default function EventosPage() {
     setEditing(ev);
     setEvName(ev.name); setRespList(parseResps(ev.responsibles));
     setEvType(ev.event_type as 'Presencial'|'Online');
-    setAttendees(ev.attendees ?? ''); setStartDate(ev.start_date); setEndDate(ev.end_date);
-    setStartTime(ev.start_time ?? ''); setFormErr(''); setRespSearch(''); setRespOpen(false);
+    setAttendees(ev.attendees ?? '');
+    setSelectedDates([ev.start_date]);
+    setUseRange(ev.start_date !== ev.end_date);
+    setStartDate(ev.start_date); setEndDate(ev.end_date);
+    setStartTime(ev.start_time ?? ''); setIsPrivate(ev.is_private ?? false); setFormErr(''); setRespSearch(''); setRespOpen(false);
     setShowModal(true);
   }
 
   async function handleSave() {
-    if (!evName.trim() || !startDate || !endDate) { setFormErr('Preencha nome, data de início e data de fim.'); return; }
-    if (startDate > endDate) { setFormErr('Data de início não pode ser posterior à data de fim.'); return; }
+    const computedStart = useRange ? startDate : selectedDates[0] ?? '';
+    const computedEnd   = useRange ? endDate   : selectedDates[selectedDates.length - 1] ?? '';
+    if (!evName.trim() || !computedStart) { setFormErr('Preencha nome e data.'); return; }
+    if (useRange && computedStart > computedEnd) { setFormErr('Data de início não pode ser posterior à data de fim.'); return; }
+    if (!useRange && selectedDates.length === 0) { setFormErr('Selecione ao menos um dia.'); return; }
     setFormErr(''); setSaving(true);
     const responsible_ids = respList
       .map((userName) => users.find((user) => user.name === userName)?.id)
       .filter((id): id is string => !!id);
-    const payload = {
+    const basePayload = {
       name: evName.trim(), responsible_ids,
       event_type: evType, attendees: attendees.trim() || null,
-      start_date: startDate, end_date: endDate, start_time: startTime || null,
+      start_time: startTime || null,
+      is_private: isPrivate,
+      is_company_wide: false,
     };
     try {
       if (editing) {
+        const payload = { ...basePayload, start_date: computedStart, end_date: computedEnd };
         const updated = await updateEvent(editing.id, payload);
         setEvents((currentEvents) => currentEvents.map((calEvent) => calEvent.id === updated.id ? updated : calEvent));
+      } else if (!useRange && selectedDates.length > 1) {
+        const created = await Promise.all(
+          selectedDates.map(date => createEvent({ ...basePayload, start_date: date, end_date: date }))
+        );
+        setEvents((currentEvents) => [...created, ...currentEvents]);
+        addToast('success', `${created.length} eventos criados`, `"${evName.trim()}" adicionado para ${created.length} dias.`);
       } else {
+        const payload = { ...basePayload, start_date: computedStart, end_date: computedEnd };
         const created = await createEvent(payload);
         setEvents((currentEvents) => [created, ...currentEvents]);
+        addToast('success', 'Evento criado', `"${created.name}" foi adicionado ao calendário.`);
       }
       setShowModal(false);
     } catch (err: unknown) {
@@ -418,10 +534,16 @@ export default function EventosPage() {
     } finally { setSaving(false); }
   }
 
-  async function handleDelete(id: string) {
-    setDeleting(id);
-    try { await deleteEvent(id); setEvents((currentEvents) => currentEvents.filter((calEvent) => calEvent.id !== id)); }
-    finally { setDeleting(null); }
+  function handleDelete(id: string) {
+    setConfirmDialog({
+      title: 'Excluir evento',
+      message: 'Esta ação não pode ser desfeita.',
+      onConfirm: async () => {
+        setDeleting(id);
+        try { await deleteEvent(id); setEvents((currentEvents) => currentEvents.filter((calEvent) => calEvent.id !== id)); }
+        finally { setDeleting(null); }
+      },
+    });
   }
 
   function toggleResp(name: string) {
@@ -455,9 +577,9 @@ export default function EventosPage() {
   const upcoming = useMemo(() => {
     const limit = new Date(); limit.setDate(limit.getDate()+30);
     const limitStr = ymd(limit);
-    return events.filter((calEvent)=>calEvent.end_date>=todayStr&&calEvent.start_date<=limitStr)
+    return visibleEvents.filter((calEvent)=>calEvent.end_date>=todayStr&&calEvent.start_date<=limitStr)
       .sort((a,b)=>a.start_date.localeCompare(b.start_date)).slice(0,5);
-  }, [events, todayStr]);
+  }, [visibleEvents, todayStr]);
 
   return (
     <>
@@ -472,93 +594,125 @@ export default function EventosPage() {
         {/* Calendar */}
         <div style={{ background:'#fff', borderRadius:14, border:'1px solid var(--border-light)', overflow:'hidden', boxShadow:'0 2px 12px rgba(0,0,0,0.04)' }}>
           {/* Toolbar */}
-          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'14px 18px', borderBottom:'1px solid var(--border-light)', flexWrap:'wrap', gap:10 }}>
-            <div style={{ display:'flex', background:'var(--bg-subtle)', borderRadius:8, padding:3, gap:2 }}>
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'14px 20px', borderBottom:'1px solid var(--border-light)', flexWrap:'wrap', gap:10, background:'#fff' }}>
+            <div style={{ display:'flex', background:'var(--bg-app)', borderRadius:10, padding:3, gap:1 }}>
               {(['week','month'] as const).map(v => (
                 <button key={v} onClick={()=>setViewMode(v)} style={{
                   background:viewMode===v?'#fff':'transparent',
-                  border:viewMode===v?'1px solid var(--border-light)':'1px solid transparent',
-                  borderRadius:6, padding:'5px 14px', fontSize:'0.82rem', fontWeight:600,
+                  border:'none', borderRadius:8, padding:'6px 16px', fontSize:'0.82rem', fontWeight:600,
                   color:viewMode===v?'var(--primary)':'var(--text-muted)', cursor:'pointer',
-                  boxShadow:viewMode===v?'0 1px 4px rgba(0,0,0,0.08)':'none',
+                  boxShadow:viewMode===v?'0 1px 4px rgba(3,78,162,0.1)':'none',
+                  transition:'all 0.15s',
                 }}>{v==='week'?'Semana':'Mês'}</button>
               ))}
             </div>
-            <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+            <div style={{ display:'flex', alignItems:'center', gap:6 }}>
               <button onClick={prevPeriod} style={navBtn}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
               </button>
-              <span style={{ fontWeight:700, fontSize:'0.92rem', color:'var(--text-primary)', minWidth:180, textAlign:'center' }}>{headerLabel}</span>
+              <span style={{ fontWeight:700, fontSize:'1rem', color:'var(--text-primary)', minWidth:190, textAlign:'center', letterSpacing:'-0.3px' }}>{headerLabel}</span>
               <button onClick={nextPeriod} style={navBtn}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"/></svg>
               </button>
             </div>
-            <button onClick={goToday} style={{ background:'none', border:'1px solid var(--border-light)', borderRadius:7, padding:'5px 14px', fontSize:'0.82rem', fontWeight:600, color:'var(--text-secondary)', cursor:'pointer' }}>Hoje</button>
+            <button onClick={goToday} style={{ background:'var(--primary-light)', border:'none', borderRadius:8, padding:'6px 16px', fontSize:'0.82rem', fontWeight:600, color:'var(--primary)', cursor:'pointer', transition:'background 0.15s' }}>Hoje</button>
           </div>
 
           {loading ? (
             <div style={{ padding:48, textAlign:'center', color:'var(--text-muted)' }}>Carregando...</div>
           ) : viewMode==='month' ? (
-            <MonthView events={events} year={year} month={month} todayStr={todayStr}
+            <MonthView events={visibleEvents} year={year} month={month} todayStr={todayStr}
               onChipClick={handleChipClick} onClickDay={(dayStr)=>openNew(dayStr)} />
           ) : (
-            <WeekView events={events} weekStart={weekStart} todayStr={todayStr}
+            <WeekView events={visibleEvents} weekStart={weekStart} todayStr={todayStr}
               onChipClick={handleChipClick} onClickDay={(dayStr)=>openNew(dayStr)} />
           )}
         </div>
 
         {/* Sidebar */}
-        <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
-          <div style={{ background:'#fff', borderRadius:12, border:'1px solid var(--border-light)', overflow:'hidden' }}>
-            <div style={{ padding:'12px 16px', borderBottom:'1px solid var(--border-light)', fontWeight:700, fontSize:'0.78rem', color:'var(--text-muted)', textTransform:'uppercase', letterSpacing:'0.06em' }}>Próximos eventos</div>
-            {upcoming.length===0
-              ? <div style={{ padding:'20px 16px', color:'var(--text-muted)', fontSize:'0.83rem' }}>Nenhum evento nos próximos 30 dias.</div>
-              : upcoming.map((calEvent) => {
-                  const colorPalette = palette(calEvent.id);
-                  const responsibles = parseResps(calEvent.responsibles);
-                  return (
-                    <div key={calEvent.id} onClick={(e)=>handleChipClick(calEvent,e)} style={{ padding:'12px 16px', borderBottom:'1px solid var(--border-light)', cursor:'pointer', display:'flex', gap:10, alignItems:'flex-start' }}>
-                      <div style={{ width:4, borderRadius:4, background:colorPalette.color, alignSelf:'stretch', flexShrink:0 }} />
-                      <div style={{ flex:1, minWidth:0 }}>
-                        <div style={{ fontSize:'0.83rem', fontWeight:600, color:'var(--text-primary)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{calEvent.name}</div>
-                        <div style={{ fontSize:'0.73rem', color:'var(--text-muted)', marginTop:2 }}>
-                          {formatDateFull(calEvent.start_date)}{calEvent.start_date!==calEvent.end_date?` → ${formatDateFull(calEvent.end_date)}`:''}
-                          {calEvent.start_time?` · ${calEvent.start_time}`:''}
-                        </div>
-                        {responsibles.length>0 && <div style={{ fontSize:'0.7rem', color:'var(--text-secondary)', marginTop:2, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{responsibles.join(', ')}</div>}
-                      </div>
-                      <span style={{ background:colorPalette.bg, color:colorPalette.color, borderRadius:4, padding:'2px 7px', fontSize:'0.68rem', fontWeight:600, flexShrink:0 }}>{calEvent.event_type}</span>
+        <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
+          {/* Próximos */}
+          <div style={{ background:'#fff', borderRadius:14, border:'1px solid var(--border-light)', overflow:'hidden', boxShadow:'0 2px 8px rgba(3,78,162,0.05)' }}>
+            <div style={{ padding:'13px 16px', borderBottom:'1px solid var(--border-light)', display:'flex', alignItems:'center', gap:8 }}>
+              <div style={{ width:28, height:28, borderRadius:7, background:'var(--primary-light)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              </div>
+              <span style={{ fontWeight:700, fontSize:'0.85rem', color:'var(--text-primary)' }}>Próximos eventos</span>
+              {upcoming.length>0 && <span style={{ marginLeft:'auto', background:'var(--primary-light)', color:'var(--primary)', borderRadius:20, padding:'1px 8px', fontSize:'0.7rem', fontWeight:700 }}>{upcoming.length}</span>}
+            </div>
+            {upcoming.length===0 ? (
+              <div style={{ padding:'24px 16px', display:'flex', flexDirection:'column', alignItems:'center', gap:8 }}>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ color:'var(--text-muted)', opacity:0.4 }}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                <span style={{ color:'var(--text-muted)', fontSize:'0.8rem', textAlign:'center' }}>Nenhum evento nos próximos 30 dias</span>
+              </div>
+            ) : upcoming.map((calEvent) => {
+                const colorPalette = palette(calEvent.id);
+                const responsibles = parseResps(calEvent.responsibles);
+                return (
+                  <div key={calEvent.id} onClick={(e)=>handleChipClick(calEvent,e)}
+                    style={{ padding:'11px 16px', borderBottom:'1px solid var(--border-light)', cursor:'pointer', display:'flex', gap:10, alignItems:'flex-start', transition:'background 0.12s' }}
+                    onMouseEnter={e=>(e.currentTarget.style.background='var(--bg-app)')}
+                    onMouseLeave={e=>(e.currentTarget.style.background='')}>
+                    <div style={{ width:36, height:36, borderRadius:9, background:colorPalette.bg, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                      <div style={{ width:10, height:10, borderRadius:'50%', background:colorPalette.color }} />
                     </div>
-                  );
-                })
+                    <div style={{ flex:1, minWidth:0 }}>
+                      <div style={{ fontSize:'0.82rem', fontWeight:600, color:'var(--text-primary)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', marginBottom:2 }}>{calEvent.name}</div>
+                      <div style={{ fontSize:'0.7rem', color:'var(--text-muted)' }}>
+                        {formatDateFull(calEvent.start_date)}{calEvent.start_date!==calEvent.end_date?` → ${formatDateFull(calEvent.end_date)}`:''}
+                        {calEvent.start_time?` · ${calEvent.start_time}`:''}
+                      </div>
+                      {responsibles.length>0 && <div style={{ fontSize:'0.68rem', color:'var(--text-secondary)', marginTop:2, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{responsibles.join(', ')}</div>}
+                    </div>
+                    <span style={{ background:colorPalette.bg, color:colorPalette.color, borderRadius:20, padding:'2px 8px', fontSize:'0.65rem', fontWeight:700, flexShrink:0 }}>{calEvent.event_type}</span>
+                  </div>
+                );
+              })
             }
           </div>
 
-          <div style={{ background:'#fff', borderRadius:12, border:'1px solid var(--border-light)', overflow:'hidden' }}>
-            <div style={{ padding:'12px 16px', borderBottom:'1px solid var(--border-light)', fontWeight:700, fontSize:'0.78rem', color:'var(--text-muted)', textTransform:'uppercase', letterSpacing:'0.06em' }}>Todos ({events.length})</div>
+          {/* Todos */}
+          <div style={{ background:'#fff', borderRadius:14, border:'1px solid var(--border-light)', overflow:'hidden', boxShadow:'0 2px 8px rgba(3,78,162,0.05)' }}>
+            <div style={{ padding:'13px 16px', borderBottom:'1px solid var(--border-light)', display:'flex', alignItems:'center', gap:8 }}>
+              <div style={{ width:28, height:28, borderRadius:7, background:'var(--primary-light)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+              </div>
+              <span style={{ fontWeight:700, fontSize:'0.85rem', color:'var(--text-primary)' }}>Todos</span>
+              <span style={{ marginLeft:'auto', background:'var(--primary-light)', color:'var(--primary)', borderRadius:20, padding:'1px 8px', fontSize:'0.7rem', fontWeight:700 }}>{visibleEvents.length}</span>
+            </div>
             <div style={{ maxHeight:320, overflowY:'auto' }}>
-              {events.length===0
-                ? <div style={{ padding:'20px 16px', color:'var(--text-muted)', fontSize:'0.83rem' }}>Nenhum evento.</div>
-                : events.map((calEvent) => {
-                    const colorPalette = palette(calEvent.id);
-                    return (
-                      <div key={calEvent.id} style={{ padding:'10px 14px', borderBottom:'1px solid var(--border-light)', display:'flex', alignItems:'center', gap:8 }}>
-                        <div style={{ width:8, height:8, borderRadius:'50%', background:colorPalette.color, flexShrink:0 }} />
-                        <div style={{ flex:1, minWidth:0, cursor:'pointer' }} onClick={(e)=>handleChipClick(calEvent,e)}>
-                          <div style={{ fontSize:'0.8rem', fontWeight:600, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{calEvent.name}</div>
-                          <div style={{ fontSize:'0.7rem', color:'var(--text-muted)' }}>{formatDateFull(calEvent.start_date)}</div>
-                        </div>
-                        <div style={{ display:'flex', gap:4 }}>
-                          <button onClick={()=>openEdit(calEvent)} style={{ background:'none', border:'none', cursor:'pointer', color:'var(--primary)', padding:'2px 4px' }} title="Editar">
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                          </button>
-                          <button onClick={()=>handleDelete(calEvent.id)} disabled={deleting===calEvent.id} style={{ background:'none', border:'none', cursor:'pointer', color:'#ef4444', padding:'2px 4px' }} title="Excluir">
-                            {deleting===calEvent.id?'…':<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>}
-                          </button>
-                        </div>
+              {visibleEvents.length===0 ? (
+                <div style={{ padding:'24px 16px', display:'flex', flexDirection:'column', alignItems:'center', gap:8 }}>
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ color:'var(--text-muted)', opacity:0.4 }}><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                  <span style={{ color:'var(--text-muted)', fontSize:'0.8rem' }}>Nenhum evento</span>
+                </div>
+              ) : visibleEvents.map((calEvent) => {
+                  const colorPalette = palette(calEvent.id);
+                  return (
+                    <div key={calEvent.id}
+                      style={{ padding:'9px 14px', borderBottom:'1px solid var(--border-light)', display:'flex', alignItems:'center', gap:8, transition:'background 0.12s' }}
+                      onMouseEnter={e=>(e.currentTarget.style.background='var(--bg-app)')}
+                      onMouseLeave={e=>(e.currentTarget.style.background='')}>
+                      <div style={{ width:8, height:8, borderRadius:'50%', background:colorPalette.color, flexShrink:0 }} />
+                      <div style={{ flex:1, minWidth:0, cursor:'pointer' }} onClick={(e)=>handleChipClick(calEvent,e)}>
+                        <div style={{ fontSize:'0.78rem', fontWeight:600, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{calEvent.name}</div>
+                        <div style={{ fontSize:'0.68rem', color:'var(--text-muted)', marginTop:1 }}>{formatDateFull(calEvent.start_date)}</div>
                       </div>
-                    );
-                  })
+                      <div style={{ display:'flex', gap:3 }}>
+                        <button onClick={()=>openEdit(calEvent)} style={{ background:'var(--primary-light)', border:'none', cursor:'pointer', color:'var(--primary)', padding:'5px', borderRadius:6, display:'flex', transition:'background 0.15s' }} title="Editar"
+                          onMouseEnter={e=>(e.currentTarget.style.background='var(--primary-glow)')}
+                          onMouseLeave={e=>(e.currentTarget.style.background='var(--primary-light)')}>
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                        </button>
+                        <button onClick={()=>handleDelete(calEvent.id)} disabled={deleting===calEvent.id} style={{ background:'#fff5f5', border:'none', cursor:'pointer', color:'#ef4444', padding:'5px', borderRadius:6, display:'flex', transition:'background 0.15s' }} title="Excluir"
+                          onMouseEnter={e=>(e.currentTarget.style.background='#fee2e2')}
+                          onMouseLeave={e=>(e.currentTarget.style.background='#fff5f5')}>
+                          {deleting===calEvent.id?<span style={{fontSize:'0.7rem'}}>…</span>:<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>}
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })
               }
             </div>
           </div>
@@ -641,9 +795,70 @@ export default function EventosPage() {
                 <label style={lbl}>Quem vai comparecer</label>
                 <textarea value={attendees} onChange={e=>setAttendees(e.target.value)} rows={2} placeholder="Ex: Equipe de vendas, Diretoria..." style={{ ...inp, resize:'vertical', minHeight:60 }} />
               </div>
-              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
-                <div><label style={lbl}>Data de Início *</label><input type="date" value={startDate} onChange={e=>setStartDate(e.target.value)} style={inp} /></div>
-                <div><label style={lbl}>Data de Fim *</label><input type="date" value={endDate} onChange={e=>setEndDate(e.target.value)} style={inp} /></div>
+              <div>
+                <label style={lbl}>Data(s) *</label>
+                <div style={{ display:'flex', background:'var(--bg-subtle)', border:'1px solid var(--border-light)', borderRadius:9, padding:3, gap:2, marginBottom:12 }}>
+                  {([false, true] as const).map(isRange => (
+                    <button key={String(isRange)} type="button" onClick={() => setUseRange(isRange)}
+                      style={{
+                        flex:1, padding:'6px 0', borderRadius:7, border:'none', cursor:'pointer',
+                        fontSize:'0.83rem', fontWeight:600, fontFamily:'inherit',
+                        background: useRange === isRange ? '#fff' : 'transparent',
+                        color: useRange === isRange ? 'var(--primary)' : 'var(--text-muted)',
+                        boxShadow: useRange === isRange ? '0 1px 4px rgba(0,0,0,0.10)' : 'none',
+                        transition: 'all 0.15s',
+                      }}>
+                      {isRange ? 'Intervalo' : 'Dia único'}
+                    </button>
+                  ))}
+                </div>
+                {useRange ? (
+                  <EventDateRangePicker from={startDate} to={endDate}
+                    onChange={(f, t) => { setStartDate(f); setEndDate(t); }} />
+                ) : (
+                  <div style={{ display:'flex', gap:12, alignItems:'flex-start' }}>
+                    <EventDayPicker selected={selectedDates} onChange={setSelectedDates} initialDate={selectedDates[0]} />
+                    <div style={{ paddingTop:4, flex:1 }}>
+                      <div style={{ fontSize:'0.72rem', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.05em', color:'var(--text-muted)', marginBottom:6 }}>
+                        {selectedDates.length > 1 ? `${selectedDates.length} dias selecionados` : 'Selecionado'}
+                      </div>
+                      {selectedDates.length === 0 ? (
+                        <span style={{ fontSize:'0.78rem', color:'var(--text-muted)', fontStyle:'italic' }}>Nenhum dia selecionado</span>
+                      ) : (
+                        <div style={{ display:'flex', flexDirection:'column', gap:4, maxHeight: selectedDates.length >= 7 ? 140 : 'none', overflowY: selectedDates.length >= 7 ? 'auto' : 'visible', paddingRight: selectedDates.length >= 7 ? 6 : 0 }}>
+                          {selectedDates.map(d => (
+                            <div key={d} style={{ display:'flex', alignItems:'center', gap:4 }}>
+                              <span style={{ background:'var(--primary-light)', color:'var(--primary)', borderRadius:5, padding:'3px 7px', fontSize:'0.75rem', fontWeight:600, flex:1, whiteSpace:'nowrap' }}>
+                                {formatDateFull(d)}
+                              </span>
+                              <button type="button" onClick={() => setSelectedDates(selectedDates.filter(x => x !== d))}
+                                style={{ background:'none', border:'none', cursor:'pointer', color:'var(--text-muted)', fontSize:'0.9rem', lineHeight:1, padding:'0 2px', flexShrink:0 }}>×</button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {selectedDates.length > 1 && (
+                        <div style={{ marginTop:8, fontSize:'0.72rem', color:'var(--text-muted)', fontStyle:'italic' }}>
+                          Serão criados {selectedDates.length} eventos
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+              {/* Toggle de visibilidade */}
+              <div>
+                <div style={{ fontSize:'0.75rem', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.06em', color:'var(--text-muted)', marginBottom:8 }}>Visibilidade</div>
+                <div onClick={() => setIsPrivate((v) => !v)}
+                  style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'10px 14px', borderRadius:8, border:`1.5px solid ${isPrivate ? 'var(--primary)' : 'var(--border-light)'}`, background: isPrivate ? 'var(--primary-light)' : '#fff', cursor:'pointer', userSelect:'none', transition:'all 0.15s' }}>
+                  <div>
+                    <div style={{ fontSize:'0.85rem', fontWeight:600, color: isPrivate ? 'var(--primary)' : 'var(--text-primary)' }}>Privado</div>
+                    <div style={{ fontSize:'0.73rem', color:'var(--text-muted)', marginTop:1 }}>Visível só para você e superiores</div>
+                  </div>
+                  <div style={{ width:38, height:22, borderRadius:11, background: isPrivate ? 'var(--primary)' : '#cbd5e1', position:'relative', transition:'background 0.2s', flexShrink:0 }}>
+                    <div style={{ position:'absolute', top:3, left: isPrivate ? 19 : 3, width:16, height:16, borderRadius:'50%', background:'#fff', transition:'left 0.2s', boxShadow:'0 1px 3px rgba(0,0,0,0.2)' }} />
+                  </div>
+                </div>
               </div>
               {formErr && <p style={{ color:'#ef4444', fontSize:'0.82rem', margin:0 }}>{formErr}</p>}
             </div>
@@ -671,6 +886,17 @@ export default function EventosPage() {
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       </button>
     </div>
+
+    <ConfirmModal
+      open={!!confirmDialog}
+      title={confirmDialog?.title ?? ''}
+      message={confirmDialog?.message}
+      confirmLabel="Excluir"
+      danger
+      onConfirm={() => confirmDialog?.onConfirm()}
+      onClose={() => setConfirmDialog(null)}
+    />
+    <ToastContainer toasts={toasts} onDismiss={dismissToast} />
     </>
   );
 }

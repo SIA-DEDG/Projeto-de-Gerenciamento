@@ -35,6 +35,11 @@ export interface StoredUser {
   role:                 string;
   username:             string;
   must_change_password: boolean;
+  department_id?:       string | null;
+}
+
+export function isAdmin(role: string | undefined): boolean {
+  return role === 'Admin';
 }
 
 // remember=true → localStorage (persiste); false → sessionStorage (limpa ao fechar aba)

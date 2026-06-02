@@ -1,200 +1,293 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { fetchLogs, clearLogs } from '@/lib/api';
 import { getUser } from '@/lib/auth';
 import type { ActivityLog } from '@/lib/api';
+import ConfirmModal from '@/components/ConfirmModal';
+import { useToast } from '@/hooks/useToast';
+import ToastContainer from '@/components/ToastContainer';
 
-const ACTION_LABELS: Record<string, string> = {
-  CREATE: 'Criou',
-  UPDATE: 'Atualizou',
-  DELETE: 'Excluiu',
+const ACTION_LABELS: Record<string, string> = { CREATE: 'Criou', UPDATE: 'Atualizou', DELETE: 'Excluiu' };
+const ENTITY_LABELS: Record<string, string> = { task: 'Atividade', project: 'Projeto', user: 'Usuário', absence: 'Falta', event: 'Evento' };
+const PAGE_SIZE = 50;
+
+const ACTION_STYLE: Record<string, { bg: string; color: string; dot: string }> = {
+  CREATE: { bg: '#dcfce7', color: '#15803d', dot: '#22c55e' },
+  UPDATE: { bg: '#fef9c3', color: '#92400e', dot: '#eab308' },
+  DELETE: { bg: '#fee2e2', color: '#b91c1c', dot: '#ef4444' },
 };
 
-const ENTITY_LABELS: Record<string, string> = {
-  task:    'Atividade',
-  project: 'Projeto',
-  user:    'Usuário',
+const ENTITY_STYLE: Record<string, { bg: string; color: string }> = {
+  task:    { bg: '#dbeafe', color: '#1d4ed8' },
+  project: { bg: '#f3e8ff', color: '#7c3aed' },
+  user:    { bg: '#e0f2fe', color: '#0369a1' },
+  absence: { bg: '#fee2e2', color: '#b91c1c' },
+  event:   { bg: '#dcfce7', color: '#15803d' },
 };
+
+function formatDateTime(iso: string) {
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) {
+    const parts = iso.split(' ');
+    return { date: parts[0] ?? iso, time: parts[1] ?? '' };
+  }
+  return {
+    date: d.toLocaleDateString('pt-BR'),
+    time: d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+  };
+}
+
+function UserAvatar({ name }: { name: string }) {
+  const initials = name.split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase();
+  const colors = ['#034ea2','#15803d','#9333ea','#b91c1c','#0369a1','#be185d'];
+  let h = 0; for (const c of name) h = (h * 31 + c.charCodeAt(0)) | 0;
+  const color = colors[Math.abs(h) % colors.length];
+  return (
+    <div style={{ width: 30, height: 30, borderRadius: '50%', background: color + '18', color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '0.68rem', flexShrink: 0 }}>
+      {initials}
+    </div>
+  );
+}
 
 export default function LogsPage() {
-  const [logs, setLogs]         = useState<ActivityLog[]>([]);
-  const [loading, setLoading]   = useState(true);
-  const [error, setError]       = useState('');
-  const [clearing, setClearing] = useState(false);
+  const [logs, setLogs]           = useState<ActivityLog[]>([]);
+  const [loading, setLoading]     = useState(true);
+  const [error, setError]         = useState('');
+  const [clearing, setClearing]   = useState(false);
   const [filterUser, setFilterUser]     = useState('');
   const [filterEntity, setFilterEntity] = useState('');
+  const [filterAction, setFilterAction] = useState('');
+  const [search, setSearch]       = useState('');
+  const [page, setPage]           = useState(1);
+  const [confirmClear, setConfirmClear] = useState(false);
 
   const isAdmin = getUser()?.role === 'Admin';
+  const { toasts, addToast, dismissToast } = useToast();
 
-  function load(): Promise<void> {
+  function load() {
     setLoading(true);
     return fetchLogs()
       .then(setLogs)
-      .catch((error) => setError(error?.message ?? 'Erro ao carregar logs'))
+      .catch((e) => setError(e?.message ?? 'Erro ao carregar logs'))
       .finally(() => setLoading(false));
   }
 
   useEffect(() => { load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  async function handleClearLogs() {
-    if (!confirm('Tem certeza que deseja apagar TODOS os logs permanentemente? Esta ação não pode ser desfeita.')) return;
+  async function executeClearLogs() {
     setClearing(true);
     try {
-      await clearLogs();
-      await load();
-    } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : 'Erro ao limpar logs');
-    } finally {
-      setClearing(false);
-    }
+      await clearLogs(); await load();
+      addToast('success', 'Logs limpos', 'Todos os registros foram apagados.');
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Erro ao limpar logs');
+    } finally { setClearing(false); }
   }
 
-  const uniqueUsers    = [...new Set(logs.map((log) => log.user_name))].sort();
-  const uniqueEntities = [...new Set(logs.map((log) => log.entity_type))].sort();
+  const uniqueUsers    = useMemo(() => [...new Set(logs.map(l => l.user_name))].sort(), [logs]);
+  const uniqueEntities = useMemo(() => [...new Set(logs.map(l => l.entity_type))].sort(), [logs]);
+  const uniqueActions  = useMemo(() => [...new Set(logs.map(l => l.action))].sort(), [logs]);
 
-  const filtered = logs.filter((log) => {
+  const filtered = useMemo(() => logs.filter(log => {
     if (filterUser   && log.user_name   !== filterUser)   return false;
     if (filterEntity && log.entity_type !== filterEntity) return false;
+    if (filterAction && log.action      !== filterAction) return false;
+    if (search && !log.details?.toLowerCase().includes(search.toLowerCase()) &&
+        !log.user_name?.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
-  });
+  }), [logs, filterUser, filterEntity, filterAction, search]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const safePage   = Math.min(page, totalPages);
+  const pageItems  = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+
+  function changeFilter(fn: () => void) { fn(); setPage(1); }
+
+  const activeFilters = [filterUser, filterEntity, filterAction, search].filter(Boolean).length;
 
   return (
     <>
       <header className="topbar">
-        <div className="topbar-left">
-          <h1>Logs de Atividade</h1>
-        </div>
+        <div className="topbar-left"><h1>Logs de Atividade</h1></div>
         <div className="topbar-right">
           {isAdmin && (
-            <button
-              type="button"
-              onClick={handleClearLogs}
+            <button type="button" onClick={() => setConfirmClear(true)}
               disabled={clearing || logs.length === 0}
-              style={{
-                padding: '7px 16px',
-                background: clearing ? '#f0f1f3' : '#ffebe6',
-                border: '1px solid #de350b',
-                borderRadius: '6px',
-                color: '#de350b',
-                fontSize: '0.82rem',
-                fontWeight: 700,
-                cursor: clearing || logs.length === 0 ? 'not-allowed' : 'pointer',
-                fontFamily: 'inherit',
-                opacity: logs.length === 0 ? 0.5 : 1,
-              }}
-            >
-              {clearing ? 'Limpando…' : 'Limpar todos os logs'}
+              style={{ display:'flex', alignItems:'center', gap:6, padding:'7px 16px', background:'#fff5f5', border:'1px solid #fecaca', borderRadius:8, color:'#dc2626', fontSize:'0.82rem', fontWeight:700, cursor: clearing || logs.length === 0 ? 'not-allowed' : 'pointer', opacity: logs.length === 0 ? 0.5 : 1, fontFamily:'inherit' }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+              {clearing ? 'Limpando…' : 'Limpar logs'}
             </button>
           )}
         </div>
       </header>
 
-      <div style={{ padding: '24px', overflowY: 'auto', flex: 1 }}>
+      <div style={{ padding:'24px 28px', overflowY:'auto', flex:1, display:'flex', flexDirection:'column', gap:16 }}>
         {error && (
-          <div style={{ marginBottom: 16, padding: '10px 16px', background: '#ffebe6', borderRadius: 8, color: '#bf2600', fontSize: '0.88rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ padding:'10px 16px', background:'#fee2e2', borderRadius:8, color:'#b91c1c', fontSize:'0.88rem', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
             <span>{error}</span>
-            <button type="button" onClick={() => setError('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#bf2600', fontWeight: 700, fontSize: '1rem' }}>×</button>
+            <button type="button" onClick={() => setError('')} style={{ background:'none', border:'none', cursor:'pointer', color:'#b91c1c', fontWeight:700, fontSize:'1rem' }}>×</button>
           </div>
         )}
 
-        {/* Filters */}
-        <div style={{ display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
-          <select
-            value={filterUser}
-            onChange={(e) => setFilterUser(e.target.value)}
-            style={{ padding: '6px 10px', borderRadius: 6, border: '1px solid #dfe1e6', fontSize: '0.875rem', fontFamily: 'inherit' }}
-          >
-            <option value="">Todos os usuários</option>
-            {uniqueUsers.map((userName) => <option key={userName} value={userName}>{userName}</option>)}
-          </select>
-          <select
-            value={filterEntity}
-            onChange={(e) => setFilterEntity(e.target.value)}
-            style={{ padding: '6px 10px', borderRadius: 6, border: '1px solid #dfe1e6', fontSize: '0.875rem', fontFamily: 'inherit' }}
-          >
-            <option value="">Todos os tipos</option>
-            {uniqueEntities.map((entityType) => (
-              <option key={entityType} value={entityType}>{ENTITY_LABELS[entityType] ?? entityType}</option>
-            ))}
-          </select>
-          <span style={{ marginLeft: 'auto', fontSize: '0.82rem', color: 'var(--text-muted)', alignSelf: 'center' }}>
+        {/* Filters bar */}
+        <div style={{ background:'#fff', borderRadius:12, border:'1px solid var(--border-light)', padding:'14px 16px', display:'flex', gap:10, alignItems:'center', flexWrap:'wrap', boxShadow:'0 1px 4px rgba(3,78,162,0.05)' }}>
+          {/* Search */}
+          <div style={{ display:'flex', alignItems:'center', gap:8, background:'var(--bg-app)', border:'1px solid var(--border-light)', borderRadius:8, padding:'6px 12px', minWidth:220, flex:1 }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink:0 }}><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" value={search} onChange={e => changeFilter(() => setSearch(e.target.value))}
+              placeholder="Buscar usuário ou detalhes..."
+              style={{ border:'none', outline:'none', background:'none', fontSize:'0.85rem', color:'var(--text-primary)', width:'100%', fontFamily:'inherit' }} />
+            {search && <button onClick={() => changeFilter(() => setSearch(''))} style={{ background:'none', border:'none', cursor:'pointer', color:'var(--text-muted)', lineHeight:1, padding:0, fontSize:'1rem' }}>×</button>}
+          </div>
+
+          {/* Select — Usuário */}
+          <div style={{ position:'relative' }}>
+            <select value={filterUser} onChange={e => changeFilter(() => setFilterUser(e.target.value))}
+              style={{ appearance:'none', background: filterUser ? 'var(--primary-light)' : 'var(--bg-app)', border:`1px solid ${filterUser ? 'var(--primary)' : 'var(--border-light)'}`, borderRadius:8, padding:'6px 32px 6px 10px', fontSize:'0.83rem', fontFamily:'inherit', color: filterUser ? 'var(--primary)' : 'var(--text-secondary)', fontWeight: filterUser ? 600 : 400, cursor:'pointer', outline:'none' }}>
+              <option value="">Todos os usuários</option>
+              {uniqueUsers.map(u => <option key={u} value={u}>{u}</option>)}
+            </select>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ position:'absolute', right:10, top:'50%', transform:'translateY(-50%)', pointerEvents:'none', color: filterUser ? 'var(--primary)' : 'var(--text-muted)' }}><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+
+          {/* Select — Tipo */}
+          <div style={{ position:'relative' }}>
+            <select value={filterEntity} onChange={e => changeFilter(() => setFilterEntity(e.target.value))}
+              style={{ appearance:'none', background: filterEntity ? 'var(--primary-light)' : 'var(--bg-app)', border:`1px solid ${filterEntity ? 'var(--primary)' : 'var(--border-light)'}`, borderRadius:8, padding:'6px 32px 6px 10px', fontSize:'0.83rem', fontFamily:'inherit', color: filterEntity ? 'var(--primary)' : 'var(--text-secondary)', fontWeight: filterEntity ? 600 : 400, cursor:'pointer', outline:'none' }}>
+              <option value="">Todos os tipos</option>
+              {uniqueEntities.map(e => <option key={e} value={e}>{ENTITY_LABELS[e] ?? e}</option>)}
+            </select>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ position:'absolute', right:10, top:'50%', transform:'translateY(-50%)', pointerEvents:'none', color: filterEntity ? 'var(--primary)' : 'var(--text-muted)' }}><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+
+          {/* Select — Ação */}
+          <div style={{ position:'relative' }}>
+            <select value={filterAction} onChange={e => changeFilter(() => setFilterAction(e.target.value))}
+              style={{ appearance:'none', background: filterAction ? 'var(--primary-light)' : 'var(--bg-app)', border:`1px solid ${filterAction ? 'var(--primary)' : 'var(--border-light)'}`, borderRadius:8, padding:'6px 32px 6px 10px', fontSize:'0.83rem', fontFamily:'inherit', color: filterAction ? 'var(--primary)' : 'var(--text-secondary)', fontWeight: filterAction ? 600 : 400, cursor:'pointer', outline:'none' }}>
+              <option value="">Todas as ações</option>
+              {uniqueActions.map(a => <option key={a} value={a}>{ACTION_LABELS[a] ?? a}</option>)}
+            </select>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ position:'absolute', right:10, top:'50%', transform:'translateY(-50%)', pointerEvents:'none', color: filterAction ? 'var(--primary)' : 'var(--text-muted)' }}><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+
+          {activeFilters > 0 && (
+            <button onClick={() => { changeFilter(() => { setFilterUser(''); setFilterEntity(''); setFilterAction(''); setSearch(''); }); }}
+              style={{ background:'none', border:'1px solid var(--border-light)', borderRadius:8, padding:'6px 12px', fontSize:'0.8rem', color:'var(--text-secondary)', cursor:'pointer', display:'flex', alignItems:'center', gap:5, whiteSpace:'nowrap' }}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              Limpar filtros
+            </button>
+          )}
+
+          <span style={{ marginLeft:'auto', fontSize:'0.78rem', color:'var(--text-muted)', whiteSpace:'nowrap' }}>
             {filtered.length} registro{filtered.length !== 1 ? 's' : ''}
           </span>
         </div>
 
-        {loading && <p style={{ color: '#6b778c' }}>Carregando…</p>}
-
-        {!loading && (
-          <div style={{ background: '#fff', borderRadius: 10, border: '1px solid var(--border-light)', boxShadow: 'var(--shadow-card)', overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
+        {/* Table */}
+        {loading ? (
+          <div style={{ padding:48, textAlign:'center', color:'var(--text-muted)' }}>Carregando…</div>
+        ) : (
+          <div style={{ background:'#fff', borderRadius:14, border:'1px solid var(--border-light)', overflow:'hidden', boxShadow:'0 2px 12px rgba(3,78,162,0.06)' }}>
+            <table style={{ width:'100%', borderCollapse:'collapse', fontSize:'0.845rem' }}>
               <thead>
-                <tr style={{ borderBottom: '1px solid var(--border-light)', background: 'var(--bg-subtle)' }}>
-                  <th style={thStyle}>Data/Hora</th>
-                  <th style={thStyle}>Usuário</th>
-                  <th style={thStyle}>Ação</th>
-                  <th style={thStyle}>Tipo</th>
-                  <th style={thStyle}>Detalhes</th>
+                <tr style={{ background:'var(--bg-app)' }}>
+                  {['Data / Hora','Usuário','Ação','Tipo','Detalhes'].map(h => (
+                    <th key={h} style={{ padding:'10px 16px', textAlign:'left', fontWeight:700, color:'var(--text-muted)', fontSize:'0.7rem', textTransform:'uppercase', letterSpacing:'0.06em', borderBottom:'1px solid var(--border-light)', whiteSpace:'nowrap' }}>{h}</th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
-                {filtered.length === 0 && (
-                  <tr>
-                    <td colSpan={5} style={{ padding: '32px', color: '#6b778c', textAlign: 'center' }}>
-                      Nenhum log encontrado.
-                    </td>
-                  </tr>
+                {pageItems.length === 0 && (
+                  <tr><td colSpan={5} style={{ padding:48, textAlign:'center', color:'var(--text-muted)' }}>Nenhum log encontrado.</td></tr>
                 )}
-                {filtered.map((log) => (
-                  <tr key={log.id} style={{ borderBottom: '1px solid #f0f1f3' }}>
-                    <td style={{ ...tdStyle, color: 'var(--text-muted)', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>{log.created_at}</td>
-                    <td style={tdStyle}>
-                      <span style={{ fontWeight: 600 }}>{log.user_name}</span>
-                    </td>
-                    <td style={tdStyle}>
-                      <span style={{ ...actionBadge, ...actionColor(log.action) }}>
-                        {ACTION_LABELS[log.action] ?? log.action}
-                      </span>
-                    </td>
-                    <td style={tdStyle}>{ENTITY_LABELS[log.entity_type] ?? log.entity_type}</td>
-                    <td style={{ ...tdStyle, color: 'var(--text-secondary)' }}>{log.details}</td>
-                  </tr>
-                ))}
+                {pageItems.map((log, idx) => {
+                  const { date, time } = formatDateTime(log.created_at);
+                  const actionStyle = ACTION_STYLE[log.action] ?? { bg: '#f1f5f9', color: '#475569', dot: '#94a3b8' };
+                  const entityStyle = ENTITY_STYLE[log.entity_type] ?? { bg: '#f1f5f9', color: '#475569' };
+                  return (
+                    <tr key={log.id}
+                      style={{ borderBottom: idx < pageItems.length - 1 ? '1px solid var(--border-light)' : 'none', transition:'background 0.12s' }}
+                      onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-app)')}
+                      onMouseLeave={e => (e.currentTarget.style.background = '')}>
+                      {/* Date */}
+                      <td style={{ padding:'11px 16px', whiteSpace:'nowrap' }}>
+                        <div style={{ fontSize:'0.82rem', fontWeight:600, color:'var(--text-primary)' }}>{date}</div>
+                        <div style={{ fontSize:'0.72rem', color:'var(--text-muted)', marginTop:1 }}>{time}</div>
+                      </td>
+                      {/* User */}
+                      <td style={{ padding:'11px 16px' }}>
+                        <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                          <UserAvatar name={log.user_name} />
+                          <span style={{ fontWeight:600, color:'var(--text-primary)', whiteSpace:'nowrap' }}>{log.user_name}</span>
+                        </div>
+                      </td>
+                      {/* Action */}
+                      <td style={{ padding:'11px 16px' }}>
+                        <span style={{ display:'inline-flex', alignItems:'center', gap:5, background:actionStyle.bg, color:actionStyle.color, borderRadius:20, padding:'3px 10px', fontSize:'0.72rem', fontWeight:700, whiteSpace:'nowrap' }}>
+                          <span style={{ width:6, height:6, borderRadius:'50%', background:actionStyle.dot, flexShrink:0 }} />
+                          {ACTION_LABELS[log.action] ?? log.action}
+                        </span>
+                      </td>
+                      {/* Entity */}
+                      <td style={{ padding:'11px 16px' }}>
+                        <span style={{ background:entityStyle.bg, color:entityStyle.color, borderRadius:6, padding:'2px 9px', fontSize:'0.72rem', fontWeight:600, whiteSpace:'nowrap' }}>
+                          {ENTITY_LABELS[log.entity_type] ?? log.entity_type}
+                        </span>
+                      </td>
+                      {/* Details */}
+                      <td style={{ padding:'11px 16px', color:'var(--text-secondary)', fontSize:'0.83rem', maxWidth:360 }}>
+                        <span style={{ display:'block', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{log.details}</span>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
+
+            {/* Pagination */}
+            <div style={{ padding:'12px 16px', borderTop:'1px solid var(--border-light)', display:'flex', alignItems:'center', justifyContent:'space-between', flexWrap:'wrap', gap:8 }}>
+              <span style={{ fontSize:'0.78rem', color:'var(--text-muted)' }}>
+                {filtered.length === 0 ? '0' : `${(safePage - 1) * PAGE_SIZE + 1}–${Math.min(safePage * PAGE_SIZE, filtered.length)}`} de {filtered.length}
+              </span>
+              <div style={{ display:'flex', gap:4, alignItems:'center' }}>
+                <button onClick={() => setPage(1)} disabled={safePage === 1} style={pgBtn(safePage === 1)} title="Primeira">«</button>
+                <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={safePage === 1} style={pgBtn(safePage === 1)} title="Anterior">‹</button>
+                {Array.from({ length: Math.min(7, totalPages) }, (_, i) => {
+                  let p: number;
+                  if (totalPages <= 7) p = i + 1;
+                  else if (safePage <= 4) p = i + 1;
+                  else if (safePage >= totalPages - 3) p = totalPages - 6 + i;
+                  else p = safePage - 3 + i;
+                  return (
+                    <button key={p} onClick={() => setPage(p)}
+                      style={{ ...pgBtn(false), background: p === safePage ? 'var(--primary)' : 'transparent', color: p === safePage ? '#fff' : 'var(--text-secondary)', fontWeight: p === safePage ? 700 : 400, border: p === safePage ? 'none' : '1px solid var(--border-light)' }}>
+                      {p}
+                    </button>
+                  );
+                })}
+                <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={safePage === totalPages} style={pgBtn(safePage === totalPages)} title="Próxima">›</button>
+                <button onClick={() => setPage(totalPages)} disabled={safePage === totalPages} style={pgBtn(safePage === totalPages)} title="Última">»</button>
+              </div>
+            </div>
           </div>
         )}
       </div>
+
+      <ConfirmModal open={confirmClear} title="Limpar todos os logs"
+        message="Todos os registros serão apagados permanentemente. Esta ação não pode ser desfeita."
+        confirmLabel="Limpar" danger onConfirm={executeClearLogs} onClose={() => setConfirmClear(false)} />
+      <ToastContainer toasts={toasts} onDismiss={dismissToast} />
     </>
   );
 }
 
-const thStyle: React.CSSProperties = {
-  padding: '10px 16px',
-  fontWeight: 600,
-  color: '#6b778c',
-  fontSize: '0.75rem',
-  textTransform: 'uppercase',
-  letterSpacing: '0.04em',
-  textAlign: 'left',
-};
-
-const tdStyle: React.CSSProperties = {
-  padding: '11px 16px',
-  color: '#172b4d',
-  verticalAlign: 'middle',
-};
-
-const actionBadge: React.CSSProperties = {
-  display: 'inline-block',
-  padding: '3px 10px',
-  borderRadius: 12,
-  fontSize: '0.75rem',
-  fontWeight: 600,
-};
-
-function actionColor(action: string): React.CSSProperties {
-  if (action === 'CREATE') return { background: '#e3fcef', color: '#006644' };
-  if (action === 'DELETE') return { background: '#ffebe6', color: '#bf2600' };
-  return { background: '#fffae6', color: '#ff8b00' };
+function pgBtn(disabled: boolean): React.CSSProperties {
+  return {
+    minWidth: 32, height: 32, borderRadius: 8, border: '1px solid var(--border-light)',
+    background: 'transparent', color: disabled ? 'var(--text-muted)' : 'var(--text-secondary)',
+    cursor: disabled ? 'not-allowed' : 'pointer', fontSize: '0.82rem', fontWeight: 500,
+    opacity: disabled ? 0.4 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
+    padding: '0 4px',
+  };
 }

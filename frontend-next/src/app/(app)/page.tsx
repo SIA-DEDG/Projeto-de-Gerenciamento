@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
@@ -15,16 +15,17 @@ import TaskDetailModal from '@/components/TaskDetailModal';
 import ImportModal from '@/components/ImportModal';
 import KanbanCard from '@/components/KanbanCard';
 import ConfirmModal from '@/components/ConfirmModal';
+import { useToast } from '@/hooks/useToast';
+import ToastContainer from '@/components/ToastContainer';
 import TaskCalendarView from '@/components/TaskCalendarView';
 import {
   fetchTasks, createTask, updateTask, deleteTask,
   fetchProjects,
-  fetchTeamMembers,
   fetchUsers,
 } from '@/lib/api';
 import type { UserPublic } from '@/lib/api';
 import { useRefetchOnFocus } from '@/lib/useRefetchOnFocus';
-import type { Task, StatusGroup, Project, TeamMember } from '@/types';
+import type { Task, StatusGroup, Project } from '@/types';
 
 const COLUMNS: { id: StatusGroup; title: string; dotClass: string }[] = [
   { id: 'pending',    title: 'Pendentes',   dotClass: 'dot-todo'     },
@@ -86,6 +87,7 @@ function KanbanColumn({
 
 // ── Board Page ────────────────────────────────────────────────────────────────
 export default function BoardPage() {
+  const { toasts, addToast, dismissToast } = useToast();
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
   );
@@ -94,7 +96,6 @@ export default function BoardPage() {
   const [error, setError] = useState('');
 
   const [projects, setProjects] = useState<Project[]>([]);
-  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [users, setUsers] = useState<UserPublic[]>([]);
 
   const [search, setSearch] = useState('');
@@ -118,11 +119,10 @@ export default function BoardPage() {
   const [confirmDialog, setConfirmDialog] = useState<{ title: string; message?: string; onConfirm: () => void } | null>(null);
 
   const load = useCallback(() => {
-    Promise.all([fetchTasks(), fetchProjects(), fetchTeamMembers(), fetchUsers()])
-      .then(([tasks, fetchedProjects, members, allUsers]) => {
+    Promise.all([fetchTasks(), fetchProjects(), fetchUsers()])
+      .then(([tasks, fetchedProjects, allUsers]) => {
         setTasks(tasks);
         setProjects(fetchedProjects);
-        setTeamMembers(members);
         setUsers(allUsers.filter((user) => user.role !== 'Admin'));
       })
       .catch((error) => setError(`Erro: ${error?.message ?? error}`))
@@ -180,6 +180,7 @@ export default function BoardPage() {
     } else {
       const created = await createTask(payload);
       setTasks((currentTasks) => [...currentTasks, created]);
+      addToast('success', 'Atividade criada', `"${created.activity}" foi adicionada ao quadro.`);
     }
   }
 
@@ -210,6 +211,21 @@ export default function BoardPage() {
     }),
     [tasks, filterUser, filterPriority, filterProject, filterDateFrom, filterDateTo, search],
   );
+
+  function exportCSV() {
+    const header = ['Atividade', 'Categoria', 'Responsável', 'Status', 'Prioridade', 'Prazo', 'Criado em', 'Projeto', 'Co-responsáveis', 'Colaboradores externos'];
+    const rows = filteredTasks.map(t => {
+      const projectName = projects.find(p => p.id === t.project_id)?.name ?? '';
+      const coResp = t.co_responsibles ? (() => { try { return (JSON.parse(t.co_responsibles!) as string[]).join('; '); } catch { return ''; } })() : '';
+      return [t.activity, t.category, t.responsible, t.status, t.priority, t.deadline ?? '', t.date, projectName, coResp, t.external_collaborators ?? ''];
+    });
+    const csv = [header, ...rows].map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `atividades_${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+  }
 
   const tasksByGroup = useCallback(
     (statusGroup: StatusGroup) => filteredTasks.filter((task) => task.status_group === statusGroup),
@@ -275,6 +291,18 @@ export default function BoardPage() {
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
+          <button
+            type="button"
+            onClick={exportCSV}
+            disabled={filteredTasks.length === 0}
+            title="Exportar atividades visíveis como CSV"
+            style={{ display:'flex', alignItems:'center', gap:6, padding:'7px 13px', borderRadius:7, border:'1px solid var(--border-light)', background:'#fff', color:'var(--text-secondary)', fontSize:'0.82rem', fontWeight:600, cursor: filteredTasks.length === 0 ? 'not-allowed' : 'pointer', opacity: filteredTasks.length === 0 ? 0.5 : 1, fontFamily:'inherit' }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            CSV
+          </button>
         </div>
       </div>
 
@@ -416,7 +444,7 @@ export default function BoardPage() {
               <button type="button" className="modal-close-btn" onClick={() => setProjectsModal(false)}>&times;</button>
             </div>
             <p style={{ fontSize: '0.82rem', color: '#6b778c', marginBottom: '12px' }}>
-              Gerencie projetos na aba <strong>Relatórios</strong>.
+              Gerencie projetos na aba <strong>Projetos</strong>.
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '300px', overflowY: 'auto' }}>
               {projects.length === 0 ? (
@@ -431,6 +459,7 @@ export default function BoardPage() {
           </div>
         </div>
       )}
+      <ToastContainer toasts={toasts} onDismiss={dismissToast} />
     </>
   );
 }

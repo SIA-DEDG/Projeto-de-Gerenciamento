@@ -6,34 +6,14 @@ import { changePassword, updateUserProfile } from '@/lib/api';
 import { getSettings, saveSettings } from '@/lib/localStorage';
 import type { Settings } from '@/types';
 import s from './configuracoes.module.css';
+import { User, Lock, Settings2, KeyRound, ShieldCheck, Bell, RefreshCw, Mail, Save, Check } from 'lucide-react';
 
 type Section = 'perfil' | 'seguranca' | 'sistema';
 
-const NAV: { id: Section; label: string; icon: React.ReactNode }[] = [
-  {
-    id: 'perfil',
-    label: 'Informações Pessoais',
-    icon: (
-      <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" /><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" /></svg>
-    ),
-  },
-  {
-    id: 'seguranca',
-    label: 'Segurança',
-    icon: (
-      <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
-    ),
-  },
-  {
-    id: 'sistema',
-    label: 'Sistema',
-    icon: (
-      <svg viewBox="0 0 24 24">
-        <circle cx="12" cy="12" r="3" />
-        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
-      </svg>
-    ),
-  },
+const NAV: { id: Section; label: string; Icon: React.ElementType }[] = [
+  { id: 'perfil',    label: 'Informações Pessoais', Icon: User },
+  { id: 'seguranca', label: 'Segurança',             Icon: Lock },
+  { id: 'sistema',   label: 'Sistema',               Icon: Settings2 },
 ];
 
 export default function ConfiguracoesPage() {
@@ -51,7 +31,7 @@ export default function ConfiguracoesPage() {
                     className={`${s.navItem}${section === item.id ? ' ' + s.active : ''}`}
                     onClick={() => setSection(item.id)}
                   >
-                    <span className={s.navIcon}>{item.icon}</span>
+                    <span className={s.navIcon}><item.Icon size={15} strokeWidth={2} /></span>
                     {item.label}
                   </button>
                 </li>
@@ -126,60 +106,46 @@ function PerfilSection() {
       </div>
 
       <form onSubmit={handleSave}>
-        <div className={s.fieldGroup}>
-          <div className={s.field}>
-            <label className={s.label} htmlFor="pf-name">Nome de exibição</label>
-            <input
-              id="pf-name"
-              type="text"
-              className={s.input}
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              maxLength={80}
-            />
-            <div className={s.nameWarning}>
-              <svg className={s.nameWarningIcon} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-                <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
-              </svg>
-              <p className={s.nameWarningText}>
-                <strong>Atenção: o nome é usado na importação via planilha.</strong>
-                Alterar o nome aqui quebra o vínculo com a coluna de responsável nas planilhas de importação. Caso seja necessário alterar, comunique previamente a diretoria ou gerência para que as planilhas sejam atualizadas.
-              </p>
+        <div className={s.card}>
+          <div className={s.cardTitle}>
+            <User size={12} strokeWidth={2.5} />
+            Dados da conta
+          </div>
+          <div className={s.fieldGroup}>
+            <div className={s.field}>
+              <label className={s.label} htmlFor="pf-name">Nome de exibição</label>
+              <input id="pf-name" type="text" className={s.input} value={name} onChange={(e) => setName(e.target.value)} maxLength={80} />
+              <div className={s.nameWarning}>
+                <svg className={s.nameWarningIcon} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                  <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+                <p className={s.nameWarningText}>
+                  <strong>Atenção: o nome é usado na importação via planilha.</strong>
+                  Alterar quebra o vínculo com a coluna de responsável. Comunique previamente a diretoria.
+                </p>
+              </div>
             </div>
-          </div>
-
-          <div className={s.field}>
-            <label className={s.label} htmlFor="pf-username">Usuário</label>
-            <input
-              id="pf-username"
-              type="text"
-              className={s.input}
-              value={user?.username ?? ''}
-              disabled
-            />
-            <span className={s.inputHint}>O usuário não pode ser alterado por aqui.</span>
-          </div>
-
-          <div className={s.field}>
-            <label className={s.label} htmlFor="pf-role">Cargo / Perfil</label>
-            <input
-              id="pf-role"
-              type="text"
-              className={s.input}
-              value={user?.role ?? ''}
-              disabled
-            />
-            <span className={s.inputHint}>Somente administradores podem alterar o perfil.</span>
+            <div className={s.field}>
+              <label className={s.label} htmlFor="pf-username">Usuário</label>
+              <input id="pf-username" type="text" className={s.input} value={user?.username ?? ''} disabled />
+              <span className={s.inputHint}>O usuário não pode ser alterado por aqui.</span>
+            </div>
+            <div className={s.field}>
+              <label className={s.label} htmlFor="pf-role">Cargo / Perfil</label>
+              <input id="pf-role" type="text" className={s.input} value={user?.role ?? ''} disabled />
+              <span className={s.inputHint}>Somente administradores podem alterar o perfil.</span>
+            </div>
           </div>
         </div>
 
         <div className={s.actions}>
           <button type="submit" className={s.btnPrimary} disabled={loading}>
-            {loading ? 'Salvando…' : 'Salvar alterações'}
+            {loading ? <><RefreshCw size={14} strokeWidth={2} style={{ animation: 'spin 1s linear infinite' }} /> Salvando…</> : <><Save size={14} strokeWidth={2} /> Salvar alterações</>}
           </button>
           {feedback && (
             <span className={`${s.feedback} ${feedback.type === 'success' ? s.feedbackSuccess : s.feedbackError}`}>
+              {feedback.type === 'success' ? <Check size={13} strokeWidth={2.5} /> : null}
               {feedback.msg}
             </span>
           )}
@@ -224,55 +190,37 @@ function SegurancaSection() {
       </div>
 
       <form onSubmit={handleSave}>
-        <div className={s.fieldGroup}>
-          <div className={s.field}>
-            <label className={s.label} htmlFor="sec-current">Senha atual</label>
-            <input
-              id="sec-current"
-              type="password"
-              className={s.input}
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              autoComplete="new-password"
-              placeholder="Digite sua senha atual"
-            />
+        <div className={s.card}>
+          <div className={s.cardTitle}><KeyRound size={12} strokeWidth={2.5} /> Senha atual</div>
+          <div className={s.fieldGroup}>
+            <div className={s.field}>
+              <label className={s.label} htmlFor="sec-current">Senha atual</label>
+              <input id="sec-current" type="password" className={s.input} value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} autoComplete="new-password" placeholder="Digite sua senha atual" />
+            </div>
           </div>
+        </div>
 
-          <div className={s.divider} />
-
-          <div className={s.field}>
-            <label className={s.label} htmlFor="sec-new">Nova senha</label>
-            <input
-              id="sec-new"
-              type="password"
-              className={s.input}
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              autoComplete="new-password"
-              placeholder="Mínimo 6 caracteres"
-            />
-          </div>
-
-          <div className={s.field}>
-            <label className={s.label} htmlFor="sec-confirm">Confirmar nova senha</label>
-            <input
-              id="sec-confirm"
-              type="password"
-              className={s.input}
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              autoComplete="new-password"
-              placeholder="Repita a nova senha"
-            />
+        <div className={s.card}>
+          <div className={s.cardTitle}><ShieldCheck size={12} strokeWidth={2.5} /> Nova senha</div>
+          <div className={s.fieldGroup}>
+            <div className={s.field}>
+              <label className={s.label} htmlFor="sec-new">Nova senha</label>
+              <input id="sec-new" type="password" className={s.input} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} autoComplete="new-password" placeholder="Mínimo 6 caracteres" />
+            </div>
+            <div className={s.field}>
+              <label className={s.label} htmlFor="sec-confirm">Confirmar nova senha</label>
+              <input id="sec-confirm" type="password" className={s.input} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} autoComplete="new-password" placeholder="Repita a nova senha" />
+            </div>
           </div>
         </div>
 
         <div className={s.actions}>
           <button type="submit" className={s.btnPrimary} disabled={loading}>
-            {loading ? 'Salvando…' : 'Alterar senha'}
+            {loading ? <><RefreshCw size={14} strokeWidth={2} style={{ animation: 'spin 1s linear infinite' }} /> Salvando…</> : <><Lock size={14} strokeWidth={2} /> Alterar senha</>}
           </button>
           {feedback && (
             <span className={`${s.feedback} ${feedback.type === 'success' ? s.feedbackSuccess : s.feedbackError}`}>
+              {feedback.type === 'success' ? <Check size={13} strokeWidth={2.5} /> : null}
               {feedback.msg}
             </span>
           )}
@@ -303,75 +251,59 @@ function SistemaSection() {
       </div>
 
       <form onSubmit={handleSave}>
-        <div className={s.fieldGroup}>
-          <div className={s.field}>
-            <label className={s.label} htmlFor="sys-notif">Perfil de Notificação</label>
-            <select
-              id="sys-notif"
-              className={s.select}
-              value={settings.notificationProfile}
-              onChange={(e) => setSettings({ ...settings, notificationProfile: e.target.value })}
-            >
-              <option value="completo">Completo</option>
-              <option value="somente_critico">Somente crítico</option>
-              <option value="silencioso">Silencioso</option>
-            </select>
-          </div>
-
-          <div className={s.field}>
-            <label className={s.label} htmlFor="sys-channel">Canal de Alertas</label>
-            <select
-              id="sys-channel"
-              className={s.select}
-              value={settings.alertChannel}
-              onChange={(e) => setSettings({ ...settings, alertChannel: e.target.value })}
-            >
-              <option value="email">E-mail</option>
-              <option value="in_app">No sistema</option>
-              <option value="email_e_sistema">E-mail + sistema</option>
-            </select>
-          </div>
-
-          <div className={s.field}>
-            <label className={s.label} htmlFor="sys-refresh">Atualização Automática</label>
-            <select
-              id="sys-refresh"
-              className={s.select}
-              value={settings.refreshInterval}
-              onChange={(e) => setSettings({ ...settings, refreshInterval: e.target.value })}
-            >
-              <option value="5">A cada 5 minutos</option>
-              <option value="15">A cada 15 minutos</option>
-              <option value="30">A cada 30 minutos</option>
-              <option value="manual">Manual</option>
-            </select>
+        <div className={s.card}>
+          <div className={s.cardTitle}><Bell size={12} strokeWidth={2.5} /> Notificações</div>
+          <div className={s.fieldGroup}>
+            <div className={s.field}>
+              <label className={s.label} htmlFor="sys-notif">Perfil de Notificação</label>
+              <select id="sys-notif" className={s.select} value={settings.notificationProfile} onChange={(e) => setSettings({ ...settings, notificationProfile: e.target.value })}>
+                <option value="completo">Completo</option>
+                <option value="somente_critico">Somente crítico</option>
+                <option value="silencioso">Silencioso</option>
+              </select>
+            </div>
+            <div className={s.field}>
+              <label className={s.label} htmlFor="sys-channel">Canal de Alertas</label>
+              <select id="sys-channel" className={s.select} value={settings.alertChannel} onChange={(e) => setSettings({ ...settings, alertChannel: e.target.value })}>
+                <option value="email">E-mail</option>
+                <option value="in_app">No sistema</option>
+                <option value="email_e_sistema">E-mail + sistema</option>
+              </select>
+            </div>
           </div>
         </div>
 
-        <div className={s.divider} />
+        <div className={s.card}>
+          <div className={s.cardTitle}><RefreshCw size={12} strokeWidth={2.5} /> Atualização</div>
+          <div className={s.fieldGroup}>
+            <div className={s.field}>
+              <label className={s.label} htmlFor="sys-refresh">Atualização Automática</label>
+              <select id="sys-refresh" className={s.select} value={settings.refreshInterval} onChange={(e) => setSettings({ ...settings, refreshInterval: e.target.value })}>
+                <option value="5">A cada 5 minutos</option>
+                <option value="15">A cada 15 minutos</option>
+                <option value="30">A cada 30 minutos</option>
+                <option value="manual">Manual</option>
+              </select>
+            </div>
+          </div>
+        </div>
 
         <div className={s.toggleRow}>
           <div className={s.toggleInfo}>
-            <span className={s.toggleLabel}>Notificações por e-mail</span>
+            <span className={s.toggleLabel}><Mail size={13} strokeWidth={2} style={{ display: 'inline', marginRight: 6, verticalAlign: 'middle' }} />Notificações por e-mail</span>
             <span className={s.toggleHint}>Receba alertas de atividades por e-mail</span>
           </div>
           <label className={s.toggle}>
-            <input
-              type="checkbox"
-              checked={settings.emailEnabled}
-              onChange={(e) => setSettings({ ...settings, emailEnabled: e.target.checked })}
-            />
+            <input type="checkbox" checked={settings.emailEnabled} onChange={(e) => setSettings({ ...settings, emailEnabled: e.target.checked })} />
             <span className={s.toggleSlider} />
           </label>
         </div>
 
-        <div className={s.actions} style={{ marginTop: 24 }}>
-          <button type="submit" className={s.btnPrimary}>Salvar preferências</button>
-          {saved && (
-            <span className={`${s.feedback} ${s.feedbackSuccess}`}>
-              Preferências salvas.
-            </span>
-          )}
+        <div className={s.actions}>
+          <button type="submit" className={s.btnPrimary}>
+            {saved ? <><Check size={14} strokeWidth={2.5} /> Salvo!</> : <><Save size={14} strokeWidth={2} /> Salvar preferências</>}
+          </button>
+          {saved && <span className={`${s.feedback} ${s.feedbackSuccess}`}><Check size={13} strokeWidth={2.5} /> Preferências salvas.</span>}
         </div>
       </form>
     </section>

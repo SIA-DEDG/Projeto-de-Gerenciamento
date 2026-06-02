@@ -26,7 +26,15 @@ function taskOnDate(task: Task, date: Date): boolean {
   const dayStr = dateToYmd(date);
   const start = task.date;
   const end = task.deadline ?? task.date;
-  return !!start && start <= dayStr && end >= dayStr;
+  const notStatus = task.status != 'Concluído'
+  return notStatus && !!start && start <= dayStr && end >= dayStr;
+}
+
+function overdue(task: Task, date: Date): boolean {
+  const day = dateToYmd(date);
+  const end = task.deadline ?? task.date;
+  const notStatus = task.status !== 'Concluído';
+  return notStatus && !!end && end < day;
 }
 
 function priorityColor(priority: string) {
@@ -110,7 +118,7 @@ function TaskQuickModal({ task, onClose }: { task: Task; onClose: () => void }) 
   );
 }
 
-export default function RightPanel({ open, onToggle, filterUser}: {
+export default function RightPanel({ open, onToggle, filterUser }: {
   open: boolean;
   onToggle: () => void;
   filterUser?: string;
@@ -138,8 +146,7 @@ export default function RightPanel({ open, onToggle, filterUser}: {
     ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
   ];
 
-  const visibleTasks = filterUser
-    ? tasks.filter((task) => {
+  const visibleTasks = filterUser ? tasks.filter((task) => {
       if (task.responsible === filterUser) return true;
       try {
         const coResponsibles: string[] = task.co_responsibles ? JSON.parse(task.co_responsibles) : [];
@@ -149,6 +156,7 @@ export default function RightPanel({ open, onToggle, filterUser}: {
     : tasks;
 
   const dayTasks = visibleTasks.filter((task) => taskOnDate(task, selected));
+  const overdueTasks = visibleTasks.filter((task) => overdue(task, today));
 
   function dayPriorities(day: number): string[] {
     const date = new Date(year, month, day);
@@ -199,10 +207,11 @@ export default function RightPanel({ open, onToggle, filterUser}: {
               const isSel = sameDay(date, selected);
               const dots = dayPriorities(day);
               const hasDots = dots.length > 0;
+              const isOverdueDay = !isSel && overdueTasks.some((task) => taskOnDate(task, date));
               return (
                 <button
                   key={i}
-                  className={`rp-cal-day${isToday ? ' rp-today' : ''}${isSel ? ' rp-selected' : ''}${hasDots && !isSel ? ' rp-has-task' : ''}`}
+                  className={`rp-cal-day${isToday ? ' rp-today' : ''}${isSel ? ' rp-selected' : ''}${isOverdueDay ? ' rp-overdue' : hasDots && !isSel ? ' rp-has-task' : ''}`}
                   onClick={() => setSelected(date)}
                 >
                   {day}
@@ -241,13 +250,43 @@ export default function RightPanel({ open, onToggle, filterUser}: {
                   onClick={() => setQuickTask(task)}
                   style={{ cursor: 'pointer' }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 6 }}>
-                    <span className="rp-task-name">{task.activity}</span>
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 2, opacity: 0.5 }}>
-                      <polyline points="9 18 15 12 9 6" />
-                    </svg>
-                  </div>
-                  {task.responsible && <span className="rp-task-resp">{task.responsible}</span>}
+                  <span className="rp-task-name">{task.activity}</span>
+                  {task.responsible && (
+                    <span className="rp-task-resp">
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                      {task.responsible}
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+        <div className="rp-tasks">
+          <div className="rp-tasks-header">
+            <span className="rp-tasks-title">Atrasadas</span>
+            <span className="rp-tasks-count" style={{ background: overdueTasks.length > 0 ? '#fee2e2' : undefined, color: overdueTasks.length > 0 ? '#dc2626' : undefined }}>
+              {overdueTasks.length} atividade{overdueTasks.length !== 1 ? 's' : ''}
+            </span>
+          </div>
+          {overdueTasks.length === 0 ? (
+            <p className="rp-tasks-empty">Sem atividades atrasadas</p>
+          ) : (
+            <ul className="rp-task-list">
+              {overdueTasks.map((task) => (
+                <li
+                  key={task.id}
+                  className="rp-task-item"
+                  onClick={() => setQuickTask(task)}
+                  style={{ cursor: 'pointer', borderLeftColor: '#dc2626' }}
+                >
+                  <span className="rp-task-name">{task.activity}</span>
+                  {task.responsible && (
+                    <span className="rp-task-resp">
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                      {task.responsible}
+                    </span>
+                  )}
                 </li>
               ))}
             </ul>

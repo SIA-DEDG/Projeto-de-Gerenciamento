@@ -99,29 +99,29 @@ function parseSheet(file: File, projects: Project[], users: UserPublic[]): Promi
         );
 
         const projectByNorm = new Map(projects.map((p) => [normalizeStr(p.name), p.id]));
-        const userByNorm    = new Map(users.map((u) => [normalizeStr(u.name), { id: u.id, name: u.name }]));
+        const userByNorm = new Map(users.map((u) => [normalizeStr(u.name), { id: u.id, name: u.name }]));
 
         const parsed: ParsedRow[] = dataRows.map((row) => {
           // Colunas: A=Projeto B=Atividade C=Descrição D=Responsável E=Colab.externa F=Prioridade G=Prazo H=Status
-          const projectName    = String(row[0] ?? '').trim();
-          const activity       = String(row[1] ?? '').trim();
-          const description    = String(row[2] ?? '').trim();
+          const projectName = String(row[0] ?? '').trim();
+          const activity = String(row[1] ?? '').trim();
+          const description = String(row[2] ?? '').trim();
           const responsavelRaw = String(row[3] ?? '').trim();
-          const extraCollab    = String(row[4] ?? '').trim() || null; // col E: Colaboração externa
-          const deadlineRaw    = row[6];                              // col G: Prazo
+          const extraCollab = String(row[4] ?? '').trim() || null; // col E: Colaboração externa
+          const deadlineRaw = row[6];                              // col G: Prazo
 
           const project_id = projectByNorm.get(normalizeStr(projectName)) ?? null;
 
           const responsavelParts = responsavelRaw.split(',').map((s) => s.trim()).filter(Boolean);
-          const mainResponsavel  = responsavelParts[0] ?? '';
-          const coNames          = responsavelParts.slice(1);
+          const mainResponsavel = responsavelParts[0] ?? '';
+          const coNames = responsavelParts.slice(1);
 
           const systemUser = mainResponsavel ? userByNorm.get(normalizeStr(mainResponsavel)) : undefined;
-          const responsible_id   = systemUser?.id ?? null;
+          const responsible_id = systemUser?.id ?? null;
           const responsible_name = systemUser?.name ?? '';
           const external_collaborators = (!systemUser && mainResponsavel) ? mainResponsavel : null;
 
-          const co_responsible_ids: string[]   = [];
+          const co_responsible_ids: string[] = [];
           const co_responsible_names: string[] = [];
           for (const name of coNames) {
             const su = userByNorm.get(normalizeStr(name));
@@ -142,7 +142,7 @@ function parseSheet(file: File, projects: Project[], users: UserPublic[]): Promi
           const prioRaw = String(row[5] ?? '').trim().toLowerCase(); // col F: Prioridade
           const priority = prioRaw.includes('alta') ? 'Alta'
             : prioRaw.includes('baixa') ? 'Baixa'
-            : 'Média';
+              : 'Média';
 
           const external_collaborators_final = [external_collaborators, extraCollab]
             .filter(Boolean).join(', ') || null;
@@ -150,8 +150,8 @@ function parseSheet(file: File, projects: Project[], users: UserPublic[]): Promi
           const status = parseStatus(row[7]); // col H: Status
 
           return {
-            category:    projectName || 'Sem categoria',
-            activity:    activity    || '(sem título)',
+            category: projectName || 'Sem categoria',
+            activity: activity || '(sem título)',
             description,
             responsible_id,
             responsible_name,
@@ -159,10 +159,10 @@ function parseSheet(file: File, projects: Project[], users: UserPublic[]): Promi
             co_responsible_names,
             status,
             priority,
-            created_at:  new Date().toISOString().split('T')[0],
+            created_at: new Date().toISOString().split('T')[0],
             project_id,
             external_collaborators: external_collaborators_final,
-            deadline:    deadlineParsed,
+            deadline: deadlineParsed,
           };
         }).filter((r) => r.activity !== '(sem título)' || r.responsible_id || r.external_collaborators);
 
