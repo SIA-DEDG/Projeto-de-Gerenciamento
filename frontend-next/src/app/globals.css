@@ -1213,7 +1213,7 @@ a {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  min-height: 120px;
+  min-height: 130px;
   border-left: 4px solid var(--priority-color, #fdb913);
   animation: fadeInUp 0.18s ease both;
 }
@@ -1260,6 +1260,7 @@ a {
   line-height: 1.5;
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  /* autoprefixer: ignore next */
   -webkit-box-orient: vertical;
   overflow: hidden;
   word-break: break-word;
