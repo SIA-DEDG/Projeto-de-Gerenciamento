@@ -53,7 +53,7 @@ export default function KanbanCard({
     >
       <div className="card-content" onClick={() => !isDragging && onView(task)}>
         <div className="card-title-row">
-          <p className="card-title">{task.activity}</p>
+          <p className="card-title" style={{ display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' }}>{task.activity}</p>
           <button
             className="delete-btn"
             onClick={(e) => { e.stopPropagation(); onDelete(task.id); }}
