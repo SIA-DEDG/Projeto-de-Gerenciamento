@@ -509,14 +509,7 @@ export default function FaltasPage() {
   return (
     <>
       <div className="topbar">
-        <div className="topbar-left"><h1>Justificativas de Falta</h1></div>
-        <div className="topbar-right">
-          <button onClick={() => { resetForm(); setShowModal(true); }}
-            style={{ display:'flex', alignItems:'center', gap:7, padding:'8px 18px', borderRadius:8, background:'var(--primary)', color:'#fff', border:'none', cursor:'pointer', fontSize:'0.875rem', fontWeight:600, boxShadow:'0 2px 8px rgba(3,78,162,0.25)' }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            Nova Justificativa
-          </button>
-        </div>
+        <div className="topbar-left"><h1>Faltas</h1></div>
       </div>
       <div style={{ padding:'24px 28px' }}>
 
@@ -859,6 +852,22 @@ export default function FaltasPage() {
       />
 
     </div>
+
+    {/* FAB */}
+    <button
+      onClick={() => { resetForm(); setShowModal(true); }}
+      title="Nova Justificativa de Falta"
+      style={{
+        position: 'fixed', bottom: 32, right: 32, zIndex: 900,
+        width: 52, height: 52, borderRadius: '50%',
+        background: 'var(--primary)', color: '#fff', border: 'none',
+        boxShadow: '0 4px 16px rgba(3,78,162,0.35)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        cursor: 'pointer',
+      }}
+    >
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    </button>
 
     <ToastContainer toasts={toasts} onDismiss={dismissToast} />
     </>

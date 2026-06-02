@@ -127,7 +127,7 @@ export default function Sidebar() {
                   <line x1="15" y1="15" x2="15" y2="15" strokeWidth="3" strokeLinecap="round" />
                 </svg>
               </span>
-              Justificativas de Falta
+              Faltas
             </Link>
           </li>
           <li className={pathname === '/eventos' ? 'active' : ''}>
