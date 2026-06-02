@@ -339,6 +339,8 @@ export default function FaltasPage() {
   const [showModal, setShowModal] = useState(false);
   const [detail, setDetail]       = useState<Absence | null>(null);
 
+  const [filterUserId, setFilterUserId] = useState<string | null>(null);
+
   const [selectedIds, setSelectedIds]     = useState<Set<string>>(new Set());
   const [confirmDialog, setConfirmDialog] = useState<{ title: string; message?: string; onConfirm: () => void } | null>(null);
 
@@ -478,9 +480,15 @@ export default function FaltasPage() {
     ? users
     : users.filter(u => u.id === currentUser?.user_id);
 
-  const visibleAbsences = seeAll
+  const baseAbsences = seeAll
     ? absences
     : absences.filter(a => a.user_id === currentUser?.user_id);
+
+  const filterUser = filterUserId ? visibleUsers.find(u => u.id === filterUserId) ?? null : null;
+
+  const visibleAbsences = filterUserId
+    ? baseAbsences.filter(a => a.user_id === filterUserId && a.start_date >= from && a.start_date <= to)
+    : baseAbsences;
 
   const statsByUser: Record<string, number> = {};
   for (const a of visibleAbsences) {
@@ -514,7 +522,16 @@ export default function FaltasPage() {
         <div style={{ background:'#fff', borderRadius:12, border:'1px solid var(--border-light)', overflow:'hidden', boxShadow:'0 1px 4px rgba(3,78,162,0.05)' }}>
           <div style={{ padding:'11px 16px', borderBottom:'1px solid var(--border-light)', background:'var(--bg-subtle)', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
             <span style={{ fontSize:'0.72rem', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.06em', color:'var(--text-muted)' }}>Colaboradores</span>
-            <span style={{ background:'var(--primary-light)', color:'var(--primary)', borderRadius:20, padding:'2px 9px', fontSize:'0.7rem', fontWeight:700 }}>{visibleUsers.length}</span>
+            <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+              {filterUserId && (
+                <button onClick={() => setFilterUserId(null)}
+                  title="Limpar filtro"
+                  style={{ background:'var(--primary-light)', border:'none', borderRadius:20, padding:'2px 8px', fontSize:'0.68rem', fontWeight:700, color:'var(--primary)', cursor:'pointer', display:'flex', alignItems:'center', gap:3 }}>
+                  ×
+                </button>
+              )}
+              <span style={{ background:'var(--primary-light)', color:'var(--primary)', borderRadius:20, padding:'2px 9px', fontSize:'0.7rem', fontWeight:700 }}>{visibleUsers.length}</span>
+            </div>
           </div>
           <div style={{ overflowY:'auto', maxHeight:420 }}>
             {visibleUsers.length === 0 ? (
@@ -525,21 +542,30 @@ export default function FaltasPage() {
               const count = statsByUser[user.name] ?? 0;
               const initials = user.name.split(' ').map((w: string) => w[0]).slice(0,2).join('').toUpperCase();
               const hasAbsences = count > 0;
+              const isActive = filterUserId === user.id;
               return (
-                <div key={user.id} style={{ display:'flex', alignItems:'center', gap:10, padding:'10px 16px', borderBottom:'1px solid var(--border-light)', transition:'background 0.12s' }}
-                  onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-subtle)')}
-                  onMouseLeave={e => (e.currentTarget.style.background = '')}>
-                  <div style={{ width:34, height:34, borderRadius:'50%', background: hasAbsences ? '#fee2e2' : 'var(--primary-light)', color: hasAbsences ? '#ef4444' : 'var(--primary)', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:700, fontSize:'0.7rem', flexShrink:0 }}>
+                <div key={user.id}
+                  onClick={() => setFilterUserId(prev => prev === user.id ? null : user.id)}
+                  style={{
+                    display:'flex', alignItems:'center', gap:10, padding:'10px 16px',
+                    borderBottom:'1px solid var(--border-light)', cursor:'pointer',
+                    background: isActive ? 'var(--primary-light)' : undefined,
+                    borderLeft: isActive ? '3px solid var(--primary)' : '3px solid transparent',
+                    transition:'background 0.12s',
+                  }}
+                  onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = 'var(--bg-subtle)'; }}
+                  onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = ''; }}>
+                  <div style={{ width:34, height:34, borderRadius:'50%', background: isActive ? 'var(--primary)' : hasAbsences ? '#fee2e2' : 'var(--primary-light)', color: isActive ? '#fff' : hasAbsences ? '#ef4444' : 'var(--primary)', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:700, fontSize:'0.7rem', flexShrink:0 }}>
                     {initials}
                   </div>
                   <div style={{ flex:1, minWidth:0 }}>
-                    <div style={{ fontSize:'0.83rem', fontWeight:600, color:'var(--text-primary)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }} title={user.name}>{user.name}</div>
-                    <div style={{ fontSize:'0.72rem', color: hasAbsences ? '#ef4444' : 'var(--text-muted)', fontWeight:500, marginTop:1 }}>
+                    <div style={{ fontSize:'0.83rem', fontWeight: isActive ? 700 : 600, color: isActive ? 'var(--primary)' : 'var(--text-primary)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }} title={user.name}>{user.name}</div>
+                    <div style={{ fontSize:'0.72rem', color: isActive ? 'var(--primary)' : hasAbsences ? '#ef4444' : 'var(--text-muted)', fontWeight:500, marginTop:1 }}>
                       {count === 0 ? `0 faltas em ${monthLabel}` : `${count} falta${count !== 1 ? 's' : ''} em ${monthLabel}`}
                     </div>
                   </div>
                   {hasAbsences && (
-                    <span style={{ background:'#fee2e2', color:'#ef4444', borderRadius:20, padding:'2px 9px', fontSize:'0.72rem', fontWeight:700, flexShrink:0 }}>{count}</span>
+                    <span style={{ background: isActive ? 'var(--primary)' : '#fee2e2', color: isActive ? '#fff' : '#ef4444', borderRadius:20, padding:'2px 9px', fontSize:'0.72rem', fontWeight:700, flexShrink:0 }}>{count}</span>
                   )}
                 </div>
               );
@@ -585,7 +611,7 @@ export default function FaltasPage() {
               </button>
             </>
           ) : (
-            <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+            <div style={{ display:'flex', alignItems:'center', gap:10, flexWrap:'wrap' }}>
               <div style={{ width:30, height:30, borderRadius:8, background:'var(--primary-light)', display:'flex', alignItems:'center', justifyContent:'center' }}>
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
@@ -594,6 +620,13 @@ export default function FaltasPage() {
               <span style={{ fontWeight:700, fontSize:'0.9rem', color:'var(--text-primary)' }}>Registros</span>
               {visibleAbsences.length > 0 && (
                 <span style={{ background:'var(--primary-light)', color:'var(--primary)', borderRadius:20, padding:'2px 10px', fontSize:'0.72rem', fontWeight:700 }}>{visibleAbsences.length}</span>
+              )}
+              {filterUser && (
+                <span style={{ display:'inline-flex', alignItems:'center', gap:5, background:'#eff6ff', border:'1px solid #bfdbfe', borderRadius:20, padding:'3px 10px 3px 8px', fontSize:'0.75rem', fontWeight:600, color:'#1d4ed8' }}>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  {filterUser.name} · {monthLabel}
+                  <button onClick={() => setFilterUserId(null)} style={{ background:'none', border:'none', cursor:'pointer', color:'#1d4ed8', padding:0, lineHeight:1, fontSize:'0.9rem', marginLeft:2, opacity:0.7 }}>×</button>
+                </span>
               )}
             </div>
           )}
