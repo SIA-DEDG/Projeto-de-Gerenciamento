@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Vyntra',
-  description: 'Vyntra — Gestão de Atividades e Projetos',
+  title: 'Task SIA',
+  description: 'Task SIA — Gestão de Atividades e Projetos',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
