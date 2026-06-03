@@ -17,6 +17,7 @@ interface Props {
   items: CalendarItem[];
   title?: string;
   onClickDay?: (dateStr: string) => void;
+  onMonthChange?: (year: number, month: number) => void;
 }
 
 const WEEKDAYS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
@@ -26,18 +27,20 @@ function ymd(date: Date): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 }
 
-export default function MonthCalendar({ items, title, onClickDay }: Props) {
+export default function MonthCalendar({ items, title, onClickDay, onMonthChange }: Props) {
   const now = new Date();
   const [year,  setYear]  = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth());
 
   function prev() {
-    if (month === 0) { setYear((y) => y - 1); setMonth(11); }
-    else { setMonth((m) => m - 1); }
+    const [ny, nm] = month === 0 ? [year - 1, 11] : [year, month - 1];
+    setYear(ny); setMonth(nm);
+    onMonthChange?.(ny, nm);
   }
   function next() {
-    if (month === 11) { setYear((y) => y + 1); setMonth(0); }
-    else { setMonth((m) => m + 1); }
+    const [ny, nm] = month === 11 ? [year + 1, 0] : [year, month + 1];
+    setYear(ny); setMonth(nm);
+    onMonthChange?.(ny, nm);
   }
 
   const firstDay = new Date(year, month, 1).getDay();

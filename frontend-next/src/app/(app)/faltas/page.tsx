@@ -340,6 +340,9 @@ export default function FaltasPage() {
   const [detail, setDetail]       = useState<Absence | null>(null);
 
   const [filterUserId, setFilterUserId] = useState<string | null>(null);
+  const nowDate = new Date();
+  const [calYear,  setCalYear]  = useState(nowDate.getFullYear());
+  const [calMonth, setCalMonth] = useState(nowDate.getMonth());
 
   const [selectedIds, setSelectedIds]     = useState<Set<string>>(new Set());
   const [confirmDialog, setConfirmDialog] = useState<{ title: string; message?: string; onConfirm: () => void } | null>(null);
@@ -474,7 +477,9 @@ export default function FaltasPage() {
     setShowModal(true);
   }
 
-  const { from, to, label: monthLabel } = currentMonthRange();
+  const from = `${calYear}-${String(calMonth + 1).padStart(2, '0')}-01`;
+  const to   = `${calYear}-${String(calMonth + 1).padStart(2, '0')}-${String(new Date(calYear, calMonth + 1, 0).getDate()).padStart(2, '0')}`;
+  const monthLabel = MONTHS_PT[calMonth];
 
   const visibleUsers = seeAll
     ? users
@@ -573,7 +578,12 @@ export default function FaltasPage() {
 
         {/* Calendário */}
         <div>
-          <MonthCalendar items={calItems} title="Calendário de Ausências" onClickDay={openNewFromDay} />
+          <MonthCalendar
+            items={calItems}
+            title="Calendário de Ausências"
+            onClickDay={openNewFromDay}
+            onMonthChange={(y, m) => { setCalYear(y); setCalMonth(m); }}
+          />
 
           {/* Legenda inline abaixo do calendário */}
           <div style={{ display:'flex', flexWrap:'wrap', gap:6, marginTop:12 }}>
