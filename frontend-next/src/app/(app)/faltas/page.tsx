@@ -343,6 +343,8 @@ export default function FaltasPage() {
   const nowDate = new Date();
   const [calYear,  setCalYear]  = useState(nowDate.getFullYear());
   const [calMonth, setCalMonth] = useState(nowDate.getMonth());
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 10;
 
   const [selectedIds, setSelectedIds]     = useState<Set<string>>(new Set());
   const [confirmDialog, setConfirmDialog] = useState<{ title: string; message?: string; onConfirm: () => void } | null>(null);
@@ -370,6 +372,7 @@ export default function FaltasPage() {
   }
 
   useEffect(() => { load(); }, []);
+  useEffect(() => { setPage(1); }, [filterUserId, calYear, calMonth]);
 
   function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
@@ -436,11 +439,14 @@ export default function FaltasPage() {
   }
 
   function toggleSelectAll() {
-    if (selectedIds.size === visibleAbsences.length) {
-      setSelectedIds(new Set());
-    } else {
-      setSelectedIds(new Set(visibleAbsences.map(a => a.id)));
-    }
+    const pageIds = pagedAbsences.map(a => a.id);
+    const allSelected = pageIds.every(id => selectedIds.has(id));
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (allSelected) { pageIds.forEach(id => next.delete(id)); }
+      else { pageIds.forEach(id => next.add(id)); }
+      return next;
+    });
   }
 
   function confirmDeleteSelected() {
@@ -500,6 +506,9 @@ export default function FaltasPage() {
     if (a.start_date >= from && a.start_date <= to)
       statsByUser[a.employee_name] = (statsByUser[a.employee_name] ?? 0) + 1;
   }
+
+  const totalPages   = Math.max(1, Math.ceil(visibleAbsences.length / PAGE_SIZE));
+  const pagedAbsences = visibleAbsences.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   // Calendário filtra só por pessoa (sem limite de mês) para funcionar na navegação de meses
   const calAbsences = filterUserId
@@ -653,8 +662,8 @@ export default function FaltasPage() {
                 <th style={{ padding:'10px 10px 10px 18px', width:36, borderBottom:'1px solid var(--border-light)', background:'var(--bg-app)' }}>
                   <input
                     type="checkbox"
-                    checked={selectedIds.size === visibleAbsences.length && visibleAbsences.length > 0}
-                    ref={el => { if (el) el.indeterminate = selectedIds.size > 0 && selectedIds.size < visibleAbsences.length; }}
+                    checked={pagedAbsences.length > 0 && pagedAbsences.every(a => selectedIds.has(a.id))}
+                    ref={el => { if (el) { const n = pagedAbsences.filter(a => selectedIds.has(a.id)).length; el.indeterminate = n > 0 && n < pagedAbsences.length; } }}
                     onChange={toggleSelectAll}
                     style={{ cursor:'pointer', width:14, height:14, accentColor:'var(--primary)' }}
                   />
@@ -665,14 +674,14 @@ export default function FaltasPage() {
               </tr>
             </thead>
             <tbody>
-              {visibleAbsences.map((a, idx) => {
+              {pagedAbsences.map((a, idx) => {
                 const rc = reasonColor(a.reason);
                 const isSelected = selectedIds.has(a.id);
                 const initials = a.employee_name.split(' ').map((w: string) => w[0]).slice(0,2).join('').toUpperCase();
                 return (
                   <tr key={a.id}
                     style={{
-                      borderBottom: idx < visibleAbsences.length-1 ? '1px solid var(--border-light)' : 'none',
+                      borderBottom: idx < pagedAbsences.length-1 ? '1px solid var(--border-light)' : 'none',
                       background: isSelected ? '#eff6ff' : undefined,
                       transition:'background 0.12s',
                     }}
@@ -733,6 +742,32 @@ export default function FaltasPage() {
               })}
             </tbody>
           </table>
+        )}
+
+        {/* Paginação — sempre visível quando há dados */}
+        {!loading && visibleAbsences.length > 0 && (
+          <div style={{ padding:'12px 20px', borderTop:'1px solid var(--border-light)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+            <div style={{ display:'flex', alignItems:'center', gap:4 }}>
+              <button
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                disabled={page === 1}
+                style={{ width:30, height:30, display:'flex', alignItems:'center', justifyContent:'center', borderRadius:7, border:'1px solid var(--border-light)', background: page === 1 ? 'var(--bg-app)' : '#fff', color: page === 1 ? 'var(--text-muted)' : 'var(--text-primary)', cursor: page === 1 ? 'not-allowed' : 'pointer', opacity: page === 1 ? 0.5 : 1 }}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+              </button>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+                <button key={p} onClick={() => setPage(p)}
+                  style={{ width:30, height:30, display:'flex', alignItems:'center', justifyContent:'center', borderRadius:7, border: p === page ? 'none' : '1px solid var(--border-light)', background: p === page ? 'var(--primary)' : '#fff', color: p === page ? '#fff' : 'var(--text-primary)', fontWeight: p === page ? 700 : 400, fontSize:'0.82rem', cursor:'pointer', fontFamily:'inherit' }}>
+                  {p}
+                </button>
+              ))}
+              <button
+                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                disabled={page === totalPages}
+                style={{ width:30, height:30, display:'flex', alignItems:'center', justifyContent:'center', borderRadius:7, border:'1px solid var(--border-light)', background: page === totalPages ? 'var(--bg-app)' : '#fff', color: page === totalPages ? 'var(--text-muted)' : 'var(--text-primary)', cursor: page === totalPages ? 'not-allowed' : 'pointer', opacity: page === totalPages ? 0.5 : 1 }}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+              </button>
+            </div>
+          </div>
         )}
       </div>
 
