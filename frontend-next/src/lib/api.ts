@@ -184,7 +184,6 @@ export async function updateTask(
   return enrichTask(data);
 }
 
-// drag-and-drop: não carrega IDs de co-responsáveis — caller deve passá-los para preservar os vínculos
 function parseCoResponsibleIds(_coResponsibles: string | null | undefined): string[] | null {
   return null;
 }

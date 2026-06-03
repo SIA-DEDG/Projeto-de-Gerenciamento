@@ -140,9 +140,18 @@ export default function BoardPage() {
     const draggedTask = tasks.find((task) => task.id === taskId);
     if (!draggedTask || draggedTask.status_group === newGroup) return;
 
+    let co_responsible_ids: string[] | null = null;
+    if (draggedTask.co_responsibles) {
+      try {
+        const names: string[] = JSON.parse(draggedTask.co_responsibles);
+        const ids = names.map((name) => users.find((u) => u.name === name)?.id).filter((id): id is string => id !== undefined);
+        co_responsible_ids = ids.length > 0 ? ids : null;
+      } catch { co_responsible_ids = null; }
+    }
+
     const prev = tasks;
     setTasks((currentTasks) => currentTasks.map((task) => (task.id === taskId ? { ...task, status_group: newGroup } : task)));
-    updateTask(draggedTask, { status_group: newGroup })
+    updateTask(draggedTask, { status_group: newGroup, co_responsible_ids })
       .then((updated) => setTasks((currentTasks) => currentTasks.map((task) => (task.id === taskId ? updated : task))))
       .catch(() => setTasks(prev));
   }

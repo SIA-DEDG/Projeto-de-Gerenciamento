@@ -127,9 +127,18 @@ export default function MinhasAtividadesPage() {
     const draggedTask = tasks.find((existingTask) => existingTask.id === taskId);
     if (!draggedTask || draggedTask.status_group === newGroup) return;
 
+    let co_responsible_ids: string[] | null = null;
+    if (draggedTask.co_responsibles) {
+      try {
+        const names: string[] = JSON.parse(draggedTask.co_responsibles);
+        const ids = names.map((name) => users.find((u) => u.name === name)?.id).filter((id): id is string => id !== undefined);
+        co_responsible_ids = ids.length > 0 ? ids : null;
+      } catch { co_responsible_ids = null; }
+    }
+
     const prev = tasks;
     setTasks((currentTasks) => currentTasks.map((existingTask) => (existingTask.id === taskId ? { ...existingTask, status_group: newGroup } : existingTask)));
-    updateTask(draggedTask, { status_group: newGroup })
+    updateTask(draggedTask, { status_group: newGroup, co_responsible_ids })
       .then((updated) => setTasks((currentTasks) => currentTasks.map((existingTask) => (existingTask.id === taskId ? updated : existingTask))))
       .catch(() => setTasks(prev));
   }
