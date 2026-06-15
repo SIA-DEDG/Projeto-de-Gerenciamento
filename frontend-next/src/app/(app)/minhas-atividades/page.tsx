@@ -230,15 +230,6 @@ export default function MinhasAtividadesPage() {
       <div className="topbar">
         <div className="topbar-left">
           <h1>Minhas Atividades</h1>
-          {currentUser && (
-            <span style={{
-              fontSize: '0.82rem', color: 'var(--text-muted)',
-              background: 'var(--bg-hover)', borderRadius: 20,
-              padding: '3px 12px', marginLeft: 12, fontWeight: 500,
-            }}>
-              {currentUser.name}
-            </span>
-          )}
           <div style={{ display: 'flex', background: 'var(--bg-subtle)', borderRadius: 8, padding: 3, gap: 2, marginLeft: 16 }}>
             <button
               onClick={() => setViewMode('kanban')}
@@ -348,10 +339,6 @@ export default function MinhasAtividadesPage() {
         <div className="loading-state">Carregando atividades...</div>
       ) : error ? (
         <div className="loading-state" style={{ color: '#BF2600' }}>{error}</div>
-      ) : myTasks.length === 0 ? (
-        <div className="loading-state" style={{ color: 'var(--text-muted)' }}>
-          Nenhuma atividade atribuída a você.
-        </div>
       ) : viewMode === 'calendar' ? (
         <div style={{ padding: '0 20px 20px' }}>
           <TaskCalendarView

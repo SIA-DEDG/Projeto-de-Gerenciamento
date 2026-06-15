@@ -83,12 +83,12 @@ function DayPicker({ selected, onChange, initialDate }: {
         <button onClick={() => { if (month===11){setYear(y=>y+1);setMonth(0);}else setMonth(m=>m+1); }}
           style={{ background:'none', border:'none', cursor:'pointer', color:'var(--text-secondary)', fontSize:'0.9rem', lineHeight:1, padding:'2px 5px' }}>›</button>
       </div>
-      <div style={{ display:'grid', gridTemplateColumns:'repeat(7,1fr)', padding:'3px 6px 0' }}>
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(7,minmax(0,1fr))', padding:'3px 6px 0' }}>
         {WEEKDAYS.map((w,i) => (
           <div key={i} style={{ textAlign:'center', fontSize:'0.6rem', fontWeight:700, color:'var(--text-muted)', padding:'2px 0' }}>{w}</div>
         ))}
       </div>
-      <div style={{ display:'grid', gridTemplateColumns:'repeat(7,1fr)', padding:'0 6px 6px', gap:1 }}>
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(7,minmax(0,1fr))', padding:'0 6px 6px', gap:1 }}>
         {cells.map((day, i) => {
           if (!day) return <div key={i} />;
           const s = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;

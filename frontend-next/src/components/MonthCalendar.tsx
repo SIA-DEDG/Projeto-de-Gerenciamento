@@ -33,14 +33,18 @@ export default function MonthCalendar({ items, title, onClickDay, onMonthChange 
   const [month, setMonth] = useState(now.getMonth());
 
   function prev() {
-    const [ny, nm] = month === 0 ? [year - 1, 11] : [year, month - 1];
-    setYear(ny); setMonth(nm);
-    onMonthChange?.(ny, nm);
+    const newYear  = month === 0 ? year - 1 : year;
+    const newMonth = month === 0 ? 11 : month - 1;
+    setYear(newYear);
+    setMonth(newMonth);
+    onMonthChange?.(newYear, newMonth);
   }
   function next() {
-    const [ny, nm] = month === 11 ? [year + 1, 0] : [year, month + 1];
-    setYear(ny); setMonth(nm);
-    onMonthChange?.(ny, nm);
+    const newYear  = month === 11 ? year + 1 : year;
+    const newMonth = month === 11 ? 0 : month + 1;
+    setYear(newYear);
+    setMonth(newMonth);
+    onMonthChange?.(newYear, newMonth);
   }
 
   const firstDay = new Date(year, month, 1).getDay();
@@ -85,7 +89,7 @@ export default function MonthCalendar({ items, title, onClickDay, onMonthChange 
       </div>
 
       {/* Weekday headers */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', background: 'var(--bg-app)', borderBottom: '1px solid var(--border-light)' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', background: 'var(--bg-app)', borderBottom: '1px solid var(--border-light)' }}>
         {WEEKDAYS.map((w, i) => (
           <div key={w} style={{
             padding: '9px 4px',
@@ -102,7 +106,7 @@ export default function MonthCalendar({ items, title, onClickDay, onMonthChange 
       </div>
 
       {/* Days grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))' }}>
         {cells.map((day, idx) => {
           const col = idx % 7;
           const isWeekend = col === 0 || col === 6;
@@ -117,6 +121,7 @@ export default function MonthCalendar({ items, title, onClickDay, onMonthChange 
               onClick={() => day !== null && onClickDay && onClickDay(dayStr)}
               style={{
                 minHeight: 76,
+                overflow: 'hidden',
                 padding: '6px 6px 4px',
                 borderRight: col !== 6 ? '1px solid var(--border-light)' : 'none',
                 borderBottom: idx < cells.length - 7 ? '1px solid var(--border-light)' : 'none',

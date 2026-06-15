@@ -49,14 +49,14 @@ function MonthView({ tasks, year, month, todayStr, selectedDay, onDayClick, onVi
 
   return (
     <>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', background: 'var(--bg-subtle)', borderBottom: '1px solid var(--border-light)' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,minmax(0,1fr))', background: 'var(--bg-subtle)', borderBottom: '1px solid var(--border-light)' }}>
         {WEEKDAYS.map(w => (
           <div key={w} style={{ padding: '10px 4px', textAlign: 'center', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
             {w}
           </div>
         ))}
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gridAutoRows: 'minmax(96px, auto)' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,minmax(0,1fr))', gridAutoRows: 'minmax(96px, auto)' }}>
         {cells.map((day, idx) => {
           const dayStr = day ? `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}` : '';
           const isToday = dayStr === todayStr;
@@ -161,7 +161,7 @@ function WeekView({ tasks, weekStart, todayStr, onViewTask }: {
   });
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)' }}>
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,minmax(0,1fr))' }}>
       {days.map((dayDate, idx) => {
         const dayStr = ymd(dayDate);
         const isToday = dayStr === todayStr;

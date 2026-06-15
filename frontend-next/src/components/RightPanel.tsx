@@ -32,9 +32,8 @@ function taskOnDate(task: Task, date: Date): boolean {
 
 function overdue(task: Task, date: Date): boolean {
   const day = dateToYmd(date);
-  const end = task.deadline ?? task.date;
   const notStatus = task.status !== 'Concluído';
-  return notStatus && !!end && end < day;
+  return notStatus && !!task.deadline && task.deadline < day;
 }
 
 function priorityColor(priority: string) {
