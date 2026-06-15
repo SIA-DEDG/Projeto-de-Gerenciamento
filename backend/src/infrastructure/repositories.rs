@@ -1,7 +1,7 @@
-use crate::domain::entities::{Absence, ActivityLog, Event, Project, Task, User, UserPublic};
+use crate::domain::entities::{Absence, ActivityLog, Event, Feedback, FeedbackComment, Project, Task, User, UserPublic};
 use crate::domain::ports::{
-    AbsenceRepository, ActivityLogRepository, EventRepository, ProjectRepository, TaskRepository,
-    UserRepository,
+    AbsenceRepository, ActivityLogRepository, EventRepository, FeedbackCommentRepository,
+    FeedbackRepository, ProjectRepository, TaskRepository, UserRepository,
 };
 use async_trait::async_trait;
 use sqlx::PgPool;
@@ -785,6 +785,269 @@ impl EventRepository for PostgresEventRepository {
             Err(format!("Evento {} não encontrado", id))
         } else {
             Ok(())
+        }
+    }
+}
+
+
+pub struct PostgresFeedbackRepository {
+    pool: PgPool,
+}
+
+impl PostgresFeedbackRepository {
+    pub fn new(pool: PgPool) -> Self {
+        Self { pool }
+    }
+}
+
+#[async_trait]
+impl FeedbackRepository for PostgresFeedbackRepository {
+    async fn add(&self, feedback: Feedback) -> Result<Feedback, String> {
+        sqlx::query_as::<_, Feedback>(
+            r#"INSERT INTO feedbacks (id, tipo, titulo, descricao, severidade, usuario_id, usuario_nome, imagens)
+               VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+               RETURNING id, tipo, titulo, descricao, severidade, usuario_id, usuario_nome, imagens, resposta, status,
+                         0::bigint AS upvotes, '[]'::text AS upvoted_by,
+                         0::bigint AS comment_count,
+                         to_char(created_at - INTERVAL '3 hours', 'DD/MM/YYYY HH24:MI') AS created_at"#,
+        )
+        .bind(feedback.id)
+        .bind(feedback.tipo)
+        .bind(feedback.titulo)
+        .bind(feedback.descricao)
+        .bind(feedback.severidade)
+        .bind(feedback.usuario_id)
+        .bind(feedback.usuario_nome)
+        .bind(feedback.imagens)
+        .fetch_one(&self.pool)
+        .await
+        .map_err(|e| e.to_string())
+    }
+
+    async fn update(&self, id: Uuid, tipo: String, titulo: String, descricao: String, severidade: Option<String>, imagens: Option<String>) -> Result<Feedback, String> {
+        sqlx::query_as::<_, Feedback>(
+            r#"WITH upd AS (
+                   UPDATE feedbacks
+                   SET tipo = $2, titulo = $3, descricao = $4, severidade = $5, imagens = $6
+                   WHERE id = $1
+                   RETURNING id
+               )
+               SELECT f.id, f.tipo, f.titulo, f.descricao, f.severidade,
+                      f.usuario_id, f.usuario_nome, f.imagens, f.resposta, f.status,
+                      COUNT(fu.user_id) AS upvotes,
+                      COALESCE(
+                          json_agg(fu.user_id::text ORDER BY fu.created_at)
+                          FILTER (WHERE fu.user_id IS NOT NULL),
+                          '[]'
+                      )::text AS upvoted_by,
+                      (SELECT COUNT(*) FROM feedback_comments WHERE feedback_id = f.id)::bigint AS comment_count,
+                      to_char(f.created_at - INTERVAL '3 hours', 'DD/MM/YYYY HH24:MI') AS created_at
+               FROM feedbacks f
+               LEFT JOIN feedback_upvotes fu ON fu.feedback_id = f.id
+               WHERE f.id = (SELECT id FROM upd)
+               GROUP BY f.id"#,
+        )
+        .bind(id)
+        .bind(tipo)
+        .bind(titulo)
+        .bind(descricao)
+        .bind(severidade)
+        .bind(imagens)
+        .fetch_one(&self.pool)
+        .await
+        .map_err(|e| e.to_string())
+    }
+
+    async fn get_all(&self) -> Result<Vec<Feedback>, String> {
+        sqlx::query_as::<_, Feedback>(
+            r#"SELECT f.id, f.tipo, f.titulo, f.descricao, f.severidade,
+                      f.usuario_id, f.usuario_nome, f.imagens, f.resposta, f.status,
+                      COUNT(fu.user_id) AS upvotes,
+                      COALESCE(
+                          json_agg(fu.user_id::text ORDER BY fu.created_at)
+                          FILTER (WHERE fu.user_id IS NOT NULL),
+                          '[]'
+                      )::text AS upvoted_by,
+                      (SELECT COUNT(*) FROM feedback_comments WHERE feedback_id = f.id)::bigint AS comment_count,
+                      to_char(f.created_at - INTERVAL '3 hours', 'DD/MM/YYYY HH24:MI') AS created_at
+               FROM feedbacks f
+               LEFT JOIN feedback_upvotes fu ON fu.feedback_id = f.id
+               GROUP BY f.id
+               ORDER BY upvotes DESC, f.created_at DESC"#,
+        )
+        .fetch_all(&self.pool)
+        .await
+        .map_err(|e| e.to_string())
+    }
+
+    async fn toggle_upvote(&self, id: Uuid, user_id: String) -> Result<Feedback, String> {
+        let uid = Uuid::parse_str(&user_id).map_err(|e| e.to_string())?;
+        let exists = sqlx::query(
+            "SELECT 1 AS one FROM feedback_upvotes WHERE feedback_id = $1 AND user_id = $2",
+        )
+        .bind(id)
+        .bind(uid)
+        .fetch_optional(&self.pool)
+        .await
+        .map_err(|e| e.to_string())?;
+
+        if exists.is_some() {
+            sqlx::query(
+                "DELETE FROM feedback_upvotes WHERE feedback_id = $1 AND user_id = $2",
+            )
+            .bind(id)
+            .bind(uid)
+            .execute(&self.pool)
+            .await
+            .map_err(|e| e.to_string())?;
+        } else {
+            sqlx::query(
+                "INSERT INTO feedback_upvotes (feedback_id, user_id) VALUES ($1, $2)",
+            )
+            .bind(id)
+            .bind(uid)
+            .execute(&self.pool)
+            .await
+            .map_err(|e| e.to_string())?;
+        }
+
+        sqlx::query_as::<_, Feedback>(
+            r#"SELECT f.id, f.tipo, f.titulo, f.descricao, f.severidade,
+                      f.usuario_id, f.usuario_nome, f.imagens, f.resposta, f.status,
+                      COUNT(fu.user_id) AS upvotes,
+                      COALESCE(
+                          json_agg(fu.user_id::text ORDER BY fu.created_at)
+                          FILTER (WHERE fu.user_id IS NOT NULL),
+                          '[]'
+                      )::text AS upvoted_by,
+                      (SELECT COUNT(*) FROM feedback_comments WHERE feedback_id = f.id)::bigint AS comment_count,
+                      to_char(f.created_at - INTERVAL '3 hours', 'DD/MM/YYYY HH24:MI') AS created_at
+               FROM feedbacks f
+               LEFT JOIN feedback_upvotes fu ON fu.feedback_id = f.id
+               WHERE f.id = $1
+               GROUP BY f.id"#,
+        )
+        .bind(id)
+        .fetch_one(&self.pool)
+        .await
+        .map_err(|e| e.to_string())
+    }
+
+    async fn set_resposta(&self, id: Uuid, resposta: Option<String>) -> Result<Feedback, String> {
+        sqlx::query_as::<_, Feedback>(
+            r#"UPDATE feedbacks SET resposta = $2 WHERE id = $1
+               RETURNING id, tipo, titulo, descricao, severidade, usuario_id, usuario_nome, imagens, resposta, status,
+                         0::bigint AS upvotes, '[]'::text AS upvoted_by,
+                         (SELECT COUNT(*) FROM feedback_comments WHERE feedback_id = id)::bigint AS comment_count,
+                         to_char(created_at - INTERVAL '3 hours', 'DD/MM/YYYY HH24:MI') AS created_at"#,
+        )
+        .bind(id)
+        .bind(resposta)
+        .fetch_one(&self.pool)
+        .await
+        .map_err(|e| e.to_string())
+    }
+
+    async fn set_status(&self, id: Uuid, status: String) -> Result<Feedback, String> {
+        sqlx::query_as::<_, Feedback>(
+            r#"UPDATE feedbacks SET status = $2 WHERE id = $1
+               RETURNING id, tipo, titulo, descricao, severidade, usuario_id, usuario_nome, imagens, resposta, status,
+                         0::bigint AS upvotes, '[]'::text AS upvoted_by,
+                         (SELECT COUNT(*) FROM feedback_comments WHERE feedback_id = id)::bigint AS comment_count,
+                         to_char(created_at - INTERVAL '3 hours', 'DD/MM/YYYY HH24:MI') AS created_at"#,
+        )
+        .bind(id)
+        .bind(status)
+        .fetch_one(&self.pool)
+        .await
+        .map_err(|e| e.to_string())
+    }
+
+    async fn delete(&self, id: Uuid, caller_id: Option<Uuid>) -> Result<(), String> {
+        match caller_id {
+            None => sqlx::query("DELETE FROM feedbacks WHERE id = $1")
+                .bind(id)
+                .execute(&self.pool)
+                .await
+                .map(|_| ())
+                .map_err(|e| e.to_string()),
+            Some(uid) => {
+                let result = sqlx::query("DELETE FROM feedbacks WHERE id = $1 AND usuario_id = $2")
+                    .bind(id)
+                    .bind(uid)
+                    .execute(&self.pool)
+                    .await
+                    .map_err(|e| e.to_string())?;
+                if result.rows_affected() == 0 {
+                    Err("forbidden".to_string())
+                } else {
+                    Ok(())
+                }
+            }
+        }
+    }
+}
+
+
+pub struct PostgresFeedbackCommentRepository {
+    pool: PgPool,
+}
+
+impl PostgresFeedbackCommentRepository {
+    pub fn new(pool: PgPool) -> Self {
+        Self { pool }
+    }
+}
+
+#[async_trait]
+impl FeedbackCommentRepository for PostgresFeedbackCommentRepository {
+    async fn add(&self, comment: FeedbackComment) -> Result<FeedbackComment, String> {
+        sqlx::query_as::<_, FeedbackComment>(
+            r#"INSERT INTO feedback_comments (id, feedback_id, parent_id, usuario_id, usuario_nome, conteudo)
+               VALUES ($1, $2, $3, $4, $5, $6)
+               RETURNING id, feedback_id, parent_id, usuario_id, usuario_nome, conteudo,
+                         to_char(created_at - INTERVAL '3 hours', 'DD/MM/YYYY HH24:MI') AS created_at"#,
+        )
+        .bind(comment.id)
+        .bind(comment.feedback_id)
+        .bind(comment.parent_id)
+        .bind(comment.usuario_id)
+        .bind(&comment.usuario_nome)
+        .bind(&comment.conteudo)
+        .fetch_one(&self.pool)
+        .await
+        .map_err(|e| e.to_string())
+    }
+
+    async fn get_by_feedback(&self, feedback_id: Uuid) -> Result<Vec<FeedbackComment>, String> {
+        sqlx::query_as::<_, FeedbackComment>(
+            r#"SELECT id, feedback_id, parent_id, usuario_id, usuario_nome, conteudo,
+                      to_char(created_at - INTERVAL '3 hours', 'DD/MM/YYYY HH24:MI') AS created_at
+               FROM feedback_comments
+               WHERE feedback_id = $1
+               ORDER BY created_at ASC"#,
+        )
+        .bind(feedback_id)
+        .fetch_all(&self.pool)
+        .await
+        .map_err(|e| e.to_string())
+    }
+
+    async fn delete(&self, id: Uuid, caller_id: Option<Uuid>) -> Result<(), String> {
+        match caller_id {
+            None => sqlx::query("DELETE FROM feedback_comments WHERE id = $1")
+                .bind(id)
+                .execute(&self.pool)
+                .await
+                .map(|_| ())
+                .map_err(|e| e.to_string()),
+            Some(uid) => sqlx::query("DELETE FROM feedback_comments WHERE id = $1 AND usuario_id = $2")
+                .bind(id)
+                .bind(uid)
+                .execute(&self.pool)
+                .await
+                .map(|_| ())
+                .map_err(|e| e.to_string()),
         }
     }
 }

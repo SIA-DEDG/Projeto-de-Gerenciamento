@@ -1,5 +1,5 @@
-use crate::domain::entities::{Absence, Event, Project, Task};
-use crate::domain::ports::{AbsenceRepository, EventRepository, ProjectRepository, TaskRepository};
+use crate::domain::entities::{Absence, Event, Feedback, FeedbackComment, Project, Task};
+use crate::domain::ports::{AbsenceRepository, EventRepository, FeedbackCommentRepository, FeedbackRepository, ProjectRepository, TaskRepository};
 use std::sync::Arc;
 use uuid::Uuid;
 
@@ -114,6 +114,54 @@ impl EventService {
     }
     pub async fn delete(&self, id: uuid::Uuid) -> Result<(), String> {
         self.repository.delete(id).await
+    }
+}
+
+pub struct FeedbackService {
+    repository: Arc<dyn FeedbackRepository>,
+}
+impl FeedbackService {
+    pub fn new(repository: Arc<dyn FeedbackRepository>) -> Self {
+        Self { repository }
+    }
+    pub async fn add(&self, feedback: Feedback) -> Result<Feedback, String> {
+        self.repository.add(feedback).await
+    }
+    pub async fn get_all(&self) -> Result<Vec<Feedback>, String> {
+        self.repository.get_all().await
+    }
+    pub async fn update_feedback(&self, id: Uuid, tipo: String, titulo: String, descricao: String, severidade: Option<String>, imagens: Option<String>) -> Result<Feedback, String> {
+        self.repository.update(id, tipo, titulo, descricao, severidade, imagens).await
+    }
+    pub async fn toggle_upvote(&self, id: Uuid, user_id: String) -> Result<Feedback, String> {
+        self.repository.toggle_upvote(id, user_id).await
+    }
+    pub async fn set_resposta(&self, id: Uuid, resposta: Option<String>) -> Result<Feedback, String> {
+        self.repository.set_resposta(id, resposta).await
+    }
+    pub async fn set_status(&self, id: Uuid, status: String) -> Result<Feedback, String> {
+        self.repository.set_status(id, status).await
+    }
+    pub async fn delete(&self, id: Uuid, caller_id: Option<Uuid>) -> Result<(), String> {
+        self.repository.delete(id, caller_id).await
+    }
+}
+
+pub struct FeedbackCommentService {
+    repository: Arc<dyn FeedbackCommentRepository>,
+}
+impl FeedbackCommentService {
+    pub fn new(repository: Arc<dyn FeedbackCommentRepository>) -> Self {
+        Self { repository }
+    }
+    pub async fn add(&self, comment: FeedbackComment) -> Result<FeedbackComment, String> {
+        self.repository.add(comment).await
+    }
+    pub async fn get_by_feedback(&self, feedback_id: Uuid) -> Result<Vec<FeedbackComment>, String> {
+        self.repository.get_by_feedback(feedback_id).await
+    }
+    pub async fn delete(&self, id: Uuid, caller_id: Option<Uuid>) -> Result<(), String> {
+        self.repository.delete(id, caller_id).await
     }
 }
 

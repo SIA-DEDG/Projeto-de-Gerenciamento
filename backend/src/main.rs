@@ -7,10 +7,11 @@ use tower_http::cors::{Any, CorsLayer};
 
 use backend::application::auth_use_case::AuthService;
 use backend::application::log_use_case::LogService;
-use backend::application::use_cases::{AbsenceService, EventService, ProjectService, TaskService};
+use backend::application::use_cases::{AbsenceService, EventService, FeedbackCommentService, FeedbackService, ProjectService, TaskService};
 use backend::infrastructure::repositories::{
     PostgresAbsenceRepository, PostgresActivityLogRepository, PostgresEventRepository,
-    PostgresProjectRepository, PostgresTaskRepository, PostgresUserRepository,
+    PostgresFeedbackCommentRepository, PostgresFeedbackRepository, PostgresProjectRepository,
+    PostgresTaskRepository, PostgresUserRepository,
 };
 use backend::presentation::api::{AppState, create_router};
 
@@ -60,12 +61,16 @@ async fn main() {
     let log_repo = PostgresActivityLogRepository::new(pool.clone());
     let absence_repo = PostgresAbsenceRepository::new(pool.clone());
     let event_repo = PostgresEventRepository::new(pool.clone());
+    let feedback_repo = PostgresFeedbackRepository::new(pool.clone());
+    let comment_repo = PostgresFeedbackCommentRepository::new(pool.clone());
 
     let task_service = Arc::new(TaskService::new(Arc::new(task_repo)));
     let project_service = Arc::new(ProjectService::new(Arc::new(project_repo)));
     let log_service = Arc::new(LogService::new(Arc::new(log_repo)));
     let absence_service = Arc::new(AbsenceService::new(Arc::new(absence_repo)));
     let event_service = Arc::new(EventService::new(Arc::new(event_repo)));
+    let feedback_service = Arc::new(FeedbackService::new(Arc::new(feedback_repo)));
+    let comment_service = Arc::new(FeedbackCommentService::new(Arc::new(comment_repo)));
 
     let cors = CorsLayer::new()
         .allow_origin(Any)
@@ -79,6 +84,8 @@ async fn main() {
         log_service,
         absence_service,
         event_service,
+        feedback_service,
+        comment_service,
     })
     .layer(cors);
 

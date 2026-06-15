@@ -1,4 +1,4 @@
-use super::entities::{Absence, ActivityLog, Event, Project, Task, User, UserPublic};
+use super::entities::{Absence, ActivityLog, Event, Feedback, FeedbackComment, Project, Task, User, UserPublic};
 use async_trait::async_trait;
 use uuid::Uuid;
 
@@ -49,6 +49,24 @@ pub trait EventRepository: Send + Sync {
     async fn get_all(&self) -> Result<Vec<Event>, String>;
     async fn update(&self, event: Event, responsible_ids: Vec<Uuid>) -> Result<Event, String>;
     async fn delete(&self, id: Uuid) -> Result<(), String>;
+}
+
+#[async_trait]
+pub trait FeedbackRepository: Send + Sync {
+    async fn add(&self, feedback: Feedback) -> Result<Feedback, String>;
+    async fn get_all(&self) -> Result<Vec<Feedback>, String>;
+    async fn update(&self, id: Uuid, tipo: String, titulo: String, descricao: String, severidade: Option<String>, imagens: Option<String>) -> Result<Feedback, String>;
+    async fn toggle_upvote(&self, id: Uuid, user_id: String) -> Result<Feedback, String>;
+    async fn set_resposta(&self, id: Uuid, resposta: Option<String>) -> Result<Feedback, String>;
+    async fn set_status(&self, id: Uuid, status: String) -> Result<Feedback, String>;
+    async fn delete(&self, id: Uuid, caller_id: Option<Uuid>) -> Result<(), String>;
+}
+
+#[async_trait]
+pub trait FeedbackCommentRepository: Send + Sync {
+    async fn add(&self, comment: FeedbackComment) -> Result<FeedbackComment, String>;
+    async fn get_by_feedback(&self, feedback_id: Uuid) -> Result<Vec<FeedbackComment>, String>;
+    async fn delete(&self, id: Uuid, caller_id: Option<Uuid>) -> Result<(), String>;
 }
 
 #[async_trait]

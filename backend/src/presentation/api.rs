@@ -12,8 +12,8 @@ use uuid::Uuid;
 
 use crate::application::auth_use_case::AuthService;
 use crate::application::log_use_case::LogService;
-use crate::application::use_cases::{AbsenceService, EventService, ProjectService, TaskService};
-use crate::domain::entities::{Absence, ActivityLog, Event, Project, Task, UserPublic};
+use crate::application::use_cases::{AbsenceService, EventService, FeedbackCommentService, FeedbackService, ProjectService, TaskService};
+use crate::domain::entities::{Absence, ActivityLog, Event, Feedback, FeedbackComment, Project, Task, UserPublic};
 use crate::presentation::auth_extractor::AuthUser;
 use crate::presentation::dto::{LoginDto, LoginResponse, RegisterDto, RegisterResponse};
 
@@ -25,6 +25,8 @@ pub struct AppState {
     pub log_service: Arc<LogService>,
     pub absence_service: Arc<AbsenceService>,
     pub event_service: Arc<EventService>,
+    pub feedback_service: Arc<FeedbackService>,
+    pub comment_service: Arc<FeedbackCommentService>,
 }
 
 pub fn create_router(state: AppState) -> Router {
@@ -68,6 +70,13 @@ pub fn create_router(state: AppState) -> Router {
         .route("/api/absences/{id}", put(update_absence_handler).delete(delete_absence_handler))
         .route("/api/events", get(get_events_handler).post(create_event_handler))
         .route("/api/events/{id}", put(update_event_handler).delete(delete_event_handler))
+        .route("/api/feedback", get(get_feedbacks_handler).post(create_feedback_handler))
+        .route("/api/feedback/{id}", put(update_feedback_handler).delete(delete_feedback_handler))
+        .route("/api/feedback/{id}/upvote", post(upvote_feedback_handler))
+        .route("/api/feedback/{id}/status", put(set_status_handler))
+        .route("/api/feedback/{id}/resposta", put(set_resposta_handler))
+        .route("/api/feedback/{id}/comments", get(get_comments_handler).post(add_comment_handler))
+        .route("/api/feedback/{id}/comments/{cid}", delete(delete_comment_handler))
         // .layer(GovernorLayer::new(Arc::clone(&api_limiter)))
         ;
 
@@ -135,6 +144,25 @@ struct EventInputDto {
     start_date: String,
     end_date: String,
     start_time: Option<String>,
+}
+
+#[derive(Deserialize)]
+struct FeedbackInputDto {
+    tipo: String,
+    titulo: String,
+    descricao: String,
+    severidade: Option<String>,
+    usuario_nome: Option<String>,
+    imagens: Option<serde_json::Value>,
+}
+
+#[derive(Deserialize)]
+struct UpdateFeedbackDto {
+    tipo: String,
+    titulo: String,
+    descricao: String,
+    severidade: Option<String>,
+    imagens: Option<serde_json::Value>,
 }
 
 
@@ -968,5 +996,211 @@ async fn delete_event_handler(
         }
         Err(e) if e.contains("não encontrado") => StatusCode::NOT_FOUND,
         Err(_) => StatusCode::INTERNAL_SERVER_ERROR,
+    }
+}
+
+
+async fn get_feedbacks_handler(
+    _auth: AuthUser,
+    State(state): State<AppState>,
+) -> Json<Vec<Feedback>> {
+    match state.feedback_service.get_all().await {
+        Ok(feedbacks) => Json(feedbacks),
+        Err(_) => Json(vec![]),
+    }
+}
+
+async fn create_feedback_handler(
+    auth: AuthUser,
+    State(state): State<AppState>,
+    Json(dto): Json<FeedbackInputDto>,
+) -> Result<(StatusCode, Json<Feedback>), (StatusCode, String)> {
+    let imagens_json = dto.imagens.map(|v| v.to_string());
+    let feedback = Feedback {
+        id: Uuid::new_v4(),
+        tipo: dto.tipo,
+        titulo: dto.titulo.clone(),
+        descricao: dto.descricao,
+        severidade: dto.severidade,
+        usuario_id: Some(parse_uid(&auth.0.sub)),
+        usuario_nome: dto.usuario_nome,
+        imagens: imagens_json,
+        resposta: None,
+        status: "pendente".to_string(),
+        upvotes: 0,
+        upvoted_by: "[]".to_string(),
+        comment_count: 0,
+        created_at: String::new(),
+    };
+    let created = state
+        .feedback_service
+        .add(feedback)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e))?;
+    let _ = state
+        .log_service
+        .add(
+            parse_uid(&auth.0.sub),
+            &auth.0.username,
+            "CREATE",
+            "feedback",
+            &created.id.to_string(),
+            &format!("Enviou feedback [{}]: '{}'", created.tipo, created.titulo),
+        )
+        .await;
+    Ok((StatusCode::CREATED, Json(created)))
+}
+
+async fn upvote_feedback_handler(
+    auth: AuthUser,
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+) -> Result<Json<Feedback>, (StatusCode, String)> {
+    state
+        .feedback_service
+        .toggle_upvote(id, auth.0.sub)
+        .await
+        .map(Json)
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e))
+}
+
+#[derive(Deserialize)]
+struct RespostaDto {
+    resposta: Option<String>,
+}
+
+#[derive(Deserialize)]
+struct StatusDto {
+    status: String,
+}
+
+async fn update_feedback_handler(
+    _auth: AuthUser,
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+    Json(dto): Json<UpdateFeedbackDto>,
+) -> Result<Json<Feedback>, (StatusCode, String)> {
+    let imagens_json = dto.imagens.map(|v| v.to_string());
+    state
+        .feedback_service
+        .update_feedback(id, dto.tipo, dto.titulo, dto.descricao, dto.severidade, imagens_json)
+        .await
+        .map(Json)
+        .map_err(|e| {
+            if e.contains("no rows") {
+                (StatusCode::NOT_FOUND, "Feedback não encontrado".to_string())
+            } else {
+                (StatusCode::INTERNAL_SERVER_ERROR, e)
+            }
+        })
+}
+
+async fn delete_feedback_handler(
+    auth: AuthUser,
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+) -> Result<StatusCode, (StatusCode, String)> {
+    let caller_id = if auth.0.role == "Admin" { None } else { Some(parse_uid(&auth.0.sub)) };
+    state
+        .feedback_service
+        .delete(id, caller_id)
+        .await
+        .map(|_| StatusCode::NO_CONTENT)
+        .map_err(|e| {
+            if e == "forbidden" {
+                (StatusCode::FORBIDDEN, "Sem permissão para excluir este feedback".to_string())
+            } else {
+                (StatusCode::INTERNAL_SERVER_ERROR, e)
+            }
+        })
+}
+
+async fn set_status_handler(
+    auth: AuthUser,
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+    Json(dto): Json<StatusDto>,
+) -> Result<Json<Feedback>, (StatusCode, String)> {
+    if auth.0.role != "Admin" {
+        return Err((StatusCode::FORBIDDEN, "Apenas admins podem alterar o status".to_string()));
+    }
+    if dto.status != "pendente" && dto.status != "respondida" {
+        return Err((StatusCode::BAD_REQUEST, "Status inválido".to_string()));
+    }
+    state
+        .feedback_service
+        .set_status(id, dto.status)
+        .await
+        .map(Json)
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e))
+}
+
+async fn set_resposta_handler(
+    auth: AuthUser,
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+    Json(dto): Json<RespostaDto>,
+) -> Result<Json<Feedback>, (StatusCode, String)> {
+    if auth.0.role != "Admin" {
+        return Err((StatusCode::FORBIDDEN, "Apenas admins podem responder feedbacks".to_string()));
+    }
+    state
+        .feedback_service
+        .set_resposta(id, dto.resposta)
+        .await
+        .map(Json)
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e))
+}
+
+
+#[derive(Deserialize)]
+struct CommentInputDto {
+    conteudo: String,
+    parent_id: Option<Uuid>,
+    usuario_nome: Option<String>,
+}
+
+async fn get_comments_handler(
+    _auth: AuthUser,
+    State(state): State<AppState>,
+    Path(feedback_id): Path<Uuid>,
+) -> impl IntoResponse {
+    match state.comment_service.get_by_feedback(feedback_id).await {
+        Ok(comments) => (StatusCode::OK, Json(comments)).into_response(),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e).into_response(),
+    }
+}
+
+async fn add_comment_handler(
+    auth: AuthUser,
+    State(state): State<AppState>,
+    Path(feedback_id): Path<Uuid>,
+    Json(dto): Json<CommentInputDto>,
+) -> impl IntoResponse {
+    let nome = dto.usuario_nome.unwrap_or_else(|| auth.0.username.clone());
+    let comment = FeedbackComment {
+        id: Uuid::new_v4(),
+        feedback_id,
+        parent_id: dto.parent_id,
+        usuario_id: Some(parse_uid(&auth.0.sub)),
+        usuario_nome: nome,
+        conteudo: dto.conteudo,
+        created_at: String::new(),
+    };
+    match state.comment_service.add(comment).await {
+        Ok(c) => (StatusCode::CREATED, Json(c)).into_response(),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e).into_response(),
+    }
+}
+
+async fn delete_comment_handler(
+    auth: AuthUser,
+    State(state): State<AppState>,
+    Path((_feedback_id, comment_id)): Path<(Uuid, Uuid)>,
+) -> impl IntoResponse {
+    let caller_id = if auth.0.role == "Admin" { None } else { Some(parse_uid(&auth.0.sub)) };
+    match state.comment_service.delete(comment_id, caller_id).await {
+        Ok(_) => StatusCode::NO_CONTENT.into_response(),
+        Err(e) => (StatusCode::FORBIDDEN, e).into_response(),
     }
 }

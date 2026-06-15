@@ -108,6 +108,47 @@ pub struct Event {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+pub struct Feedback {
+    #[serde(default = "Uuid::new_v4")]
+    pub id: Uuid,
+    pub tipo: String,
+    pub titulo: String,
+    pub descricao: String,
+    pub severidade: Option<String>,
+    pub usuario_id: Option<Uuid>,
+    pub usuario_nome: Option<String>,
+    pub imagens: Option<String>,
+    pub resposta: Option<String>,
+    #[serde(default = "default_pendente")]
+    pub status: String,
+    // Campos computados via LEFT JOIN em feedback_upvotes
+    #[serde(default)]
+    pub upvotes: i64,
+    #[serde(default = "default_empty_array")]
+    pub upvoted_by: String, // JSON array de user_id (UUIDs como string)
+    #[serde(default)]
+    pub comment_count: i64,
+    #[serde(default)]
+    pub created_at: String,
+}
+
+fn default_pendente() -> String { "pendente".to_string() }
+fn default_empty_array() -> String { "[]".to_string() }
+
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+pub struct FeedbackComment {
+    #[serde(default = "Uuid::new_v4")]
+    pub id: Uuid,
+    pub feedback_id: Uuid,
+    pub parent_id: Option<Uuid>,
+    pub usuario_id: Option<Uuid>,
+    pub usuario_nome: String,
+    pub conteudo: String,
+    #[serde(default)]
+    pub created_at: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct ActivityLog {
     pub id: Uuid,
     pub user_id: Uuid,
