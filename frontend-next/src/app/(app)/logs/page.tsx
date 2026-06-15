@@ -10,7 +10,7 @@ import ToastContainer from '@/components/ToastContainer';
 
 const ACTION_LABELS: Record<string, string> = { CREATE: 'Criou', UPDATE: 'Atualizou', DELETE: 'Excluiu' };
 const ENTITY_LABELS: Record<string, string> = { task: 'Atividade', project: 'Projeto', user: 'Usuário', absence: 'Falta', event: 'Evento' };
-const PAGE_SIZE = 50;
+const PAGE_SIZE = 20;
 
 const ACTION_STYLE: Record<string, { bg: string; color: string; dot: string }> = {
   CREATE: { bg: '#dcfce7', color: '#15803d', dot: '#22c55e' },
@@ -61,6 +61,7 @@ export default function LogsPage() {
   const [search, setSearch]       = useState('');
   const [page, setPage]           = useState(1);
   const [confirmClear, setConfirmClear] = useState(false);
+  const [selectedLog, setSelectedLog]   = useState<ActivityLog | null>(null);
 
   const isAdmin = getUser()?.role === 'Admin';
   const { toasts, addToast, dismissToast } = useToast();
@@ -122,7 +123,7 @@ export default function LogsPage() {
         </div>
       </header>
 
-      <div style={{ padding:'24px 28px', overflowY:'auto', flex:1, display:'flex', flexDirection:'column', gap:16 }}>
+      <div style={{ padding:'24px 28px', overflowY:'auto', flex:1, minHeight:0, display:'flex', flexDirection:'column', gap:16 }}>
         {error && (
           <div style={{ padding:'10px 16px', background:'#fee2e2', borderRadius:8, color:'#b91c1c', fontSize:'0.88rem', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
             <span>{error}</span>
@@ -188,7 +189,7 @@ export default function LogsPage() {
         {loading ? (
           <div style={{ padding:48, textAlign:'center', color:'var(--text-muted)' }}>Carregando…</div>
         ) : (
-          <div style={{ background:'#fff', borderRadius:14, border:'1px solid var(--border-light)', overflow:'hidden', boxShadow:'0 2px 12px rgba(3,78,162,0.06)' }}>
+          <div style={{ background:'#fff', borderRadius:14, border:'1px solid var(--border-light)', overflow:'hidden', boxShadow:'0 2px 12px rgba(3,78,162,0.06)', flexShrink:0 }}>
             <table style={{ width:'100%', borderCollapse:'collapse', fontSize:'0.845rem' }}>
               <thead>
                 <tr style={{ background:'var(--bg-app)' }}>
@@ -207,7 +208,8 @@ export default function LogsPage() {
                   const entityStyle = ENTITY_STYLE[log.entity_type] ?? { bg: '#f1f5f9', color: '#475569' };
                   return (
                     <tr key={log.id}
-                      style={{ borderBottom: idx < pageItems.length - 1 ? '1px solid var(--border-light)' : 'none', transition:'background 0.12s' }}
+                      onClick={() => setSelectedLog(log)}
+                      style={{ borderBottom: idx < pageItems.length - 1 ? '1px solid var(--border-light)' : 'none', transition:'background 0.12s', cursor:'pointer' }}
                       onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-app)')}
                       onMouseLeave={e => (e.currentTarget.style.background = '')}>
                       {/* Date */}
@@ -246,10 +248,7 @@ export default function LogsPage() {
             </table>
 
             {/* Pagination */}
-            <div style={{ padding:'12px 16px', borderTop:'1px solid var(--border-light)', display:'flex', alignItems:'center', justifyContent:'space-between', flexWrap:'wrap', gap:8 }}>
-              <span style={{ fontSize:'0.78rem', color:'var(--text-muted)' }}>
-                {filtered.length === 0 ? '0' : `${(safePage - 1) * PAGE_SIZE + 1}–${Math.min(safePage * PAGE_SIZE, filtered.length)}`} de {filtered.length}
-              </span>
+            <div style={{ padding:'12px 16px', borderTop:'1px solid var(--border-light)', display:'flex', alignItems:'center', justifyContent:'center', flexWrap:'wrap', gap:8 }}>
               <div style={{ display:'flex', gap:4, alignItems:'center' }}>
                 <button onClick={() => setPage(1)} disabled={safePage === 1} style={pgBtn(safePage === 1)} title="Primeira">«</button>
                 <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={safePage === 1} style={pgBtn(safePage === 1)} title="Anterior">‹</button>
@@ -274,11 +273,85 @@ export default function LogsPage() {
         )}
       </div>
 
+      {selectedLog && <LogPreviewModal log={selectedLog} onClose={() => setSelectedLog(null)} />}
+
       <ConfirmModal open={confirmClear} title="Limpar todos os logs"
         message="Todos os registros serão apagados permanentemente. Esta ação não pode ser desfeita."
         confirmLabel="Limpar" danger onConfirm={executeClearLogs} onClose={() => setConfirmClear(false)} />
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />
     </>
+  );
+}
+
+function LogPreviewModal({ log, onClose }: { log: ActivityLog; onClose: () => void }) {
+  const { date, time } = formatDateTime(log.created_at);
+  const actionStyle = ACTION_STYLE[log.action] ?? { bg: '#f1f5f9', color: '#475569', dot: '#94a3b8' };
+  const entityStyle = ENTITY_STYLE[log.entity_type] ?? { bg: '#f1f5f9', color: '#475569' };
+
+  return (
+    <div
+      onClick={onClose}
+      style={{ position:'fixed', inset:0, background:'rgba(3,20,50,0.45)', zIndex:1000, display:'flex', alignItems:'center', justifyContent:'center', padding:24 }}>
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{ background:'#fff', borderRadius:16, boxShadow:'0 8px 40px rgba(3,78,162,0.18)', width:'100%', maxWidth:480, padding:'28px 28px 24px' }}>
+
+        {/* Header */}
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20 }}>
+          <span style={{ fontWeight:700, fontSize:'1rem', color:'var(--text-primary)' }}>Detalhes do registro</span>
+          <button onClick={onClose} style={{ background:'none', border:'none', cursor:'pointer', color:'var(--text-muted)', display:'flex', padding:4, borderRadius:6 }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+
+        {/* User */}
+        <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:20, padding:'12px 14px', background:'var(--bg-app)', borderRadius:10 }}>
+          <UserAvatar name={log.user_name} />
+          <div>
+            <div style={{ fontWeight:700, fontSize:'0.9rem', color:'var(--text-primary)' }}>{log.user_name}</div>
+            <div style={{ fontSize:'0.72rem', color:'var(--text-muted)', marginTop:1 }}>ID: {log.user_id}</div>
+          </div>
+        </div>
+
+        {/* Fields grid */}
+        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginBottom:16 }}>
+          <Field label="Data">
+            <span style={{ fontWeight:600, color:'var(--text-primary)' }}>{date}</span>
+            <span style={{ color:'var(--text-muted)', fontSize:'0.8rem', marginLeft:6 }}>{time}</span>
+          </Field>
+          <Field label="Ação">
+            <span style={{ display:'inline-flex', alignItems:'center', gap:5, background:actionStyle.bg, color:actionStyle.color, borderRadius:20, padding:'3px 10px', fontSize:'0.75rem', fontWeight:700 }}>
+              <span style={{ width:6, height:6, borderRadius:'50%', background:actionStyle.dot, flexShrink:0 }} />
+              {ACTION_LABELS[log.action] ?? log.action}
+            </span>
+          </Field>
+          <Field label="Tipo">
+            <span style={{ background:entityStyle.bg, color:entityStyle.color, borderRadius:6, padding:'2px 9px', fontSize:'0.75rem', fontWeight:600 }}>
+              {ENTITY_LABELS[log.entity_type] ?? log.entity_type}
+            </span>
+          </Field>
+          <Field label="ID do registro">
+            <span style={{ fontFamily:'monospace', fontSize:'0.78rem', color:'var(--text-secondary)', wordBreak:'break-all' }}>{log.entity_id || '—'}</span>
+          </Field>
+        </div>
+
+        {/* Details */}
+        <Field label="Detalhes">
+          <p style={{ margin:0, fontSize:'0.86rem', color:'var(--text-secondary)', lineHeight:1.6, whiteSpace:'pre-wrap', wordBreak:'break-word' }}>
+            {log.details || '—'}
+          </p>
+        </Field>
+      </div>
+    </div>
+  );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <div style={{ fontSize:'0.68rem', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.06em', color:'var(--text-muted)', marginBottom:4 }}>{label}</div>
+      <div>{children}</div>
+    </div>
   );
 }
 
