@@ -29,10 +29,10 @@ export default function LoginPage() {
     try {
       const data = await login(username, password);
       setAuth(data.token, {
-        user_id:              data.user_id,
-        name:                 data.name,
-        role:                 data.role,
-        username:             data.username,
+        user_id: data.user_id,
+        name: data.name,
+        role: data.role,
+        username: data.username,
         must_change_password: data.must_change_password,
       }, remember);
       router.replace(data.must_change_password ? '/redefinir-senha' : '/');
