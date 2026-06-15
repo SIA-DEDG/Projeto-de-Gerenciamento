@@ -11,7 +11,8 @@ export interface Task {
   priority: string;
   created_at: string;
   project_id?: string | null;
-  co_responsibles?: string | null;  // JSON array of names from junction — display only
+  co_responsibles?: string | null;    // JSON array of names from junction — display only
+  co_responsible_ids?: string | null; // JSON array of UUIDs from junction — used for updates
   external_collaborators?: string | null;
   deadline?: string | null;
   // enriched client-side

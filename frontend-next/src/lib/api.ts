@@ -172,7 +172,7 @@ export async function updateTask(
       project_id: updates.project_id !== undefined ? updates.project_id : existing.project_id,
       co_responsible_ids: updates.co_responsible_ids !== undefined
         ? updates.co_responsible_ids
-        : parseCoResponsibleIds(existing.co_responsibles),
+        : parseCoResponsibleIds(existing.co_responsible_ids),
       external_collaborators: updates.external_collaborators !== undefined
         ? updates.external_collaborators
         : existing.external_collaborators,
@@ -184,8 +184,12 @@ export async function updateTask(
   return enrichTask(data);
 }
 
-function parseCoResponsibleIds(_coResponsibles: string | null | undefined): string[] | null {
-  return null;
+function parseCoResponsibleIds(coResponsibleIds: string | null | undefined): string[] | null {
+  if (!coResponsibleIds) return null;
+  try {
+    const ids = JSON.parse(coResponsibleIds) as string[];
+    return ids.length > 0 ? ids : null;
+  } catch { return null; }
 }
 
 export async function deleteTask(id: string): Promise<void> {
@@ -394,10 +398,10 @@ export interface CalendarEvent {
   start_date: string;
   end_date: string;
   start_time: string | null;
-  is_private?: boolean;
-  is_company_wide?: boolean;
-  created_by_id?: string | null;
+  is_private: boolean;
+  is_company_wide: boolean;
   created_at: string;
+  created_by_id?: string | null;
 }
 
 export async function fetchEvents(): Promise<CalendarEvent[]> {
@@ -412,6 +416,8 @@ export async function createEvent(payload: {
   start_date: string;
   end_date: string;
   start_time: string | null;
+  is_private: boolean;
+  is_company_wide?: boolean;
 }): Promise<CalendarEvent> {
   return apiFetch<CalendarEvent>('/api/events', {
     method: 'POST',
@@ -427,6 +433,8 @@ export async function updateEvent(id: string, payload: {
   start_date: string;
   end_date: string;
   start_time: string | null;
+  is_private: boolean;
+  is_company_wide?: boolean;
 }): Promise<CalendarEvent> {
   return apiFetch<CalendarEvent>(`/api/events/${id}`, {
     method: 'PUT',
@@ -456,4 +464,100 @@ export async function adminResetUserPassword(id: string, newPassword: string): P
     method: 'PUT',
     body: JSON.stringify({ new_password: newPassword }),
   });
+}
+
+
+export interface FeedbackItem {
+  id: string;
+  tipo: 'bug' | 'melhoria';
+  titulo: string;
+  descricao: string;
+  severidade: string | null;
+  usuario_id: string | null;
+  usuario_nome: string | null;
+  imagens: string | null;
+  resposta: string | null;
+  status: 'pendente' | 'respondida';
+  upvotes: number;
+  upvoted_by: string;
+  comment_count: number;
+  created_at: string;
+}
+
+export interface FeedbackComment {
+  id: string;
+  feedback_id: string;
+  parent_id: string | null;
+  usuario_id: string | null;
+  usuario_nome: string;
+  conteudo: string;
+  created_at: string;
+}
+
+export async function fetchFeedbacks(): Promise<FeedbackItem[]> {
+  return apiFetch<FeedbackItem[]>('/api/feedback');
+}
+
+export async function submitFeedback(payload: {
+  tipo: 'bug' | 'melhoria';
+  titulo: string;
+  descricao: string;
+  severidade: string | null;
+  usuario_nome: string | null;
+  imagens: { nome: string; dados: string }[];
+}): Promise<FeedbackItem> {
+  return apiFetch<FeedbackItem>('/api/feedback', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function updateFeedback(id: string, payload: {
+  tipo: 'bug' | 'melhoria';
+  titulo: string;
+  descricao: string;
+  severidade: string | null;
+  imagens: { nome: string; dados: string }[];
+}): Promise<FeedbackItem> {
+  return apiFetch<FeedbackItem>(`/api/feedback/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function toggleFeedbackUpvote(id: string): Promise<FeedbackItem> {
+  return apiFetch<FeedbackItem>(`/api/feedback/${id}/upvote`, { method: 'POST' });
+}
+
+export async function deleteFeedback(id: string): Promise<void> {
+  return apiFetch<void>(`/api/feedback/${id}`, { method: 'DELETE' });
+}
+
+export async function setFeedbackStatus(id: string, status: 'pendente' | 'respondida'): Promise<FeedbackItem> {
+  return apiFetch<FeedbackItem>(`/api/feedback/${id}/status`, {
+    method: 'PUT',
+    body: JSON.stringify({ status }),
+  });
+}
+
+export async function setFeedbackResposta(id: string, resposta: string | null): Promise<FeedbackItem> {
+  return apiFetch<FeedbackItem>(`/api/feedback/${id}/resposta`, {
+    method: 'PUT',
+    body: JSON.stringify({ resposta }),
+  });
+}
+
+export async function fetchComments(feedbackId: string): Promise<FeedbackComment[]> {
+  return apiFetch<FeedbackComment[]>(`/api/feedback/${feedbackId}/comments`);
+}
+
+export async function addComment(feedbackId: string, conteudo: string, parentId?: string, usuarioNome?: string): Promise<FeedbackComment> {
+  return apiFetch<FeedbackComment>(`/api/feedback/${feedbackId}/comments`, {
+    method: 'POST',
+    body: JSON.stringify({ conteudo, parent_id: parentId ?? null, usuario_nome: usuarioNome ?? null }),
+  });
+}
+
+export async function deleteComment(feedbackId: string, commentId: string): Promise<void> {
+  return apiFetch<void>(`/api/feedback/${feedbackId}/comments/${commentId}`, { method: 'DELETE' });
 }

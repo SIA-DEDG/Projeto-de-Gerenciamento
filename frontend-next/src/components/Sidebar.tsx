@@ -80,7 +80,7 @@ export default function Sidebar() {
 
       <div className="sidebar-divider" />
 
-      <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
+      <div className="sidebar-scroll" style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
       <div className="sidebar-section">
         <div className="sidebar-section-title">Planejamento</div>
         <ul className="nav">
@@ -174,19 +174,21 @@ export default function Sidebar() {
               Projetos
             </Link>
           </li>
-          <li className={pathname === '/logs' ? 'active' : ''}>
-            <Link href="/logs" className="nav-link">
-              <span className="nav-icon">
-                <svg viewBox="0 0 24 24">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                  <line x1="8" y1="10" x2="16" y2="10" />
-                  <line x1="8" y1="14" x2="16" y2="14" />
-                  <line x1="8" y1="18" x2="12" y2="18" />
-                </svg>
-              </span>
-              Logs
-            </Link>
-          </li>
+          {user?.role === 'Admin' && (
+            <li className={pathname === '/logs' ? 'active' : ''}>
+              <Link href="/logs" className="nav-link">
+                <span className="nav-icon">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                    <line x1="8" y1="10" x2="16" y2="10" />
+                    <line x1="8" y1="14" x2="16" y2="14" />
+                    <line x1="8" y1="18" x2="12" y2="18" />
+                  </svg>
+                </span>
+                Logs
+              </Link>
+            </li>
+          )}
         </ul>
       </div>
 
@@ -204,6 +206,16 @@ export default function Sidebar() {
                 </svg>
               </span>
               Configurações
+            </Link>
+          </li>
+          <li className={pathname === '/feedback' ? 'active' : ''}>
+            <Link href="/feedback" className="nav-link">
+              <span className="nav-icon">
+                <svg viewBox="0 0 24 24">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                </svg>
+              </span>
+              Relatar Feedback
             </Link>
           </li>
           {canManageUsers(user?.role) && (
@@ -241,7 +253,7 @@ export default function Sidebar() {
       </div>{/* fim container scrollable */}
 
       <div className="sidebar-footer">
-        <div className="sidebar-user" style={{ position: 'relative' }} ref={menuRef}>
+<div className="sidebar-user" style={{ position: 'relative' }} ref={menuRef}>
           <button
             className="sidebar-user-btn"
             onClick={() => setMenuOpen((isOpen) => !isOpen)}
