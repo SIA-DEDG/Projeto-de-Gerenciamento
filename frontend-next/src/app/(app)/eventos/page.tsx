@@ -83,12 +83,12 @@ function EventDayPicker({ selected, onChange, initialDate }: {
         <button type="button" onClick={() => { if(pickMonth===11){setPickYear(y=>y+1);setPickMonth(0);}else setPickMonth(m=>m+1); }}
           style={{ background:'none', border:'none', cursor:'pointer', color:'var(--text-secondary)', fontSize:'0.9rem', lineHeight:1, padding:'2px 5px' }}>›</button>
       </div>
-      <div style={{ display:'grid', gridTemplateColumns:'repeat(7,1fr)', padding:'3px 6px 0' }}>
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(7,minmax(0,1fr))', padding:'3px 6px 0' }}>
         {WEEKDAYS_MINI.map((w,i) => (
           <div key={i} style={{ textAlign:'center', fontSize:'0.6rem', fontWeight:700, color:'var(--text-muted)', padding:'2px 0' }}>{w}</div>
         ))}
       </div>
-      <div style={{ display:'grid', gridTemplateColumns:'repeat(7,1fr)', padding:'0 6px 6px', gap:1 }}>
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(7,minmax(0,1fr))', padding:'0 6px 6px', gap:1 }}>
         {cells.map((day, i) => {
           if (!day) return <div key={i} />;
           const s = `${pickYear}-${String(pickMonth+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
@@ -301,12 +301,12 @@ function MonthView({ events, year, month, todayStr, onChipClick, onClickDay }: {
 
   return (
     <>
-      <div style={{ display:'grid', gridTemplateColumns:'repeat(7,1fr)', background:'var(--bg-app)', borderBottom:'1px solid var(--border-light)' }}>
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(7,minmax(0,1fr))', background:'var(--bg-app)', borderBottom:'1px solid var(--border-light)' }}>
         {WEEKDAYS_SHORT.map((w, i) => (
           <div key={w} style={{ padding:'10px 4px', textAlign:'center', fontSize:'0.68rem', fontWeight:700, color: i===0||i===6 ? '#94a3b8' : 'var(--text-muted)', textTransform:'uppercase', letterSpacing:'0.06em' }}>{w}</div>
         ))}
       </div>
-      <div style={{ display:'grid', gridTemplateColumns:'repeat(7,1fr)' }}>
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(7,minmax(0,1fr))' }}>
         {cells.map((day, idx) => {
           const col = idx % 7;
           const isWeekend = col === 0 || col === 6;
@@ -318,7 +318,7 @@ function MonthView({ events, year, month, todayStr, onChipClick, onClickDay }: {
               key={idx}
               onClick={() => day && onClickDay(dayStr)}
               style={{
-                minHeight: 86, padding: '6px 6px 4px',
+                minHeight: 86, overflow: 'hidden', padding: '6px 6px 4px',
                 borderRight: col!==6 ? '1px solid var(--border-light)' : 'none',
                 borderBottom: idx<cells.length-7 ? '1px solid var(--border-light)' : 'none',
                 background: day===null ? 'var(--bg-app)' : isWeekend ? '#fafbfc' : '#fff',
@@ -364,14 +364,14 @@ function WeekView({ events, weekStart, todayStr, onChipClick, onClickDay }: {
   const days = Array.from({length:7}, (_, i) => { const dayDate=new Date(weekStart); dayDate.setDate(weekStart.getDate()+i); return dayDate; });
 
   return (
-    <div style={{ display:'grid', gridTemplateColumns:'repeat(7,1fr)' }}>
+    <div style={{ display:'grid', gridTemplateColumns:'repeat(7,minmax(0,1fr))' }}>
       {days.map((dayDate, idx) => {
         const dayStr = ymd(dayDate);
         const isToday = dayStr === todayStr;
         const dayEvs = eventsForDay(events, dayStr);
         return (
           <div key={idx}
-            style={{ borderRight: idx<6?'1px solid var(--border-light)':'none', minHeight:240, cursor:'pointer' }}
+            style={{ borderRight: idx<6?'1px solid var(--border-light)':'none', minHeight:240, overflow:'hidden', cursor:'pointer' }}
             onClick={() => onClickDay(dayStr)}
           >
             <div style={{ padding:'10px 8px 6px', borderBottom:'1px solid var(--border-light)', textAlign:'center' }}>
