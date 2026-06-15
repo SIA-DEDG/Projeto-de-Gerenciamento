@@ -491,15 +491,32 @@ a {
   flex: 1;
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow: hidden;
   background: var(--bg-app);
   min-width: 0;
   position: relative;
 }
 
+.page-scroll {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.page-inner {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  padding-top: var(--topbar-height); /* compensa o topbar fixed fora do fluxo */
+}
+
+/* No board/minhas-atividades o topbar é sticky (em fluxo), sem padding extra */
+.has-right-panel .page-inner {
+  padding-top: 0;
+}
+
 .app-logo-corner {
-  position: absolute;
+  position: fixed;
   top: 0;
   right: 0;
   height: var(--topbar-height);
@@ -508,7 +525,7 @@ a {
   justify-content: center;
   padding: 0 20px;
   background: var(--bg-topbar);
-  z-index: 10;
+  z-index: 6;
 }
 
 .main-content.has-logo-corner .topbar-right {
@@ -811,6 +828,10 @@ a {
 
 /* ── TOP BAR ─────────────────────────────────── */
 .topbar {
+  position: fixed;
+  top: 0;
+  left: var(--sidebar-width);
+  right: 0;
   height: var(--topbar-height);
   min-height: var(--topbar-height);
   background: var(--bg-topbar);
@@ -821,6 +842,14 @@ a {
   justify-content: space-between;
   padding: 0 28px;
   z-index: 5;
+}
+
+/* Board / minhas-atividades têm painel direito e não scrollam verticalmente:
+   sticky é suficiente e evita o topbar cobrir o rp-header */
+.has-right-panel .topbar {
+  position: sticky;
+  left: auto;
+  right: auto;
 }
 
 .topbar-left {
@@ -1211,7 +1240,7 @@ a {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  min-height: 130px;
+  min-height: 120px;
   border-left: 4px solid var(--priority-color, #fdb913);
   animation: fadeInUp 0.18s ease both;
 }
@@ -1258,7 +1287,6 @@ a {
   line-height: 1.5;
   display: -webkit-box;
   -webkit-line-clamp: 2;
-  /* autoprefixer: ignore next */
   -webkit-box-orient: vertical;
   overflow: hidden;
   word-break: break-word;
@@ -2240,7 +2268,6 @@ a {
 
   .nav { display: flex; padding: 0 8px; gap: 2px; }
   .nav li.active .nav-link::before { display: none; }
-  .main-content { overflow-y: auto; }
 
   .kanban-board {
     flex-direction: column;

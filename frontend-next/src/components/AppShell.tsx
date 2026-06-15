@@ -21,8 +21,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     <div className="app-container">
       <Sidebar />
 
-      <main className={`main-content${isBoard ? '' : ' has-logo-corner'}`}>
-        {children}
+      <main className={`main-content${isBoard ? '' : ' has-logo-corner'}${showPanel ? ' has-right-panel' : ''}`}>
+        <div className="page-scroll">
+          <div className="page-inner">
+            {children}
+          </div>
+        </div>
 
         {/* Logo no topbar — só em páginas que NÃO são o Board */}
         {!isBoard && !isMyActivities && !isConfigurations &&(
