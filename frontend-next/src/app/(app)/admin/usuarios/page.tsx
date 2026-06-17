@@ -5,6 +5,7 @@ import { fetchUsers, deleteUser, updateUserRole, adminResetUserPassword } from '
 import { getUser, canResetPasswords } from '@/lib/auth';
 import type { UserPublic } from '@/lib/api';
 import ConfirmModal from '@/components/ConfirmModal';
+import { Search, ChevronDown, Lock, Trash2 } from 'lucide-react';
 
 const ALL_ROLES = [
   { value: 'Estagiario',  label: 'Estagiário(a)'   },
@@ -166,7 +167,7 @@ export default function UsuariosPage() {
         <div className="topbar-left"><h1>Gerenciar Usuários</h1></div>
         <div className="topbar-right">
           <div className="topbar-search">
-            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
+            <Search size={16} />
             <input type="text" placeholder="Buscar usuário..." value={search} onChange={(e) => setSearch(e.target.value)} />
           </div>
         </div>
@@ -243,7 +244,7 @@ export default function UsuariosPage() {
                                   style={{ appearance: 'none', padding: '4px 24px 4px 8px', borderRadius: 7, border: '1px solid var(--border-light)', fontSize: '0.75rem', fontFamily: 'inherit', cursor: 'pointer', background: '#fff', color: 'var(--text-secondary)', outline: 'none' }}>
                                   {roles.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
                                 </select>
-                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ position: 'absolute', right: 7, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-muted)' }}><polyline points="6 9 12 15 18 9"/></svg>
+                                <ChevronDown size={10} style={{ position: 'absolute', right: 7, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-muted)' }} />
                                 {roleUpdating === user.id && <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', marginLeft: 4 }}>…</span>}
                               </div>
                             )}
@@ -259,14 +260,14 @@ export default function UsuariosPage() {
                                 style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 11px', background: 'var(--primary-light)', border: 'none', borderRadius: 7, color: 'var(--primary)', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'background 0.15s' }}
                                 onMouseEnter={e => (e.currentTarget.style.background = 'var(--primary-glow)')}
                                 onMouseLeave={e => (e.currentTarget.style.background = 'var(--primary-light)')}>
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                                <Lock size={12} />
                                 Redefinir
                               </button>
                             )}
                             {isSelf || !canAct ? (
                               <span style={{ padding: '6px 11px', background: 'var(--bg-subtle)', border: '1px solid var(--border-light)', borderRadius: 7, color: 'var(--text-muted)', fontSize: '0.75rem', fontWeight: 600, cursor: 'not-allowed', display: 'inline-flex', alignItems: 'center', gap: 5 }}
                                 title={isSelf ? 'Você não pode excluir sua própria conta' : 'Sem permissão'}>
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                                <Trash2 size={12} />
                                 Excluir
                               </span>
                             ) : (
@@ -274,7 +275,7 @@ export default function UsuariosPage() {
                                 style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 11px', background: '#fff5f5', border: 'none', borderRadius: 7, color: '#dc2626', fontSize: '0.75rem', fontWeight: 600, cursor: deleting === user.id ? 'not-allowed' : 'pointer', fontFamily: 'inherit', opacity: deleting === user.id ? 0.6 : 1, transition: 'background 0.15s' }}
                                 onMouseEnter={e => { if (deleting !== user.id) e.currentTarget.style.background = '#fee2e2'; }}
                                 onMouseLeave={e => (e.currentTarget.style.background = '#fff5f5')}>
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                                <Trash2 size={12} />
                                 {deleting === user.id ? '…' : 'Excluir'}
                               </button>
                             )}

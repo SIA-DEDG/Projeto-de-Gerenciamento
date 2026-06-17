@@ -10,6 +10,7 @@ import {
   LinearScale,
   BarElement,
 } from 'chart.js';
+import { Clock, RefreshCw, Check, TriangleAlert, List, Star, Calendar, ChartPie, ChartColumn, UsersRound } from 'lucide-react';
 import { Doughnut, Bar } from 'react-chartjs-2';
 import { fetchTasks } from '@/lib/api';
 import type { Task } from '@/types';
@@ -60,14 +61,14 @@ export default function DashboardsPage() {
   const in7 = new Date(today); in7.setDate(today.getDate() + 7);
   const in7Str = in7.toISOString().split('T')[0];
 
-  const pending    = useMemo(() => tasks.filter(t => t.status_group === 'pending').length, [tasks]);
+  const pending = useMemo(() => tasks.filter(t => t.status_group === 'pending').length, [tasks]);
   const inProgress = useMemo(() => tasks.filter(t => t.status_group === 'in_progress').length, [tasks]);
-  const done       = useMemo(() => tasks.filter(t => t.status_group === 'done').length, [tasks]);
-  const total      = tasks.length;
+  const done = useMemo(() => tasks.filter(t => t.status_group === 'done').length, [tasks]);
+  const total = tasks.length;
 
-  const overdue       = useMemo(() => tasks.filter(t => t.status_group !== 'done' && t.deadline && t.deadline < todayStr).length, [tasks, todayStr]);
-  const dueThisWeek   = useMemo(() => tasks.filter(t => t.status_group !== 'done' && t.deadline && t.deadline >= todayStr && t.deadline <= in7Str).length, [tasks, todayStr, in7Str]);
-  const highPriority  = useMemo(() => tasks.filter(t => t.status_group !== 'done' && t.priority?.toLowerCase() === 'alta').length, [tasks]);
+  const overdue = useMemo(() => tasks.filter(t => t.status_group !== 'done' && t.deadline && t.deadline < todayStr).length, [tasks, todayStr]);
+  const dueThisWeek = useMemo(() => tasks.filter(t => t.status_group !== 'done' && t.deadline && t.deadline >= todayStr && t.deadline <= in7Str).length, [tasks, todayStr, in7Str]);
+  const highPriority = useMemo(() => tasks.filter(t => t.status_group !== 'done' && t.priority?.toLowerCase() === 'alta').length, [tasks]);
   const completionPct = total > 0 ? Math.round((done / total) * 100) : 0;
 
   // Distribuição de status
@@ -83,12 +84,7 @@ export default function DashboardsPage() {
   };
   const doughnutOptions = {
     responsive: true, maintainAspectRatio: false, cutout: '68%',
-    plugins: {
-      legend: {
-        position: 'bottom' as const,
-        labels: { padding: 18, usePointStyle: true, pointStyleWidth: 10, font: { family: 'Montserrat', size: 12 } },
-      },
-    },
+    plugins: { legend: { display: false } },
   };
 
   // Tarefas por responsável (top 8)
@@ -119,9 +115,7 @@ export default function DashboardsPage() {
       x: { beginAtZero: true, stacked: true, ticks: { stepSize: 1, font: { family: 'Montserrat', size: 11 } }, grid: { color: 'rgba(0,0,0,0.04)' } },
       y: { stacked: true, ticks: { font: { family: 'Montserrat', size: 12 } }, grid: { display: false } },
     },
-    plugins: {
-      legend: { position: 'top' as const, labels: { usePointStyle: true, pointStyleWidth: 8, font: { family: 'Montserrat', size: 11 }, padding: 16 } },
-    },
+    plugins: { legend: { display: false } },
   };
 
   // Distribuição de prioridade
@@ -177,16 +171,16 @@ export default function DashboardsPage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 14, padding: '0 32px 14px' }}>
           <KpiCard label="Pendentes" value={pending} color="#eab308"
             sub={highPriority > 0 ? `${highPriority} de alta prioridade` : 'Nenhuma alta prioridade'}
-            icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>} />
+            icon={<Clock height={16} />} />
           <KpiCard label="Em Andamento" value={inProgress} color="#3b82f6"
             sub={total > 0 ? `${Math.round((inProgress / total) * 100)}% do total` : '—'}
-            icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>} />
+            icon={<RefreshCw height={16} />} />
           <KpiCard label="Concluídos" value={done} color="#22c55e"
             sub={`Taxa de conclusão: ${completionPct}%`}
-            icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12"/></svg>} />
+            icon={<Check height={16} />} />
           <KpiCard label="Atrasadas" value={overdue} color="#ef4444" accent={overdue > 0}
             sub={overdue > 0 ? 'Requer atenção imediata' : 'Tudo em dia'}
-            icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>} />
+            icon={<TriangleAlert height={16} />} />
         </div>
 
         {/* KPI Row 2 */}
@@ -205,17 +199,17 @@ export default function DashboardsPage() {
           {/* Due this week */}
           <KpiCard label="Prazo esta semana" value={dueThisWeek} color="#8b5cf6"
             sub={dueThisWeek > 0 ? 'Atividades com prazo em 7 dias' : 'Nenhuma com prazo próximo'}
-            icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>} />
+            icon={<Calendar height={16} />} />
 
           {/* High priority */}
           <KpiCard label="Alta Prioridade" value={highPriority} color="#f97316" accent={highPriority > 0}
             sub="Pendentes ou em andamento"
-            icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>} />
+            icon={<Star height={16} />} />
 
           {/* Total */}
           <KpiCard label="Total de Atividades" value={total} color="#034ea2"
             sub={`${pending + inProgress} ativas`}
-            icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>} />
+            icon={<List height={16} />} />
         </div>
 
         {/* Charts row 1 */}
@@ -223,19 +217,34 @@ export default function DashboardsPage() {
           <div className="chart-card">
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20 }}>
               <div style={{ width: 28, height: 28, borderRadius: 7, background: 'var(--primary-light)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2"><circle cx="12" cy="12" r="10"/></svg>
+                <ChartPie width={14} height={14} color="var(--primary)" />
               </div>
               <h3 style={{ margin: 0, fontSize: '0.92rem', fontWeight: 700, color: 'var(--text-primary)' }}>Distribuição de Status</h3>
             </div>
             <div className="chart-wrapper">
               {total > 0 ? <Doughnut data={doughnutData} options={doughnutOptions} /> : <p style={{ color: 'var(--text-muted)', textAlign: 'center', paddingTop: 100 }}>Nenhuma atividade.</p>}
             </div>
+            {total > 0 && (
+              <div style={{ display: 'flex', justifyContent: 'center', gap: 20, marginTop: 16, flexWrap: 'wrap' }}>
+                {[
+                  { label: 'Pendentes',    color: '#eab308', value: pending    },
+                  { label: 'Em Andamento', color: '#3b82f6', value: inProgress },
+                  { label: 'Concluídos',   color: '#22c55e', value: done       },
+                ].map(item => (
+                  <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{ width: 10, height: 10, borderRadius: 3, background: item.color, flexShrink: 0 }} />
+                    <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 500 }}>{item.label}</span>
+                    <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 700 }}>({item.value})</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="chart-card">
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20 }}>
               <div style={{ width: 28, height: 28, borderRadius: 7, background: '#fef9c3', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#eab308" strokeWidth="2"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
+                <ChartColumn width={14} height={14} color="#eab308" />  
               </div>
               <h3 style={{ margin: 0, fontSize: '0.92rem', fontWeight: 700, color: 'var(--text-primary)' }}>Distribuição por Prioridade</h3>
               <span style={{ marginLeft: 'auto', fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 500 }}>ativas</span>
@@ -251,11 +260,25 @@ export default function DashboardsPage() {
           <div className="chart-card">
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20 }}>
               <div style={{ width: 28, height: 28, borderRadius: 7, background: '#dcfce7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                <UsersRound width={14} height={14} color="#22c55e" />
               </div>
               <h3 style={{ margin: 0, fontSize: '0.92rem', fontWeight: 700, color: 'var(--text-primary)' }}>Carga de Trabalho por Responsável</h3>
               <span style={{ marginLeft: 'auto', fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 500 }}>top {topResp.length}</span>
             </div>
+            {topResp.length > 0 && (
+              <div style={{ display: 'flex', gap: 16, marginBottom: 16, flexWrap: 'wrap' }}>
+                {[
+                  { label: 'Concluídas',    color: '#22c55e' },
+                  { label: 'Em andamento',  color: '#3b82f6' },
+                  { label: 'Atrasadas',     color: '#ef4444' },
+                ].map(item => (
+                  <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{ width: 10, height: 10, borderRadius: 3, background: item.color, flexShrink: 0 }} />
+                    <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 500 }}>{item.label}</span>
+                  </div>
+                ))}
+              </div>
+            )}
             <div className="chart-wrapper" style={{ height: Math.max(220, topResp.length * 44) }}>
               {topResp.length > 0 ? <Bar data={respBarData} options={respBarOptions} /> : <p style={{ color: 'var(--text-muted)', textAlign: 'center', paddingTop: 80 }}>Nenhuma atividade com responsável.</p>}
             </div>

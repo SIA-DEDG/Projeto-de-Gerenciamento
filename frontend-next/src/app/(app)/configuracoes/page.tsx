@@ -6,7 +6,7 @@ import { changePassword, updateUserProfile } from '@/lib/api';
 import { getSettings, saveSettings } from '@/lib/localStorage';
 import type { Settings } from '@/types';
 import s from './configuracoes.module.css';
-import { User, Lock, Settings2, KeyRound, ShieldCheck, Bell, RefreshCw, Mail, Save, Check } from 'lucide-react';
+import { User, Lock, Settings2, KeyRound, ShieldCheck, Bell, RefreshCw, Mail, Save, Check, AlertTriangle } from 'lucide-react';
 
 type Section = 'perfil' | 'seguranca' | 'sistema';
 
@@ -20,6 +20,10 @@ export default function ConfiguracoesPage() {
   const [section, setSection] = useState<Section>('perfil');
 
   return (
+    <>
+      <div className="topbar">
+        <div className="topbar-left"><h1>Configurações</h1></div>
+      </div>
     <div className={s.page}>
           {/* ── Left nav ── */}
           <nav className={s.nav}>
@@ -47,7 +51,9 @@ export default function ConfiguracoesPage() {
               {section === 'sistema'   && <SistemaSection />}
             </div>
           </div>
-        </div>  );
+        </div>
+    </>
+  );
 }
 
 // ── Informações Pessoais ───────────────────────────────────────────────────────
@@ -116,10 +122,7 @@ function PerfilSection() {
               <label className={s.label} htmlFor="pf-name">Nome de exibição</label>
               <input id="pf-name" type="text" className={s.input} value={name} onChange={(e) => setName(e.target.value)} maxLength={80} />
               <div className={s.nameWarning}>
-                <svg className={s.nameWarningIcon} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-                  <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
-                </svg>
+                <AlertTriangle className={s.nameWarningIcon} size={14} strokeWidth={2.2} />
                 <p className={s.nameWarningText}>
                   <strong>Atenção: o nome é usado na importação via planilha.</strong>
                   Alterar quebra o vínculo com a coluna de responsável. Comunique previamente a diretoria.

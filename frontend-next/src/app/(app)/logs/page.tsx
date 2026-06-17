@@ -7,6 +7,7 @@ import type { ActivityLog } from '@/lib/api';
 import ConfirmModal from '@/components/ConfirmModal';
 import { useToast } from '@/hooks/useToast';
 import ToastContainer from '@/components/ToastContainer';
+import { Trash2, Search, ChevronDown, X } from 'lucide-react';
 
 const ACTION_LABELS: Record<string, string> = { CREATE: 'Criou', UPDATE: 'Atualizou', DELETE: 'Excluiu' };
 const ENTITY_LABELS: Record<string, string> = { task: 'Atividade', project: 'Projeto', user: 'Usuário', absence: 'Falta', event: 'Evento' };
@@ -116,7 +117,7 @@ export default function LogsPage() {
             <button type="button" onClick={() => setConfirmClear(true)}
               disabled={clearing || logs.length === 0}
               style={{ display:'flex', alignItems:'center', gap:6, padding:'7px 16px', background:'#fff5f5', border:'1px solid #fecaca', borderRadius:8, color:'#dc2626', fontSize:'0.82rem', fontWeight:700, cursor: clearing || logs.length === 0 ? 'not-allowed' : 'pointer', opacity: logs.length === 0 ? 0.5 : 1, fontFamily:'inherit' }}>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+              <Trash2 size={13} />
               {clearing ? 'Limpando…' : 'Limpar logs'}
             </button>
           )}
@@ -135,7 +136,7 @@ export default function LogsPage() {
         <div style={{ background:'#fff', borderRadius:12, border:'1px solid var(--border-light)', padding:'14px 16px', display:'flex', gap:10, alignItems:'center', flexWrap:'wrap', boxShadow:'0 1px 4px rgba(3,78,162,0.05)' }}>
           {/* Search */}
           <div style={{ display:'flex', alignItems:'center', gap:8, background:'var(--bg-app)', border:'1px solid var(--border-light)', borderRadius:8, padding:'6px 12px', minWidth:220, flex:1 }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink:0 }}><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <Search size={14} color="var(--text-muted)" style={{ flexShrink:0 }} />
             <input type="text" value={search} onChange={e => changeFilter(() => setSearch(e.target.value))}
               placeholder="Buscar usuário ou detalhes..."
               style={{ border:'none', outline:'none', background:'none', fontSize:'0.85rem', color:'var(--text-primary)', width:'100%', fontFamily:'inherit' }} />
@@ -149,7 +150,7 @@ export default function LogsPage() {
               <option value="">Todos os usuários</option>
               {uniqueUsers.map(u => <option key={u} value={u}>{u}</option>)}
             </select>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ position:'absolute', right:10, top:'50%', transform:'translateY(-50%)', pointerEvents:'none', color: filterUser ? 'var(--primary)' : 'var(--text-muted)' }}><polyline points="6 9 12 15 18 9"/></svg>
+            <ChevronDown size={12} style={{ position:'absolute', right:10, top:'50%', transform:'translateY(-50%)', pointerEvents:'none', color: filterUser ? 'var(--primary)' : 'var(--text-muted)' }} />
           </div>
 
           {/* Select — Tipo */}
@@ -159,7 +160,7 @@ export default function LogsPage() {
               <option value="">Todos os tipos</option>
               {uniqueEntities.map(e => <option key={e} value={e}>{ENTITY_LABELS[e] ?? e}</option>)}
             </select>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ position:'absolute', right:10, top:'50%', transform:'translateY(-50%)', pointerEvents:'none', color: filterEntity ? 'var(--primary)' : 'var(--text-muted)' }}><polyline points="6 9 12 15 18 9"/></svg>
+            <ChevronDown size={12} style={{ position:'absolute', right:10, top:'50%', transform:'translateY(-50%)', pointerEvents:'none', color: filterEntity ? 'var(--primary)' : 'var(--text-muted)' }} />
           </div>
 
           {/* Select — Ação */}
@@ -169,13 +170,13 @@ export default function LogsPage() {
               <option value="">Todas as ações</option>
               {uniqueActions.map(a => <option key={a} value={a}>{ACTION_LABELS[a] ?? a}</option>)}
             </select>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ position:'absolute', right:10, top:'50%', transform:'translateY(-50%)', pointerEvents:'none', color: filterAction ? 'var(--primary)' : 'var(--text-muted)' }}><polyline points="6 9 12 15 18 9"/></svg>
+            <ChevronDown size={12} style={{ position:'absolute', right:10, top:'50%', transform:'translateY(-50%)', pointerEvents:'none', color: filterAction ? 'var(--primary)' : 'var(--text-muted)' }} />
           </div>
 
           {activeFilters > 0 && (
             <button onClick={() => { changeFilter(() => { setFilterUser(''); setFilterEntity(''); setFilterAction(''); setSearch(''); }); }}
               style={{ background:'none', border:'1px solid var(--border-light)', borderRadius:8, padding:'6px 12px', fontSize:'0.8rem', color:'var(--text-secondary)', cursor:'pointer', display:'flex', alignItems:'center', gap:5, whiteSpace:'nowrap' }}>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              <X size={12} />
               Limpar filtros
             </button>
           )}
@@ -300,7 +301,7 @@ function LogPreviewModal({ log, onClose }: { log: ActivityLog; onClose: () => vo
         <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20 }}>
           <span style={{ fontWeight:700, fontSize:'1rem', color:'var(--text-primary)' }}>Detalhes do registro</span>
           <button onClick={onClose} style={{ background:'none', border:'none', cursor:'pointer', color:'var(--text-muted)', display:'flex', padding:4, borderRadius:6 }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            <X size={16} />
           </button>
         </div>
 

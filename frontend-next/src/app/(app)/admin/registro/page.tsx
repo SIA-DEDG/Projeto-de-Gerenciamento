@@ -6,7 +6,7 @@ import { getUser } from '@/lib/auth';
 import { useToast } from '@/hooks/useToast';
 import ToastContainer from '@/components/ToastContainer';
 import ConfirmModal from '@/components/ConfirmModal';
-import { GraduationCap, User, Wrench, ClipboardList, BarChart2, Landmark, ShieldAlert } from 'lucide-react';
+import { GraduationCap, User, Wrench, ClipboardList, BarChart2, Landmark, ShieldAlert, Check, Copy, Trash2, RefreshCw, Lock } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 const ROLES: { value: string; label: string; desc: string; color: string; bg: string; Icon: LucideIcon }[] = [
@@ -133,7 +133,7 @@ export default function RegistroPage() {
             <div style={{ background: 'linear-gradient(135deg, #f0fdf4, #dcfce7)', border: '1.5px solid #86efac', borderRadius: 14, padding: '18px 20px', marginBottom: 20 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                 <div style={{ width: 28, height: 28, borderRadius: 8, background: '#16a34a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  <Check size={14} color="#fff" strokeWidth={2.5} />
                 </div>
                 <span style={{ fontWeight: 700, fontSize: '0.92rem', color: '#166534' }}>Colaborador criado!</span>
                 <button onClick={() => setSuccess(null)} style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', color: '#166534', fontSize: '1.1rem', lineHeight: 1 }}>×</button>
@@ -209,7 +209,7 @@ export default function RegistroPage() {
               <button type="submit" disabled={loading}
                 style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '12px', fontSize: '0.9rem', fontWeight: 700, background: loading ? 'var(--text-muted)' : selectedRole.color, color: '#fff', border: 'none', borderRadius: 9, cursor: loading ? 'not-allowed' : 'pointer', fontFamily: 'inherit', transition: 'background 0.15s' }}>
                 {loading ? (
-                  <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ animation: 'spin 1s linear infinite' }}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> Criando…</>
+                  <><RefreshCw size={14} strokeWidth={2} style={{ animation: 'spin 1s linear infinite' }} /> Criando…</>
                 ) : (
                   <><selectedRole.Icon size={16} strokeWidth={2} /> Criar como {selectedRole.label}</>
                 )}
@@ -224,7 +224,7 @@ export default function RegistroPage() {
             <div style={{ height: 4, background: '#eab308' }} />
             <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-light)', display: 'flex', alignItems: 'center', gap: 10 }}>
               <div style={{ width: 32, height: 32, borderRadius: 8, background: '#fef9c3', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#b45309" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                <Lock size={15} color="#b45309" strokeWidth={2} />
               </div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 700, fontSize: '0.92rem', color: 'var(--text-primary)' }}>Senhas temporárias pendentes</div>
@@ -245,7 +245,7 @@ export default function RegistroPage() {
             {history.length === 0 ? (
               <div style={{ padding: '48px 24px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
                 <div style={{ width: 52, height: 52, borderRadius: 14, background: '#f0fdf4', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  <Check size={24} color="#22c55e" strokeWidth={1.5} />
                 </div>
                 <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', margin: 0, fontWeight: 500 }}>Nenhuma senha temporária pendente.</p>
                 <p style={{ color: 'var(--text-muted)', fontSize: '0.78rem', margin: 0 }}>Todos os colaboradores já definiram suas senhas.</p>
@@ -284,15 +284,15 @@ export default function RegistroPage() {
                         <button type="button" onClick={() => handleCopy(entry.temp_password, entry.user_id)}
                           style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '8px 13px', background: copied === entry.user_id ? '#16a34a' : 'var(--primary)', color: '#fff', border: 'none', borderRadius: 7, fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap', flexShrink: 0, transition: 'background 0.15s' }}>
                           {copied === entry.user_id
-                            ? <><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg> Copiado</>
-                            : <><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copiar</>
+                            ? <><Check size={11} strokeWidth={2.5} /> Copiado</>
+                            : <><Copy size={11} strokeWidth={2} /> Copiar</>
                           }
                         </button>
                         <button type="button" onClick={() => setConfirmDelete(entry)} disabled={removing === entry.user_id}
                           style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '8px 11px', background: '#fff5f5', border: 'none', borderRadius: 7, color: '#dc2626', fontSize: '0.78rem', fontWeight: 600, cursor: removing === entry.user_id ? 'not-allowed' : 'pointer', fontFamily: 'inherit', flexShrink: 0, transition: 'background 0.15s', opacity: removing === entry.user_id ? 0.6 : 1 }}
                           onMouseEnter={e => { if (removing !== entry.user_id) e.currentTarget.style.background = '#fee2e2'; }}
                           onMouseLeave={e => (e.currentTarget.style.background = '#fff5f5')}>
-                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
+                          <Trash2 size={11} strokeWidth={2} />
                           {removing === entry.user_id ? '…' : 'Excluir'}
                         </button>
                       </div>
