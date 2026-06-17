@@ -4,6 +4,7 @@ import { useState, useRef } from 'react';
 import { Bug, Lightbulb } from 'lucide-react';
 import { getUser } from '@/lib/auth';
 import { submitFeedback, updateFeedback, type FeedbackItem } from '@/lib/api';
+import { emitTasksChanged } from '@/lib/taskEvents';
 import { SEVERITIES, type FeedbackType, type Severity, inp } from './types';
 
 interface Props {
@@ -56,6 +57,7 @@ export default function FormModal({ onClose, onCreated, editItem, onUpdated }: P
           usuario_nome: user?.name ?? null,
         });
         onCreated(created);
+        emitTasksChanged();
       }
       onClose();
     } catch (ex: unknown) {
@@ -66,15 +68,23 @@ export default function FormModal({ onClose, onCreated, editItem, onUpdated }: P
   return (
     <div
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
-      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
+      style={{ position: 'fixed', inset: 0, background: 'rgba(3,78,162,0.22)', backdropFilter: 'blur(2px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
     >
-      <div style={{ background: 'var(--bg-card)', borderRadius: 8, width: '100%', maxWidth: 560, boxShadow: '0 8px 32px rgba(3,78,162,0.18)', maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
-        <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-light)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
-          <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)' }}>{editItem ? 'Editar publicação' : 'Nova publicação'}</h2>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.3rem', color: 'var(--text-muted)', lineHeight: 1 }}>×</button>
+      <div style={{ background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', width: '100%', maxWidth: 560, boxShadow: '0 20px 60px rgba(3,78,162,0.18), 0 4px 16px rgba(0,0,0,0.10)', maxHeight: '90vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', animation: 'modal-pop-in-flex 0.2s cubic-bezier(0.34,1.56,0.64,1) forwards' }}>
+        <div style={{ height: 5, flexShrink: 0, background: 'linear-gradient(to right, #034ea2 40%, #fdb913 40% 55%, #ef4123 55% 75%, #007932 75%)' }} />
+        <div style={{ padding: '16px 20px 14px', borderBottom: '1px solid var(--border-light)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10, flexShrink: 0 }}>
+          <div>
+            <div style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-muted)', marginBottom: 4 }}>
+              {editItem ? 'Editar publicação' : 'Nova publicação'}
+            </div>
+            <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'inherit' }}>
+              {editItem ? editItem.titulo : 'Preencha os dados abaixo'}
+            </h2>
+          </div>
+          <button onClick={onClose} style={{ flexShrink: 0, width: 28, height: 28, borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-light)', background: 'var(--bg-subtle)', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'inherit' }}>✕</button>
         </div>
 
-        <form onSubmit={handleSubmit} noValidate style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: 16, overflowY: 'auto' }}>
+        <form id="feedback-form" onSubmit={handleSubmit} noValidate style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: 16, overflowY: 'auto', flex: 1 }}>
           {/* Tipo */}
           <div>
             <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#57606a', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Tipo</label>
@@ -169,17 +179,17 @@ export default function FormModal({ onClose, onCreated, editItem, onUpdated }: P
             <div style={{ color: '#cf222e', background: '#ffebe9', padding: '9px 12px', borderRadius: 6, fontSize: '0.82rem', border: '1px solid #ffcecb' }}>{err}</div>
           )}
 
-          <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-            <button type="button" onClick={onClose}
-              style={{ padding: '8px 16px', background: '#f6f8fa', border: '1px solid #d8dee4', borderRadius: 6, fontSize: '0.85rem', cursor: 'pointer', fontFamily: 'inherit', color: '#24292f' }}>
-              Cancelar
-            </button>
-            <button type="submit" disabled={saving}
-              style={{ padding: '8px 18px', background: saving ? '#8c959f' : 'var(--primary)', color: '#fff', border: 'none', borderRadius: 6, fontSize: '0.85rem', fontWeight: 700, cursor: saving ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}>
-              {saving ? (editItem ? 'Salvando…' : 'Publicando…') : (editItem ? 'Salvar' : 'Publicar')}
-            </button>
-          </div>
         </form>
+        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', padding: '12px 20px', borderTop: '1px solid var(--border-light)', background: 'var(--bg-subtle)', flexShrink: 0 }}>
+          <button type="button" onClick={onClose}
+            style={{ padding: '6px 14px', background: '#fff', border: '1px solid var(--border-light)', borderRadius: 'var(--radius-sm)', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', color: 'var(--text-secondary)' }}>
+            Cancelar
+          </button>
+          <button type="submit" form="feedback-form" disabled={saving}
+            style={{ padding: '6px 18px', background: saving ? 'var(--text-muted)' : 'var(--primary)', color: '#fff', border: 'none', borderRadius: 'var(--radius-sm)', fontSize: '0.8rem', fontWeight: 700, cursor: saving ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}>
+            {saving ? (editItem ? 'Salvando…' : 'Publicando…') : (editItem ? 'Salvar' : 'Publicar')}
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { getUser } from '@/lib/auth';
 import { fetchFeedbacks, toggleFeedbackUpvote, setFeedbackStatus, deleteFeedback, type FeedbackItem } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import { CircleQuestionMark, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
 import ToastContainer from '@/components/ToastContainer';
 import ConfirmModal from '@/components/ConfirmModal';
 import FormModal from './_components/FormModal';
@@ -33,6 +34,9 @@ export default function FeedbackPage() {
   const [upvoting, setUpvoting] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<FeedbackItem | null>(null);
   const [page, setPage] = useState(1);
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkDeletePending, setBulkDeletePending] = useState(false);
 
   const PAGE_SIZE = 15;
 
@@ -85,6 +89,34 @@ export default function FeedbackPage() {
     } catch {
       addToast('error', 'Erro', 'Não foi possível excluir.');
     }
+  }
+
+  function handleToggleSelect(id: string) {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function handleSelectAll() {
+    setSelectedIds(new Set(visible.map(it => it.id)));
+  }
+
+  function handleCancelSelect() {
+    setSelectionMode(false);
+    setSelectedIds(new Set());
+  }
+
+  async function performBulkDelete() {
+    const ids = [...selectedIds];
+    setBulkDeletePending(false);
+    setSelectionMode(false);
+    setSelectedIds(new Set());
+    await Promise.allSettled(ids.map(id => deleteFeedback(id)));
+    setItems(prev => prev.filter(it => !ids.includes(it.id)));
+    addToast('success', 'Excluídos', `${ids.length} publicação(ões) removida(s).`);
   }
 
   async function handleStatusChange(id: string, status: 'pendente' | 'respondida') {
@@ -168,9 +200,21 @@ export default function FeedbackPage() {
                 {loading ? 'Carregando…' : `${visible.length} publicaç${visible.length === 1 ? 'ão' : 'ões'} encontrada${visible.length === 1 ? '' : 's'}`}
               </p>
             </div>
-            <div style={{ display: 'flex', gap: 6 }}>
-              {sortBtn('votos', 'Populares')}
-              {sortBtn('recentes', 'Recentes')}
+            <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+              {!selectionMode && sortBtn('votos', 'Populares')}
+              {!selectionMode && sortBtn('recentes', 'Recentes')}
+              <button
+                onClick={() => { setSelectionMode(s => !s); setSelectedIds(new Set()); }}
+                style={{
+                  padding: '6px 14px', borderRadius: 20, fontSize: '0.82rem', fontWeight: 600,
+                  border: `1.5px solid ${selectionMode ? 'var(--primary)' : 'var(--border-light)'}`,
+                  background: selectionMode ? 'var(--primary-light)' : 'var(--bg-card)',
+                  color: selectionMode ? 'var(--primary)' : 'var(--text-secondary)',
+                  cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s',
+                }}
+              >
+                {selectionMode ? 'Cancelar' : 'Selecionar'}
+              </button>
             </div>
           </div>
 
@@ -181,11 +225,7 @@ export default function FeedbackPage() {
             </div>
           ) : visible.length === 0 ? (
             <div style={{ padding: '72px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--border-light)" strokeWidth="1.5" strokeLinecap="round">
-                <circle cx="12" cy="12" r="10" />
-                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
-                <line x1="12" y1="17" x2="12.01" y2="17" />
-              </svg>
+              <CircleQuestionMark size={48} color="var(--border-light)" />
               <p style={{ color: 'var(--text-secondary)', margin: 0, fontWeight: 600 }}>Nenhuma publicação encontrada.</p>
               <button onClick={() => setShowForm(true)}
                 style={{ padding: '8px 20px', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: 6, fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
@@ -207,6 +247,9 @@ export default function FeedbackPage() {
                   onRespond={setRespondTarget}
                   onStatusChange={handleStatusChange}
                   upvoting={upvoting}
+                  selectionMode={selectionMode}
+                  isSelected={selectedIds.has(item.id)}
+                  onToggleSelect={handleToggleSelect}
                 />
               ))}
               {totalPages > 1 && (
@@ -221,7 +264,7 @@ export default function FeedbackPage() {
                       display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'inherit',
                     }}
                   >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+                    <ChevronLeft width={14} height={14} />
                   </button>
 
                   {(() => {
@@ -265,7 +308,7 @@ export default function FeedbackPage() {
                       display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'inherit',
                     }}
                   >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+                    <ChevronRight width={14} height={14} />
                   </button>
                 </div>
               )}
@@ -292,23 +335,84 @@ export default function FeedbackPage() {
           onSaved={updated => { handleResponded(updated); addToast('success', 'Resposta salva', ''); }}
         />
       )}
+      {selectionMode && (
+        <div style={{
+          position: 'fixed', bottom: 28, left: '50%', transform: 'translateX(-50%)',
+          display: 'flex', alignItems: 'center', gap: 6,
+          background: '#fff', border: '1px solid var(--border-light)',
+          borderRadius: 'var(--radius-lg)', padding: '8px 12px',
+          boxShadow: '0 4px 24px rgba(3,78,162,0.13), 0 1px 4px rgba(3,78,162,0.07)',
+          zIndex: 200, whiteSpace: 'nowrap',
+        }}>
+          <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 700, marginRight: 4 }}>
+            {selectedIds.size} selecionado(s)
+          </span>
+          <div style={{ width: 1, height: 18, background: 'var(--border-light)', margin: '0 4px' }} />
+          <button
+            onClick={handleSelectAll}
+            style={{
+              padding: '5px 12px', borderRadius: 'var(--radius-sm)',
+              border: '1px solid var(--border-light)', background: 'var(--bg-subtle)',
+              color: 'var(--text-secondary)', fontSize: '0.78rem', fontWeight: 600,
+              cursor: 'pointer', fontFamily: 'inherit',
+            }}
+            onMouseEnter={e => (e.currentTarget.style.background = 'var(--primary-light)')}
+            onMouseLeave={e => (e.currentTarget.style.background = 'var(--bg-subtle)')}
+          >
+            Selecionar todos
+          </button>
+          <div style={{ width: 1, height: 18, background: 'var(--border-light)', margin: '0 4px' }} />
+          <button
+            onClick={() => { if (selectedIds.size > 0) setBulkDeletePending(true); }}
+            disabled={selectedIds.size === 0}
+            style={{
+              padding: '5px 12px', borderRadius: 'var(--radius-sm)',
+              border: '1px solid var(--border-light)',
+              background: selectedIds.size > 0 ? 'rgba(239,65,35,0.07)' : 'transparent',
+              color: selectedIds.size > 0 ? '#ef4123' : 'var(--text-muted)',
+              fontSize: '0.78rem', fontWeight: 600,
+              cursor: selectedIds.size > 0 ? 'pointer' : 'not-allowed',
+              fontFamily: 'inherit',
+            }}
+            onMouseEnter={e => { if (selectedIds.size > 0) e.currentTarget.style.background = 'rgba(239,65,35,0.14)'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = selectedIds.size > 0 ? 'rgba(239,65,35,0.07)' : 'transparent'; }}
+          >
+            Excluir
+          </button>
+          <div style={{ width: 1, height: 18, background: 'var(--border-light)', margin: '0 4px' }} />
+          <button
+            onClick={handleCancelSelect}
+            style={{
+              padding: '5px 10px', borderRadius: 'var(--radius-sm)',
+              border: '1px solid transparent', background: 'transparent',
+              color: 'var(--text-muted)', fontSize: '0.78rem',
+              cursor: 'pointer', fontFamily: 'inherit',
+            }}
+            onMouseEnter={e => (e.currentTarget.style.color = 'var(--text-primary)')}
+            onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-muted)')}
+          >
+            Cancelar
+          </button>
+        </div>
+      )}
+
       {/* FAB */}
-      <button
-        onClick={() => setShowForm(true)}
-        title="Nova publicação"
-        style={{
-          position: 'fixed', bottom: 32, right: 32, zIndex: 900,
-          width: 52, height: 52, borderRadius: '50%',
-          background: 'var(--primary)', color: '#fff', border: 'none',
-          boxShadow: '0 4px 16px rgba(3,78,162,0.35)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          cursor: 'pointer',
-        }}
-      >
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-        </svg>
-      </button>
+      {!selectionMode && (
+        <button
+          onClick={() => setShowForm(true)}
+          title="Nova publicação"
+          style={{
+            position: 'fixed', bottom: 32, right: 32, zIndex: 900,
+            width: 52, height: 52, borderRadius: '50%',
+            background: 'var(--primary)', color: '#fff', border: 'none',
+            boxShadow: '0 4px 16px rgba(3,78,162,0.35)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            cursor: 'pointer',
+          }}
+        >
+          <Plus width={24} height={24} />
+        </button>
+      )}
 
       <ConfirmModal
         open={!!deleteTarget}
@@ -318,6 +422,15 @@ export default function FeedbackPage() {
         danger
         onConfirm={() => deleteTarget && performDelete(deleteTarget)}
         onClose={() => setDeleteTarget(null)}
+      />
+      <ConfirmModal
+        open={bulkDeletePending}
+        title={`Excluir ${selectedIds.size} publicação(ões)`}
+        message="Esta ação não pode ser desfeita."
+        confirmLabel="Excluir"
+        danger
+        onConfirm={performBulkDelete}
+        onClose={() => setBulkDeletePending(false)}
       />
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />
     </>

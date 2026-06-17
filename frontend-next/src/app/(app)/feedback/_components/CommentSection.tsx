@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { MessageSquare, Plus } from 'lucide-react';
 import { fetchComments, addComment, deleteComment, type FeedbackComment } from '@/lib/api';
 import { avatarColor } from './types';
 
@@ -213,9 +214,7 @@ export default function CommentSection({ feedbackId, currentUserId, currentUserN
     <div style={{ borderTop: '1px solid var(--border-light)', padding: '14px 20px 18px' }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 2 }}>
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2.2" strokeLinecap="round">
-          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-        </svg>
+        <MessageSquare size={13} stroke="var(--text-muted)" strokeWidth={2.2} />
         <span style={{ fontSize: '0.79rem', fontWeight: 700, color: 'var(--text-secondary)' }}>
           {loaded ? `${comments.length} ${comments.length === 1 ? 'comentário' : 'comentários'}` : 'Comentários'}
         </span>
@@ -273,9 +272,7 @@ export default function CommentSection({ feedbackId, currentUserId, currentUserN
                 onMouseEnter={e => { const el = e.currentTarget; el.style.borderColor = 'var(--primary)'; el.style.color = 'var(--primary)'; }}
                 onMouseLeave={e => { const el = e.currentTarget; el.style.borderColor = 'var(--border-light)'; el.style.color = 'var(--text-muted)'; }}
               >
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round">
-                  <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-                </svg>
+                <Plus size={10} strokeWidth={3} />
               </div>
             </button>
           )}

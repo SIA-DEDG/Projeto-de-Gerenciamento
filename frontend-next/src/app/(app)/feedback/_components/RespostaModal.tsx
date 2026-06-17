@@ -26,30 +26,34 @@ export default function RespostaModal({ item, onClose, onSaved }: Props) {
   return (
     <div
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
-      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
+      style={{ position: 'fixed', inset: 0, background: 'rgba(3,78,162,0.22)', backdropFilter: 'blur(2px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
     >
-      <div style={{ background: '#fff', borderRadius: 8, width: '100%', maxWidth: 500, boxShadow: '0 8px 32px rgba(0,0,0,0.22)' }}>
-        <div style={{ padding: '16px 20px', borderBottom: '1px solid #d8dee4', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: '#24292f' }}>Resposta oficial</h2>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.3rem', color: '#6e7781' }}>×</button>
+      <div style={{ background: '#fff', borderRadius: 'var(--radius-lg)', width: '100%', maxWidth: 500, maxHeight: '90vh', boxShadow: '0 20px 60px rgba(3,78,162,0.18), 0 4px 16px rgba(0,0,0,0.10)', overflow: 'hidden', display: 'flex', flexDirection: 'column', animation: 'modal-pop-in-flex 0.2s cubic-bezier(0.34,1.56,0.64,1) forwards' }}>
+        <div style={{ height: 5, flexShrink: 0, background: 'linear-gradient(to right, #034ea2 40%, #fdb913 40% 55%, #ef4123 55% 75%, #007932 75%)' }} />
+        <div style={{ padding: '16px 20px 14px', borderBottom: '1px solid var(--border-light)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10, flexShrink: 0 }}>
+          <div>
+            <div style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-muted)', marginBottom: 4 }}>Feedback</div>
+            <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'inherit' }}>Resposta oficial</h2>
+          </div>
+          <button onClick={onClose} style={{ flexShrink: 0, width: 28, height: 28, borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-light)', background: 'var(--bg-subtle)', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'inherit' }}>✕</button>
         </div>
-        <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <div style={{ fontSize: '0.82rem', color: '#57606a', background: '#f6f8fa', borderRadius: 6, padding: '10px 12px', border: '1px solid #d8dee4' }}>
+        <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: 14, flex: 1, overflowY: 'auto' }}>
+          <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', background: 'var(--bg-subtle)', borderRadius: 'var(--radius-sm)', padding: '10px 12px', border: '1px solid var(--border-light)' }}>
             {item.titulo}
           </div>
           <textarea value={text} onChange={e => setText(e.target.value)} rows={5}
             placeholder="Digite a resposta oficial…"
             style={{ ...inp, resize: 'vertical', minHeight: 100, lineHeight: 1.6 }} />
-          <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-            <button onClick={onClose}
-              style={{ padding: '8px 16px', background: '#f6f8fa', border: '1px solid #d8dee4', borderRadius: 6, fontSize: '0.85rem', cursor: 'pointer', fontFamily: 'inherit', color: '#24292f' }}>
-              Cancelar
-            </button>
-            <button onClick={handleSave} disabled={saving}
-              style={{ padding: '8px 18px', background: saving ? '#8c959f' : 'var(--primary)', color: '#fff', border: 'none', borderRadius: 6, fontSize: '0.85rem', fontWeight: 700, cursor: saving ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}>
-              {saving ? 'Salvando…' : 'Salvar'}
-            </button>
-          </div>
+        </div>
+        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', padding: '12px 20px', borderTop: '1px solid var(--border-light)', background: 'var(--bg-subtle)', flexShrink: 0 }}>
+          <button onClick={onClose}
+            style={{ padding: '6px 14px', background: '#fff', border: '1px solid var(--border-light)', borderRadius: 'var(--radius-sm)', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', color: 'var(--text-secondary)' }}>
+            Cancelar
+          </button>
+          <button onClick={handleSave} disabled={saving}
+            style={{ padding: '6px 18px', background: saving ? 'var(--text-muted)' : 'var(--primary)', color: '#fff', border: 'none', borderRadius: 'var(--radius-sm)', fontSize: '0.8rem', fontWeight: 700, cursor: saving ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}>
+            {saving ? 'Salvando…' : 'Salvar'}
+          </button>
         </div>
       </div>
     </div>

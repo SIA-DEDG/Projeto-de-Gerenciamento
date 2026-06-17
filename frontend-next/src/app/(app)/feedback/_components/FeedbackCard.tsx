@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Bug, Lightbulb } from 'lucide-react';
+import { Bug, Lightbulb, ThumbsUp, MessageSquare, Pencil, Trash2, Triangle, Check } from 'lucide-react';
 import { type FeedbackItem } from '@/lib/api';
 import { avatarColor, severityMeta, parseUpvotedBy, truncate } from './types';
 import CommentSection from './CommentSection';
@@ -17,9 +17,12 @@ interface Props {
   onRespond: (item: FeedbackItem) => void;
   onStatusChange: (id: string, status: 'pendente' | 'respondida') => void;
   upvoting: string | null;
+  selectionMode?: boolean;
+  isSelected?: boolean;
+  onToggleSelect?: (id: string) => void;
 }
 
-export default function FeedbackCard({ item, currentUserId, currentUserName, isAdmin, onUpvote, onEdit, onDelete, onRespond, onStatusChange, upvoting }: Props) {
+export default function FeedbackCard({ item, currentUserId, currentUserName, isAdmin, onUpvote, onEdit, onDelete, onRespond, onStatusChange, upvoting, selectionMode = false, isSelected = false, onToggleSelect }: Props) {
   const [expanded, setExpanded] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [commentCount, setCommentCount] = useState(item.comment_count ?? 0);
@@ -51,12 +54,30 @@ export default function FeedbackCard({ item, currentUserId, currentUserName, isA
     <div style={{
       background: 'var(--bg-card)',
       borderRadius: 8,
-      border: '1px solid var(--border-light)',
+      border: `1px solid ${isSelected ? 'var(--primary)' : 'var(--border-light)'}`,
       boxShadow: 'var(--shadow-card)',
       marginBottom: 12,
-      transition: 'box-shadow 0.15s',
+      transition: 'box-shadow 0.15s, border-color 0.15s',
       position: 'relative',
     }}>
+      {selectionMode && (
+        <div
+          onClick={() => onToggleSelect?.(item.id)}
+          style={{ position: 'absolute', inset: 0, zIndex: 2, cursor: 'pointer', borderRadius: 8 }}
+        />
+      )}
+      {selectionMode && (
+        <div style={{
+          position: 'absolute', top: 10, left: 10, zIndex: 3,
+          width: 18, height: 18, borderRadius: 4,
+          border: `2px solid ${isSelected ? 'var(--primary)' : '#c1c7d0'}`,
+          background: isSelected ? 'var(--primary)' : '#fff',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          pointerEvents: 'none',
+        }}>
+          {isSelected && <Check size={11} color="#fff" strokeWidth={3} />}
+        </div>
+      )}
       <div style={{ position: 'absolute', top: 12, right: 12, display: 'flex', alignItems: 'center', gap: 6, zIndex: 1 }}>
         <span style={{
           padding: '3px 11px', borderRadius: 20, fontSize: '0.7rem', fontWeight: 700,
@@ -102,7 +123,7 @@ export default function FeedbackCard({ item, currentUserId, currentUserName, isA
                       onMouseEnter={e => ((e.currentTarget as HTMLButtonElement).style.background = 'var(--bg-hover)')}
                       onMouseLeave={e => ((e.currentTarget as HTMLButtonElement).style.background = 'none')}
                     >
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                      <MessageSquare size={13} />
                       Resposta oficial
                     </button>
                     <div style={{ height: 1, background: 'var(--border-light)', margin: '0 8px' }} />
@@ -114,7 +135,7 @@ export default function FeedbackCard({ item, currentUserId, currentUserName, isA
                   onMouseEnter={e => ((e.currentTarget as HTMLButtonElement).style.background = 'var(--bg-hover)')}
                   onMouseLeave={e => ((e.currentTarget as HTMLButtonElement).style.background = 'none')}
                 >
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                  <Pencil size={13} />
                   Editar
                 </button>
                 <div style={{ height: 1, background: 'var(--border-light)', margin: '0 8px' }} />
@@ -124,7 +145,7 @@ export default function FeedbackCard({ item, currentUserId, currentUserName, isA
                   onMouseEnter={e => ((e.currentTarget as HTMLButtonElement).style.background = '#fef2f2')}
                   onMouseLeave={e => ((e.currentTarget as HTMLButtonElement).style.background = 'none')}
                 >
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                  <Trash2 size={13} />
                   Excluir
                 </button>
               </div>
@@ -133,7 +154,7 @@ export default function FeedbackCard({ item, currentUserId, currentUserName, isA
         )}
       </div>
 
-      <div style={{ padding: '18px 20px', display: 'flex', gap: 16, alignItems: 'flex-start' }}>
+      <div style={{ padding: '18px 20px', paddingLeft: selectionMode ? 36 : 20, display: 'flex', gap: 16, alignItems: 'flex-start' }}>
 
         {/* Upvote */}
         <button
@@ -142,11 +163,12 @@ export default function FeedbackCard({ item, currentUserId, currentUserName, isA
           title={voted ? 'Remover voto' : 'Votar'}
           style={{
             flexShrink: 0,
-            width: 58,
-            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
+            width: 38,
+            height: 42,
+            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
             background: voted ? 'rgba(3,78,162,0.07)' : 'var(--bg-subtle)',
             border: `1.5px solid ${voted ? 'var(--primary)' : 'var(--border-light)'}`,
-            borderRadius: 8, padding: '10px 6px',
+            borderRadius: 8, padding: '5px 4px',
             cursor: isLoading ? 'wait' : 'pointer',
             transition: 'all 0.15s',
             fontFamily: 'inherit',
@@ -154,13 +176,8 @@ export default function FeedbackCard({ item, currentUserId, currentUserName, isA
           onMouseEnter={e => { if (!voted && !isLoading) (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--primary)'; }}
           onMouseLeave={e => { if (!voted) (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--border-light)'; }}
         >
-          <svg width="14" height="12" viewBox="0 0 24 20" style={{ display: 'block' }}>
-            <polygon points="12,2 22,18 2,18"
-              fill={voted ? 'var(--primary)' : 'none'}
-              stroke={voted ? 'var(--primary)' : 'var(--text-muted)'}
-              strokeWidth="2.5" strokeLinejoin="round" />
-          </svg>
-          <span style={{ fontSize: '1.2rem', fontWeight: 800, color: voted ? 'var(--primary)' : 'var(--text-primary)', lineHeight: 1 }}>
+          <Triangle size={11} style={{ display: 'block' }} color={voted ? 'var(--primary)' : 'var(--text-muted)'} fill={voted ? 'var(--primary)' : 'none'} />
+          <span style={{ fontSize: '0.82rem', fontWeight: 800, color: voted ? 'var(--primary)' : 'var(--text-primary)', lineHeight: 1 }}>
             {item.upvotes}
           </span>
         </button>
@@ -209,7 +226,7 @@ export default function FeedbackCard({ item, currentUserId, currentUserName, isA
               style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, color: 'var(--text-muted)', fontFamily: 'inherit' }}
               title="Ver comentários"
             >
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              <MessageSquare size={13} />
               <span style={{ fontSize: '0.75rem', fontWeight: 600 }}>{commentCount}</span>
             </button>
 

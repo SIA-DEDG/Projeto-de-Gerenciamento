@@ -3,6 +3,7 @@
 import { Bug, Lightbulb, Check } from 'lucide-react';
 import { type FeedbackItem } from '@/lib/api';
 import { SEVERITIES, type TypeFilter, type StatusFilter, type SeverityFilter, inp } from './types';
+import { Search } from 'lucide-react';
 
 interface NavItemProps {
   active: boolean;
@@ -86,10 +87,7 @@ export default function FeedbackSidebar({
 
         {/* Pesquisa */}
         <div style={{ position: 'relative' }}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2" strokeLinecap="round"
-            style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
-            <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
-          </svg>
+          <Search size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
           <input type="text" placeholder="Pesquisar…" value={search}
             onChange={e => setSearch(e.target.value)}
             style={{ ...inp, paddingLeft: 32, fontSize: '0.82rem' }} />
