@@ -1,6 +1,7 @@
 ﻿'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { Loader2, Download, Search, FileText, User, Calendar, Check, Trash2, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import ActivityModal from '@/components/ActivityModal';
 import ProjectModal from '@/components/ProjectModal';
 import TaskDetailModal from '@/components/TaskDetailModal';
@@ -146,10 +147,10 @@ export default function RelatoriosPage() {
 
   // Seleciona todos os projetos ou limpa a seleção.
   function toggleSelectAll() {
-    if (selectedIds.size === projects.length) {
+    if (selectedIds.size === filteredProjects.length && filteredProjects.length > 0) {
       setSelectedIds(new Set());
     } else {
-      setSelectedIds(new Set(projects.map((project) => project.id)));
+      setSelectedIds(new Set(filteredProjects.map((project) => project.id)));
     }
   }
 
@@ -268,19 +269,12 @@ export default function RelatoriosPage() {
           >
             {downloading ? (
               <>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-                  style={{ animation: 'spin 1s linear infinite' }}>
-                  <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
-                </svg>
+                <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} />
                 Baixando…
               </>
             ) : (
               <>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                  <polyline points="7 10 12 15 17 10"/>
-                  <line x1="12" y1="15" x2="12" y2="3"/>
-                </svg>
+                <Download size={14} />
                 Baixar modelo padrão
               </>
             )}
@@ -302,14 +296,6 @@ export default function RelatoriosPage() {
                 </button>
                 <button
                   type="button"
-                  className="btn-secondary"
-                  onClick={toggleSelectAll}
-                  style={{ minWidth: 140 }}
-                >
-                  {selectedIds.size === projects.length && projects.length > 0 ? 'Desmarcar todos' : 'Selecionar todos'}
-                </button>
-                <button
-                  type="button"
                   className="btn-primary"
                   onClick={handleDeleteSelected}
                   style={{ background: '#de350b' }}
@@ -318,22 +304,21 @@ export default function RelatoriosPage() {
                 </button>
               </>
             )}
-            {selectedIds.size === 0 && (
-              <button
-                type="button"
-                className="btn-primary"
-                onClick={() => setProjectModal({ open: true, project: null })}
-              >
-                + Novo Projeto
-              </button>
-            )}
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={toggleSelectAll}
+              style={{ minWidth: 140 }}
+            >
+              {selectedIds.size === filteredProjects.length && filteredProjects.length > 0 ? 'Desmarcar todos' : 'Selecionar todos'}
+            </button>
           </div>
         </div>
 
         {/* Busca */}
         <div style={{ padding: '0 32px 20px', display: 'flex', alignItems: 'center', gap: 12 }}>
           <div style={{ flex: 1, maxWidth: 360, display: 'flex', alignItems: 'center', gap: 8, background: '#fff', border: '1px solid var(--border-light)', borderRadius: 10, padding: '8px 14px', boxShadow: '0 1px 4px rgba(3,78,162,0.05)' }}>
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <Search size={15} color="var(--text-muted)" style={{ flexShrink: 0 }} />
             <input
               type="text"
               value={search}
@@ -364,7 +349,7 @@ export default function RelatoriosPage() {
         ) : projects.length === 0 ? (
           <div style={{ padding: '64px 32px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
             <div style={{ width: 56, height: 56, borderRadius: 14, background: 'var(--primary-light)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              <FileText size={26} color="var(--primary)" strokeWidth={1.5} />
             </div>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', margin: 0 }}>Nenhum projeto cadastrado ainda.</p>
             <button type="button" className="btn-primary" onClick={() => setProjectModal({ open: true, project: null })}>+ Criar primeiro projeto</button>
@@ -387,19 +372,23 @@ export default function RelatoriosPage() {
                     className="project-card"
                     onClick={() => !isSelected && setSelectedProject(project)}
                     title={`Abrir ${project.name}`}
-                    style={isSelected ? { outline: `2px solid ${color}`, background: '#f0f4ff' } : undefined}
                   >
                     {/* Color accent top bar */}
                     <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, background: color, borderRadius: '8px 8px 0 0' }} />
 
-                    <div style={{ position: 'absolute', top: 12, right: 12, zIndex: 2 }}>
-                      <input
-                        type="checkbox"
-                        checked={isSelected}
-                        onChange={() => toggleCardSelection(project.id)}
-                        onClick={(e) => e.stopPropagation()}
-                        style={{ width: 15, height: 15, cursor: 'pointer', accentColor: color }}
-                      />
+                    <div
+                      style={{ position: 'absolute', top: 12, right: 12, zIndex: 2 }}
+                      onClick={(e) => { e.stopPropagation(); toggleCardSelection(project.id); }}
+                    >
+                      <div style={{
+                        width: 18, height: 18, borderRadius: 4,
+                        border: `2px solid ${isSelected ? color : '#c1c7d0'}`,
+                        background: isSelected ? color : '#fff',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        cursor: 'pointer',
+                      }}>
+                        {isSelected && <Check size={11} color="#fff" strokeWidth={3} />}
+                      </div>
                     </div>
 
                     {/* Avatar + name */}
@@ -413,13 +402,13 @@ export default function RelatoriosPage() {
                     <div className="project-card-meta">
                       {project.owner && (
                         <div className="project-card-meta-row">
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+                          <User size={12} />
                           {project.owner}
                         </div>
                       )}
                       {project.deadline && (
                         <div className="project-card-meta-row">
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+                          <Calendar size={12} />
                           {project.deadline}
                         </div>
                       )}
@@ -431,7 +420,7 @@ export default function RelatoriosPage() {
 
                     <div className="project-card-footer">
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: `${color}12`, color, borderRadius: 20, padding: '3px 10px', fontSize: '0.72rem', fontWeight: 700 }}>
-                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                        <Check size={10} strokeWidth={2.5} />
                         {count} atividade{count !== 1 ? 's' : ''}
                       </span>
                       <div className="project-card-actions" onClick={(e) => e.stopPropagation()}>
@@ -443,9 +432,7 @@ export default function RelatoriosPage() {
                         <button type="button" className="evidence-btn"
                           style={{ background: '#fff5f5', borderColor: 'transparent', color: '#dc2626', padding: '4px 8px' }}
                           onClick={(e) => handleDeleteProject(project.id, e)} title="Excluir projeto">
-                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-                          </svg>
+                          <Trash2 size={13} />
                         </button>
                       </div>
                     </div>
@@ -458,7 +445,7 @@ export default function RelatoriosPage() {
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '20px 32px 32px' }}>
               <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}
                 style={{ width: 32, height: 32, borderRadius: 8, border: '1px solid var(--border-light)', background: currentPage === 1 ? 'var(--bg-app)' : '#fff', cursor: currentPage === 1 ? 'not-allowed' : 'pointer', color: currentPage === 1 ? 'var(--text-muted)' : 'var(--text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: currentPage === 1 ? 0.5 : 1 }}>
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+                <ChevronLeft size={13} strokeWidth={2.5} />
               </button>
               {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
                 <button key={p} onClick={() => setCurrentPage(p)}
@@ -468,7 +455,7 @@ export default function RelatoriosPage() {
               ))}
               <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}
                 style={{ width: 32, height: 32, borderRadius: 8, border: '1px solid var(--border-light)', background: currentPage === totalPages ? 'var(--bg-app)' : '#fff', cursor: currentPage === totalPages ? 'not-allowed' : 'pointer', color: currentPage === totalPages ? 'var(--text-muted)' : 'var(--text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: currentPage === totalPages ? 0.5 : 1 }}>
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+                <ChevronRight size={13} strokeWidth={2.5} />
               </button>
             </div>
           </>
@@ -479,71 +466,81 @@ export default function RelatoriosPage() {
         const detailColor = projectColor(selectedProject.id);
         const detailInitials = selectedProject.name.split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase();
         return (
-          <div className="project-detail-overlay" onClick={(e) => { if (e.target === e.currentTarget) setSelectedProject(null); }}>
-            <div className="project-detail-panel">
-              {/* Color accent bar */}
-              <div style={{ height: 4, background: detailColor, flexShrink: 0 }} />
+          <div
+            onClick={(e) => { if (e.target === e.currentTarget) setSelectedProject(null); }}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(3,78,162,0.22)', backdropFilter: 'blur(2px)', zIndex: 200, display: 'flex', alignItems: 'stretch', justifyContent: 'flex-end', animation: 'overlayFadeIn 0.2s ease' }}
+          >
+            <div style={{ width: 'min(720px, 100%)', background: '#fff', display: 'flex', flexDirection: 'column', overflow: 'hidden', animation: 'panelSlideIn 0.25s ease', boxShadow: '-8px 0 40px rgba(3,78,162,0.12)' }}>
+              {/* Piauí flag stripe */}
+              <div style={{ height: 5, flexShrink: 0, background: 'linear-gradient(to right, #034ea2 40%, #fdb913 40% 55%, #ef4123 55% 75%, #007932 75%)' }} />
 
-              <div className="project-detail-header">
+              {/* Header */}
+              <div style={{ background: '#fff', borderBottom: '1px solid var(--border-light)', padding: '20px 28px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexShrink: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
                   <div style={{ width: 44, height: 44, borderRadius: 12, background: `${detailColor}18`, color: detailColor, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '0.9rem', flexShrink: 0 }}>
                     {detailInitials}
                   </div>
                   <div>
-                    <div className="project-detail-title">{selectedProject.name}</div>
+                    <div style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-muted)', marginBottom: 4 }}>Projeto</div>
+                    <div style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.3 }}>{selectedProject.name}</div>
                     {selectedProject.category && (
                       <div style={{ fontSize: '0.75rem', marginTop: 3, color: detailColor, fontWeight: 600 }}>{selectedProject.category}</div>
                     )}
                   </div>
                 </div>
-                <button type="button" className="project-detail-close" onClick={() => setSelectedProject(null)} aria-label="Fechar">×</button>
+                <button type="button" onClick={() => setSelectedProject(null)} aria-label="Fechar"
+                  style={{ flexShrink: 0, width: 28, height: 28, borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-light)', background: 'var(--bg-subtle)', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'inherit' }}>
+                  ✕
+                </button>
               </div>
 
+              {/* Meta */}
               {(selectedProject.owner || selectedProject.deadline || selectedProject.executive_status) && (
-                <div className="project-detail-meta">
+                <div style={{ background: 'var(--bg-subtle)', borderBottom: '1px solid var(--border-light)', padding: '14px 28px', display: 'flex', flexWrap: 'wrap', gap: 20, flexShrink: 0 }}>
                   {selectedProject.owner && (
-                    <div className="project-detail-meta-item">
-                      <span className="project-detail-meta-label">
-                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: 4 }}><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                      <span style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--text-muted)', display: 'flex', alignItems: 'center' }}>
+                        <User size={10} style={{ marginRight: 4 }} />
                         Responsável
                       </span>
-                      <span className="project-detail-meta-value">{selectedProject.owner}</span>
+                      <span style={{ fontSize: '0.85rem', color: 'var(--text-primary)', fontWeight: 500 }}>{selectedProject.owner}</span>
                     </div>
                   )}
                   {selectedProject.deadline && (
-                    <div className="project-detail-meta-item">
-                      <span className="project-detail-meta-label">
-                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: 4 }}><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                      <span style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--text-muted)', display: 'flex', alignItems: 'center' }}>
+                        <Calendar size={10} style={{ marginRight: 4 }} />
                         Prazo
                       </span>
-                      <span className="project-detail-meta-value">{selectedProject.deadline}</span>
+                      <span style={{ fontSize: '0.85rem', color: 'var(--text-primary)', fontWeight: 500 }}>{selectedProject.deadline}</span>
                     </div>
                   )}
                   {selectedProject.executive_status && (
-                    <div className="project-detail-meta-item">
-                      <span className="project-detail-meta-label">Status Executivo</span>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                      <span style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--text-muted)' }}>Status Executivo</span>
                       <span style={{ fontSize: '0.8rem', fontWeight: 700, color: detailColor, background: `${detailColor}14`, borderRadius: 20, padding: '2px 10px', display: 'inline-block', marginTop: 2 }}>{selectedProject.executive_status}</span>
                     </div>
                   )}
                 </div>
               )}
 
-              <div className="project-detail-body">
+              {/* Body */}
+              <div style={{ flex: 1, overflowY: 'auto', padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: 16, background: 'var(--bg-app)' }}>
                 {selectedProject.objective && (
                   <div style={{ background: '#fff', borderRadius: 10, border: '1px solid var(--border-light)', padding: '14px 16px' }}>
-                    <div className="project-detail-section-title">Objetivo</div>
+                    <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8 }}>Objetivo</div>
                     <p style={{ fontSize: '0.875rem', lineHeight: 1.6, color: 'var(--text-secondary)', margin: 0 }}>{selectedProject.objective}</p>
                   </div>
                 )}
                 {selectedProject.scope && (
                   <div style={{ background: '#fff', borderRadius: 10, border: '1px solid var(--border-light)', padding: '14px 16px' }}>
-                    <div className="project-detail-section-title">Escopo</div>
+                    <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8 }}>Escopo</div>
                     <p style={{ fontSize: '0.875rem', lineHeight: 1.6, color: 'var(--text-secondary)', margin: 0 }}>{selectedProject.scope}</p>
                   </div>
                 )}
                 {selectedProject.summary && (
                   <div style={{ background: '#fff', borderRadius: 10, border: '1px solid var(--border-light)', padding: '14px 16px' }}>
-                    <div className="project-detail-section-title">Resumo</div>
+                    <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8 }}>Resumo</div>
                     <p style={{ fontSize: '0.875rem', lineHeight: 1.6, color: 'var(--text-secondary)', margin: 0 }}>{selectedProject.summary}</p>
                   </div>
                 )}
@@ -562,7 +559,7 @@ export default function RelatoriosPage() {
 
                   {linkedTasks.length === 0 ? (
                     <div style={{ padding: '32px 16px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
-                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--text-muted)', opacity: 0.4 }}><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                      <Check size={28} strokeWidth={1.5} style={{ color: 'var(--text-muted)', opacity: 0.4 }} />
                       <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: 0 }}>Nenhuma atividade vinculada.</p>
                     </div>
                   ) : (
@@ -583,7 +580,7 @@ export default function RelatoriosPage() {
                             </button>
                             <button type="button" style={{ background: '#fff5f5', border: 'none', borderRadius: 7, color: '#dc2626', padding: '5px', cursor: 'pointer', display: 'flex' }}
                               onClick={(e) => { e.stopPropagation(); handleDeleteTask(task.id); }}>
-                              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                              <Trash2 size={13} />
                             </button>
                           </div>
                         </div>
@@ -602,6 +599,7 @@ export default function RelatoriosPage() {
         project={projectModal.project}
         onClose={() => setProjectModal({ open: false, project: null })}
         onSave={handleSaveProject}
+        users={users}
       />
 
       <ActivityModal
@@ -638,6 +636,24 @@ export default function RelatoriosPage() {
         onConfirm={() => confirmDialog?.onConfirm()}
         onClose={() => setConfirmDialog(null)}
       />
+
+      {!selectedProject && !projectModal.open && !activityModal.open && !taskDetail.open && (
+        <button
+          className="kanban-fab"
+          onClick={() => setProjectModal({ open: true, project: null })}
+          title="Novo projeto"
+          style={{
+            position: 'fixed', bottom: 32, right: 32, zIndex: 900,
+            width: 52, height: 52, borderRadius: '50%',
+            background: 'var(--primary)', color: '#fff', border: 'none',
+            boxShadow: '0 4px 16px rgba(3,78,162,0.35)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            cursor: 'pointer',
+          }}
+        >
+          <Plus width={20} height={20} />
+        </button>
+      )}
 
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />
     </>
