@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { Plus, LayoutDashboard, Calendar, Search, Funnel, Ellipsis } from 'lucide-react';
 import {
   DndContext,
   DragEndEvent,
@@ -42,38 +43,88 @@ const STATUS_MAP: Record<StatusGroup, string> = {
 // ── Kanban Column ─────────────────────────────────────────────────────────────
 function KanbanColumn({
   col, tasks, onAddCard, onViewCard, onDeleteCard,
+  isSelecting, selectedTaskIds, onToggleSelect, onStartSelect, onStartSelectAll,
 }: {
   col: (typeof COLUMNS)[0];
   tasks: Task[];
   onAddCard: (sg: StatusGroup) => void;
   onViewCard: (t: Task) => void;
   onDeleteCard: (id: string) => void;
+  isSelecting: boolean;
+  selectedTaskIds: Set<string>;
+  onToggleSelect: (id: string) => void;
+  onStartSelect: () => void;
+  onStartSelectAll: () => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: col.id });
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    function onClickOutside(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
+    }
+    document.addEventListener('mousedown', onClickOutside);
+    return () => document.removeEventListener('mousedown', onClickOutside);
+  }, [menuOpen]);
 
   return (
-    <div ref={setNodeRef} className={`kanban-column${isOver ? ' drag-over' : ''}`}>
+    <div ref={setNodeRef} className={`kanban-column${isOver && !isSelecting ? ' drag-over' : ''}`}>
       <div className="column-header">
         <div className="column-header-left">
           <span className={`column-status-dot ${col.dotClass}`} />
           <span className="column-title">{col.title}</span>
           <span className="column-count">{tasks.length}</span>
         </div>
+        <div className="column-actions" style={{ position: 'relative' }} ref={menuRef}>
+          <button className="column-action-btn" title="Mais opções" onClick={() => setMenuOpen(o => !o)}>
+            <Ellipsis />
+          </button>
+          {menuOpen && (
+            <div style={{
+              position: 'absolute', top: '100%', right: 0, marginTop: 4,
+              background: '#fff', border: '1px solid var(--border-light)',
+              borderRadius: 8, boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
+              zIndex: 100, minWidth: 190, padding: '4px 0',
+            }}>
+              <button
+                style={{
+                  display: 'block', width: '100%', textAlign: 'left',
+                  padding: '8px 14px', background: 'none', border: 'none',
+                  cursor: 'pointer', fontSize: '0.82rem', color: 'var(--text-primary)', fontFamily: 'inherit',
+                }}
+                onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-subtle)')}
+                onMouseLeave={e => (e.currentTarget.style.background = 'none')}
+                onClick={() => { setMenuOpen(false); onStartSelect(); }}
+              >
+                Selecionar
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="kanban-cards">
         {tasks.map((task) => (
-          <KanbanCard key={task.id} task={task} onView={onViewCard} onDelete={onDeleteCard} />
+          <KanbanCard
+            key={task.id}
+            task={task}
+            onView={onViewCard}
+            onDelete={onDeleteCard}
+            selectionMode={isSelecting}
+            isSelected={selectedTaskIds.has(task.id)}
+            onToggleSelect={onToggleSelect}
+          />
         ))}
       </div>
 
-      <button className="add-card-btn" onClick={() => onAddCard(col.id)}>
-        <svg viewBox="0 0 24 24">
-          <line x1="12" y1="5" x2="12" y2="19" />
-          <line x1="5" y1="12" x2="19" y2="12" />
-        </svg>
-        Criar atividade
-      </button>
+      {!isSelecting && (
+        <button className="add-card-btn" onClick={() => onAddCard(col.id)}>
+          <Plus size={16} />
+          Criar atividade
+        </button>
+      )}
     </div>
   );
 }
@@ -97,7 +148,6 @@ export default function MinhasAtividadesPage() {
   const [filterProject, setFilterProject] = useState('');
   const [filterDateFrom, setFilterDateFrom] = useState('');
   const [filterDateTo, setFilterDateTo] = useState('');
-  const [filtersOpen, setFiltersOpen] = useState(true);
 
   const [viewMode, setViewMode] = useState<'kanban' | 'calendar'>('kanban');
 
@@ -106,6 +156,8 @@ export default function MinhasAtividadesPage() {
   }>({ open: false, task: null });
   const [taskDetail, setTaskDetail] = useState<{ open: boolean; task: Task | null }>({ open: false, task: null });
   const [confirmDialog, setConfirmDialog] = useState<{ title: string; message?: string; onConfirm: () => void } | null>(null);
+  const [selectionMode, setSelectionMode] = useState<StatusGroup | null>(null);
+  const [selectedTaskIds, setSelectedTaskIds] = useState<Set<string>>(new Set());
 
   const load = useCallback(() => {
     const loggedInUser = getUser();
@@ -119,7 +171,72 @@ export default function MinhasAtividadesPage() {
   useEffect(() => { load(); }, [load]);
   useRefetchOnFocus(load);
 
+  function handleToggleSelect(id: string) {
+    setSelectedTaskIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function handleStartSelect(columnId: StatusGroup) {
+    setSelectionMode(columnId);
+    setSelectedTaskIds(new Set());
+  }
+
+  function handleStartSelectAll(columnId: StatusGroup) {
+    setSelectionMode(columnId);
+    setSelectedTaskIds(new Set(tasksByGroup(columnId).map(t => t.id)));
+  }
+
+  function handleCancelSelect() {
+    setSelectionMode(null);
+    setSelectedTaskIds(new Set());
+  }
+
+  async function handleMoveSelected(to: StatusGroup) {
+    if (!selectionMode || selectedTaskIds.size === 0) return;
+    const ids = [...selectedTaskIds];
+    const prevTasks = tasks;
+    setTasks(curr => curr.map(t => ids.includes(t.id) ? { ...t, status_group: to } : t));
+    setSelectionMode(null);
+    setSelectedTaskIds(new Set());
+    try {
+      await Promise.all(ids.map(id => {
+        const task = prevTasks.find(t => t.id === id)!;
+        let co_responsible_ids: string[] | null = null;
+        if (task.co_responsibles) {
+          try {
+            const names: string[] = JSON.parse(task.co_responsibles);
+            const resolved = names.map(name => users.find(u => u.name === name)?.id).filter((rid): rid is string => rid !== undefined);
+            co_responsible_ids = resolved.length > 0 ? resolved : null;
+          } catch { co_responsible_ids = null; }
+        }
+        return updateTask(task, { status_group: to, co_responsible_ids });
+      }));
+    } catch {
+      setTasks(prevTasks);
+    }
+  }
+
+  function handleDeleteSelected() {
+    if (!selectionMode || selectedTaskIds.size === 0) return;
+    const ids = [...selectedTaskIds];
+    setConfirmDialog({
+      title: `Excluir ${ids.length} atividade(s)`,
+      message: 'Esta ação não pode ser desfeita.',
+      onConfirm: async () => {
+        setTasks(curr => curr.filter(t => !ids.includes(t.id)));
+        setSelectionMode(null);
+        setSelectedTaskIds(new Set());
+        try { await Promise.all(ids.map(id => deleteTask(id))); } catch { load(); }
+      },
+    });
+  }
+
   function handleDragEnd(event: DragEndEvent) {
+    if (selectionMode) return;
     const { active, over } = event;
     if (!over) return;
     const taskId = active.id as string;
@@ -245,9 +362,7 @@ export default function MinhasAtividadesPage() {
                 transition: 'all 0.15s',
               }}
             >
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-                <rect x="3" y="3" width="7" height="18" rx="1" /><rect x="14" y="3" width="7" height="11" rx="1" />
-              </svg>
+              <LayoutDashboard size={13} strokeWidth={2.2} />
               Quadro
             </button>
             <button
@@ -264,19 +379,14 @@ export default function MinhasAtividadesPage() {
                 transition: 'all 0.15s',
               }}
             >
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-                <rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
-              </svg>
+              <Calendar size={13} strokeWidth={2.2} />
               Calendário
             </button>
           </div>
         </div>
         <div className="topbar-right">
           <div className="topbar-search">
-            <svg viewBox="0 0 24 24">
-              <circle cx="11" cy="11" r="8" />
-              <line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
+            <Search size={16} />
             <input
               type="text"
               placeholder="Pesquisar atividades..."
@@ -287,51 +397,55 @@ export default function MinhasAtividadesPage() {
         </div>
       </div>
 
-      <div className={`board-toolbar${filtersOpen ? '' : ' board-toolbar-collapsed'}`}>
-        <button
-          className={`filters-toggle-btn${filtersOpen ? ' active' : ''}`}
-          onClick={() => setFiltersOpen((isOpen) => !isOpen)}
-          title={filtersOpen ? 'Ocultar filtros' : 'Exibir filtros'}
+      <div className="board-toolbar">
+        <Funnel width={13} height={13} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+
+        <select
+          className={`filter-chip${filterPriority ? ' filter-chip-active' : ''}`}
+          value={filterPriority}
+          onChange={(e) => setFilterPriority(e.target.value)}
         >
-          <svg viewBox="0 0 24 24">
-            <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
-          </svg>
-          Filtros
-          <svg viewBox="0 0 24 24" style={{ width: 10, height: 10, transition: 'transform 0.18s', transform: filtersOpen ? 'rotate(180deg)' : 'none' }}>
-            <polyline points="6 9 12 15 18 9" />
-          </svg>
-        </button>
+          <option value="">Prioridade</option>
+          <option value="Alta">Alta</option>
+          <option value="Média">Média</option>
+          <option value="Baixa">Baixa</option>
+        </select>
 
-        {filtersOpen && (
-          <div className="board-filters">
-            <select className="filter-btn" value={filterPriority} onChange={(e) => setFilterPriority(e.target.value)}>
-              <option value="">Prioridade: Todas</option>
-              <option value="Alta">🔴 Alta</option>
-              <option value="Média">🟡 Média</option>
-              <option value="Baixa">🟢 Baixa</option>
-            </select>
+        <select
+          className={`filter-chip${filterProject ? ' filter-chip-active' : ''}`}
+          value={filterProject}
+          onChange={(e) => setFilterProject(e.target.value)}
+        >
+          <option value="">Projeto</option>
+          {projects.map((project) => <option key={project.id} value={project.id}>{project.name}</option>)}
+        </select>
 
-            <select className="filter-btn" value={filterProject} onChange={(e) => setFilterProject(e.target.value)}>
-              <option value="">Projeto: Todos</option>
-              {projects.map((project) => <option key={project.id} value={project.id}>{project.name}</option>)}
-            </select>
+        <div className={`filter-date-range${filterDateFrom || filterDateTo ? ' filter-chip-active' : ''}`}>
+          <span className="filter-date-label">Criado</span>
+          <input
+            type="date"
+            value={filterDateFrom}
+            onChange={(e) => setFilterDateFrom(e.target.value)}
+            className="filter-date-input"
+            placeholder="de"
+          />
+          <span className="filter-date-sep">→</span>
+          <input
+            type="date"
+            value={filterDateTo}
+            onChange={(e) => setFilterDateTo(e.target.value)}
+            className="filter-date-input"
+            placeholder="até"
+          />
+        </div>
 
-            <input type="date" className="filter-btn" title="De" value={filterDateFrom}
-              onChange={(e) => setFilterDateFrom(e.target.value)}
-              style={{ fontFamily: 'inherit', fontSize: '0.82rem' }}
-            />
-            <input type="date" className="filter-btn" title="Até" value={filterDateTo}
-              onChange={(e) => setFilterDateTo(e.target.value)}
-              style={{ fontFamily: 'inherit', fontSize: '0.82rem' }}
-            />
-
-            {hasFilters && (
-              <button className="filter-btn" style={{ color: '#ef4123', borderColor: '#ef4123' }}
-                onClick={() => { setFilterPriority(''); setFilterProject(''); setFilterDateFrom(''); setFilterDateTo(''); }}>
-                ✕ Limpar
-              </button>
-            )}
-          </div>
+        {hasFilters && (
+          <button
+            className="filter-clear-btn"
+            onClick={() => { setFilterPriority(''); setFilterProject(''); setFilterDateFrom(''); setFilterDateTo(''); }}
+          >
+            ✕ Limpar
+          </button>
         )}
       </div>
 
@@ -357,10 +471,118 @@ export default function MinhasAtividadesPage() {
                 onAddCard={(sg) => setActivityModal({ open: true, task: null, defaultStatus: STATUS_MAP[sg] })}
                 onViewCard={(task) => setTaskDetail({ open: true, task })}
                 onDeleteCard={handleDeleteCard}
+                isSelecting={selectionMode === col.id}
+                selectedTaskIds={selectedTaskIds}
+                onToggleSelect={handleToggleSelect}
+                onStartSelect={() => handleStartSelect(col.id)}
+                onStartSelectAll={() => handleStartSelectAll(col.id)}
               />
             ))}
           </div>
         </DndContext>
+      )}
+
+      {viewMode === 'kanban' && !selectionMode && !taskDetail.open && !activityModal.open && (
+        <button
+          className="kanban-fab"
+          onClick={() => setActivityModal({ open: true, task: null })}
+          title="Criar atividade"
+          style={{
+            position: 'fixed', bottom: 32, right: 32, zIndex: 900,
+            width: 52, height: 52, borderRadius: '50%',
+            background: 'var(--primary)', color: '#fff', border: 'none',
+            boxShadow: '0 4px 16px rgba(3,78,162,0.35)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            cursor: 'pointer',
+          }}
+        >
+          <Plus width={20} height={20} />
+        </button>
+      )}
+
+      {selectionMode && (
+        <div style={{
+          position: 'fixed', bottom: 28, left: '50%', transform: 'translateX(-50%)',
+          display: 'flex', alignItems: 'center', gap: 6,
+          background: '#fff',
+          border: '1px solid var(--border-light)',
+          borderRadius: 'var(--radius-lg)',
+          padding: '8px 12px',
+          boxShadow: '0 4px 24px rgba(3,78,162,0.13), 0 1px 4px rgba(3,78,162,0.07)',
+          zIndex: 200, whiteSpace: 'nowrap',
+        }}>
+          <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 700, marginRight: 4 }}>
+            {selectedTaskIds.size} selecionado(s)
+          </span>
+          <div style={{ width: 1, height: 18, background: 'var(--border-light)', margin: '0 4px' }} />
+          <button
+            onClick={() => selectionMode && setSelectedTaskIds(new Set(tasksByGroup(selectionMode).map(t => t.id)))}
+            style={{
+              padding: '5px 12px', borderRadius: 'var(--radius-sm)',
+              border: '1px solid var(--border-light)', background: 'var(--bg-subtle)',
+              color: 'var(--text-secondary)', fontSize: '0.78rem', fontWeight: 600,
+              cursor: 'pointer', fontFamily: 'inherit',
+            }}
+            onMouseEnter={e => (e.currentTarget.style.background = 'var(--primary-light)')}
+            onMouseLeave={e => (e.currentTarget.style.background = 'var(--bg-subtle)')}
+          >
+            Selecionar todos
+          </button>
+          <div style={{ width: 1, height: 18, background: 'var(--border-light)', margin: '0 4px' }} />
+          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginRight: 2 }}>Mover para</span>
+          {COLUMNS.filter(c => c.id !== selectionMode).map(target => (
+            <button
+              key={target.id}
+              onClick={() => handleMoveSelected(target.id)}
+              disabled={selectedTaskIds.size === 0}
+              style={{
+                padding: '5px 12px', borderRadius: 'var(--radius-sm)',
+                border: '1px solid var(--border-light)',
+                background: selectedTaskIds.size > 0 ? 'var(--primary-light)' : 'transparent',
+                color: selectedTaskIds.size > 0 ? 'var(--primary)' : 'var(--text-muted)',
+                fontSize: '0.78rem', fontWeight: 600,
+                cursor: selectedTaskIds.size > 0 ? 'pointer' : 'not-allowed',
+                fontFamily: 'inherit', transition: 'background var(--transition-fast)',
+              }}
+              onMouseEnter={e => { if (selectedTaskIds.size > 0) e.currentTarget.style.background = 'var(--primary-glow)'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = selectedTaskIds.size > 0 ? 'var(--primary-light)' : 'transparent'; }}
+            >
+              {target.title}
+            </button>
+          ))}
+          <div style={{ width: 1, height: 18, background: 'var(--border-light)', margin: '0 4px' }} />
+          <button
+            onClick={handleDeleteSelected}
+            disabled={selectedTaskIds.size === 0}
+            style={{
+              padding: '5px 12px', borderRadius: 'var(--radius-sm)',
+              border: '1px solid var(--border-light)',
+              background: selectedTaskIds.size > 0 ? 'rgba(239,65,35,0.07)' : 'transparent',
+              color: selectedTaskIds.size > 0 ? '#ef4123' : 'var(--text-muted)',
+              fontSize: '0.78rem', fontWeight: 600,
+              cursor: selectedTaskIds.size > 0 ? 'pointer' : 'not-allowed',
+              fontFamily: 'inherit', transition: 'background var(--transition-fast)',
+            }}
+            onMouseEnter={e => { if (selectedTaskIds.size > 0) e.currentTarget.style.background = 'rgba(239,65,35,0.14)'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = selectedTaskIds.size > 0 ? 'rgba(239,65,35,0.07)' : 'transparent'; }}
+          >
+            Excluir
+          </button>
+          <div style={{ width: 1, height: 18, background: 'var(--border-light)', margin: '0 4px' }} />
+          <button
+            onClick={handleCancelSelect}
+            style={{
+              padding: '5px 10px', borderRadius: 'var(--radius-sm)',
+              border: '1px solid transparent', background: 'transparent',
+              color: 'var(--text-muted)', fontSize: '0.78rem',
+              cursor: 'pointer', fontFamily: 'inherit', transition: 'color var(--transition-fast)',
+            }}
+            onMouseEnter={e => (e.currentTarget.style.color = 'var(--text-primary)')}
+            onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-muted)')}
+          >
+            Cancelar
+          </button>
+        </div>
       )}
 
       <TaskDetailModal
