@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { FileText, Trash2, User, Calendar, Eye, ChevronLeft, ChevronRight, AlertTriangle, Plus } from 'lucide-react';
 import MonthCalendar, { CalendarItem } from '@/components/MonthCalendar';
 import ConfirmModal from '@/components/ConfirmModal';
 import { useToast } from '@/hooks/useToast';
@@ -184,21 +185,24 @@ function AbsenceDetailModal({ absence, onClose, onUpdated, onDeleted }: {
   }
 
   return (
-    <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.45)', zIndex:1000, display:'flex', alignItems:'center', justifyContent:'center', padding:16 }}
+    <div style={{ position:'fixed', inset:0, background:'rgba(3,78,162,0.22)', backdropFilter:'blur(2px)', zIndex:1000, display:'flex', alignItems:'center', justifyContent:'center', padding:16 }}
       onClick={e => { if (e.target===e.currentTarget) onClose(); }}>
-      <div style={{ background:'#fff', borderRadius:14, width:'100%', maxWidth:480, boxShadow:'0 24px 64px rgba(0,0,0,0.22)', overflow:'hidden' }}>
-        <div style={{ height:4, background:reasonColor(absence.reason).color }} />
-        <div style={{ padding:'18px 22px 14px', borderBottom:'1px solid var(--border-light)', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+      <div style={{ background:'#fff', borderRadius:'var(--radius-lg)', width:'100%', maxWidth:480, maxHeight:'90vh', boxShadow:'0 20px 60px rgba(3,78,162,0.18), 0 4px 16px rgba(0,0,0,0.10)', overflow:'hidden', display:'flex', flexDirection:'column', animation:'modal-pop-in-flex 0.2s cubic-bezier(0.34,1.56,0.64,1) forwards' }}>
+        <div style={{ height:5, flexShrink:0, background:'linear-gradient(to right, #034ea2 40%, #fdb913 40% 55%, #ef4123 55% 75%, #007932 75%)' }} />
+        <div style={{ padding:'16px 20px 14px', borderBottom:'1px solid var(--border-light)', display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:10, flexShrink:0 }}>
           <div>
-            <div style={{ fontSize:'0.7rem', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.06em', color:'var(--text-muted)', marginBottom:4 }}>
+            <div style={{ fontSize:'0.65rem', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.1em', color:'var(--text-muted)', marginBottom:4 }}>
               {absence.employee_name}
             </div>
-            <span style={{ background: reasonColor(absence.reason).bg, color: reasonColor(absence.reason).color, borderRadius:4, padding:'2px 8px', fontSize:'0.75rem', fontWeight:700 }}>{absence.reason}</span>
+            <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+              <h2 style={{ margin:0, fontSize:'1rem', fontWeight:700, color:'var(--text-primary)', fontFamily:'inherit' }}>Justificativa de Falta</h2>
+              <span style={{ background: reasonColor(absence.reason).bg, color: reasonColor(absence.reason).color, borderRadius:4, padding:'2px 8px', fontSize:'0.72rem', fontWeight:700 }}>{absence.reason}</span>
+            </div>
           </div>
-          <button onClick={onClose} style={{ background:'none', border:'none', cursor:'pointer', fontSize:'1.3rem', color:'var(--text-muted)', lineHeight:1 }}>×</button>
+          <button onClick={onClose} style={{ flexShrink:0, width:28, height:28, borderRadius:'var(--radius-sm)', border:'1px solid var(--border-light)', background:'var(--bg-subtle)', color:'var(--text-muted)', cursor:'pointer', fontSize:'0.85rem', display:'flex', alignItems:'center', justifyContent:'center', fontFamily:'inherit' }}>✕</button>
         </div>
 
-        <div style={{ padding:'18px 22px', display:'flex', flexDirection:'column', gap:14, maxHeight:'60vh', overflowY:'auto' }}>
+        <div style={{ padding:'18px 22px', display:'flex', flexDirection:'column', gap:14, flex:1, overflowY:'auto' }}>
           {mode === 'view' ? (
             <>
               <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
@@ -222,7 +226,7 @@ function AbsenceDetailModal({ absence, onClose, onUpdated, onDeleted }: {
                 <div>
                   <div style={fieldLabel}>Arquivo</div>
                   <span style={{ fontSize:'0.82rem', color:'var(--primary)', display:'flex', alignItems:'center', gap:5 }}>
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    <FileText size={13} />
                     {absence.file_name}
                   </span>
                 </div>
@@ -294,21 +298,21 @@ function AbsenceDetailModal({ absence, onClose, onUpdated, onDeleted }: {
           )}
         </div>
 
-        <div style={{ padding:'12px 22px 18px', display:'flex', justifyContent:'space-between', gap:8 }}>
+        <div style={{ padding:'12px 20px', borderTop:'1px solid var(--border-light)', background:'var(--bg-subtle)', display:'flex', justifyContent:'space-between', gap:8, flexShrink:0 }}>
           <button onClick={() => setConfirmDelete(true)} disabled={deleting}
-            style={{ padding:'7px 14px', background:'#fff5f5', border:'1px solid #fecaca', borderRadius:6, color:'#dc2626', fontFamily:'inherit', fontSize:'0.83rem', fontWeight:600, cursor:'pointer' }}>
+            style={{ padding:'6px 14px', background:'#fff5f5', border:'1px solid #fecaca', borderRadius:'var(--radius-sm)', color:'#dc2626', fontFamily:'inherit', fontSize:'0.8rem', fontWeight:600, cursor:'pointer' }}>
             {deleting ? '...' : 'Excluir'}
           </button>
           <div style={{ display:'flex', gap:8 }}>
             {mode === 'view' ? (
               <>
-                <button onClick={onClose} style={cancelBtn}>Fechar</button>
-                <button onClick={() => setMode('edit')} style={saveBtn}>Editar</button>
+                <button onClick={onClose} style={{ padding:'6px 14px', background:'#fff', border:'1px solid var(--border-light)', borderRadius:'var(--radius-sm)', fontSize:'0.8rem', fontWeight:600, cursor:'pointer', fontFamily:'inherit', color:'var(--text-secondary)' }}>Fechar</button>
+                <button onClick={() => setMode('edit')} style={{ padding:'6px 18px', background:'var(--primary)', color:'#fff', border:'none', borderRadius:'var(--radius-sm)', fontSize:'0.8rem', fontWeight:700, cursor:'pointer', fontFamily:'inherit' }}>Editar</button>
               </>
             ) : (
               <>
-                <button onClick={() => setMode('view')} style={cancelBtn}>Cancelar</button>
-                <button onClick={handleSave} disabled={saving} style={saveBtn}>{saving ? 'Salvando…' : 'Salvar'}</button>
+                <button onClick={() => setMode('view')} style={{ padding:'6px 14px', background:'#fff', border:'1px solid var(--border-light)', borderRadius:'var(--radius-sm)', fontSize:'0.8rem', fontWeight:600, cursor:'pointer', fontFamily:'inherit', color:'var(--text-secondary)' }}>Cancelar</button>
+                <button onClick={handleSave} disabled={saving} style={{ padding:'6px 18px', background:saving?'var(--text-muted)':'var(--primary)', color:'#fff', border:'none', borderRadius:'var(--radius-sm)', fontSize:'0.8rem', fontWeight:700, cursor:saving?'not-allowed':'pointer', fontFamily:'inherit' }}>{saving ? 'Salvando…' : 'Salvar'}</button>
               </>
             )}
           </div>
@@ -621,18 +625,14 @@ export default function FaltasPage() {
                 onClick={confirmDeleteSelected}
                 style={{ display:'flex', alignItems:'center', gap:6, padding:'6px 14px', borderRadius:8, border:'1px solid #fecaca', background:'#fff5f5', color:'#dc2626', cursor:'pointer', fontSize:'0.82rem', fontWeight:600 }}
               >
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-                </svg>
+                <Trash2 size={13} />
                 Excluir {selectedIds.size}
               </button>
             </>
           ) : (
             <div style={{ display:'flex', alignItems:'center', gap:10, flexWrap:'wrap' }}>
               <div style={{ width:30, height:30, borderRadius:8, background:'var(--primary-light)', display:'flex', alignItems:'center', justifyContent:'center' }}>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
-                </svg>
+                <FileText size={15} color="var(--primary)" />
               </div>
               <span style={{ fontWeight:700, fontSize:'0.9rem', color:'var(--text-primary)' }}>Registros</span>
               {visibleAbsences.length > 0 && (
@@ -640,7 +640,7 @@ export default function FaltasPage() {
               )}
               {filterUser && (
                 <span style={{ display:'inline-flex', alignItems:'center', gap:5, background:'#eff6ff', border:'1px solid #bfdbfe', borderRadius:20, padding:'3px 10px 3px 8px', fontSize:'0.75rem', fontWeight:600, color:'#1d4ed8' }}>
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  <User size={11} strokeWidth={2.5} />
                   {filterUser.name} · {monthLabel}
                   <button onClick={() => setFilterUserId(null)} style={{ background:'none', border:'none', cursor:'pointer', color:'#1d4ed8', padding:0, lineHeight:1, fontSize:'0.9rem', marginLeft:2, opacity:0.7 }}>×</button>
                 </span>
@@ -652,7 +652,7 @@ export default function FaltasPage() {
           <div style={{ padding:40, textAlign:'center', color:'var(--text-muted)' }}>Carregando...</div>
         ) : visibleAbsences.length === 0 ? (
           <div style={{ padding:48, textAlign:'center', color:'var(--text-muted)', display:'flex', flexDirection:'column', alignItems:'center', gap:10 }}>
-            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity:0.3 }}><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            <Calendar size={36} style={{ opacity:0.3 }} />
             <span style={{ fontSize:'0.88rem' }}>Nenhuma justificativa registrada.</span>
           </div>
         ) : (
@@ -724,16 +724,14 @@ export default function FaltasPage() {
                           title="Ver detalhes"
                           onMouseEnter={e => (e.currentTarget.style.background = 'var(--primary-glow)')}
                           onMouseLeave={e => (e.currentTarget.style.background = 'var(--primary-light)')}>
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                          <Eye size={14} />
                         </button>
                         <button onClick={() => confirmDeleteOne(a)}
                           style={{ background:'#fff5f5', border:'none', cursor:'pointer', color:'#dc2626', padding:'6px', borderRadius:7, display:'flex', transition:'background 0.15s' }}
                           title="Excluir"
                           onMouseEnter={e => (e.currentTarget.style.background = '#fee2e2')}
                           onMouseLeave={e => (e.currentTarget.style.background = '#fff5f5')}>
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-                          </svg>
+                          <Trash2 size={14} />
                         </button>
                       </div>
                     </td>
@@ -752,7 +750,7 @@ export default function FaltasPage() {
                 onClick={() => setPage(p => Math.max(1, p - 1))}
                 disabled={page === 1}
                 style={{ width:30, height:30, display:'flex', alignItems:'center', justifyContent:'center', borderRadius:7, border:'1px solid var(--border-light)', background: page === 1 ? 'var(--bg-app)' : '#fff', color: page === 1 ? 'var(--text-muted)' : 'var(--text-primary)', cursor: page === 1 ? 'not-allowed' : 'pointer', opacity: page === 1 ? 0.5 : 1 }}>
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+                <ChevronLeft size={13} strokeWidth={2.5} />
               </button>
               {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
                 <button key={p} onClick={() => setPage(p)}
@@ -764,7 +762,7 @@ export default function FaltasPage() {
                 onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                 disabled={page === totalPages}
                 style={{ width:30, height:30, display:'flex', alignItems:'center', justifyContent:'center', borderRadius:7, border:'1px solid var(--border-light)', background: page === totalPages ? 'var(--bg-app)' : '#fff', color: page === totalPages ? 'var(--text-muted)' : 'var(--text-primary)', cursor: page === totalPages ? 'not-allowed' : 'pointer', opacity: page === totalPages ? 0.5 : 1 }}>
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+                <ChevronRight size={13} strokeWidth={2.5} />
               </button>
             </div>
           </div>
@@ -772,14 +770,18 @@ export default function FaltasPage() {
       </div>
 
       {showModal && (
-        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.45)', zIndex:1000, display:'flex', alignItems:'center', justifyContent:'center', padding:16 }}
+        <div style={{ position:'fixed', inset:0, background:'rgba(3,78,162,0.22)', backdropFilter:'blur(2px)', zIndex:1000, display:'flex', alignItems:'center', justifyContent:'center', padding:16 }}
           onClick={e => { if (e.target===e.currentTarget) setShowModal(false); }}>
-          <div style={{ background:'#fff', borderRadius:14, width:'100%', maxWidth:520, boxShadow:'0 24px 64px rgba(0,0,0,0.22)', overflow:'hidden' }}>
-            <div style={{ padding:'18px 22px', borderBottom:'1px solid var(--border-light)', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-              <h2 style={{ margin:0, fontSize:'1.05rem', fontWeight:700 }}>Nova Justificativa de Falta</h2>
-              <button onClick={() => setShowModal(false)} style={{ background:'none', border:'none', cursor:'pointer', fontSize:'1.2rem', color:'var(--text-muted)', lineHeight:1 }}>×</button>
+          <div style={{ background:'#fff', borderRadius:'var(--radius-lg)', width:'100%', maxWidth:520, maxHeight:'90vh', boxShadow:'0 20px 60px rgba(3,78,162,0.18), 0 4px 16px rgba(0,0,0,0.10)', overflow:'hidden', display:'flex', flexDirection:'column', animation:'modal-pop-in-flex 0.2s cubic-bezier(0.34,1.56,0.64,1) forwards' }}>
+            <div style={{ height:5, flexShrink:0, background:'linear-gradient(to right, #034ea2 40%, #fdb913 40% 55%, #ef4123 55% 75%, #007932 75%)' }} />
+            <div style={{ padding:'16px 20px 14px', borderBottom:'1px solid var(--border-light)', display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:10, flexShrink:0 }}>
+              <div>
+                <div style={{ fontSize:'0.65rem', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.1em', color:'var(--text-muted)', marginBottom:4 }}>Nova justificativa de falta</div>
+                <h2 style={{ margin:0, fontSize:'1rem', fontWeight:700, color:'var(--text-primary)', fontFamily:'inherit' }}>Preencha os dados abaixo</h2>
+              </div>
+              <button onClick={() => setShowModal(false)} style={{ flexShrink:0, width:28, height:28, borderRadius:'var(--radius-sm)', border:'1px solid var(--border-light)', background:'var(--bg-subtle)', color:'var(--text-muted)', cursor:'pointer', fontSize:'0.85rem', display:'flex', alignItems:'center', justifyContent:'center', fontFamily:'inherit' }}>✕</button>
             </div>
-            <div style={{ padding:'22px', display:'flex', flexDirection:'column', gap:16, maxHeight:'70vh', overflowY:'auto' }}>
+            <div style={{ padding:'22px', display:'flex', flexDirection:'column', gap:16, flex:1, overflowY:'auto' }}>
               <div>
                 <label style={labelStyle}>Funcionário</label>
                 <input type="text" value={currentUser?.name ?? ''} disabled
@@ -799,9 +801,7 @@ export default function FaltasPage() {
               <div>
                 <label style={labelStyle}>Anexar Arquivo (ex: atestado)</label>
                 <div style={{ background:'#fffbe6', border:'1px solid #ffe58f', borderRadius:6, padding:'8px 12px', marginBottom:8, display:'flex', alignItems:'center', gap:8 }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#d48806" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink:0 }}>
-                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
-                  </svg>
+                  <AlertTriangle size={14} color="#d48806" style={{ flexShrink:0 }} />
                   <span style={{ fontSize:'0.78rem', color:'#ad6800', fontWeight:500 }}>Em desenvolvimento — envio de arquivos indisponível.</span>
                 </div>
                 <div style={{ display:'flex', alignItems:'center', gap:10, opacity:0.45, pointerEvents:'none' }}>
@@ -862,13 +862,13 @@ export default function FaltasPage() {
               </div>
               {formErr && <p style={{ color:'#ef4444', fontSize:'0.82rem', margin:0 }}>{formErr}</p>}
             </div>
-            <div style={{ padding:'14px 22px', borderTop:'1px solid var(--border-light)', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+            <div style={{ padding:'12px 20px', borderTop:'1px solid var(--border-light)', background:'var(--bg-subtle)', display:'flex', justifyContent:'space-between', alignItems:'center', flexShrink:0 }}>
               <span style={{ fontSize:'0.78rem', color:'var(--text-muted)' }}>
                 {!useRange && selectedDays.length > 1 ? `${selectedDays.length} registros serão criados` : ''}
               </span>
-              <div style={{ display:'flex', gap:10 }}>
-                <button onClick={() => setShowModal(false)} style={cancelBtn}>Cancelar</button>
-                <button onClick={handleSave} disabled={saving} style={saveBtn}>
+              <div style={{ display:'flex', gap:8 }}>
+                <button onClick={() => setShowModal(false)} style={{ padding:'6px 14px', background:'#fff', border:'1px solid var(--border-light)', borderRadius:'var(--radius-sm)', fontSize:'0.8rem', fontWeight:600, cursor:'pointer', fontFamily:'inherit', color:'var(--text-secondary)' }}>Cancelar</button>
+                <button onClick={handleSave} disabled={saving} style={{ padding:'6px 18px', background:saving?'var(--text-muted)':'var(--primary)', color:'#fff', border:'none', borderRadius:'var(--radius-sm)', fontSize:'0.8rem', fontWeight:700, cursor:saving?'not-allowed':'pointer', fontFamily:'inherit' }}>
                   {saving ? 'Salvando...' : (!useRange && selectedDays.length > 1) ? `Salvar ${selectedDays.length} registros` : 'Salvar'}
                 </button>
               </div>
@@ -911,7 +911,7 @@ export default function FaltasPage() {
         cursor: 'pointer',
       }}
     >
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      <Plus size={22} strokeWidth={2.5} />
     </button>
 
     <ToastContainer toasts={toasts} onDismiss={dismissToast} />

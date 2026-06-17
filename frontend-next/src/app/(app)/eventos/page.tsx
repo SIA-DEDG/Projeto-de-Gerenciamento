@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { Calendar, Users, User, Trash2, Pencil, ChevronLeft, ChevronRight, Clock, AlertCircle, ChevronDown, List, Check, Plus } from 'lucide-react';
 import {
   fetchEvents, createEvent, updateEvent, deleteEvent, fetchUsers,
   type CalendarEvent, type UserPublic,
@@ -213,7 +214,7 @@ function EventPreview({
       <div style={{ padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
         {/* Date / time */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <Calendar size={13} />
           <span>
             {sameDay ? formatDateFull(calEvent.start_date) : `${formatDate(calEvent.start_date)} → ${formatDateFull(calEvent.end_date)}`}
             {calEvent.start_time && <span style={{ marginLeft: 6, fontWeight: 600, color: colorPalette.color }}>{calEvent.start_time}</span>}
@@ -223,7 +224,7 @@ function EventPreview({
         {/* Responsibles */}
         {responsibles.length > 0 && (
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginTop: 2, flexShrink: 0 }}><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <Users size={13} style={{ marginTop: 2, flexShrink: 0 }} />
             <span>{responsibles.join(', ')}</span>
           </div>
         )}
@@ -231,7 +232,7 @@ function EventPreview({
         {/* Attendees */}
         {calEvent.attendees && (
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginTop: 2, flexShrink: 0 }}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <User size={13} style={{ marginTop: 2, flexShrink: 0 }} />
             <span>{calEvent.attendees}</span>
           </div>
         )}
@@ -248,7 +249,7 @@ function EventPreview({
             cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
           }}
         >
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+          <Trash2 size={13} />
           {deleting === calEvent.id ? 'Excluindo…' : 'Excluir'}
         </button>
         <button
@@ -259,7 +260,7 @@ function EventPreview({
             cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
           }}
         >
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          <Pencil size={13} />
           Editar
         </button>
       </div>
@@ -629,11 +630,11 @@ export default function EventosPage() {
             </div>
             <div style={{ display:'flex', alignItems:'center', gap:6 }}>
               <button onClick={prevPeriod} style={navBtn}>
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+                <ChevronLeft size={13} />
               </button>
               <span style={{ fontWeight:700, fontSize:'1rem', color:'var(--text-primary)', minWidth:190, textAlign:'center', letterSpacing:'-0.3px' }}>{headerLabel}</span>
               <button onClick={nextPeriod} style={navBtn}>
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+                <ChevronRight size={13} />
               </button>
             </div>
             <button onClick={goToday} style={{ background:'var(--primary-light)', border:'none', borderRadius:8, padding:'6px 16px', fontSize:'0.82rem', fontWeight:600, color:'var(--primary)', cursor:'pointer', transition:'background 0.15s' }}>Hoje</button>
@@ -656,14 +657,14 @@ export default function EventosPage() {
           <div style={{ background:'#fff', borderRadius:14, border:'1px solid var(--border-light)', overflow:'hidden', boxShadow:'0 2px 8px rgba(3,78,162,0.05)' }}>
             <div style={{ padding:'13px 16px', borderBottom:'1px solid var(--border-light)', display:'flex', alignItems:'center', gap:8 }}>
               <div style={{ width:28, height:28, borderRadius:7, background:'var(--primary-light)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                <Clock size={14} color="var(--primary)" />
               </div>
               <span style={{ fontWeight:700, fontSize:'0.85rem', color:'var(--text-primary)' }}>Próximos eventos</span>
               {upcoming.length>0 && <span style={{ marginLeft:'auto', background:'var(--primary-light)', color:'var(--primary)', borderRadius:20, padding:'1px 8px', fontSize:'0.7rem', fontWeight:700 }}>{upcoming.length}</span>}
             </div>
             {upcoming.length===0 ? (
               <div style={{ padding:'24px 16px', display:'flex', flexDirection:'column', alignItems:'center', gap:8 }}>
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ color:'var(--text-muted)', opacity:0.4 }}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                <AlertCircle size={28} style={{ color:'var(--text-muted)', opacity:0.4 }} />
                 <span style={{ color:'var(--text-muted)', fontSize:'0.8rem', textAlign:'center' }}>Nenhum evento nos próximos 30 dias</span>
               </div>
             ) : upcoming.map((calEvent) => {
@@ -700,11 +701,11 @@ export default function EventosPage() {
                 style={{ width:'100%', padding:'13px 16px', borderBottom: pastOpen ? '1px solid #e2e8f0' : 'none', display:'flex', alignItems:'center', gap:8, background:'none', border:'none', cursor:'pointer', fontFamily:'inherit', textAlign:'left' }}
               >
                 <div style={{ width:28, height:28, borderRadius:7, background:'#f1f5f9', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 8 14"/></svg>
+                  <Clock size={14} color="#64748b" />
                 </div>
                 <span style={{ fontWeight:700, fontSize:'0.85rem', color:'#64748b' }}>Eventos passados</span>
                 <span style={{ marginLeft:'auto', background:'#f1f5f9', color:'#64748b', borderRadius:20, padding:'1px 8px', fontSize:'0.7rem', fontWeight:700 }}>{pastEvents.length}</span>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2.5" style={{ transition:'transform 0.15s', transform: pastOpen ? 'rotate(180deg)' : 'none', flexShrink:0 }}><polyline points="6 9 12 15 18 9"/></svg>
+                <ChevronDown size={12} color="#94a3b8" style={{ transition:'transform 0.15s', transform: pastOpen ? 'rotate(180deg)' : 'none', flexShrink:0 }} />
               </button>
               {pastOpen && (
                 <div style={{ maxHeight:280, overflowY:'auto' }}>
@@ -727,7 +728,7 @@ export default function EventosPage() {
                       >
                         {deleting===calEvent.id
                           ? <span style={{fontSize:'0.7rem'}}>…</span>
-                          : <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                          : <Trash2 size={12} />
                         }
                       </button>
                     </div>
@@ -741,7 +742,7 @@ export default function EventosPage() {
           <div style={{ background:'#fff', borderRadius:14, border:'1px solid var(--border-light)', overflow:'hidden', boxShadow:'0 2px 8px rgba(3,78,162,0.05)' }}>
             <div style={{ padding:'13px 16px', borderBottom:'1px solid var(--border-light)', display:'flex', alignItems:'center', gap:8 }}>
               <div style={{ width:28, height:28, borderRadius:7, background:'var(--primary-light)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                <List size={14} color="var(--primary)" />
               </div>
               <span style={{ fontWeight:700, fontSize:'0.85rem', color:'var(--text-primary)' }}>Todos</span>
               <span style={{ marginLeft:'auto', background:'var(--primary-light)', color:'var(--primary)', borderRadius:20, padding:'1px 8px', fontSize:'0.7rem', fontWeight:700 }}>{visibleEvents.length}</span>
@@ -749,7 +750,7 @@ export default function EventosPage() {
             <div style={{ maxHeight:320, overflowY:'auto' }}>
               {visibleEvents.length===0 ? (
                 <div style={{ padding:'24px 16px', display:'flex', flexDirection:'column', alignItems:'center', gap:8 }}>
-                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ color:'var(--text-muted)', opacity:0.4 }}><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                  <Calendar size={28} style={{ color:'var(--text-muted)', opacity:0.4 }} />
                   <span style={{ color:'var(--text-muted)', fontSize:'0.8rem' }}>Nenhum evento</span>
                 </div>
               ) : visibleEvents.map((calEvent) => {
@@ -768,12 +769,12 @@ export default function EventosPage() {
                         <button onClick={()=>openEdit(calEvent)} style={{ background:'var(--primary-light)', border:'none', cursor:'pointer', color:'var(--primary)', padding:'5px', borderRadius:6, display:'flex', transition:'background 0.15s' }} title="Editar"
                           onMouseEnter={e=>(e.currentTarget.style.background='var(--primary-glow)')}
                           onMouseLeave={e=>(e.currentTarget.style.background='var(--primary-light)')}>
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                          <Pencil size={12} />
                         </button>
                         <button onClick={()=>handleDelete(calEvent.id)} disabled={deleting===calEvent.id} style={{ background:'#fff5f5', border:'none', cursor:'pointer', color:'#ef4444', padding:'5px', borderRadius:6, display:'flex', transition:'background 0.15s' }} title="Excluir"
                           onMouseEnter={e=>(e.currentTarget.style.background='#fee2e2')}
                           onMouseLeave={e=>(e.currentTarget.style.background='#fff5f5')}>
-                          {deleting===calEvent.id?<span style={{fontSize:'0.7rem'}}>…</span>:<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>}
+                          {deleting===calEvent.id?<span style={{fontSize:'0.7rem'}}>…</span>:<Trash2 size={12} />}
                         </button>
                       </div>
                     </div>
@@ -798,14 +799,18 @@ export default function EventosPage() {
 
       {/* Edit / Create modal */}
       {showModal && (
-        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.45)', zIndex:1000, display:'flex', alignItems:'center', justifyContent:'center', padding:16 }}
+        <div style={{ position:'fixed', inset:0, background:'rgba(3,78,162,0.22)', backdropFilter:'blur(2px)', zIndex:1000, display:'flex', alignItems:'center', justifyContent:'center', padding:16 }}
           onClick={e=>{if(e.target===e.currentTarget)setShowModal(false);}}>
-          <div style={{ background:'#fff', borderRadius:14, width:'100%', maxWidth:520, boxShadow:'0 24px 64px rgba(0,0,0,0.22)', overflow:'hidden' }}>
-            <div style={{ padding:'18px 22px', borderBottom:'1px solid var(--border-light)', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-              <h2 style={{ margin:0, fontSize:'1.05rem', fontWeight:700 }}>{editing?'Editar Evento':'Novo Evento'}</h2>
-              <button onClick={()=>setShowModal(false)} style={{ background:'none', border:'none', cursor:'pointer', fontSize:'1.3rem', color:'var(--text-muted)', lineHeight:1 }}>×</button>
+          <div style={{ background:'#fff', borderRadius:'var(--radius-lg)', width:'100%', maxWidth:520, maxHeight:'90vh', boxShadow:'0 20px 60px rgba(3,78,162,0.18), 0 4px 16px rgba(0,0,0,0.10)', overflow:'hidden', display:'flex', flexDirection:'column', animation:'modal-pop-in-flex 0.2s cubic-bezier(0.34,1.56,0.64,1) forwards' }}>
+            <div style={{ height:5, flexShrink:0, background:'linear-gradient(to right, #034ea2 40%, #fdb913 40% 55%, #ef4123 55% 75%, #007932 75%)' }} />
+            <div style={{ padding:'16px 20px 14px', borderBottom:'1px solid var(--border-light)', display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:10, flexShrink:0 }}>
+              <div>
+                <div style={{ fontSize:'0.65rem', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.1em', color:'var(--text-muted)', marginBottom:4 }}>{editing?'Editar evento':'Novo evento'}</div>
+                <h2 style={{ margin:0, fontSize:'1rem', fontWeight:700, color:'var(--text-primary)', fontFamily:'inherit' }}>{editing?(evName||'Editar Evento'):'Preencha os dados abaixo'}</h2>
+              </div>
+              <button onClick={()=>setShowModal(false)} style={{ flexShrink:0, width:28, height:28, borderRadius:'var(--radius-sm)', border:'1px solid var(--border-light)', background:'var(--bg-subtle)', color:'var(--text-muted)', cursor:'pointer', fontSize:'0.85rem', display:'flex', alignItems:'center', justifyContent:'center', fontFamily:'inherit' }}>✕</button>
             </div>
-            <div style={{ padding:'22px', display:'flex', flexDirection:'column', gap:16, maxHeight:'70vh', overflowY:'auto' }}>
+            <div style={{ padding:'22px', display:'flex', flexDirection:'column', gap:16, flex:1, overflowY:'auto' }}>
               <div>
                 <label style={lbl}>Nome do Evento *</label>
                 <input type="text" value={evName} onChange={e=>setEvName(e.target.value)} placeholder="Ex: Reunião de planejamento" style={inp} />
@@ -831,7 +836,7 @@ export default function EventosPage() {
                       {filteredUsers.map((user)=>(
                         <div key={user.id} onClick={()=>toggleResp(user.name)} style={{ padding:'8px 12px', cursor:'pointer', display:'flex', alignItems:'center', gap:8, background:respList.includes(user.name)?'#eff6ff':'transparent', fontSize:'0.85rem' }}>
                           <span style={{ width:16, height:16, borderRadius:3, border:`2px solid ${respList.includes(user.name)?'#1d4ed8':'var(--border-light)'}`, background:respList.includes(user.name)?'#1d4ed8':'#fff', display:'inline-flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                            {respList.includes(user.name)&&<svg width="9" height="9" viewBox="0 0 12 12" fill="none" stroke="#fff" strokeWidth="2.5"><polyline points="2 6 5 9 10 3"/></svg>}
+                            {respList.includes(user.name)&&<Check size={9} color="#fff" strokeWidth={2.5} />}
                           </span>
                           {user.name}
                         </div>
@@ -928,9 +933,9 @@ export default function EventosPage() {
               </div>
               {formErr && <p style={{ color:'#ef4444', fontSize:'0.82rem', margin:0 }}>{formErr}</p>}
             </div>
-            <div style={{ padding:'14px 22px', borderTop:'1px solid var(--border-light)', display:'flex', justifyContent:'flex-end', gap:10 }}>
-              <button onClick={()=>setShowModal(false)} style={cancelBtn}>Cancelar</button>
-              <button onClick={handleSave} disabled={saving} style={saveBtn}>{saving?'Salvando…':editing?'Salvar alterações':'Salvar'}</button>
+            <div style={{ padding:'12px 20px', borderTop:'1px solid var(--border-light)', background:'var(--bg-subtle)', display:'flex', justifyContent:'flex-end', gap:8, flexShrink:0 }}>
+              <button onClick={()=>setShowModal(false)} style={{ padding:'6px 14px', background:'#fff', border:'1px solid var(--border-light)', borderRadius:'var(--radius-sm)', fontSize:'0.8rem', fontWeight:600, cursor:'pointer', fontFamily:'inherit', color:'var(--text-secondary)' }}>Cancelar</button>
+              <button onClick={handleSave} disabled={saving} style={{ padding:'6px 18px', background:saving?'var(--text-muted)':'var(--primary)', color:'#fff', border:'none', borderRadius:'var(--radius-sm)', fontSize:'0.8rem', fontWeight:700, cursor:saving?'not-allowed':'pointer', fontFamily:'inherit' }}>{saving?'Salvando…':editing?'Salvar alterações':'Salvar'}</button>
             </div>
           </div>
         </div>
@@ -949,7 +954,7 @@ export default function EventosPage() {
           cursor: 'pointer',
         }}
       >
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        <Plus size={22} strokeWidth={2.5} />
       </button>
     </div>
 
