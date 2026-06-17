@@ -21,7 +21,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     <div className="app-container">
       <Sidebar />
 
-      <main className={`main-content${isBoard ? '' : ' has-logo-corner'}${showPanel ? ' has-right-panel' : ''}`}>
+      <main
+        className={`main-content${isBoard ? '' : ' has-logo-corner'}${showPanel ? ' has-right-panel' : ''}`}
+        data-right-panel={showPanel && panelOpen ? 'open' : 'closed'}
+      >
         <div className="page-scroll">
           <div className="page-inner">
             {children}

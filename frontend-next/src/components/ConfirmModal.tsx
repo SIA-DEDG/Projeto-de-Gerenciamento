@@ -1,5 +1,7 @@
 'use client';
 
+import { ShieldAlert } from 'lucide-react';
+
 interface Props {
   open: boolean;
   title: string;
@@ -27,11 +29,7 @@ export default function ConfirmModal({
 
         {/* Ícone */}
         <div style={{ width: 72, height: 72, borderRadius: '50%', background: accentBg, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}>
-          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke={accentColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2" />
-            <line x1="12" y1="8" x2="12" y2="12" />
-            <line x1="12" y1="16" x2="12.01" y2="16" />
-          </svg>
+          <ShieldAlert size={36} color={accentColor} />
         </div>
 
         {/* Título */}

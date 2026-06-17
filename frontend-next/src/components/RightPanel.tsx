@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
+import { User, ChevronLeft, ChevronRight } from 'lucide-react';
 import { fetchTasks } from '@/lib/api';
 import { useRefetchOnFocus } from '@/lib/useRefetchOnFocus';
 import type { Task } from '@/types';
@@ -183,9 +184,7 @@ export default function RightPanel({ open, onToggle, filterUser }: {
             onClick={onToggle}
             title={open ? 'Recolher calendário' : 'Expandir calendário'}
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points={open ? '15 18 9 12 15 6' : '9 18 15 12 9 6'} />
-            </svg>
+            {open ? <ChevronLeft size={14} strokeWidth={2.5} /> : <ChevronRight size={14} strokeWidth={2.5} />}
           </button>
         </div>
 
@@ -252,7 +251,7 @@ export default function RightPanel({ open, onToggle, filterUser }: {
                   <span className="rp-task-name">{task.activity}</span>
                   {task.responsible && (
                     <span className="rp-task-resp">
-                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                      <User width={10} height={10} />
                       {task.responsible}
                     </span>
                   )}
@@ -282,7 +281,7 @@ export default function RightPanel({ open, onToggle, filterUser }: {
                   <span className="rp-task-name">{task.activity}</span>
                   {task.responsible && (
                     <span className="rp-task-resp">
-                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                      <User width={10} height={10} />
                       {task.responsible}
                     </span>
                   )}

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { ChevronDown } from 'lucide-react';
 import type { Task, Project } from '@/types';
 import type { UserPublic } from '@/lib/api';
 import RichTextEditor from './RichTextEditor';
@@ -112,9 +113,7 @@ function CoResponsaveisSelect({
             </span>
           ))
         )}
-        <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" fill="none" strokeWidth="2" style={{ marginLeft: 'auto', flexShrink: 0, color: '#6b778c', transform: open ? 'rotate(180deg)' : undefined }}>
-          <polyline points="6 9 12 15 18 9" />
-        </svg>
+        <ChevronDown size={12} style={{ marginLeft: 'auto', flexShrink: 0, color: '#6b778c', transform: open ? 'rotate(180deg)' : undefined }} />
       </button>
 
       {open && (
@@ -200,35 +199,69 @@ export default function ActivityModal({
   const showProjectSelect = fixedProjectId == null;
   const fixedProject = fixedProjectId != null ? projects.find((proj) => proj.id === fixedProjectId) : null;
 
+  const inp: React.CSSProperties = {
+    width: '100%', padding: '8px 10px', borderRadius: 'var(--radius-sm)',
+    border: '1px solid var(--border-light)', fontSize: '0.85rem',
+    fontFamily: 'inherit', background: '#fff', color: 'var(--text-primary)',
+    outline: 'none', boxSizing: 'border-box',
+  };
+  const lbl: React.CSSProperties = {
+    display: 'block', fontSize: '0.72rem', fontWeight: 700,
+    color: 'var(--text-muted)', marginBottom: 5,
+    textTransform: 'uppercase', letterSpacing: '0.04em',
+  };
+
   return (
-    <div className="modal-backdrop" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="modal-card">
-        <div className="modal-head">
-          <h3>{task ? 'Editar Atividade' : 'Nova Atividade'}</h3>
-          <button type="button" className="modal-close-btn" onClick={onClose}>&times;</button>
+    <div
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      style={{ position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(3,78,162,0.22)', backdropFilter: 'blur(2px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
+    >
+      <div style={{
+        background: '#fff', borderRadius: 'var(--radius-lg)',
+        width: '100%', maxWidth: 520, maxHeight: '90vh',
+        boxShadow: '0 20px 60px rgba(3,78,162,0.18), 0 4px 16px rgba(0,0,0,0.10)',
+        overflow: 'hidden', display: 'flex', flexDirection: 'column',
+        animation: 'modal-pop-in-flex 0.2s cubic-bezier(0.34,1.56,0.64,1) forwards',
+      }}>
+        {/* Piauí flag stripe */}
+        <div style={{ height: 5, flexShrink: 0, background: 'linear-gradient(to right, #034ea2 40%, #fdb913 40% 55%, #ef4123 55% 75%, #007932 75%)' }} />
+
+        {/* Header */}
+        <div style={{ padding: '16px 20px 14px', borderBottom: '1px solid var(--border-light)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10, flexShrink: 0 }}>
+          <div>
+            <div style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-muted)', marginBottom: 4 }}>
+              {task ? 'Editar atividade' : 'Nova atividade'}
+            </div>
+            <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'inherit' }}>
+              {task ? (task.activity || 'Editar Atividade') : 'Preencha os dados abaixo'}
+            </h2>
+          </div>
+          <button type="button" onClick={onClose} style={{ flexShrink: 0, width: 28, height: 28, borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-light)', background: 'var(--bg-subtle)', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'inherit' }}>✕</button>
         </div>
 
-        {fixedProject && (
-          <div style={{ marginBottom: '12px', padding: '6px 10px', background: '#eef3fa', borderRadius: '4px', fontSize: '0.8rem', color: 'var(--primary)', fontWeight: 600 }}>
-            Projeto: {fixedProject.name}
-          </div>
-        )}
+        {/* Scrollable body */}
+        <form id="activity-form" onSubmit={handleSubmit} noValidate style={{ flex: 1, overflowY: 'auto', padding: '20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+          {fixedProject && (
+            <div style={{ padding: '6px 10px', background: 'var(--primary-light)', borderRadius: 'var(--radius-sm)', fontSize: '0.8rem', color: 'var(--primary)', fontWeight: 600 }}>
+              Projeto: {fixedProject.name}
+            </div>
+          )}
 
-        <form className="modal-form" onSubmit={handleSubmit}>
-          <label className="modal-field">
-            Título da Atividade *
+          <div>
+            <label style={lbl}>Título da Atividade *</label>
             <input
               type="text"
               value={form.activity}
               onChange={(e) => setForm({ ...form, activity: e.target.value })}
               placeholder="O que precisa ser feito?"
               required
+              style={inp}
             />
-          </label>
+          </div>
 
-          <div className="modal-field">
-            <span>Descrição</span>
-            <div style={{ marginTop: 6 }}>
+          <div>
+            <label style={lbl}>Descrição</label>
+            <div style={{ marginTop: 4 }}>
               <RichTextEditor
                 value={form.description}
                 onChange={(html) => setForm((f) => ({ ...f, description: html }))}
@@ -236,10 +269,9 @@ export default function ActivityModal({
             </div>
           </div>
 
-          {/* Priority */}
-          <div className="modal-field">
-            <span>Prioridade</span>
-            <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
+          <div>
+            <label style={lbl}>Prioridade</label>
+            <div style={{ display: 'flex', gap: 8 }}>
               {PRIORITY_OPTIONS.map((opt) => {
                 const active = form.priority === opt.value;
                 return (
@@ -248,14 +280,13 @@ export default function ActivityModal({
                     type="button"
                     onClick={() => setForm({ ...form, priority: opt.value })}
                     style={{
-                      flex: 1, padding: '8px 4px',
-                      border: `2px solid ${active ? opt.color : '#dfe1e6'}`,
-                      borderRadius: '8px',
+                      flex: 1, padding: '7px 4px',
+                      border: `2px solid ${active ? opt.color : 'var(--border-light)'}`,
+                      borderRadius: 'var(--radius-sm)',
                       background: active ? opt.bg : '#fafbfc',
-                      color: active ? opt.color : '#6b778c',
+                      color: active ? opt.color : 'var(--text-muted)',
                       fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer',
-                      transition: 'all 0.14s',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                       fontFamily: 'inherit',
                     }}
                   >
@@ -267,50 +298,47 @@ export default function ActivityModal({
             </div>
           </div>
 
-          <div className="modal-row">
+          <div style={{ display: 'grid', gridTemplateColumns: showProjectSelect ? '1fr 1fr' : '1fr', gap: 12 }}>
             {showProjectSelect && (
-              <label className="modal-field">
-                Projeto
-                <select value={form.project_id ?? ''} onChange={(e) => setForm({ ...form, project_id: e.target.value || null })}>
+              <div>
+                <label style={lbl}>Projeto</label>
+                <select value={form.project_id ?? ''} onChange={(e) => setForm({ ...form, project_id: e.target.value || null })} style={inp}>
                   <option value="">— Sem projeto —</option>
                   {projects.map((project) => <option key={project.id} value={project.id}>{project.name}</option>)}
                 </select>
-              </label>
+              </div>
             )}
-            <label className="modal-field">
-              Pipeline / Status
-              <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
+            <div>
+              <label style={lbl}>Pipeline / Status</label>
+              <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} style={inp}>
                 {PIPELINE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
               </select>
-            </label>
+            </div>
           </div>
 
-          <div className="modal-row">
-            <label className="modal-field">
-              Responsável principal
-              <select value={form.responsible} onChange={(e) => setForm({ ...form, responsible: e.target.value, co_responsibles: form.co_responsibles.filter((n) => n !== e.target.value) })}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div>
+              <label style={lbl}>Responsável principal</label>
+              <select value={form.responsible} onChange={(e) => setForm({ ...form, responsible: e.target.value, co_responsibles: form.co_responsibles.filter((n) => n !== e.target.value) })} style={inp}>
                 <option value="">— Sem responsável —</option>
                 {users.map((user) => <option key={user.id} value={user.name}>{user.name}</option>)}
               </select>
-            </label>
-            <label className="modal-field">
-              Data
-              <input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
-            </label>
+            </div>
+            <div>
+              <label style={lbl}>Data</label>
+              <input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} style={inp} />
+            </div>
           </div>
 
-          <div className="modal-field">
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-              <span>Prazo de Finalização</span>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.8rem', color: 'var(--text-muted)', cursor: 'pointer', fontWeight: 400 }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 5 }}>
+              <label style={{ ...lbl, marginBottom: 0 }}>Prazo de Finalização</label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.78rem', color: 'var(--text-muted)', cursor: 'pointer', fontWeight: 500 }}>
                 <input
                   type="checkbox"
                   checked={noDeadline}
-                  onChange={(e) => {
-                    setNoDeadline(e.target.checked);
-                    if (e.target.checked) setForm({ ...form, deadline: '' });
-                  }}
-                  style={{ cursor: 'pointer' }}
+                  onChange={(e) => { setNoDeadline(e.target.checked); if (e.target.checked) setForm({ ...form, deadline: '' }); }}
+                  style={{ cursor: 'pointer', accentColor: 'var(--primary)' }}
                 />
                 Indeterminado
               </label>
@@ -320,14 +348,13 @@ export default function ActivityModal({
               value={form.deadline}
               onChange={(e) => setForm({ ...form, deadline: e.target.value })}
               disabled={noDeadline}
-              style={{ opacity: noDeadline ? 0.4 : 1, width: '100%' }}
+              style={{ ...inp, opacity: noDeadline ? 0.4 : 1 }}
             />
           </div>
 
-          {/* Co-responsáveis */}
-          <div className="modal-field">
-            <span>Co-responsáveis</span>
-            <div style={{ marginTop: 6 }}>
+          <div>
+            <label style={lbl}>Co-responsáveis</label>
+            <div style={{ marginTop: 4 }}>
               <CoResponsaveisSelect
                 users={users}
                 selected={form.co_responsibles}
@@ -337,22 +364,23 @@ export default function ActivityModal({
             </div>
           </div>
 
-          {/* Colaboração externa */}
-          <label className="modal-field">
-            Colaboração externa
+          <div>
+            <label style={lbl}>Colaboração externa</label>
             <input
               type="text"
               value={form.external_collaborators}
               onChange={(e) => setForm({ ...form, external_collaborators: e.target.value })}
               placeholder="Nomes externos, separados por vírgula"
+              style={inp}
             />
-          </label>
-
-          <div className="modal-actions">
-            <button type="button" className="btn-secondary" onClick={onClose}>Cancelar</button>
-            <button type="submit" className="btn-primary">Salvar</button>
           </div>
         </form>
+
+        {/* Footer */}
+        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', padding: '12px 20px', borderTop: '1px solid var(--border-light)', background: 'var(--bg-subtle)', flexShrink: 0 }}>
+          <button type="button" onClick={onClose} style={{ padding: '6px 14px', background: '#fff', border: '1px solid var(--border-light)', borderRadius: 'var(--radius-sm)', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', color: 'var(--text-secondary)' }}>Cancelar</button>
+          <button type="submit" form="activity-form" style={{ padding: '6px 18px', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: 'var(--radius-sm)', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>{task ? 'Salvar' : 'Criar'}</button>
+        </div>
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
+import { FileUp, CheckCircle } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import type { Project, Task } from '@/types';
 import { importTasks, createProject } from '@/lib/api';
@@ -287,12 +288,7 @@ export default function ImportModal({ open, projects, users, onClose, onImported
             onDragOver={(e) => e.preventDefault()}
             onDrop={(e) => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) handleFile(f); }}
           >
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#6b778c" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: 12 }}>
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-              <polyline points="14 2 14 8 20 8" />
-              <line x1="12" y1="18" x2="12" y2="12" />
-              <line x1="9" y1="15" x2="15" y2="15" />
-            </svg>
+            <FileUp size={40} color="#6b778c" strokeWidth={1.5} style={{ marginBottom: 12 }} />
             <p style={{ color: '#344563', fontWeight: 600, marginBottom: 4 }}>Clique ou arraste o arquivo aqui</p>
             <p style={{ color: '#6b778c', fontSize: '0.82rem' }}>.xlsx, .xls ou .csv</p>
             <input
@@ -400,10 +396,7 @@ export default function ImportModal({ open, projects, users, onClose, onImported
         {/* STEP: done */}
         {step === 'done' && (
           <div style={{ textAlign: 'center', padding: '32px 0' }}>
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#36B37E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: 12 }}>
-              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-              <polyline points="22 4 12 14.01 9 11.01" />
-            </svg>
+            <CheckCircle size={48} color="#36B37E" style={{ marginBottom: 12 }} />
             <p style={{ fontWeight: 700, color: '#172b4d', fontSize: '1rem', marginBottom: 4 }}>
               {imported} atividade{imported !== 1 ? 's' : ''} importada{imported !== 1 ? 's' : ''}!
             </p>

@@ -5,6 +5,7 @@ import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
 import Placeholder from '@tiptap/extension-placeholder';
 import { useEffect } from 'react';
+import { List, ListOrdered, Undo2, Redo2 } from 'lucide-react';
 
 interface Props {
   value: string;
@@ -140,29 +141,19 @@ export default function RichTextEditor({ value, onChange, placeholder }: Props) 
         <div style={{ width: 1, height: 18, background: '#dfe1e6', margin: '0 4px' }} />
 
         <ToolbarButton title="Lista com marcadores" active={editor.isActive('bulletList')} onClick={() => editor.chain().focus().toggleBulletList().run()}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
-            <circle cx="3" cy="6" r="1" fill="currentColor"/><circle cx="3" cy="12" r="1" fill="currentColor"/><circle cx="3" cy="18" r="1" fill="currentColor"/>
-          </svg>
+          <List size={14} />
         </ToolbarButton>
         <ToolbarButton title="Lista numerada" active={editor.isActive('orderedList')} onClick={() => editor.chain().focus().toggleOrderedList().run()}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="10" y1="6" x2="21" y2="6"/><line x1="10" y1="12" x2="21" y2="12"/><line x1="10" y1="18" x2="21" y2="18"/>
-            <path d="M4 6h1v4"/><path d="M4 10H6"/><path d="M6 18H4c0-1 2-2 2-3s-1-1.5-2-1"/>
-          </svg>
+          <ListOrdered size={14} />
         </ToolbarButton>
 
         <div style={{ width: 1, height: 18, background: '#dfe1e6', margin: '0 4px' }} />
 
         <ToolbarButton title="Desfazer (Ctrl+Z)" onClick={() => editor.chain().focus().undo().run()}>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/>
-          </svg>
+          <Undo2 size={13} />
         </ToolbarButton>
         <ToolbarButton title="Refazer (Ctrl+Y)" onClick={() => editor.chain().focus().redo().run()}>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="15 14 20 9 15 4"/><path d="M4 20v-7a4 4 0 0 1 4-4h12"/>
-          </svg>
+          <Redo2 size={13} />
         </ToolbarButton>
       </div>
 

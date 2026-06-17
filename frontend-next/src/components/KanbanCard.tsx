@@ -1,6 +1,7 @@
 'use client';
 
 import { useDraggable } from '@dnd-kit/core';
+import { Trash2, Flag, Clock, Calendar, Check } from 'lucide-react';
 import { avatarColor, initials } from '@/lib/utils';
 import type { Task } from '@/types';
 
@@ -17,14 +18,21 @@ export default function KanbanCard({
   task,
   onView,
   onDelete,
+  selectionMode = false,
+  isSelected = false,
+  onToggleSelect,
 }: {
   task: Task;
   onView: (t: Task) => void;
   onDelete: (id: string) => void;
+  selectionMode?: boolean;
+  isSelected?: boolean;
+  onToggleSelect?: (id: string) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: task.id,
     data: { task },
+    disabled: selectionMode,
   });
 
   let coResponsibles: string[] = [];
@@ -36,6 +44,7 @@ export default function KanbanCard({
       ref={setNodeRef}
       className={`kanban-card ${priorityClass(task.priority)}`}
       style={{
+        position: 'relative',
         transform: transform
           ? isDragging
             ? `translate3d(${transform.x}px,${transform.y}px,0) rotate(2deg) scale(1.04)`
@@ -51,7 +60,23 @@ export default function KanbanCard({
       {...listeners}
       {...attributes}
     >
-      <div className="card-content" onClick={() => !isDragging && onView(task)}>
+      {selectionMode && (
+        <div
+          style={{
+            position: 'absolute', top: 10, left: 10, zIndex: 2,
+            width: 18, height: 18, borderRadius: 4,
+            border: `2px solid ${isSelected ? 'var(--primary)' : '#c1c7d0'}`,
+            background: isSelected ? 'var(--primary)' : '#fff',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            pointerEvents: 'none', flexShrink: 0,
+          }}
+        >
+          {isSelected && <Check size={11} color="#fff" strokeWidth={3} />}
+        </div>
+      )}
+      <div className="card-content"
+        style={{ paddingLeft: selectionMode ? 34 : undefined }}
+        onClick={() => { if (isDragging) return; selectionMode ? onToggleSelect?.(task.id) : onView(task); }}>
         <div className="card-title-row">
           <p className="card-title">{task.activity}</p>
           <button
@@ -60,10 +85,7 @@ export default function KanbanCard({
             onPointerDown={(e) => e.stopPropagation()}
             title="Excluir"
           >
-            <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="3 6 5 6 21 6" />
-              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-            </svg>
+            <Trash2 size={13} />
           </button>
         </div>
 
@@ -83,10 +105,7 @@ export default function KanbanCard({
 
       <div className="card-footer">
         <span className="issue-key">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
-            <line x1="4" y1="22" x2="4" y2="15" />
-          </svg>
+          <Flag size={11} />
           SIA-{task.id.slice(0, 8)}
         </span>
         <div className="card-footer-right">
@@ -99,22 +118,14 @@ export default function KanbanCard({
             const color = overdue ? '#de350b' : dueSoon ? '#b45309' : undefined;
             return (
               <span className="card-date" style={{ color, fontWeight: (overdue || dueSoon) ? 700 : undefined }} title={overdue ? 'Atrasado' : dueSoon ? 'Vence em breve' : 'Prazo'}>
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="10" />
-                  <polyline points="12 6 12 12 16 14" />
-                </svg>
+                <Clock size={11} />
                 {task.deadline}
               </span>
             );
           })()}
           {task.date && !task.deadline && (
             <span className="card-date">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                <line x1="16" y1="2" x2="16" y2="6" />
-                <line x1="8" y1="2" x2="8" y2="6" />
-                <line x1="3" y1="10" x2="21" y2="10" />
-              </svg>
+              <Calendar size={11} />
               {task.date}
             </span>
           )}
