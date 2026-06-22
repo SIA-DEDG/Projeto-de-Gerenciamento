@@ -7,6 +7,7 @@ use axum::{
 };
 use serde::Deserialize;
 use std::sync::Arc;
+#[allow(unused_imports)]
 use tower_governor::{GovernorLayer, governor::GovernorConfigBuilder};
 use uuid::Uuid;
 

@@ -1,6 +1,7 @@
 use dotenvy::dotenv;
 use sqlx::postgres::PgPoolOptions;
 use std::env;
+#[allow(unused_imports)]
 use std::net::SocketAddr;
 use std::sync::Arc;
 use tower_http::cors::{Any, CorsLayer};
