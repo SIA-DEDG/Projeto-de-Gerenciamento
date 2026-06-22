@@ -11,6 +11,7 @@ import {
   createAbsence,
   updateAbsence,
   deleteAbsence,
+  approveAbsence,
   fetchUsers,
   type Absence,
   type UserPublic,
@@ -352,6 +353,15 @@ export default function FaltasPage() {
 
   const [selectedIds, setSelectedIds]     = useState<Set<string>>(new Set());
   const [confirmDialog, setConfirmDialog] = useState<{ title: string; message?: string; onConfirm: () => void } | null>(null);
+  const canApprove = seeAll;
+
+  async function handleApproval(id: string, status: 'aprovada' | 'recusada') {
+    try {
+      const updated = await approveAbsence(id, status);
+      setAbsences((prev) => prev.map((a) => (a.id === id ? updated : a)));
+      addToast('success', status === 'aprovada' ? 'Aprovada' : 'Recusada', 'Status de aprovação atualizado.');
+    } catch { addToast('error', 'Erro', 'Não foi possível alterar o status.'); }
+  }
 
   const [selectedUserId, setSelectedUserId] = useState(currentUser?.user_id ?? '');
   const [reason, setReason]         = useState('Doença');
@@ -718,20 +728,33 @@ export default function FaltasPage() {
                       }
                     </td>
                     <td style={{ padding:'10px 12px' }} onClick={e => e.stopPropagation()}>
-                      <div style={{ display:'flex', gap:4 }}>
+                      <div style={{ display:'flex', gap:4, alignItems:'center', flexWrap:'wrap' }}>
+                        {/* Badge de aprovação */}
+                        {a.approval_status === 'aprovada' && (
+                          <span className="approval-badge aprovada">Aprovada</span>
+                        )}
+                        {a.approval_status === 'recusada' && (
+                          <span className="approval-badge recusada">Recusada</span>
+                        )}
+                        {(a.approval_status === 'pendente' || !a.approval_status) && (
+                          canApprove ? (
+                            <>
+                              <button className="absence-approve-btn" onClick={() => handleApproval(a.id, 'aprovada')}>Aprovar</button>
+                              <button className="absence-reject-btn" onClick={() => handleApproval(a.id, 'recusada')}>Recusar</button>
+                            </>
+                          ) : (
+                            <span className="approval-badge pendente">Pendente</span>
+                          )
+                        )}
                         <button onClick={() => setDetail(a)}
-                          style={{ background:'var(--primary-light)', border:'none', cursor:'pointer', color:'var(--primary)', padding:'6px', borderRadius:7, display:'flex', transition:'background 0.15s' }}
-                          title="Ver detalhes"
-                          onMouseEnter={e => (e.currentTarget.style.background = 'var(--primary-glow)')}
-                          onMouseLeave={e => (e.currentTarget.style.background = 'var(--primary-light)')}>
-                          <Eye size={14} />
+                          style={{ background:'rgba(3,78,162,0.06)', border:'none', cursor:'pointer', color:'var(--blue)', padding:'5px', borderRadius:'var(--radius)', display:'flex' }}
+                          title="Ver detalhes">
+                          <Eye size={13} />
                         </button>
                         <button onClick={() => confirmDeleteOne(a)}
-                          style={{ background:'#fff5f5', border:'none', cursor:'pointer', color:'#dc2626', padding:'6px', borderRadius:7, display:'flex', transition:'background 0.15s' }}
-                          title="Excluir"
-                          onMouseEnter={e => (e.currentTarget.style.background = '#fee2e2')}
-                          onMouseLeave={e => (e.currentTarget.style.background = '#fff5f5')}>
-                          <Trash2 size={14} />
+                          style={{ background:'rgba(180,35,24,0.06)', border:'none', cursor:'pointer', color:'var(--red)', padding:'5px', borderRadius:'var(--radius)', display:'flex' }}
+                          title="Excluir">
+                          <Trash2 size={13} />
                         </button>
                       </div>
                     </td>

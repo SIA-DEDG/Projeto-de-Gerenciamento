@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { Calendar, Users, User, Trash2, Pencil, ChevronLeft, ChevronRight, Clock, AlertCircle, ChevronDown, List, Check, Plus } from 'lucide-react';
 import {
   fetchEvents, createEvent, updateEvent, deleteEvent, fetchUsers,
+  setEventMinutes, removeEventMinutes,
   type CalendarEvent, type UserPublic,
 } from '@/lib/api';
 import ConfirmModal from '@/components/ConfirmModal';
@@ -236,6 +237,37 @@ function EventPreview({
             <span>{calEvent.attendees}</span>
           </div>
         )}
+
+        {/* Ata de reunião */}
+        <div style={{ borderTop: '1px solid var(--line-2)', paddingTop: 8, marginTop: 2 }}>
+          {calEvent.minutes_file_name ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'space-between' }}>
+              <span className="ata-badge anexada">Ata: {calEvent.minutes_file_name}</span>
+              <button className="btn btn-danger btn-xs" onClick={async () => {
+                const updated = await removeEventMinutes(calEvent.id);
+                onClose();
+                window.dispatchEvent(new CustomEvent('event-ata-updated', { detail: updated }));
+              }}>Remover</button>
+            </div>
+          ) : (
+            <div>
+              <span className="ata-badge pendente" style={{ marginBottom: 6, display: 'inline-block' }}>Ata pendente</span>
+              <input type="file" accept=".pdf" id={`ata-${calEvent.id}`} style={{ display: 'none' }}
+                onChange={async (e) => {
+                  const f = e.target.files?.[0]; if (!f) return;
+                  const reader = new FileReader();
+                  reader.onload = async (ev) => {
+                    const b64 = (ev.target?.result as string).split(',')[1] ?? '';
+                    const updated = await setEventMinutes(calEvent.id, f.name, b64);
+                    onClose();
+                    window.dispatchEvent(new CustomEvent('event-ata-updated', { detail: updated }));
+                  };
+                  reader.readAsDataURL(f);
+                }} />
+              <label htmlFor={`ata-${calEvent.id}`} className="btn btn-secondary btn-xs" style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4 }}>Anexar ata (.pdf)</label>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Actions */}
@@ -434,7 +466,18 @@ export default function EventosPage() {
   const [events, setEvents]     = useState<CalendarEvent[]>([]);
   const [users, setUsers]       = useState<UserPublic[]>([]);
   const [loading, setLoading]   = useState(true);
+  const [tab, setTab] = useState<'agenda' | 'atas' | 'calendar'>('agenda');
   const [viewMode, setViewMode] = useState<'month'|'week'>('month');
+  const [ataUploading, setAtaUploading] = useState(false);
+
+  useEffect(() => {
+    function handler(e: Event) {
+      const updated = (e as CustomEvent<CalendarEvent>).detail;
+      setEvents((curr) => curr.map((x) => (x.id === updated.id ? updated : x)));
+    }
+    window.addEventListener('event-ata-updated', handler);
+    return () => window.removeEventListener('event-ata-updated', handler);
+  }, []);
 
   const visibleEvents = useMemo(() => events, [events]);
   const [year, setYear]         = useState(now.getFullYear());
@@ -607,10 +650,46 @@ export default function EventosPage() {
     <>
       <div className="topbar">
         <div className="topbar-left">
-          <h1>Eventos</h1>
+          <h1 style={{ fontSize: '1rem', fontWeight: 700 }}>Eventos</h1>
+          <div className="segmented" style={{ marginLeft: 12 }}>
+            <button className={`segmented-btn${tab === 'agenda' ? ' active' : ''}`} onClick={() => setTab('agenda')}>Agenda</button>
+            <button className={`segmented-btn${tab === 'atas' ? ' active' : ''}`} onClick={() => setTab('atas')}>Atas</button>
+            <button className={`segmented-btn${tab === 'calendar' ? ' active' : ''}`} onClick={() => setTab('calendar')}>Calendário</button>
+          </div>
         </div>
       </div>
-      <div style={{ padding:'32px 28px' }}>
+      {tab === 'atas' && (
+        <div style={{ padding: '16px 32px 32px' }}>
+          <div style={{ marginBottom: 12 }}>
+            <span style={{ fontFamily: 'var(--mono)', fontSize: '0.6rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-3)' }}>
+              {events.filter((e) => e.minutes_file_name).length} ata(s) anexada(s)
+            </span>
+          </div>
+          {events.filter((e) => e.minutes_file_name).length === 0 ? (
+            <div className="empty-state"><p>Nenhuma ata anexada ainda.</p></div>
+          ) : events.filter((e) => e.minutes_file_name).map((ev) => (
+            <div key={ev.id} className="event-row">
+              <div>
+                <div className="event-row-title">{ev.name}</div>
+                <div className="event-row-meta">
+                  <span className="mono">{ev.start_date}</span>
+                  <span className="ata-badge anexada">Ata: {ev.minutes_file_name}</span>
+                </div>
+              </div>
+              <button className="btn btn-danger btn-xs" style={{ marginLeft: 'auto' }}
+                onClick={async () => {
+                  const updated = await removeEventMinutes(ev.id);
+                  setEvents((curr) => curr.map((x) => (x.id === ev.id ? updated : x)));
+                  addToast('success', 'Ata removida', '');
+                }}>
+                Remover ata
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {tab !== 'atas' && <div style={{ padding:'32px 28px' }}>
 
       <div style={{ display:'grid', gridTemplateColumns:'1fr 280px', gap:20, alignItems:'start' }}>
         {/* Calendar */}
@@ -956,7 +1035,7 @@ export default function EventosPage() {
       >
         <Plus size={22} strokeWidth={2.5} />
       </button>
-    </div>
+    </div>}
 
     <ConfirmModal
       open={!!confirmDialog}

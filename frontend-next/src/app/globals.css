@@ -53,6 +53,35 @@
   /* Misc */
   --radius: 3px;
   --mono: 'IBM Plex Mono', 'Courier New', monospace;
+
+  /* ── Aliases de retrocompatibilidade (páginas ainda não migradas) ── */
+  --primary:       var(--blue);
+  --primary-hover: var(--blue-h);
+  --primary-light: rgba(3,78,162,0.08);
+  --primary-glow:  rgba(3,78,162,0.2);
+  --bg-app:        var(--bg);
+  --bg-subtle:     var(--surface-2);
+  --bg-card:       var(--surface);
+  --bg-topbar:     var(--surface);
+  --bg-input:      var(--surface);
+  --bg-hover:      var(--surface-2);
+  --bg-column:     var(--surface-2);
+  --text-primary:  var(--text);
+  --text-secondary:var(--text-2);
+  --text-muted:    var(--text-3);
+  --text-inverse:  #ffffff;
+  --border-light:  var(--border);
+  --shadow-card:   none;
+  --shadow-card-hover: 0 4px 16px rgba(0,0,0,0.1);
+  --radius-sm:     var(--radius);
+  --radius-md:     var(--radius);
+  --radius-lg:     var(--radius);
+  --radius-xl:     var(--radius);
+  --transition-fast:   0.12s ease;
+  --transition-normal: 0.2s ease;
+  --transition-smooth: 0.25s cubic-bezier(0.4,0,0.2,1);
+  --sidebar-width: var(--sidebar-w);
+  --topbar-height: var(--topbar-h);
 }
 
 .theme-dark {

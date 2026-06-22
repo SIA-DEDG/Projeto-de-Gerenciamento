@@ -7,8 +7,8 @@ import { avatarColor, initials, statusGroupLabel } from '@/lib/utils';
 interface Props {
   task: Task;
   onClose: () => void;
-  onEdit: () => void;
-  onDelete: () => void;
+  onEdit: (task: Task) => void;
+  onDelete: (id: string) => void;
   onAdvanceStatus?: () => void;
 }
 
@@ -176,11 +176,11 @@ export default function DrawerDetalhe({ task, onClose, onEdit, onDelete, onAdvan
               Avançar para {statusGroupLabel(nextStatus)}
             </button>
           )}
-          <button className="btn btn-ghost btn-sm" onClick={onEdit} title="Editar">
+          <button className="btn btn-ghost btn-sm" onClick={() => onEdit(task)} title="Editar">
             <Pencil size={14} />
             Editar
           </button>
-          <button className="btn btn-danger btn-sm" onClick={onDelete} title="Excluir">
+          <button className="btn btn-danger btn-sm" onClick={() => onDelete(task.id)} title="Excluir">
             <Trash2 size={14} />
           </button>
         </div>

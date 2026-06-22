@@ -238,6 +238,19 @@ function SegurancaSection() {
 function SistemaSection() {
   const [settings, setSettings] = useState<Settings>(getSettings);
   const [saved, setSaved] = useState(false);
+  const [isDark, setIsDark] = useState(() => localStorage.getItem('sia-theme') === 'dark');
+
+  function toggleTheme() {
+    const next = !isDark;
+    setIsDark(next);
+    localStorage.setItem('sia-theme', next ? 'dark' : 'light');
+    // Aplica no contêiner raiz (AppShell)
+    const root = document.querySelector('.app-container');
+    if (root) {
+      if (next) root.classList.add('theme-dark');
+      else root.classList.remove('theme-dark');
+    }
+  }
 
   function handleSave(e: React.FormEvent) {
     e.preventDefault();
@@ -254,6 +267,21 @@ function SistemaSection() {
       </div>
 
       <form onSubmit={handleSave}>
+        {/* Aparência */}
+        <div className={s.card} style={{ marginBottom: 16 }}>
+          <div className={s.cardTitle}>Aparência</div>
+          <div className={s.toggleRow}>
+            <div className={s.toggleInfo}>
+              <div className={s.toggleLabel}>Tema escuro</div>
+              <div className={s.toggleDesc}>Alterna entre tema claro e escuro. A preferência é salva automaticamente.</div>
+            </div>
+            <label className="toggle-switch">
+              <input type="checkbox" checked={isDark} onChange={toggleTheme} />
+              <span className="toggle-track" />
+            </label>
+          </div>
+        </div>
+
         <div className={s.card}>
           <div className={s.cardTitle}><Bell size={12} strokeWidth={2.5} /> Notificações</div>
           <div className={s.fieldGroup}>
