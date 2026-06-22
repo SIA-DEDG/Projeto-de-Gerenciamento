@@ -1,4 +1,4 @@
-'use client';
+﻿﻿'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Plus, AlertTriangle } from 'lucide-react';
@@ -11,6 +11,7 @@ import {
   fetchUsers, type Absence, type UserPublic,
 } from '@/lib/api';
 import { getUser, canSeeAllAbsences } from '@/lib/auth';
+import PageHeader from '@/components/PageHeader';
 
 const REASON_COLORS: Record<string, string> = {
   Doença:  '#b42318',
@@ -223,13 +224,7 @@ export default function FaltasPage() {
 
   return (
     <>
-      {/* Header */}
-      <div style={{ padding: '26px 32px 0', background: 'var(--surface)', flexShrink: 0 }}>
-        <div className="mono" style={{ fontSize: '0.68rem', fontWeight: 500, color: 'var(--text-3)', letterSpacing: '1.4px', textTransform: 'uppercase' }}>
-          Controle de frequência · {monthLabel} {yearLabel}
-        </div>
-        <h1 style={{ fontSize: '1.65rem', fontWeight: 600, letterSpacing: '-0.7px', color: 'var(--text)', marginTop: 6 }}>Faltas</h1>
-      </div>
+      <PageHeader eyebrow={`Controle de frequência · ${monthLabel} ${yearLabel}`} title="Faltas" />
 
       {/* Summary strip */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', borderTop: '1px solid var(--line-1)', borderBottom: '1px solid var(--line-1)', marginTop: 24, flexShrink: 0 }}>

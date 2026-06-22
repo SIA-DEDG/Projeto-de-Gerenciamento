@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
@@ -20,6 +20,7 @@ import { avatarColor, initials, statusGroupLabel } from '@/lib/utils';
 import { useRefetchOnFocus } from '@/lib/useRefetchOnFocus';
 import type { UserPublic } from '@/lib/api';
 import type { Task, Project } from '@/types';
+import PageHeader from '@/components/PageHeader';
 
 const PAGE_SIZE = 12;
 
@@ -128,13 +129,11 @@ export default function ProjetosPage() {
   return (
     <>
       {/* ── Header ── */}
-      <div style={{ padding: '26px 32px 16px', flexShrink: 0, background: 'var(--surface)', borderBottom: '1px solid var(--line-1)' }}>
-        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 20 }}>
-          <div>
-            <div className="mono" style={{ fontSize: '0.68rem', fontWeight: 500, color: 'var(--text-3)', letterSpacing: '1.4px', textTransform: 'uppercase' }}>Portfólio da DEDG</div>
-            <h1 style={{ fontSize: '1.65rem', fontWeight: 600, letterSpacing: '-0.7px', color: 'var(--text)', marginTop: 6 }}>Projetos</h1>
-          </div>
-          <div style={{ display: 'flex', gap: 10, alignItems: 'center', paddingBottom: 4 }}>
+      <PageHeader
+        eyebrow="Portfólio da DEDG"
+        title="Projetos"
+        right={
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 7, border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '6px 10px', background: 'var(--surface)' }}>
               <Search size={13} style={{ color: 'var(--text-3)', flexShrink: 0 }} />
               <input type="text" placeholder="Buscar projeto..." value={search} onChange={(e) => setSearch(e.target.value)} style={{ border: 'none', outline: 'none', background: 'none', fontSize: '0.82rem', color: 'var(--text)', width: 180, fontFamily: 'inherit' }} />
@@ -143,8 +142,8 @@ export default function ProjetosPage() {
               <Plus size={13} />Novo projeto
             </button>
           </div>
-        </div>
-      </div>
+        }
+      />
 
       {loading ? (
         <div className="loading-state">Carregando projetos…</div>

@@ -1,4 +1,4 @@
-'use client';
+﻿﻿'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Archive, Search, RotateCcw } from 'lucide-react';
@@ -7,6 +7,7 @@ import ConfirmModal from '@/components/ConfirmModal';
 import { useToast } from '@/hooks/useToast';
 import ToastContainer from '@/components/ToastContainer';
 import type { Task } from '@/types';
+import PageHeader from '@/components/PageHeader';
 
 const PRIO_COLOR: Record<string, string> = {
   Alta:  '#b42318',
@@ -62,21 +63,16 @@ export default function ArquivadasPage() {
 
   return (
     <>
-      {/* Header */}
-      <div style={{ padding: '26px 32px 0', background: 'var(--surface)', flexShrink: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-          <div>
-            <div className="mono" style={{ fontSize: '0.68rem', fontWeight: 500, color: 'var(--text-3)', letterSpacing: '1.4px', textTransform: 'uppercase' }}>
-              Atividades concluídas e arquivadas
-            </div>
-            <h1 style={{ fontSize: '1.65rem', fontWeight: 600, letterSpacing: '-0.7px', color: 'var(--text)', marginTop: 6 }}>Arquivadas</h1>
-          </div>
-          <div className="topbar-search" style={{ alignSelf: 'flex-end', marginBottom: 4 }}>
+      <PageHeader
+        eyebrow="Atividades concluídas e arquivadas"
+        title="Arquivadas"
+        right={
+          <div className="topbar-search">
             <Search size={13} style={{ color: 'var(--text-3)', flexShrink: 0 }} />
             <input type="text" placeholder="Pesquisar arquivadas..." value={search} onChange={e => setSearch(e.target.value)} />
           </div>
-        </div>
-      </div>
+        }
+      />
 
       {loading ? (
         <div className="loading-state">Carregando atividades arquivadas…</div>

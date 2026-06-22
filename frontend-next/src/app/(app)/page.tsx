@@ -25,6 +25,7 @@ import type { UserPublic } from '@/lib/api';
 import { useRefetchOnFocus } from '@/lib/useRefetchOnFocus';
 import type { Task, StatusGroup, Project } from '@/types';
 import { useTabs, useActiveTab } from '@/context/TabsContext';
+import PageHeader from '@/components/PageHeader';
 
 const COLUMNS: { id: StatusGroup; title: string; color: string }[] = [
   { id: 'pending',    title: 'Pendente',    color: 'var(--s-pending)' },
@@ -355,17 +356,12 @@ export default function BoardPage() {
 
   return (
     <>
-      {/* ── Header de tela (eyebrow + título + stats) ── */}
-      <div style={{ padding: '26px 32px 0', flexShrink: 0, background: 'var(--surface)' }}>
-        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 20 }}>
-          <div>
-            <div className="mono" style={{ fontSize: '0.68rem', fontWeight: 500, color: 'var(--text-3)', letterSpacing: '1.4px', textTransform: 'uppercase' }}>
-              Planejamento
-            </div>
-            <h1 style={{ fontSize: '1.7rem', fontWeight: 600, letterSpacing: '-0.7px', color: 'var(--text)', marginTop: 6 }}>Atividades</h1>
-          </div>
-          {/* Stats por status */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 22, paddingBottom: 3 }}>
+      {/* ── Header de tela ── */}
+      <PageHeader
+        eyebrow="Planejamento"
+        title="Atividades"
+        right={
+          <div style={{ display: 'flex', alignItems: 'center', gap: 22 }}>
             {boardStats.map((s) => (
               <div key={s.label} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span style={{ width: 8, height: 8, borderRadius: 2, background: s.color, boxShadow: `0 0 0 3px ${s.color}1f`, flexShrink: 0 }} />
@@ -374,68 +370,60 @@ export default function BoardPage() {
               </div>
             ))}
           </div>
-        </div>
-      </div>
+        }
+      />
 
-      {/* ── Barra de abas + toolbar (Quadro/Lista/Calendário + busca + filtros) ── */}
-      <div style={{ borderBottom: '1px solid var(--line-1)', flexShrink: 0, background: 'var(--surface)' }}>
-        {/* Tab bar */}
-        <div style={{ display: 'flex', alignItems: 'stretch', overflow: 'hidden', padding: '0 28px', gap: 0 }}>
+      {/* ── Toolbar: view toggle + busca + filtros (uma única linha) ── */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 32px', borderBottom: '1px solid var(--line-1)', flexShrink: 0, background: 'var(--surface)', flexWrap: 'wrap' }}>
+        {/* View toggle */}
+        <div style={{ display: 'flex', alignItems: 'center', border: '1px solid var(--border)', borderRadius: 'var(--radius)', overflow: 'hidden', flexShrink: 0 }}>
           {(['kanban', 'list', 'calendar'] as const).map((v) => {
             const labels = { kanban: 'Quadro', list: 'Lista', calendar: 'Calendário' };
-            const isActive = view === v;
+            const isAct = view === v;
             return (
               <button key={v} onClick={() => patchActiveTab({ view: v })}
-                style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0 16px', height: 40, border: 'none', borderBottom: isActive ? '2px solid #034EA2' : '2px solid transparent', background: 'transparent', color: isActive ? '#034EA2' : 'var(--text-2)', fontSize: '0.82rem', fontWeight: isActive ? 600 : 400, cursor: 'pointer', flexShrink: 0, fontFamily: 'inherit', transition: 'color 0.12s, border-color 0.12s' }}>
+                style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px', border: 'none', borderRight: v !== 'calendar' ? '1px solid var(--border)' : 'none', background: isAct ? '#034EA2' : 'var(--surface)', color: isAct ? '#fff' : 'var(--text-2)', fontSize: '0.78rem', fontWeight: isAct ? 600 : 500, cursor: 'pointer', fontFamily: 'inherit', transition: 'background 0.12s, color 0.12s', whiteSpace: 'nowrap' }}>
+                {v === 'kanban' ? <LayoutGrid size={12} /> : v === 'list' ? <List size={12} /> : <Calendar size={12} />}
                 {labels[v]}
               </button>
             );
           })}
-          {/* Nova atividade — direita da barra */}
-          <button onClick={() => setActivityModal({ open: true, task: null })}
-            style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '0 16px', height: 40, border: 'none', borderBottom: '2px solid transparent', background: 'transparent', color: '#034EA2', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', flexShrink: 0, marginLeft: 'auto', fontFamily: 'inherit' }}>
-            <Plus size={14} />
-            Nova atividade
+        </div>
+
+        <div style={{ width: 1, height: 20, background: 'var(--border)', flexShrink: 0 }} />
+
+        {/* Busca */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 7, border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '6px 10px', width: 210 }}>
+          <Search size={13} style={{ color: 'var(--text-3)', flexShrink: 0 }} />
+          <input value={search} onChange={(e) => patchActiveTab({ search: e.target.value })} placeholder="Pesquisar..." style={{ border: 'none', outline: 'none', background: 'none', fontSize: '0.8rem', color: 'var(--text)', width: '100%', fontFamily: 'inherit' }} />
+        </div>
+
+        <select value={filterUser} onChange={(e) => patchActiveTab({ fUser: e.target.value })} className={`filter-chip${filterUser ? ' active' : ''}`}>
+          <option value="">Responsável</option>
+          {users.map((u) => <option key={u.id} value={u.name}>{u.name}</option>)}
+        </select>
+        <select value={filterPriority} onChange={(e) => patchActiveTab({ fPrio: e.target.value })} className={`filter-chip${filterPriority ? ' active' : ''}`}>
+          <option value="">Prioridade</option>
+          <option value="Alta">Alta</option>
+          <option value="Média">Média</option>
+          <option value="Baixa">Baixa</option>
+        </select>
+        <select value={filterProject} onChange={(e) => patchActiveTab({ fProj: e.target.value })} className={`filter-chip${filterProject ? ' active' : ''}`}>
+          <option value="">Projeto</option>
+          {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+        </select>
+        {hasFilters && (
+          <button onClick={() => patchActiveTab({ fUser: '', fPrio: '', fProj: '', fDateFrom: '', fDateTo: '' })}
+            className="mono" style={{ fontSize: '0.7rem', fontWeight: 500, color: '#034EA2', background: 'none', border: 'none', cursor: 'pointer', letterSpacing: '0.5px' }}>
+            LIMPAR
           </button>
-        </div>
-
-        {/* Toolbar de filtros */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 18, padding: '18px 32px', flexShrink: 0, flexWrap: 'wrap' }}>
-          {/* Busca */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '7px 11px', width: 230 }}>
-            <Search size={14} style={{ color: 'var(--text-3)', flexShrink: 0 }} />
-            <input value={search} onChange={(e) => patchActiveTab({ search: e.target.value })} placeholder="Pesquisar..." style={{ border: 'none', outline: 'none', background: 'none', fontSize: '0.82rem', color: 'var(--text)', width: '100%', fontFamily: 'inherit' }} />
-          </div>
-          <div style={{ width: 1, height: 20, background: 'var(--border)' }} />
-          <select value={filterUser} onChange={(e) => patchActiveTab({ fUser: e.target.value })} className={`filter-chip${filterUser ? ' active' : ''}`}>
-            <option value="">Responsável</option>
-            {users.map((u) => <option key={u.id} value={u.name}>{u.name}</option>)}
-          </select>
-          <select value={filterPriority} onChange={(e) => patchActiveTab({ fPrio: e.target.value })} className={`filter-chip${filterPriority ? ' active' : ''}`}>
-            <option value="">Prioridade</option>
-            <option value="Alta">Alta</option>
-            <option value="Média">Média</option>
-            <option value="Baixa">Baixa</option>
-          </select>
-          <select value={filterProject} onChange={(e) => patchActiveTab({ fProj: e.target.value })} className={`filter-chip${filterProject ? ' active' : ''}`}>
-            <option value="">Projeto</option>
-            {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-          </select>
-          {hasFilters && (
-            <button onClick={() => patchActiveTab({ fUser: '', fPrio: '', fProj: '', fDateFrom: '', fDateTo: '' })}
-              className="mono" style={{ fontSize: '0.72rem', fontWeight: 500, color: '#034EA2', background: 'none', border: 'none', cursor: 'pointer', letterSpacing: '0.5px' }}>
-              LIMPAR
-            </button>
-          )}
-          <div style={{ flex: 1 }} />
-          <span className="mono" style={{ fontSize: '0.72rem', color: 'var(--text-3)', letterSpacing: '0.5px' }}>
-            {filteredTasks.length} ATIVIDADES
-          </span>
-          <button className="btn btn-secondary btn-sm" onClick={() => setImportModal(true)}><FileUp size={13} />Importar</button>
-          <button className="btn btn-secondary btn-sm" onClick={exportCSV} disabled={filteredTasks.length === 0}><Download size={13} />CSV</button>
-        </div>
+        )}
+        <div style={{ flex: 1 }} />
+        <span className="mono" style={{ fontSize: '0.7rem', color: 'var(--text-3)', letterSpacing: '0.5px' }}>{filteredTasks.length} ATIVIDADES</span>
+        <button className="btn btn-secondary btn-sm" onClick={() => setImportModal(true)}><FileUp size={13} />Importar</button>
+        <button className="btn btn-secondary btn-sm" onClick={exportCSV} disabled={filteredTasks.length === 0}><Download size={13} />CSV</button>
+        <button onClick={() => setActivityModal({ open: true, task: null })} className="btn btn-primary btn-sm"><Plus size={13} />Nova atividade</button>
       </div>
-
 
       {/* Conteúdo */}
       {loading ? (

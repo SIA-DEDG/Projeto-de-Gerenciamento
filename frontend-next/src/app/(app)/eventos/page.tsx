@@ -1,4 +1,4 @@
-﻿'use client';
+﻿﻿'use client';
 
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { Trash2, Pencil, ChevronLeft, ChevronRight, Clock, ChevronDown, Check, Plus, FileText, Paperclip, X as XIcon, Calendar, Users, User } from 'lucide-react';
@@ -12,8 +12,9 @@ import ConfirmModal from '@/components/ConfirmModal';
 import { useToast } from '@/hooks/useToast';
 import ToastContainer from '@/components/ToastContainer';
 import { getUser } from '@/lib/auth';
+import PageHeader from '@/components/PageHeader';
 
-// â”€â”€ helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â"€â"€ helpers â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 
 const WEEKDAYS_SHORT = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 const MONTHS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
@@ -124,7 +125,7 @@ function EventDateRangePicker({ from, to, onChange }: {
         <input type="date" value={from} onChange={e => onChange(e.target.value, to < e.target.value ? e.target.value : to)}
           style={{ width:'100%', border:'1px solid var(--border)', borderRadius:3, padding:'7px 10px', fontSize:'0.85rem', outline:'none', boxSizing:'border-box' as const, background:'var(--surface)', color:'var(--text)', fontFamily:'inherit' }} />
       </div>
-      <div style={{ fontSize:'0.8rem', color:'var(--text-muted)', marginTop:18 }}>â†’</div>
+      <div style={{ fontSize:'0.8rem', color:'var(--text-muted)', marginTop:18 }}>â†'</div>
       <div style={{ flex:1 }}>
         <div style={{ fontSize:'0.72rem', fontWeight:600, color:'var(--text-muted)', marginBottom:4 }}>Fim</div>
         <input type="date" value={to} min={from} onChange={e => onChange(from, e.target.value)}
@@ -134,7 +135,7 @@ function EventDateRangePicker({ from, to, onChange }: {
   );
 }
 
-// â”€â”€ Preview popup â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â"€â"€ Preview popup â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 
 interface PreviewState {
   event: CalendarEvent;
@@ -218,7 +219,7 @@ function EventPreview({
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
           <Calendar size={13} />
           <span>
-            {sameDay ? formatDateFull(calEvent.start_date) : `${formatDate(calEvent.start_date)} â†’ ${formatDateFull(calEvent.end_date)}`}
+            {sameDay ? formatDateFull(calEvent.start_date) : `${formatDate(calEvent.start_date)} â†' ${formatDateFull(calEvent.end_date)}`}
             {calEvent.start_time && <span style={{ marginLeft: 6, fontWeight: 600, color: colorPalette.color }}>{calEvent.start_time}</span>}
           </span>
         </div>
@@ -239,7 +240,7 @@ function EventPreview({
           </div>
         )}
 
-        {/* Ata de reuniÃ£o */}
+        {/* Ata de reunião */}
         <div style={{ borderTop: '1px solid var(--line-2)', paddingTop: 8, marginTop: 2 }}>
           {calEvent.minutes_file_name ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'space-between' }}>
@@ -301,7 +302,7 @@ function EventPreview({
   );
 }
 
-// â”€â”€ EventChip (month view) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â"€â"€ EventChip (month view) â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 
 function EventChip({ event: calEvent, onClick, isPast }: { event: CalendarEvent; onClick: (e: React.MouseEvent) => void; isPast?: boolean }) {
   const colorPalette = palette(calEvent.id);
@@ -321,7 +322,7 @@ function EventChip({ event: calEvent, onClick, isPast }: { event: CalendarEvent;
   );
 }
 
-// â”€â”€ Month view â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â"€â"€ Month view â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 
 function MonthView({ events, year, month, todayStr, onChipClick, onClickDay }: {
   events: CalendarEvent[]; year: number; month: number; todayStr: string;
@@ -388,7 +389,7 @@ function MonthView({ events, year, month, todayStr, onChipClick, onClickDay }: {
   );
 }
 
-// â”€â”€ Week view â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â"€â"€ Week view â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 
 function WeekView({ events, weekStart, todayStr, onChipClick, onClickDay }: {
   events: CalendarEvent[]; weekStart: Date; todayStr: string;
@@ -455,7 +456,7 @@ function WeekView({ events, weekStart, todayStr, onChipClick, onClickDay }: {
   );
 }
 
-// â”€â”€ Main page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â"€â"€ Main page â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 
 export default function EventosPage() {
   const now = new Date();
@@ -555,7 +556,7 @@ export default function EventosPage() {
     const computedStart = useRange ? startDate : selectedDates[0] ?? '';
     const computedEnd   = useRange ? endDate   : selectedDates[selectedDates.length - 1] ?? '';
     if (!evName.trim() || !computedStart) { setFormErr('Preencha nome e data.'); return; }
-    if (useRange && computedStart > computedEnd) { setFormErr('Data de inÃ­cio nÃ£o pode ser posterior Ã  data de fim.'); return; }
+    if (useRange && computedStart > computedEnd) { setFormErr('Data de inÃ­cio não pode ser posterior Ã  data de fim.'); return; }
     if (!useRange && selectedDates.length === 0) { setFormErr('Selecione ao menos um dia.'); return; }
     setFormErr(''); setSaving(true);
     const responsible_ids = respList
@@ -583,7 +584,7 @@ export default function EventosPage() {
         const payload = { ...basePayload, start_date: computedStart, end_date: computedEnd };
         const created = await createEvent(payload);
         setEvents((currentEvents) => [created, ...currentEvents]);
-        addToast('success', 'Evento criado', `"${created.name}" foi adicionado ao calendÃ¡rio.`);
+        addToast('success', 'Evento criado', `"${created.name}" foi adicionado ao Calendário.`);
       }
       setShowModal(false);
     } catch (err: unknown) {
@@ -594,7 +595,7 @@ export default function EventosPage() {
   function handleDelete(id: string) {
     setConfirmDialog({
       title: 'Excluir evento',
-      message: 'Esta aÃ§Ã£o nÃ£o pode ser desfeita.',
+      message: 'Esta aÃ§ão não pode ser desfeita.',
       onConfirm: async () => {
         setDeleting(id);
         try { await deleteEvent(id); setEvents((currentEvents) => currentEvents.filter((calEvent) => calEvent.id !== id)); }
@@ -629,7 +630,7 @@ export default function EventosPage() {
   const weekEnd = useMemo(() => { const endDate=new Date(weekStart); endDate.setDate(endDate.getDate()+6); return endDate; }, [weekStart]);
   const headerLabel = viewMode==='month'
     ? `${MONTHS[month]} ${year}`
-    : `${weekStart.getDate()} ${MONTHS[weekStart.getMonth()].slice(0,3)} â€“ ${weekEnd.getDate()} ${MONTHS[weekEnd.getMonth()].slice(0,3)} ${weekEnd.getFullYear()}`;
+    : `${weekStart.getDate()} ${MONTHS[weekStart.getMonth()].slice(0,3)} â€" ${weekEnd.getDate()} ${MONTHS[weekEnd.getMonth()].slice(0,3)} ${weekEnd.getFullYear()}`;
 
   const upcoming = useMemo(() => {
     const limit = new Date(); limit.setDate(limit.getDate()+30);
@@ -645,7 +646,7 @@ export default function EventosPage() {
     [visibleEvents, todayStr],
   );
 
-  /* â”€â”€ Grupos de agenda â”€â”€ */
+  /* â"€â"€ Grupos de agenda â"€â"€ */
   const agendados = useMemo(() =>
     visibleEvents.filter(ev => ev.end_date >= todayStr).sort((a, b) => a.start_date.localeCompare(b.start_date)),
     [visibleEvents, todayStr]
@@ -690,7 +691,7 @@ export default function EventosPage() {
 
   const [pastOpen, setPastOpen] = useState(false);
 
-  /* â”€â”€ Calendario items â”€â”€ */
+  /* â"€â"€ Calendario items â"€â"€ */
   const calItems: CalendarioItem[] = useMemo(() => visibleEvents.map(ev => ({
     id: ev.id,
     title: ev.name,
@@ -702,16 +703,13 @@ export default function EventosPage() {
 
   return (
     <>
-      {/* â”€â”€ Header â”€â”€ */}
-      <div style={{ padding: '26px 32px 0', flexShrink: 0, background: 'var(--surface)' }}>
-        <h1 style={{ fontSize: '1.65rem', fontWeight: 600, letterSpacing: '-0.7px', color: 'var(--text)' }}>Eventos</h1>
-      </div>
+      <PageHeader eyebrow="Planejamento · DEDG" title="Eventos" />
 
-      {/* â”€â”€ Tab bar â”€â”€ */}
+      {/* â"€â"€ Tab bar â"€â"€ */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 20, padding: '18px 32px 0', borderBottom: '1px solid var(--line-1)', flexShrink: 0 }}>
         <button style={tabStyle(tab === 'agenda')} onClick={() => setTab('agenda')}>Agenda</button>
-        <button style={tabStyle(tab === 'atas')} onClick={() => setTab('atas')}>Atas de reuniÃ£o</button>
-        <button style={tabStyle(tab === 'calendar')} onClick={() => setTab('calendar')}>CalendÃ¡rio</button>
+        <button style={tabStyle(tab === 'atas')} onClick={() => setTab('atas')}>Atas de reunião</button>
+        <button style={tabStyle(tab === 'calendar')} onClick={() => setTab('calendar')}>Calendário</button>
         <div style={{ flex: 1 }} />
         <span className="mono" style={{ fontSize: '0.72rem', color: 'var(--text-3)', letterSpacing: '0.5px' }}>
           {visibleEvents.length} EVENTOS
@@ -878,7 +876,7 @@ export default function EventosPage() {
             </div>
             <div style={{ padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
               <div className="mono" style={{ fontSize: '0.82rem', color: 'var(--text-2)' }}>
-                {preview.event.start_date === preview.event.end_date ? formatDateFull(preview.event.start_date) : `${formatDate(preview.event.start_date)} â†’ ${formatDateFull(preview.event.end_date)}`}
+                {preview.event.start_date === preview.event.end_date ? formatDateFull(preview.event.start_date) : `${formatDate(preview.event.start_date)} â†' ${formatDateFull(preview.event.end_date)}`}
                 {preview.event.start_time && <span style={{ marginLeft: 6, fontWeight: 600, color: '#034EA2' }}>{preview.event.start_time}</span>}
               </div>
               {parseResps(preview.event.responsibles).length > 0 && (
@@ -956,7 +954,7 @@ export default function EventosPage() {
             <div style={{ padding: '22px', display: 'flex', flexDirection: 'column', gap: 14, flex: 1, overflowY: 'auto' }}>
               <div>
                 <label className="mono" style={modalLabel}>Nome do Evento *</label>
-                <input type="text" value={evName} onChange={e => setEvName(e.target.value)} placeholder="Ex: ReuniÃ£o de planejamento" style={modalInp} />
+                <input type="text" value={evName} onChange={e => setEvName(e.target.value)} placeholder="Ex: reunião de planejamento" style={modalInp} />
               </div>
               <div style={{ position: 'relative' }}>
                 <label className="mono" style={modalLabel}>ResponsÃ¡vel(eis)</label>

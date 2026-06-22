@@ -1,4 +1,4 @@
-﻿'use client';
+﻿﻿'use client';
 
 import { useState, useEffect } from 'react';
 import { registerUser, deleteUser, fetchUsers } from '@/lib/api';
@@ -8,6 +8,7 @@ import ToastContainer from '@/components/ToastContainer';
 import ConfirmModal from '@/components/ConfirmModal';
 import { GraduationCap, User, Wrench, ClipboardList, BarChart2, Landmark, ShieldAlert, Check, Copy, Trash2, RefreshCw, Lock } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import PageHeader from '@/components/PageHeader';
 
 const ROLES: { value: string; label: string; desc: string; color: string; bg: string; Icon: LucideIcon }[] = [
   { value: 'Estagiario',  label: 'Estagiário(a)',   desc: 'Tarefas atribuídas',      color: '#a21caf', bg: '#fdf4ff', Icon: GraduationCap },
@@ -119,10 +120,7 @@ export default function RegistroPage() {
 
   return (
     <>
-      <div style={{ padding: '26px 32px 16px', flexShrink: 0, background: 'var(--surface)', borderBottom: '1px solid var(--line-1)' }}>
-        <div className="mono" style={{ fontSize: '0.68rem', fontWeight: 500, color: 'var(--text-3)', letterSpacing: '1.4px', textTransform: 'uppercase' }}>Controle de acesso · Admin</div>
-        <h1 style={{ fontSize: '1.65rem', fontWeight: 600, letterSpacing: '-0.7px', color: 'var(--text)', marginTop: 6 }}>Cadastrar usuário</h1>
-      </div>
+      <PageHeader eyebrow="Controle de acesso · Admin" title="Cadastrar usuário" />
 
       <div style={{ flex: 1, overflowY: 'auto', padding: '28px 32px', display: 'flex', gap: 28, alignItems: 'flex-start' }}>
 

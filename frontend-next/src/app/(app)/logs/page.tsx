@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect, useMemo } from 'react';
 import { fetchLogs, clearLogs } from '@/lib/api';
@@ -8,6 +8,7 @@ import ConfirmModal from '@/components/ConfirmModal';
 import { useToast } from '@/hooks/useToast';
 import ToastContainer from '@/components/ToastContainer';
 import { Trash2, Search, X } from 'lucide-react';
+import PageHeader from '@/components/PageHeader';
 
 const ACTION_LABELS: Record<string, string> = {
   CREATE: 'Criou',
@@ -140,49 +141,21 @@ export default function LogsPage() {
 
   return (
     <>
-      {/* Header */}
-      <div className="page-header" style={{ padding: '26px 32px 0' }}>
-        <div className="mono page-eyebrow" style={{
-          fontSize: '0.68rem',
-          color: 'var(--text-3)',
-          textTransform: 'uppercase',
-          letterSpacing: '1.4px',
-          marginBottom: 6,
-        }}>
-          Auditoria do sistema · DEDG
-        </div>
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
-          <h1 className="page-title">Logs</h1>
-          {isAdmin && (
-            <button
-              type="button"
-              onClick={() => setConfirmClear(true)}
-              disabled={clearing || logs.length === 0}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-                padding: '7px 14px',
-                background: 'rgba(180,35,24,0.06)',
-                border: '1px solid rgba(180,35,24,0.2)',
-                borderRadius: 3,
-                color: '#b42318',
-                fontSize: '0.78rem',
-                fontWeight: 600,
-                fontFamily: 'inherit',
-                cursor: clearing || logs.length === 0 ? 'not-allowed' : 'pointer',
-                opacity: logs.length === 0 ? 0.5 : 1,
-                flexShrink: 0,
-                marginTop: 4,
-              }}
-            >
-              <Trash2 size={12} />
-              {clearing ? 'Limpando…' : 'Limpar logs'}
-            </button>
-          )}
-        </div>
-        <div style={{ borderTop: '1px solid var(--line-1)', marginTop: 24 }} />
-      </div>
+      <PageHeader
+        eyebrow="Auditoria do sistema · DEDG"
+        title="Logs"
+        right={isAdmin ? (
+          <button
+            type="button"
+            onClick={() => setConfirmClear(true)}
+            disabled={clearing || logs.length === 0}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', background: 'rgba(180,35,24,0.06)', border: '1px solid rgba(180,35,24,0.2)', borderRadius: 3, color: '#b42318', fontSize: '0.78rem', fontWeight: 600, fontFamily: 'inherit', cursor: clearing || logs.length === 0 ? 'not-allowed' : 'pointer', opacity: logs.length === 0 ? 0.5 : 1, flexShrink: 0 }}
+          >
+            <Trash2 size={12} />
+            {clearing ? 'Limpando…' : 'Limpar logs'}
+          </button>
+        ) : undefined}
+      />
 
       {/* Body */}
       <div style={{ padding: '0 32px 32px', overflowY: 'auto', flex: 1, minHeight: 0 }}>

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect, useMemo } from 'react';
 import {
@@ -8,6 +8,7 @@ import {
 import { Doughnut, Line } from 'react-chartjs-2';
 import { fetchTasks, fetchProjects } from '@/lib/api';
 import type { Task, Project } from '@/types';
+import PageHeader from '@/components/PageHeader';
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, Filler);
 
@@ -212,19 +213,11 @@ export default function DashboardsPage() {
     <div style={{ flex: 1, overflowY: 'auto' }}>
 
       {/* ── Page header ── */}
-      <div style={{ padding: '26px 32px 0', flexShrink: 0, background: 'var(--surface)' }}>
-        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 20 }}>
-          <div>
-            <div className="mono" style={{ fontSize: '0.68rem', fontWeight: 500, color: 'var(--text-3)', letterSpacing: '1.4px', textTransform: 'uppercase' }}>
-              Visão geral · Desempenho da equipe
-            </div>
-            <h1 style={{ fontSize: '1.65rem', fontWeight: 600, letterSpacing: '-0.7px', color: 'var(--text)', marginTop: 6 }}>Dashboards</h1>
-          </div>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center', paddingBottom: 4 }}>
-            <span className="mono" style={{ fontSize: '0.66rem', color: 'var(--text-3)', letterSpacing: '0.5px', textTransform: 'uppercase' }}>{total} ATIVIDADES</span>
-          </div>
-        </div>
-      </div>
+      <PageHeader
+        eyebrow="Visão geral · Desempenho da equipe"
+        title="Dashboards"
+        right={<span className="mono" style={{ fontSize: '0.66rem', color: 'var(--text-3)', letterSpacing: '0.5px', textTransform: 'uppercase' }}>{total} ATIVIDADES</span>}
+      />
 
       {/* ── KPI strip (4 stats) ── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', borderTop: '1px solid var(--line-1)', borderBottom: '1px solid var(--line-1)', marginTop: 20 }}>

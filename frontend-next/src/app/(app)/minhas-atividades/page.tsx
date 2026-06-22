@@ -23,6 +23,7 @@ import type { UserPublic } from '@/lib/api';
 import { useRefetchOnFocus } from '@/lib/useRefetchOnFocus';
 import type { Task, StatusGroup, Project } from '@/types';
 import { useTabs, useActiveTab } from '@/context/TabsContext';
+import PageHeader from '@/components/PageHeader';
 
 const COLUMNS: { id: StatusGroup; title: string; color: string }[] = [
   { id: 'pending',    title: 'Pendente',    color: 'var(--s-pending)' },
@@ -216,53 +217,42 @@ export default function MinhasAtividadesPage() {
   return (
     <>
       {/* ── Header de tela ── */}
-      <div style={{ padding: '26px 32px 0', flexShrink: 0, background: 'var(--surface)' }}>
-        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 20 }}>
-          <div>
-            <div className="mono" style={{ fontSize: '0.68rem', fontWeight: 500, color: 'var(--text-3)', letterSpacing: '1.4px', textTransform: 'uppercase' }}>
-              Atribuídas a você
-            </div>
-            <h1 style={{ fontSize: '1.65rem', fontWeight: 600, letterSpacing: '-0.7px', color: 'var(--text)', marginTop: 6 }}>Minhas atividades</h1>
-          </div>
-        </div>
-      </div>
+      <PageHeader eyebrow="Atribuídas a você" title="Minhas atividades" />
 
-      {/* ── View toggle + filtros ── */}
-      <div style={{ borderBottom: '1px solid var(--line-1)', flexShrink: 0, background: 'var(--surface)' }}>
-        <div style={{ display: 'flex', alignItems: 'stretch', padding: '0 28px' }}>
+      {/* ── Toolbar: view toggle + filtros (uma linha) ── */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 32px', borderBottom: '1px solid var(--line-1)', flexShrink: 0, background: 'var(--surface)', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', border: '1px solid var(--border)', borderRadius: 'var(--radius)', overflow: 'hidden', flexShrink: 0 }}>
           {(['kanban', 'list', 'calendar'] as const).map((v) => {
             const labels = { kanban: 'Quadro', list: 'Lista', calendar: 'Calendário' };
             const isAct = view === v;
             return (
               <button key={v} onClick={() => patchActiveTab({ view: v })}
-                style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0 16px', height: 40, border: 'none', borderBottom: isAct ? '2px solid #034EA2' : '2px solid transparent', background: 'transparent', color: isAct ? '#034EA2' : 'var(--text-2)', fontSize: '0.82rem', fontWeight: isAct ? 600 : 400, cursor: 'pointer', flexShrink: 0, fontFamily: 'inherit', transition: 'color 0.12s, border-color 0.12s' }}>
+                style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px', border: 'none', borderRight: v !== 'calendar' ? '1px solid var(--border)' : 'none', background: isAct ? '#034EA2' : 'var(--surface)', color: isAct ? '#fff' : 'var(--text-2)', fontSize: '0.78rem', fontWeight: isAct ? 600 : 500, cursor: 'pointer', fontFamily: 'inherit', transition: 'background 0.12s, color 0.12s', whiteSpace: 'nowrap' }}>
+                {v === 'kanban' ? <LayoutGrid size={12} /> : v === 'list' ? <List size={12} /> : <Calendar size={12} />}
                 {labels[v]}
               </button>
             );
           })}
-          <button onClick={() => setActivityModal({ open: true, task: null, defaultStatus: 'Pendente' })}
-            style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '0 16px', height: 40, border: 'none', borderBottom: '2px solid transparent', background: 'transparent', color: '#034EA2', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', flexShrink: 0, marginLeft: 'auto', fontFamily: 'inherit' }}>
-            <Plus size={14} />Nova atividade
-          </button>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 18, padding: '18px 32px', flexShrink: 0, flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '7px 11px', width: 230 }}>
-            <Search size={14} style={{ color: 'var(--text-3)', flexShrink: 0 }} />
-            <input value={search} onChange={(e) => patchActiveTab({ search: e.target.value })} placeholder="Pesquisar..." style={{ border: 'none', outline: 'none', background: 'none', fontSize: '0.82rem', color: 'var(--text)', width: '100%', fontFamily: 'inherit' }} />
-          </div>
-          <div style={{ width: 1, height: 20, background: 'var(--border)' }} />
-          <select value={filterPriority} onChange={(e) => patchActiveTab({ fPrio: e.target.value })} className={`filter-chip${filterPriority ? ' active' : ''}`}>
-            <option value="">Prioridade</option>
-            <option value="Alta">Alta</option>
-            <option value="Média">Média</option>
-            <option value="Baixa">Baixa</option>
-          </select>
-          {filterPriority && (
-            <button onClick={() => patchActiveTab({ fPrio: '' })} className="mono" style={{ fontSize: '0.72rem', fontWeight: 500, color: '#034EA2', background: 'none', border: 'none', cursor: 'pointer', letterSpacing: '0.5px' }}>LIMPAR</button>
-          )}
-          <div style={{ flex: 1 }} />
-          <span className="mono" style={{ fontSize: '0.72rem', color: 'var(--text-3)', letterSpacing: '0.5px' }}>{myTasks.length} ATIVIDADES</span>
+        <div style={{ width: 1, height: 20, background: 'var(--border)', flexShrink: 0 }} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 7, border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '6px 10px', width: 200 }}>
+          <Search size={13} style={{ color: 'var(--text-3)', flexShrink: 0 }} />
+          <input value={search} onChange={(e) => patchActiveTab({ search: e.target.value })} placeholder="Pesquisar..." style={{ border: 'none', outline: 'none', background: 'none', fontSize: '0.8rem', color: 'var(--text)', width: '100%', fontFamily: 'inherit' }} />
         </div>
+        <select value={filterPriority} onChange={(e) => patchActiveTab({ fPrio: e.target.value })} className={`filter-chip${filterPriority ? ' active' : ''}`}>
+          <option value="">Prioridade</option>
+          <option value="Alta">Alta</option>
+          <option value="Média">Média</option>
+          <option value="Baixa">Baixa</option>
+        </select>
+        {filterPriority && (
+          <button onClick={() => patchActiveTab({ fPrio: '' })} className="mono" style={{ fontSize: '0.7rem', fontWeight: 500, color: '#034EA2', background: 'none', border: 'none', cursor: 'pointer', letterSpacing: '0.5px' }}>LIMPAR</button>
+        )}
+        <div style={{ flex: 1 }} />
+        <span className="mono" style={{ fontSize: '0.7rem', color: 'var(--text-3)', letterSpacing: '0.5px' }}>{myTasks.length} ATIVIDADES</span>
+        <button onClick={() => setActivityModal({ open: true, task: null, defaultStatus: 'Pendente' })} className="btn btn-primary btn-sm">
+          <Plus size={13} />Nova atividade
+        </button>
       </div>
 
       {loading ? (

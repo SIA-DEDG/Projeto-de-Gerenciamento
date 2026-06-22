@@ -1,4 +1,4 @@
-﻿'use client';
+﻿﻿'use client';
 
 import { useState, useEffect, useCallback } from 'react';
 import { getUser } from '@/lib/auth';
@@ -12,6 +12,7 @@ import RespostaModal from './_components/RespostaModal';
 import FeedbackCard from './_components/FeedbackCard';
 import FeedbackSidebar from './_components/FeedbackSidebar';
 import { type TypeFilter, type StatusFilter, type SeverityFilter, type Sort } from './_components/types';
+import PageHeader from '@/components/PageHeader';
 
 export default function FeedbackPage() {
   const user = getUser();
@@ -170,11 +171,7 @@ export default function FeedbackPage() {
 
   return (
     <>
-      {/* ── Header ── */}
-      <div style={{ padding: '26px 32px 16px', flexShrink: 0, background: 'var(--surface)', borderBottom: '1px solid var(--line-1)' }}>
-        <div className="mono" style={{ fontSize: '0.68rem', fontWeight: 500, color: 'var(--text-3)', letterSpacing: '1.4px', textTransform: 'uppercase' }}>Sistema · Comunicação</div>
-        <h1 style={{ fontSize: '1.65rem', fontWeight: 600, letterSpacing: '-0.7px', color: 'var(--text)', marginTop: 6 }}>Feedback & Sugestões</h1>
-      </div>
+      <PageHeader eyebrow="Sistema · Comunicação" title="Feedback & Sugestões" />
 
       {/* Body */}
       <div style={{ flex: 1, overflow: 'hidden', display: 'flex', minHeight: 0 }}>

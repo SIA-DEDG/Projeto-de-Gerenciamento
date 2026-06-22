@@ -133,6 +133,14 @@ export function TabsProvider({ children }: { children: React.ReactNode }) {
   }, [activeTabId]);
 
   // On initial load: sync active tab to the current URL path
+  // Prefetch todas as rotas para navegação mais rápida
+  useEffect(() => {
+    Object.values(PAGE_INFO).forEach(info => {
+      try { router.prefetch(info.path); } catch {}
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const didInit = useRef(false);
   useEffect(() => {
     if (didInit.current) return;

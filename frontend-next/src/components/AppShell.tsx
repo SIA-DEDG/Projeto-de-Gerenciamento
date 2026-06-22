@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import Sidebar from './Sidebar';
-import TabBar from './TabBar';
 import { TabsProvider } from '@/context/TabsContext';
 
 const THEME_KEY = 'sia-theme';
@@ -31,7 +30,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         </div>
 
         <main className="main-content">
-          <TabBar />
           <div className="page-scroll">
             {children}
           </div>

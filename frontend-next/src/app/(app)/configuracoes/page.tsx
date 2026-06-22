@@ -1,4 +1,4 @@
-'use client';
+﻿﻿'use client';
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -10,6 +10,7 @@ import {
   User, Lock, Shield, LogOut, Check, RefreshCw, Save,
   Mail, AlertTriangle, Bell,
 } from 'lucide-react';
+import PageHeader from '@/components/PageHeader';
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -723,10 +724,7 @@ function SistemaSection() {
 export default function ConfiguracoesPage() {
   return (
     <>
-      <div style={{ padding: '26px 32px 16px', flexShrink: 0, background: 'var(--surface)', borderBottom: '1px solid var(--line-1)' }}>
-        <div className="mono" style={{ fontSize: '0.68rem', fontWeight: 500, color: 'var(--text-3)', letterSpacing: '1.4px', textTransform: 'uppercase' }}>Sistema · Conta</div>
-        <h1 style={{ fontSize: '1.65rem', fontWeight: 600, letterSpacing: '-0.7px', color: 'var(--text)', marginTop: 6 }}>Configurações</h1>
-      </div>
+      <PageHeader eyebrow="Sistema · Conta" title="Configurações" />
 
       <div style={{ flex: 1, overflowY: 'auto', padding: '32px 32px 60px', minHeight: 0 }}>
         <div style={{ maxWidth: 580 }}>
