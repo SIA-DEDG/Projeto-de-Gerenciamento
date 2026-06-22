@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
@@ -51,7 +51,7 @@ export default function LoginPage() {
         <div style={{ position: 'relative', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '44px 48px' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 40 }}>
-              <div style={{ width: 36, height: 36, borderRadius: 4, background: 'rgba(255,255,255,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#E0A92E', fontSize: 18, lineHeight: 1 }}>★</div>
+              <div style={{ width: 36, height: 36, borderRadius: 3, background: 'rgba(255,255,255,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#E0A92E', fontSize: 18, lineHeight: 1 }}>★</div>
               <div>
                 <div style={{ fontWeight: 600, fontSize: '1rem', color: '#fff', letterSpacing: '-0.2px' }}>Tasks SIA</div>
                 <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '0.6rem', color: 'rgba(255,255,255,0.45)', letterSpacing: '1.2px', textTransform: 'uppercase' }}>Sistema de Gestão · DEDG</div>
@@ -81,7 +81,7 @@ export default function LoginPage() {
 
         {/* Logo centralizado */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 32 }}>
-          <div style={{ width: 48, height: 48, borderRadius: 4, background: '#072f63', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#E0A92E', fontSize: 26, lineHeight: 1, boxShadow: '0 0 0 6px rgba(7,47,99,0.08)' }}>★</div>
+          <div style={{ width: 48, height: 48, borderRadius: 3, background: '#072f63', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#E0A92E', fontSize: 26, lineHeight: 1, boxShadow: '0 0 0 6px rgba(7,47,99,0.08)' }}>★</div>
           <div style={{ marginTop: 11, fontWeight: 700, fontSize: '1.08rem', color: '#072f63', letterSpacing: '-0.2px' }}>Tasks SIA</div>
           <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '0.62rem', color: '#9aa1ac', letterSpacing: '1.2px', textTransform: 'uppercase', marginTop: 3 }}>Sistema de Gestão · DEDG</div>
         </div>

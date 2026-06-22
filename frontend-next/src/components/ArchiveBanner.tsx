@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import { useState } from 'react';
 import { Archive, Trash2, X } from 'lucide-react';
 
@@ -26,7 +26,7 @@ export default function ArchiveBanner({ count, label, onArchiveAll, onDeleteAll 
     <div style={{
       position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)',
       zIndex: 500, display: 'flex', alignItems: 'center', gap: 12,
-      background: '#1e293b', color: '#fff', borderRadius: 12,
+      background: '#1e293b', color: '#fff', borderRadius: 3,
       padding: '10px 16px', boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
       fontSize: '0.83rem', fontFamily: 'inherit', whiteSpace: 'nowrap',
     }}>
@@ -36,12 +36,12 @@ export default function ArchiveBanner({ count, label, onArchiveAll, onDeleteAll 
       </span>
       <div style={{ display: 'flex', gap: 6 }}>
         <button onClick={() => handle('archive')} disabled={loading !== null}
-          style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 12px', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: 6, fontSize: '0.78rem', fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}>
+          style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 12px', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: 3, fontSize: '0.78rem', fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}>
           <Archive size={12} strokeWidth={2} />
           {loading === 'archive' ? 'Arquivando…' : 'Arquivar'}
         </button>
         <button onClick={() => handle('delete')} disabled={loading !== null}
-          style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 12px', background: '#dc2626', color: '#fff', border: 'none', borderRadius: 6, fontSize: '0.78rem', fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}>
+          style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 12px', background: '#dc2626', color: '#fff', border: 'none', borderRadius: 3, fontSize: '0.78rem', fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}>
           <Trash2 size={12} strokeWidth={2} />
           {loading === 'delete' ? 'Excluindo…' : 'Excluir todos'}
         </button>

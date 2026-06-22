@@ -15,8 +15,8 @@ import { getUser } from '@/lib/auth';
 
 // â”€â”€ helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-const WEEKDAYS_SHORT = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'SÃ¡b'];
-const MONTHS = ['Janeiro','Fevereiro','MarÃ§o','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+const WEEKDAYS_SHORT = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+const MONTHS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 
 const PALETTE = [
   { color: '#1d4ed8', bg: '#dbeafe', light: '#eff6ff' },
@@ -191,7 +191,7 @@ function EventPreview({
       ref={ref}
       style={{
         position: 'fixed', left: pos.left, top: pos.top, zIndex: 2000,
-        background: '#fff', borderRadius: 12,
+        background: '#fff', borderRadius: 3,
         boxShadow: '0 8px 32px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.08)',
         width: 280, overflow: 'hidden',
         border: '1px solid var(--border-light)',
@@ -205,9 +205,9 @@ function EventPreview({
             {calEvent.name}
           </div>
           <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
-            <span style={{ background: colorPalette.bg, color: colorPalette.color, borderRadius: 4, padding: '2px 8px', fontSize: '0.72rem', fontWeight: 700 }}>{calEvent.event_type}</span>
-            {calEvent.is_private && <span style={{ background: '#f3e8ff', color: '#7c3aed', borderRadius: 4, padding: '2px 8px', fontSize: '0.72rem', fontWeight: 700 }}>Privado</span>}
-            {isPast && <span style={{ background: '#f1f5f9', color: '#64748b', borderRadius: 4, padding: '2px 8px', fontSize: '0.72rem', fontWeight: 700 }}>Passado</span>}
+            <span style={{ background: colorPalette.bg, color: colorPalette.color, borderRadius: 3, padding: '2px 8px', fontSize: '0.72rem', fontWeight: 700 }}>{calEvent.event_type}</span>
+            {calEvent.is_private && <span style={{ background: '#f3e8ff', color: '#7c3aed', borderRadius: 3, padding: '2px 8px', fontSize: '0.72rem', fontWeight: 700 }}>Privado</span>}
+            {isPast && <span style={{ background: '#f1f5f9', color: '#64748b', borderRadius: 3, padding: '2px 8px', fontSize: '0.72rem', fontWeight: 700 }}>Passado</span>}
           </div>
         </div>
         <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: '1.1rem', lineHeight: 1, padding: '0 0 0 8px', flexShrink: 0 }}>Ã—</button>
@@ -277,7 +277,7 @@ function EventPreview({
           onClick={() => { onDelete(calEvent.id); onClose(); }}
           disabled={deleting === calEvent.id}
           style={{
-            flex: 1, padding: '7px 0', borderRadius: 7, border: '1px solid #fecaca',
+            flex: 1, padding: '7px 0', borderRadius: 3, border: '1px solid #fecaca',
             background: '#fff5f5', color: '#dc2626', fontSize: '0.82rem', fontWeight: 600,
             cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
           }}
@@ -288,7 +288,7 @@ function EventPreview({
         <button
           onClick={() => { onClose(); onEdit(calEvent); }}
           style={{
-            flex: 1, padding: '7px 0', borderRadius: 7, border: 'none',
+            flex: 1, padding: '7px 0', borderRadius: 3, border: 'none',
             background: 'var(--primary)', color: '#fff', fontSize: '0.82rem', fontWeight: 600,
             cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
           }}
@@ -309,7 +309,7 @@ function EventChip({ event: calEvent, onClick, isPast }: { event: CalendarEvent;
   return (
     <div
       onClick={onClick}
-      style={{ background: isPast ? '#f1f5f9' : colorPalette.bg, borderLeft: `3px solid ${isPast ? '#94a3b8' : colorPalette.color}`, borderRadius: 4, padding: '3px 6px', marginBottom: 2, cursor: 'pointer', opacity: isPast ? 0.75 : 1 }}
+      style={{ background: isPast ? '#f1f5f9' : colorPalette.bg, borderLeft: `3px solid ${isPast ? '#94a3b8' : colorPalette.color}`, borderRadius: 3, padding: '3px 6px', marginBottom: 2, cursor: 'pointer', opacity: isPast ? 0.75 : 1 }}
     >
       {isPast
         ? <div style={{ fontSize: '0.55rem', color: '#94a3b8', fontWeight: 700, lineHeight: 1, marginBottom: 1, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Passado</div>
@@ -665,7 +665,7 @@ export default function EventosPage() {
     [visibleEvents]
   );
 
-  const WEEKDAYS_S = ['Dom','Seg','Ter','Qua','Qui','Sex','SÃ¡b'];
+  const WEEKDAYS_S = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
   const MONTHS_S   = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 
   function parseDateUTC(s: string) {
@@ -1053,7 +1053,7 @@ export default function EventosPage() {
                     <div style={{ fontSize: '0.85rem', fontWeight: 600, color: isPrivate ? '#034EA2' : 'var(--text)' }}>Privado</div>
                     <div style={{ fontSize: '0.73rem', color: 'var(--text-3)', marginTop: 1 }}>VisÃ­vel sÃ³ para vocÃª e superiores</div>
                   </div>
-                  <div style={{ width: 38, height: 22, borderRadius: 11, background: isPrivate ? '#034EA2' : 'var(--border)', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
+                  <div style={{ width: 38, height: 22, borderRadius: 3, background: isPrivate ? '#034EA2' : 'var(--border)', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
                     <div style={{ position: 'absolute', top: 3, left: isPrivate ? 19 : 3, width: 16, height: 16, borderRadius: '50%', background: '#fff', transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
                   </div>
                 </div>

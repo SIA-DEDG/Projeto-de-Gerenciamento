@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { Bug, Lightbulb, Check } from 'lucide-react';
 import { type FeedbackItem } from '@/lib/api';
@@ -20,7 +20,7 @@ function NavItem({ active, onClick, children }: NavItemProps) {
         border: 'none',
         cursor: 'pointer',
         padding: '7px 12px',
-        borderRadius: 6,
+        borderRadius: 3,
         textAlign: 'left',
         fontFamily: 'inherit',
         fontSize: '0.84rem',
@@ -136,7 +136,7 @@ export default function FeedbackSidebar({
                 <button key={s.value}
                   onClick={() => setSeverityFilter(active ? 'todos' : s.value)}
                   style={{
-                    padding: '4px 11px', borderRadius: 20, fontSize: '0.73rem', fontWeight: active ? 700 : 500,
+                    padding: '4px 11px', borderRadius: 3, fontSize: '0.73rem', fontWeight: active ? 700 : 500,
                     background: active ? 'rgba(3,78,162,0.1)' : 'var(--bg-subtle)',
                     border: `1.5px solid ${active ? 'var(--primary)' : 'var(--border-light)'}`,
                     color: active ? 'var(--primary)' : 'var(--text-secondary)',
@@ -156,7 +156,7 @@ export default function FeedbackSidebar({
           onClick={() => setMyOnly(!myOnly)}
           style={{
             width: '100%', background: myOnly ? 'rgba(3,78,162,0.08)' : 'none', border: 'none', cursor: 'pointer',
-            padding: '7px 12px', borderRadius: 6, textAlign: 'left', fontFamily: 'inherit',
+            padding: '7px 12px', borderRadius: 3, textAlign: 'left', fontFamily: 'inherit',
             fontSize: '0.84rem', color: myOnly ? 'var(--primary)' : 'var(--text-secondary)',
             fontWeight: myOnly ? 700 : 500, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
             transition: 'background 0.15s',

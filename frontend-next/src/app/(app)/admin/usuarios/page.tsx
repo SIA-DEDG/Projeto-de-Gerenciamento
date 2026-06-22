@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect } from 'react';
 import { fetchUsers, deleteUser, updateUserRole, adminResetUserPassword } from '@/lib/api';
@@ -53,7 +53,7 @@ function ResetPasswordModal({ user, onClose, onSuccess }: { user: UserPublic; on
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: 16 }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div style={{ background: '#fff', borderRadius: 12, width: '100%', maxWidth: 420, boxShadow: '0 20px 60px rgba(0,0,0,0.2)', overflow: 'hidden' }}>
+      <div style={{ background: '#fff', borderRadius: 3, width: '100%', maxWidth: 420, boxShadow: '0 20px 60px rgba(0,0,0,0.2)', overflow: 'hidden' }}>
         <div style={{ padding: '20px 24px 16px', borderBottom: '1px solid #eef0f2', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
             <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700 }}>Redefinir senha</h3>
@@ -62,23 +62,23 @@ function ResetPasswordModal({ user, onClose, onSuccess }: { user: UserPublic; on
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6b778c', fontSize: '1.4rem', lineHeight: 1 }}>×</button>
         </div>
         <form onSubmit={handleSubmit} style={{ padding: '20px 24px' }}>
-          {error && <div style={{ marginBottom: 14, padding: '10px 14px', background: '#ffebe6', borderRadius: 6, color: '#bf2600', fontSize: '0.85rem' }}>{error}</div>}
+          {error && <div style={{ marginBottom: 14, padding: '10px 14px', background: '#ffebe6', borderRadius: 3, color: '#bf2600', fontSize: '0.85rem' }}>{error}</div>}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             <label style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: '0.82rem', fontWeight: 600 }}>
               Nova senha
-              <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="Mínimo 6 caracteres" required style={{ padding: '9px 12px', borderRadius: 6, border: '1px solid #dfe1e6', fontSize: '0.9rem', fontFamily: 'inherit' }} />
+              <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="Mínimo 6 caracteres" required style={{ padding: '9px 12px', borderRadius: 3, border: '1px solid #dfe1e6', fontSize: '0.9rem', fontFamily: 'inherit' }} />
             </label>
             <label style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: '0.82rem', fontWeight: 600 }}>
               Confirmar nova senha
-              <input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} placeholder="Repita a nova senha" required style={{ padding: '9px 12px', borderRadius: 6, border: '1px solid #dfe1e6', fontSize: '0.9rem', fontFamily: 'inherit' }} />
+              <input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} placeholder="Repita a nova senha" required style={{ padding: '9px 12px', borderRadius: 3, border: '1px solid #dfe1e6', fontSize: '0.9rem', fontFamily: 'inherit' }} />
             </label>
           </div>
-          <div style={{ marginTop: 8, padding: '10px 12px', background: '#fffbeb', borderRadius: 6, border: '1px solid #fde68a', fontSize: '0.78rem', color: '#92400e' }}>
+          <div style={{ marginTop: 8, padding: '10px 12px', background: '#fffbeb', borderRadius: 3, border: '1px solid #fde68a', fontSize: '0.78rem', color: '#92400e' }}>
             O usuário será obrigado a trocar a senha no próximo login.
           </div>
           <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 20 }}>
-            <button type="button" onClick={onClose} style={{ padding: '8px 18px', background: 'none', border: '1px solid #dfe1e6', borderRadius: 6, fontFamily: 'inherit', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer' }}>Cancelar</button>
-            <button type="submit" disabled={saving} style={{ padding: '8px 20px', background: saving ? '#a5adba' : 'var(--primary)', color: '#fff', border: 'none', borderRadius: 6, fontFamily: 'inherit', fontWeight: 600, fontSize: '0.85rem', cursor: saving ? 'not-allowed' : 'pointer' }}>
+            <button type="button" onClick={onClose} style={{ padding: '8px 18px', background: 'none', border: '1px solid #dfe1e6', borderRadius: 3, fontFamily: 'inherit', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer' }}>Cancelar</button>
+            <button type="submit" disabled={saving} style={{ padding: '8px 20px', background: saving ? '#a5adba' : 'var(--primary)', color: '#fff', border: 'none', borderRadius: 3, fontFamily: 'inherit', fontWeight: 600, fontSize: '0.85rem', cursor: saving ? 'not-allowed' : 'pointer' }}>
               {saving ? 'Salvando…' : 'Redefinir senha'}
             </button>
           </div>
@@ -175,13 +175,13 @@ export default function UsuariosPage() {
 
       <div style={{ flex: 1, overflowY: 'auto', padding: '28px 40px' }}>
         {successMsg && (
-          <div style={{ marginBottom: 16, padding: '12px 16px', background: '#e3fcef', borderRadius: 8, color: '#006644', fontSize: '0.88rem', display: 'flex', justifyContent: 'space-between', border: '1px solid #abf5d1' }}>
+          <div style={{ marginBottom: 16, padding: '12px 16px', background: '#e3fcef', borderRadius: 3, color: '#006644', fontSize: '0.88rem', display: 'flex', justifyContent: 'space-between', border: '1px solid #abf5d1' }}>
             <span>{successMsg}</span>
             <button type="button" onClick={() => setSuccessMsg('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#006644', fontWeight: 700 }}>×</button>
           </div>
         )}
         {error && (
-          <div style={{ marginBottom: 16, padding: '12px 16px', background: '#ffebe6', borderRadius: 8, color: '#bf2600', fontSize: '0.88rem', display: 'flex', justifyContent: 'space-between', border: '1px solid #ffbdad' }}>
+          <div style={{ marginBottom: 16, padding: '12px 16px', background: '#ffebe6', borderRadius: 3, color: '#bf2600', fontSize: '0.88rem', display: 'flex', justifyContent: 'space-between', border: '1px solid #ffbdad' }}>
             <span>{error}</span>
             <button type="button" onClick={() => setError('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#bf2600', fontWeight: 700 }}>×</button>
           </div>
@@ -190,7 +190,7 @@ export default function UsuariosPage() {
         {loading ? (
           <p style={{ color: 'var(--text-muted)' }}>Carregando usuários…</p>
         ) : (
-          <div style={{ background: '#fff', borderRadius: 14, border: '1px solid var(--border-light)', boxShadow: '0 2px 12px rgba(3,78,162,0.06)', overflow: 'hidden' }}>
+          <div style={{ background: '#fff', borderRadius: 3, border: '1px solid var(--border-light)', boxShadow: '0 2px 12px rgba(3,78,162,0.06)', overflow: 'hidden' }}>
             <div style={{ height: 3, background: 'var(--primary)' }} />
             {filtered.length === 0 ? (
               <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-muted)' }}>
@@ -227,21 +227,21 @@ export default function UsuariosPage() {
                             </div>
                             <div>
                               <div style={{ fontWeight: 600, fontSize: '0.88rem' }}>{user.name}</div>
-                              {isSelf && <span style={{ fontSize: '0.62rem', color: 'var(--primary)', fontWeight: 700, background: 'var(--primary-light)', borderRadius: 10, padding: '1px 7px' }}>Você</span>}
+                              {isSelf && <span style={{ fontSize: '0.62rem', color: 'var(--primary)', fontWeight: 700, background: 'var(--primary-light)', borderRadius: 3, padding: '1px 7px' }}>Você</span>}
                             </div>
                           </div>
                         </td>
                         <td style={{ ...tdSt, color: 'var(--text-secondary)', fontSize: '0.83rem' }}>{user.username}</td>
                         <td style={tdSt}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <span style={{ fontSize: '0.72rem', fontWeight: 700, padding: '3px 10px', borderRadius: 20, whiteSpace: 'nowrap', ...roleBadgeStyle(user.role) }}>
+                            <span style={{ fontSize: '0.72rem', fontWeight: 700, padding: '3px 10px', borderRadius: 3, whiteSpace: 'nowrap', ...roleBadgeStyle(user.role) }}>
                               {ALL_ROLES.find(r => r.value === user.role)?.label ?? user.role}
                             </span>
                             {canAct && !isSelf && (
                               <div style={{ position: 'relative' }}>
                                 <select value={user.role} disabled={roleUpdating === user.id}
                                   onChange={(e) => handleRoleChange(user, e.target.value)}
-                                  style={{ appearance: 'none', padding: '4px 24px 4px 8px', borderRadius: 7, border: '1px solid var(--border-light)', fontSize: '0.75rem', fontFamily: 'inherit', cursor: 'pointer', background: '#fff', color: 'var(--text-secondary)', outline: 'none' }}>
+                                  style={{ appearance: 'none', padding: '4px 24px 4px 8px', borderRadius: 3, border: '1px solid var(--border-light)', fontSize: '0.75rem', fontFamily: 'inherit', cursor: 'pointer', background: '#fff', color: 'var(--text-secondary)', outline: 'none' }}>
                                   {roles.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
                                 </select>
                                 <ChevronDown size={10} style={{ position: 'absolute', right: 7, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-muted)' }} />
@@ -257,7 +257,7 @@ export default function UsuariosPage() {
                           <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end', alignItems: 'center' }}>
                             {canResetPasswords(myRole) && !isSelf && canAct && (
                               <button type="button" onClick={() => setResetModal(user)}
-                                style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 11px', background: 'var(--primary-light)', border: 'none', borderRadius: 7, color: 'var(--primary)', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'background 0.15s' }}
+                                style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 11px', background: 'var(--primary-light)', border: 'none', borderRadius: 3, color: 'var(--primary)', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'background 0.15s' }}
                                 onMouseEnter={e => (e.currentTarget.style.background = 'var(--primary-glow)')}
                                 onMouseLeave={e => (e.currentTarget.style.background = 'var(--primary-light)')}>
                                 <Lock size={12} />
@@ -265,14 +265,14 @@ export default function UsuariosPage() {
                               </button>
                             )}
                             {isSelf || !canAct ? (
-                              <span style={{ padding: '6px 11px', background: 'var(--bg-subtle)', border: '1px solid var(--border-light)', borderRadius: 7, color: 'var(--text-muted)', fontSize: '0.75rem', fontWeight: 600, cursor: 'not-allowed', display: 'inline-flex', alignItems: 'center', gap: 5 }}
+                              <span style={{ padding: '6px 11px', background: 'var(--bg-subtle)', border: '1px solid var(--border-light)', borderRadius: 3, color: 'var(--text-muted)', fontSize: '0.75rem', fontWeight: 600, cursor: 'not-allowed', display: 'inline-flex', alignItems: 'center', gap: 5 }}
                                 title={isSelf ? 'Você não pode excluir sua própria conta' : 'Sem permissão'}>
                                 <Trash2 size={12} />
                                 Excluir
                               </span>
                             ) : (
                               <button type="button" onClick={() => handleDelete(user)} disabled={deleting === user.id}
-                                style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 11px', background: '#fff5f5', border: 'none', borderRadius: 7, color: '#dc2626', fontSize: '0.75rem', fontWeight: 600, cursor: deleting === user.id ? 'not-allowed' : 'pointer', fontFamily: 'inherit', opacity: deleting === user.id ? 0.6 : 1, transition: 'background 0.15s' }}
+                                style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 11px', background: '#fff5f5', border: 'none', borderRadius: 3, color: '#dc2626', fontSize: '0.75rem', fontWeight: 600, cursor: deleting === user.id ? 'not-allowed' : 'pointer', fontFamily: 'inherit', opacity: deleting === user.id ? 0.6 : 1, transition: 'background 0.15s' }}
                                 onMouseEnter={e => { if (deleting !== user.id) e.currentTarget.style.background = '#fee2e2'; }}
                                 onMouseLeave={e => (e.currentTarget.style.background = '#fff5f5')}>
                                 <Trash2 size={12} />

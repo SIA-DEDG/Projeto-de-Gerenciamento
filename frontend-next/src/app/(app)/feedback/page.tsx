@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect, useCallback } from 'react';
 import { getUser } from '@/lib/auth';
@@ -154,7 +154,7 @@ export default function FeedbackPage() {
       onClick={() => setSort(value)}
       style={{
         padding: '6px 16px',
-        borderRadius: 20,
+        borderRadius: 3,
         border: `1.5px solid ${sort === value ? 'var(--primary)' : 'var(--border-light)'}`,
         background: sort === value ? 'var(--primary)' : 'var(--bg-card)',
         color: sort === value ? '#fff' : 'var(--text-secondary)',
@@ -206,7 +206,7 @@ export default function FeedbackPage() {
               <button
                 onClick={() => { setSelectionMode(s => !s); setSelectedIds(new Set()); }}
                 style={{
-                  padding: '6px 14px', borderRadius: 20, fontSize: '0.82rem', fontWeight: 600,
+                  padding: '6px 14px', borderRadius: 3, fontSize: '0.82rem', fontWeight: 600,
                   border: `1.5px solid ${selectionMode ? 'var(--primary)' : 'var(--border-light)'}`,
                   background: selectionMode ? 'var(--primary-light)' : 'var(--bg-card)',
                   color: selectionMode ? 'var(--primary)' : 'var(--text-secondary)',
@@ -228,7 +228,7 @@ export default function FeedbackPage() {
               <CircleQuestionMark size={48} color="var(--border-light)" />
               <p style={{ color: 'var(--text-secondary)', margin: 0, fontWeight: 600 }}>Nenhuma publicação encontrada.</p>
               <button onClick={() => setShowForm(true)}
-                style={{ padding: '8px 20px', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: 6, fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+                style={{ padding: '8px 20px', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: 3, fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
                 Nova publicação
               </button>
             </div>
@@ -258,7 +258,7 @@ export default function FeedbackPage() {
                     onClick={() => setPage(p => Math.max(1, p - 1))}
                     disabled={page === 1}
                     style={{
-                      width: 34, height: 34, borderRadius: 6, border: '1.5px solid var(--border-light)',
+                      width: 34, height: 34, borderRadius: 3, border: '1.5px solid var(--border-light)',
                       background: 'var(--bg-card)', color: 'var(--text-secondary)',
                       cursor: page === 1 ? 'not-allowed' : 'pointer', opacity: page === 1 ? 0.4 : 1,
                       display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'inherit',
@@ -285,7 +285,7 @@ export default function FeedbackPage() {
                         key={n}
                         onClick={() => setPage(n as number)}
                         style={{
-                          width: 34, height: 34, borderRadius: 6, fontFamily: 'inherit',
+                          width: 34, height: 34, borderRadius: 3, fontFamily: 'inherit',
                           border: `1.5px solid ${n === page ? 'var(--primary)' : 'var(--border-light)'}`,
                           background: n === page ? 'var(--primary)' : 'var(--bg-card)',
                           color: n === page ? '#fff' : 'var(--text-secondary)',
@@ -302,7 +302,7 @@ export default function FeedbackPage() {
                     onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                     disabled={page === totalPages}
                     style={{
-                      width: 34, height: 34, borderRadius: 6, border: '1.5px solid var(--border-light)',
+                      width: 34, height: 34, borderRadius: 3, border: '1.5px solid var(--border-light)',
                       background: 'var(--bg-card)', color: 'var(--text-secondary)',
                       cursor: page === totalPages ? 'not-allowed' : 'pointer', opacity: page === totalPages ? 0.4 : 1,
                       display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'inherit',

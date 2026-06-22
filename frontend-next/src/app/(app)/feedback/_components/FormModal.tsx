@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useRef } from 'react';
 import { Bug, Lightbulb } from 'lucide-react';
@@ -96,7 +96,7 @@ export default function FormModal({ onClose, onCreated, editItem, onUpdated }: P
                 const active = tipo === opt.value;
                 return (
                   <button key={opt.value} type="button" onClick={() => setTipo(opt.value)}
-                    style={{ flex: 1, padding: '9px 12px', borderRadius: 6, border: `1.5px solid ${active ? 'var(--primary)' : '#d8dee4'}`, background: active ? '#dbeafe' : '#f6f8fa', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.85rem', fontWeight: active ? 700 : 500, color: active ? '#1d4ed8' : '#57606a', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}>
+                    style={{ flex: 1, padding: '9px 12px', borderRadius: 3, border: `1.5px solid ${active ? 'var(--primary)' : '#d8dee4'}`, background: active ? '#dbeafe' : '#f6f8fa', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.85rem', fontWeight: active ? 700 : 500, color: active ? '#1d4ed8' : '#57606a', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}>
                     <opt.Icon size={15} />{opt.label}
                   </button>
                 );
@@ -123,7 +123,7 @@ export default function FormModal({ onClose, onCreated, editItem, onUpdated }: P
                   const active = severidade === s.value;
                   return (
                     <button key={s.value} type="button" onClick={() => setSeveridade(s.value)}
-                      style={{ flex: 1, padding: '6px 8px', borderRadius: 6, border: `1.5px solid ${active ? s.color : '#d8dee4'}`, background: active ? s.bg : '#f6f8fa', cursor: 'pointer', fontSize: '0.78rem', fontWeight: active ? 700 : 500, color: active ? s.color : '#57606a', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}>
+                      style={{ flex: 1, padding: '6px 8px', borderRadius: 3, border: `1.5px solid ${active ? s.color : '#d8dee4'}`, background: active ? s.bg : '#f6f8fa', cursor: 'pointer', fontSize: '0.78rem', fontWeight: active ? 700 : 500, color: active ? s.color : '#57606a', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}>
                       <s.Icon size={12} />
                       {s.value}
                     </button>
@@ -154,7 +154,7 @@ export default function FormModal({ onClose, onCreated, editItem, onUpdated }: P
                 onDragLeave={() => setDragOver(false)}
                 onDrop={e => { e.preventDefault(); setDragOver(false); readFiles(e.dataTransfer.files); }}
                 onClick={() => fileRef.current?.click()}
-                style={{ border: `2px dashed ${dragOver ? 'var(--primary)' : '#d8dee4'}`, borderRadius: 6, padding: '14px', textAlign: 'center', cursor: 'pointer', background: dragOver ? '#eff6ff' : '#f6f8fa', fontSize: '0.82rem', color: dragOver ? 'var(--primary)' : '#6e7781', marginBottom: images.length ? 8 : 0 }}>
+                style={{ border: `2px dashed ${dragOver ? 'var(--primary)' : '#d8dee4'}`, borderRadius: 3, padding: '14px', textAlign: 'center', cursor: 'pointer', background: dragOver ? '#eff6ff' : '#f6f8fa', fontSize: '0.82rem', color: dragOver ? 'var(--primary)' : '#6e7781', marginBottom: images.length ? 8 : 0 }}>
                 {dragOver ? 'Solte aqui' : 'Clique ou arraste imagens'}
               </div>
             )}
@@ -164,7 +164,7 @@ export default function FormModal({ onClose, onCreated, editItem, onUpdated }: P
             {images.length > 0 && (
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 6 }}>
                 {images.map((img, i) => (
-                  <div key={i} style={{ position: 'relative', width: 60, height: 60, borderRadius: 4, overflow: 'hidden', border: '1px solid #d8dee4' }}>
+                  <div key={i} style={{ position: 'relative', width: 60, height: 60, borderRadius: 3, overflow: 'hidden', border: '1px solid #d8dee4' }}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={img.dataUrl} alt={img.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     <button type="button" onClick={() => setImages(p => p.filter((_, idx) => idx !== i))}
@@ -176,7 +176,7 @@ export default function FormModal({ onClose, onCreated, editItem, onUpdated }: P
           </div>
 
           {err && (
-            <div style={{ color: '#cf222e', background: '#ffebe9', padding: '9px 12px', borderRadius: 6, fontSize: '0.82rem', border: '1px solid #ffcecb' }}>{err}</div>
+            <div style={{ color: '#cf222e', background: '#ffebe9', padding: '9px 12px', borderRadius: 3, fontSize: '0.82rem', border: '1px solid #ffcecb' }}>{err}</div>
           )}
 
         </form>

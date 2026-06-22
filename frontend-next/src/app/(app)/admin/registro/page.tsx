@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect } from 'react';
 import { registerUser, deleteUser, fetchUsers } from '@/lib/api';
@@ -38,7 +38,7 @@ function toUsername(name: string) {
 
 const inp: React.CSSProperties = {
   width: '100%', padding: '10px 13px', border: '1.5px solid var(--border-light)',
-  borderRadius: 9, fontSize: '0.9rem', fontFamily: 'inherit', outline: 'none',
+  borderRadius: 3, fontSize: '0.9rem', fontFamily: 'inherit', outline: 'none',
   transition: 'border-color 0.15s, box-shadow 0.15s', boxSizing: 'border-box', background: '#fff',
 };
 
@@ -130,9 +130,9 @@ export default function RegistroPage() {
 
           {/* Success banner */}
           {success && (
-            <div style={{ background: 'linear-gradient(135deg, #f0fdf4, #dcfce7)', border: '1.5px solid #86efac', borderRadius: 14, padding: '18px 20px', marginBottom: 20 }}>
+            <div style={{ background: 'linear-gradient(135deg, #f0fdf4, #dcfce7)', border: '1.5px solid #86efac', borderRadius: 3, padding: '18px 20px', marginBottom: 20 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                <div style={{ width: 28, height: 28, borderRadius: 8, background: '#16a34a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ width: 28, height: 28, borderRadius: 3, background: '#16a34a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <Check size={14} color="#fff" strokeWidth={2.5} />
                 </div>
                 <span style={{ fontWeight: 700, fontSize: '0.92rem', color: '#166534' }}>Colaborador criado!</span>
@@ -142,11 +142,11 @@ export default function RegistroPage() {
                 Repasse a senha temporária para <strong>{success.name}</strong>:
               </p>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                <code style={{ flex: 1, background: 'rgba(255,255,255,0.7)', borderRadius: 8, padding: '9px 14px', fontSize: '1rem', fontWeight: 700, color: '#14532d', letterSpacing: '0.08em', fontFamily: 'monospace' }}>
+                <code style={{ flex: 1, background: 'rgba(255,255,255,0.7)', borderRadius: 3, padding: '9px 14px', fontSize: '1rem', fontWeight: 700, color: '#14532d', letterSpacing: '0.08em', fontFamily: 'monospace' }}>
                   {success.temp_password}
                 </code>
                 <button type="button" onClick={() => handleCopy(success.temp_password, 'success')}
-                  style={{ padding: '9px 16px', background: copied === 'success' ? '#166534' : '#16a34a', color: '#fff', border: 'none', borderRadius: 8, fontSize: '0.82rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }}>
+                  style={{ padding: '9px 16px', background: copied === 'success' ? '#166534' : '#16a34a', color: '#fff', border: 'none', borderRadius: 3, fontSize: '0.82rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }}>
                   {copied === 'success' ? '✓ Copiado' : 'Copiar'}
                 </button>
               </div>
@@ -154,7 +154,7 @@ export default function RegistroPage() {
           )}
 
           {/* Form card */}
-          <div style={{ background: '#fff', borderRadius: 14, border: '1px solid var(--border-light)', overflow: 'hidden', boxShadow: '0 2px 12px rgba(3,78,162,0.06)' }}>
+          <div style={{ background: '#fff', borderRadius: 3, border: '1px solid var(--border-light)', overflow: 'hidden', boxShadow: '0 2px 12px rgba(3,78,162,0.06)' }}>
             <div style={{ height: 4, background: 'var(--primary)' }} />
 
             <form onSubmit={handleSubmit} noValidate style={{ padding: '22px 24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -171,7 +171,7 @@ export default function RegistroPage() {
               <div>
                 <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)', marginBottom: 6 }}>
                   Nome de usuário
-                  {!usernameTouched && fullName && <span style={{ marginLeft: 6, fontSize: '0.68rem', color: 'var(--primary)', fontWeight: 600, background: 'var(--primary-light)', borderRadius: 4, padding: '1px 5px' }}>auto</span>}
+                  {!usernameTouched && fullName && <span style={{ marginLeft: 6, fontSize: '0.68rem', color: 'var(--primary)', fontWeight: 600, background: 'var(--primary-light)', borderRadius: 3, padding: '1px 5px' }}>auto</span>}
                 </label>
                 <input type="text" placeholder="joao.silva" value={username}
                   onChange={e => { setUsername(e.target.value); setUsernameTouched(true); }}
@@ -188,8 +188,8 @@ export default function RegistroPage() {
                     const active = role === r.value;
                     return (
                       <button key={r.value} type="button" onClick={() => setRole(r.value)}
-                        style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '11px 13px', borderRadius: 10, border: `1.5px solid ${active ? r.color : 'var(--border-light)'}`, background: active ? r.bg : '#fff', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit', transition: 'all 0.15s', boxShadow: active ? `0 0 0 2px ${r.color}22` : 'none' }}>
-                        <div style={{ width: 28, height: 28, borderRadius: 7, background: active ? r.color + '22' : 'var(--bg-app)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
+                        style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '11px 13px', borderRadius: 3, border: `1.5px solid ${active ? r.color : 'var(--border-light)'}`, background: active ? r.bg : '#fff', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit', transition: 'all 0.15s', boxShadow: active ? `0 0 0 2px ${r.color}22` : 'none' }}>
+                        <div style={{ width: 28, height: 28, borderRadius: 3, background: active ? r.color + '22' : 'var(--bg-app)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
                           <r.Icon size={14} color={active ? r.color : 'var(--text-muted)'} strokeWidth={2} />
                         </div>
                         <div style={{ minWidth: 0 }}>
@@ -203,11 +203,11 @@ export default function RegistroPage() {
               </div>
 
               {error && (
-                <div style={{ color: '#bf2600', background: '#ffebe6', padding: '10px 13px', borderRadius: 8, fontSize: '0.83rem', border: '1px solid #ffbdad' }}>{error}</div>
+                <div style={{ color: '#bf2600', background: '#ffebe6', padding: '10px 13px', borderRadius: 3, fontSize: '0.83rem', border: '1px solid #ffbdad' }}>{error}</div>
               )}
 
               <button type="submit" disabled={loading}
-                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '12px', fontSize: '0.9rem', fontWeight: 700, background: loading ? 'var(--text-muted)' : selectedRole.color, color: '#fff', border: 'none', borderRadius: 9, cursor: loading ? 'not-allowed' : 'pointer', fontFamily: 'inherit', transition: 'background 0.15s' }}>
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '12px', fontSize: '0.9rem', fontWeight: 700, background: loading ? 'var(--text-muted)' : selectedRole.color, color: '#fff', border: 'none', borderRadius: 3, cursor: loading ? 'not-allowed' : 'pointer', fontFamily: 'inherit', transition: 'background 0.15s' }}>
                 {loading ? (
                   <><RefreshCw size={14} strokeWidth={2} style={{ animation: 'spin 1s linear infinite' }} /> Criando…</>
                 ) : (
@@ -220,23 +220,23 @@ export default function RegistroPage() {
 
         {/* ── Right: Password History ── */}
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ background: '#fff', borderRadius: 14, border: '1px solid var(--border-light)', overflow: 'hidden', boxShadow: '0 2px 12px rgba(3,78,162,0.06)' }}>
+          <div style={{ background: '#fff', borderRadius: 3, border: '1px solid var(--border-light)', overflow: 'hidden', boxShadow: '0 2px 12px rgba(3,78,162,0.06)' }}>
             <div style={{ height: 4, background: '#eab308' }} />
             <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-light)', display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div style={{ width: 32, height: 32, borderRadius: 8, background: '#fef9c3', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ width: 32, height: 32, borderRadius: 3, background: '#fef9c3', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <Lock size={15} color="#b45309" strokeWidth={2} />
               </div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 700, fontSize: '0.92rem', color: 'var(--text-primary)' }}>Senhas temporárias pendentes</div>
                 <div style={{ fontSize: '0.73rem', color: 'var(--text-muted)', marginTop: 1 }}>Colaboradores que ainda não fizeram o primeiro acesso</div>
               </div>
-              <span style={{ background: history.length > 0 ? '#fef9c3' : 'var(--bg-app)', color: history.length > 0 ? '#b45309' : 'var(--text-muted)', borderRadius: 20, padding: '2px 10px', fontSize: '0.72rem', fontWeight: 700 }}>
+              <span style={{ background: history.length > 0 ? '#fef9c3' : 'var(--bg-app)', color: history.length > 0 ? '#b45309' : 'var(--text-muted)', borderRadius: 3, padding: '2px 10px', fontSize: '0.72rem', fontWeight: 700 }}>
                 {history.length} pendente{history.length !== 1 ? 's' : ''}
               </span>
             </div>
 
             {removeErr && (
-              <div style={{ margin: '12px 20px 0', padding: '10px 13px', background: '#fee2e2', border: '1px solid #fecaca', borderRadius: 8, color: '#b91c1c', fontSize: '0.83rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ margin: '12px 20px 0', padding: '10px 13px', background: '#fee2e2', border: '1px solid #fecaca', borderRadius: 3, color: '#b91c1c', fontSize: '0.83rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span>{removeErr}</span>
                 <button onClick={() => setRemoveErr(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#b91c1c', fontWeight: 700 }}>×</button>
               </div>
@@ -244,7 +244,7 @@ export default function RegistroPage() {
 
             {history.length === 0 ? (
               <div style={{ padding: '48px 24px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
-                <div style={{ width: 52, height: 52, borderRadius: 14, background: '#f0fdf4', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ width: 52, height: 52, borderRadius: 3, background: '#f0fdf4', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <Check size={24} color="#22c55e" strokeWidth={1.5} />
                 </div>
                 <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', margin: 0, fontWeight: 500 }}>Nenhuma senha temporária pendente.</p>
@@ -268,7 +268,7 @@ export default function RegistroPage() {
                           <div style={{ fontSize: '0.73rem', color: 'var(--text-muted)' }}>@{entry.username}</div>
                         </div>
                         {roleInfo && (
-                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: '0.68rem', fontWeight: 700, padding: '2px 8px', borderRadius: 20, background: roleInfo.bg, color: roleInfo.color, whiteSpace: 'nowrap' }}>
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: '0.68rem', fontWeight: 700, padding: '2px 8px', borderRadius: 3, background: roleInfo.bg, color: roleInfo.color, whiteSpace: 'nowrap' }}>
                             <roleInfo.Icon size={10} strokeWidth={2.5} />
                             {roleInfo.label}
                           </span>
@@ -278,18 +278,18 @@ export default function RegistroPage() {
                         </span>
                       </div>
                       <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                        <code style={{ flex: 1, background: 'var(--bg-app)', borderRadius: 7, padding: '8px 12px', fontSize: '0.92rem', fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '0.06em', fontFamily: 'monospace', border: '1px solid var(--border-light)' }}>
+                        <code style={{ flex: 1, background: 'var(--bg-app)', borderRadius: 3, padding: '8px 12px', fontSize: '0.92rem', fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '0.06em', fontFamily: 'monospace', border: '1px solid var(--border-light)' }}>
                           {entry.temp_password}
                         </code>
                         <button type="button" onClick={() => handleCopy(entry.temp_password, entry.user_id)}
-                          style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '8px 13px', background: copied === entry.user_id ? '#16a34a' : 'var(--primary)', color: '#fff', border: 'none', borderRadius: 7, fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap', flexShrink: 0, transition: 'background 0.15s' }}>
+                          style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '8px 13px', background: copied === entry.user_id ? '#16a34a' : 'var(--primary)', color: '#fff', border: 'none', borderRadius: 3, fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap', flexShrink: 0, transition: 'background 0.15s' }}>
                           {copied === entry.user_id
                             ? <><Check size={11} strokeWidth={2.5} /> Copiado</>
                             : <><Copy size={11} strokeWidth={2} /> Copiar</>
                           }
                         </button>
                         <button type="button" onClick={() => setConfirmDelete(entry)} disabled={removing === entry.user_id}
-                          style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '8px 11px', background: '#fff5f5', border: 'none', borderRadius: 7, color: '#dc2626', fontSize: '0.78rem', fontWeight: 600, cursor: removing === entry.user_id ? 'not-allowed' : 'pointer', fontFamily: 'inherit', flexShrink: 0, transition: 'background 0.15s', opacity: removing === entry.user_id ? 0.6 : 1 }}
+                          style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '8px 11px', background: '#fff5f5', border: 'none', borderRadius: 3, color: '#dc2626', fontSize: '0.78rem', fontWeight: 600, cursor: removing === entry.user_id ? 'not-allowed' : 'pointer', fontFamily: 'inherit', flexShrink: 0, transition: 'background 0.15s', opacity: removing === entry.user_id ? 0.6 : 1 }}
                           onMouseEnter={e => { if (removing !== entry.user_id) e.currentTarget.style.background = '#fee2e2'; }}
                           onMouseLeave={e => (e.currentTarget.style.background = '#fff5f5')}>
                           <Trash2 size={11} strokeWidth={2} />

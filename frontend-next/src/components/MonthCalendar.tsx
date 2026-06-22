@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 import { Calendar, ChevronRight, ChevronLeft, ListTodo } from 'lucide-react';
@@ -65,23 +65,23 @@ export default function MonthCalendar({ items, title, onClickDay, onMonthChange 
   const todayStr = ymd(now);
 
   return (
-    <div style={{ background: '#fff', borderRadius: 16, border: '1px solid var(--border-light)', overflow: 'hidden', boxShadow: '0 2px 12px rgba(3,78,162,0.06)' }}>
+    <div style={{ background: '#fff', borderRadius: 3, border: '1px solid var(--border-light)', overflow: 'hidden', boxShadow: '0 2px 12px rgba(3,78,162,0.06)' }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid var(--border-light)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--primary-light)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ width: 32, height: 32, borderRadius: 3, background: 'var(--primary-light)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Calendar width={16} height={16} color="var(--primary)" />
           </div>
           {title && <span style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--text-primary)' }}>{title}</span>}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <button onClick={prev} style={{ background: 'var(--bg-subtle)', border: '1px solid var(--border-light)', borderRadius: 8, width: 30, height: 30, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', transition: 'all 0.15s' }}>
+          <button onClick={prev} style={{ background: 'var(--bg-subtle)', border: '1px solid var(--border-light)', borderRadius: 3, width: 30, height: 30, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', transition: 'all 0.15s' }}>
             <ChevronLeft width={13} height={13} />
           </button>
           <span style={{ fontWeight: 700, fontSize: '0.92rem', color: 'var(--text-primary)', minWidth: 130, textAlign: 'center' }}>
             {MONTHS[month]} {year}
           </span>
-          <button onClick={next} style={{ background: 'var(--bg-subtle)', border: '1px solid var(--border-light)', borderRadius: 8, width: 30, height: 30, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', transition: 'all 0.15s' }}>
+          <button onClick={next} style={{ background: 'var(--bg-subtle)', border: '1px solid var(--border-light)', borderRadius: 3, width: 30, height: 30, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', transition: 'all 0.15s' }}>
             <ChevronRight width={13} height={13} />
           </button>
         </div>

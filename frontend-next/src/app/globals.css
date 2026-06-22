@@ -188,12 +188,12 @@ input::placeholder, textarea::placeholder { color: var(--text-3); opacity: 1; }
   box-shadow: 6px 0 28px rgba(4,20,45,0.28);
 }
 
-/* Faixa de cores do Gov-PI no topo */
+/* Faixa de 4 cores do Gov-PI no topo */
 .sidebar::before {
   content: '';
   display: block;
   height: 3px;
-  background: linear-gradient(90deg, #034EA2 0 62%, #E0A92E 62% 100%);
+  background: linear-gradient(90deg, #034EA2 0 40%, #E0A92E 40% 55%, #b42318 55% 75%, #1B8A4B 75%);
   flex-shrink: 0;
 }
 

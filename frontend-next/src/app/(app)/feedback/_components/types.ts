@@ -1,4 +1,4 @@
-import { Info, AlertCircle, AlertTriangle, Flame } from 'lucide-react';
+﻿import { Info, AlertCircle, AlertTriangle, Flame } from 'lucide-react';
 import React from 'react';
 
 export type FeedbackType = 'bug' | 'melhoria';
@@ -47,6 +47,6 @@ export function truncate(text: string, max: number) {
 
 export const inp: React.CSSProperties = {
   width: '100%', padding: '8px 12px', border: '1px solid var(--border-light)',
-  borderRadius: 6, fontSize: '0.875rem', fontFamily: 'inherit', outline: 'none',
+  borderRadius: 3, fontSize: '0.875rem', fontFamily: 'inherit', outline: 'none',
   boxSizing: 'border-box', background: 'var(--bg-input)', color: 'var(--text-primary)',
 };

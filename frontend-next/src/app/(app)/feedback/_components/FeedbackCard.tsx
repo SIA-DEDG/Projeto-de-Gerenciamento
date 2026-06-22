@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useRef, useEffect } from 'react';
 import { Bug, Lightbulb, ThumbsUp, MessageSquare, Pencil, Trash2, Triangle, Check } from 'lucide-react';
@@ -53,7 +53,7 @@ export default function FeedbackCard({ item, currentUserId, currentUserName, isA
   return (
     <div style={{
       background: 'var(--bg-card)',
-      borderRadius: 8,
+      borderRadius: 3,
       border: `1px solid ${isSelected ? 'var(--primary)' : 'var(--border-light)'}`,
       boxShadow: 'var(--shadow-card)',
       marginBottom: 12,
@@ -63,13 +63,13 @@ export default function FeedbackCard({ item, currentUserId, currentUserName, isA
       {selectionMode && (
         <div
           onClick={() => onToggleSelect?.(item.id)}
-          style={{ position: 'absolute', inset: 0, zIndex: 2, cursor: 'pointer', borderRadius: 8 }}
+          style={{ position: 'absolute', inset: 0, zIndex: 2, cursor: 'pointer', borderRadius: 3 }}
         />
       )}
       {selectionMode && (
         <div style={{
           position: 'absolute', top: 10, left: 10, zIndex: 3,
-          width: 18, height: 18, borderRadius: 4,
+          width: 18, height: 18, borderRadius: 3,
           border: `2px solid ${isSelected ? 'var(--primary)' : '#c1c7d0'}`,
           background: isSelected ? 'var(--primary)' : '#fff',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -80,7 +80,7 @@ export default function FeedbackCard({ item, currentUserId, currentUserName, isA
       )}
       <div style={{ position: 'absolute', top: 12, right: 12, display: 'flex', alignItems: 'center', gap: 6, zIndex: 1 }}>
         <span style={{
-          padding: '3px 11px', borderRadius: 20, fontSize: '0.7rem', fontWeight: 700,
+          padding: '3px 11px', borderRadius: 3, fontSize: '0.7rem', fontWeight: 700,
           background: item.tipo === 'bug' ? '#fef2f2' : 'rgba(3,78,162,0.08)',
           color: item.tipo === 'bug' ? '#b91c1c' : 'var(--primary)',
           border: `1px solid ${item.tipo === 'bug' ? '#fca5a5' : 'rgba(3,78,162,0.22)'}`,
@@ -95,7 +95,7 @@ export default function FeedbackCard({ item, currentUserId, currentUserName, isA
               onClick={() => setMenuOpen(v => !v)}
               title="Opções"
               style={{
-                width: 28, height: 28, borderRadius: 6,
+                width: 28, height: 28, borderRadius: 3,
                 background: menuOpen ? 'var(--bg-hover)' : 'none',
                 border: `1px solid ${menuOpen ? 'var(--border-light)' : 'transparent'}`,
                 cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -112,7 +112,7 @@ export default function FeedbackCard({ item, currentUserId, currentUserName, isA
               <div style={{
                 position: 'absolute', top: 32, right: 0, zIndex: 50,
                 background: '#fff', border: '1px solid var(--border-light)',
-                borderRadius: 8, boxShadow: '0 4px 16px rgba(3,78,162,0.12)',
+                borderRadius: 3, boxShadow: '0 4px 16px rgba(3,78,162,0.12)',
                 minWidth: 130,
               }}>
                 {isAdmin && (
@@ -168,7 +168,7 @@ export default function FeedbackCard({ item, currentUserId, currentUserName, isA
             display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
             background: voted ? 'rgba(3,78,162,0.07)' : 'var(--bg-subtle)',
             border: `1.5px solid ${voted ? 'var(--primary)' : 'var(--border-light)'}`,
-            borderRadius: 8, padding: '5px 4px',
+            borderRadius: 3, padding: '5px 4px',
             cursor: isLoading ? 'wait' : 'pointer',
             transition: 'all 0.15s',
             fontFamily: 'inherit',
@@ -232,7 +232,7 @@ export default function FeedbackCard({ item, currentUserId, currentUserName, isA
 
             {/* Severity badge */}
             {sv && (
-              <span style={{ background: sv.bg, color: sv.color, border: `1px solid ${sv.border}`, borderRadius: 4, padding: '2px 8px', fontSize: '0.7rem', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+              <span style={{ background: sv.bg, color: sv.color, border: `1px solid ${sv.border}`, borderRadius: 3, padding: '2px 8px', fontSize: '0.7rem', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                 <sv.Icon size={11} />
                 {item.severidade}
               </span>
@@ -244,7 +244,7 @@ export default function FeedbackCard({ item, currentUserId, currentUserName, isA
                 onClick={() => onStatusChange(item.id, answered ? 'pendente' : 'respondida')}
                 title={answered ? 'Marcar como pendente' : 'Marcar como respondida'}
                 style={{
-                  padding: '2px 9px', borderRadius: 4, fontSize: '0.7rem', fontWeight: 700,
+                  padding: '2px 9px', borderRadius: 3, fontSize: '0.7rem', fontWeight: 700,
                   background: answered ? 'rgba(0,121,50,0.09)' : 'var(--bg-subtle)',
                   color: answered ? '#007932' : 'var(--text-muted)',
                   border: `1px solid ${answered ? 'rgba(0,121,50,0.22)' : 'var(--border-light)'}`,
@@ -257,7 +257,7 @@ export default function FeedbackCard({ item, currentUserId, currentUserName, isA
               </button>
             ) : (
             <span style={{
-              padding: '2px 9px', borderRadius: 4, fontSize: '0.7rem', fontWeight: 700,
+              padding: '2px 9px', borderRadius: 3, fontSize: '0.7rem', fontWeight: 700,
               background: answered ? 'rgba(0,121,50,0.09)' : 'var(--bg-subtle)',
               color: answered ? '#007932' : 'var(--text-muted)',
               border: `1px solid ${answered ? 'rgba(0,121,50,0.22)' : 'var(--border-light)'}`,
@@ -280,13 +280,13 @@ export default function FeedbackCard({ item, currentUserId, currentUserName, isA
                     <a key={i} href={img.dados} target="_blank" rel="noreferrer">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={img.dados} alt={img.nome}
-                        style={{ width: 84, height: 84, objectFit: 'cover', borderRadius: 6, border: '1px solid var(--border-light)', cursor: 'zoom-in' }} />
+                        style={{ width: 84, height: 84, objectFit: 'cover', borderRadius: 3, border: '1px solid var(--border-light)', cursor: 'zoom-in' }} />
                     </a>
                   ))}
                 </div>
               )}
               {answered && (
-                <div style={{ borderRadius: 6, border: '1px solid var(--border-light)', overflow: 'hidden', marginBottom: 4 }}>
+                <div style={{ borderRadius: 3, border: '1px solid var(--border-light)', overflow: 'hidden', marginBottom: 4 }}>
                   <div style={{ padding: '9px 14px', background: 'var(--bg-subtle)', borderBottom: '1px solid var(--border-light)' }}>
                     <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Resposta oficial</span>
                   </div>
