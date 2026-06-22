@@ -66,24 +66,54 @@ function KanbanColumn({
     return () => document.removeEventListener('mousedown', handler);
   }, [menuOpen]);
 
+  /* Cor do dot/tint da coluna conforme design */
+  const dotColor = col.color;
+  const tintColor = col.id === 'pending' ? 'rgba(154,161,172,0.12)'
+    : col.id === 'in_progress' ? 'rgba(3,78,162,0.1)'
+    : col.id === 'review'     ? 'rgba(224,169,46,0.1)'
+    : 'rgba(27,138,75,0.1)';
+  const titleColor = col.id === 'pending' ? 'var(--text-3)'
+    : col.id === 'in_progress' ? '#034EA2'
+    : col.id === 'review'     ? '#A87A00'
+    : '#157F3C';
+
   return (
-    <div ref={setNodeRef} className={`kanban-column${isOver && !isSelecting ? ' drag-over' : ''}`}>
-      <div className="column-header">
-        <div className="column-header-left">
-          <span className="column-status-bar" style={{ background: col.color }} />
-          <span className="column-title">{col.title}</span>
-          <span className="column-count">{tasks.length}</span>
-        </div>
-        <div style={{ position: 'relative' }} ref={menuRef}>
-          <button className="column-action-btn" onClick={() => setMenuOpen((o) => !o)} title="Opções">
+    <div
+      ref={setNodeRef}
+      onDrop={undefined}
+      style={{
+        borderRight: '1px solid var(--line-1)',
+        borderTop: `2px solid ${dotColor}`,
+        minHeight: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        background: isOver && !isSelecting ? 'var(--surface-2)' : 'var(--surface)',
+        transition: 'background 0.12s',
+      }}
+    >
+      {/* Header da coluna — sticky */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '14px 20px', position: 'sticky', top: 0, background: 'var(--surface)', zIndex: 1, borderBottom: '1px solid var(--line-2)' }}>
+        <span style={{ width: 9, height: 9, borderRadius: 2, background: dotColor, boxShadow: `0 0 0 3px ${tintColor}`, flexShrink: 0 }} />
+        <span className="mono" style={{ fontWeight: 600, fontSize: '0.72rem', color: titleColor, letterSpacing: '1.2px', textTransform: 'uppercase' }}>{col.title}</span>
+        <span className="mono" style={{ fontSize: '0.68rem', fontWeight: 600, color: titleColor, background: tintColor, padding: '1px 8px', borderRadius: 3, marginLeft: 2 }}>{tasks.length}</span>
+        <div style={{ position: 'relative', marginLeft: 'auto' }} ref={menuRef}>
+          <button
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)', display: 'flex', alignItems: 'center', padding: 4, borderRadius: 3 }}
+            onClick={() => setMenuOpen((o) => !o)}
+            title="Opções"
+            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--surface-2)'; (e.currentTarget as HTMLElement).style.color = 'var(--text)'; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'none'; (e.currentTarget as HTMLElement).style.color = 'var(--text-3)'; }}
+          >
             <Ellipsis size={14} />
           </button>
           {menuOpen && (
             <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: 4, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', zIndex: 100, minWidth: 160, padding: '2px 0' }}>
-              <button style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 12px', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.78rem', color: 'var(--text)', fontFamily: 'inherit' }}
+              <button
+                style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 12px', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.78rem', color: 'var(--text)', fontFamily: 'inherit' }}
                 onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--surface-2)')}
                 onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
-                onClick={() => { setMenuOpen(false); onStartSelect(); }}>
+                onClick={() => { setMenuOpen(false); onStartSelect(); }}
+              >
                 Selecionar itens
               </button>
             </div>
@@ -91,7 +121,8 @@ function KanbanColumn({
         </div>
       </div>
 
-      <div className="kanban-cards">
+      {/* Cards */}
+      <div style={{ flex: 1 }}>
         {tasks.map((task) => (
           <KanbanCard
             key={task.id}
@@ -103,14 +134,18 @@ function KanbanColumn({
             onToggleSelect={onToggleSelect}
           />
         ))}
+        {!isSelecting && (
+          <button
+            onClick={() => onAddCard(col.id)}
+            style={{ display: 'flex', alignItems: 'center', gap: 7, width: '100%', padding: '13px 24px', border: 'none', borderTop: '1px solid var(--line-2)', background: 'none', color: 'var(--text-3)', fontSize: '0.78rem', fontWeight: 500, cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = '#034EA2'; (e.currentTarget as HTMLElement).style.background = 'var(--surface-2)'; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--text-3)'; (e.currentTarget as HTMLElement).style.background = 'none'; }}
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+            Adicionar
+          </button>
+        )}
       </div>
-
-      {!isSelecting && (
-        <button className="column-add-btn" onClick={() => onAddCard(col.id)}>
-          <Plus size={13} />
-          Adicionar atividade
-        </button>
-      )}
     </div>
   );
 }
@@ -298,56 +333,97 @@ export default function BoardPage() {
 
   const hasFilters = filterUser || filterPriority || filterProject || filterDateFrom || filterDateTo;
 
+  /* Stats por status (conforme design — mostrado no header) */
+  const boardStats = useMemo(() => [
+    { label: 'PENDENTE',    value: filteredTasks.filter((t) => t.status_group === 'pending').length,    color: '#9aa1ac' },
+    { label: 'ANDAMENTO',  value: filteredTasks.filter((t) => t.status_group === 'in_progress').length, color: '#034EA2' },
+    { label: 'REVISÃO',    value: filteredTasks.filter((t) => t.status_group === 'review').length,      color: '#E0A92E' },
+    { label: 'CONCLUÍDO',  value: filteredTasks.filter((t) => t.status_group === 'done').length,        color: '#1B8A4B' },
+  ], [filteredTasks]);
+
   return (
     <>
-      {/* Topbar */}
-      <div className="topbar">
-        <div className="topbar-left">
-          <h1 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text)' }}>Atividades</h1>
-          <div className="view-toggle">
-            <button className={`view-toggle-btn${view === 'kanban' ? ' active' : ''}`} onClick={() => setView('kanban')}><LayoutGrid size={13} />Quadro</button>
-            <button className={`view-toggle-btn${view === 'list' ? ' active' : ''}`} onClick={() => setView('list')}><List size={13} />Lista</button>
-            <button className={`view-toggle-btn${view === 'calendar' ? ' active' : ''}`} onClick={() => setView('calendar')}><Calendar size={13} />Calendário</button>
+      {/* ── Header de tela (eyebrow + título + stats) ── */}
+      <div style={{ padding: '26px 32px 0', flexShrink: 0, background: 'var(--surface)' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 20 }}>
+          <div>
+            <div className="mono" style={{ fontSize: '0.68rem', fontWeight: 500, color: 'var(--text-3)', letterSpacing: '1.4px', textTransform: 'uppercase' }}>
+              Planejamento
+            </div>
+            <h1 style={{ fontSize: '1.7rem', fontWeight: 600, letterSpacing: '-0.7px', color: 'var(--text)', marginTop: 6 }}>Atividades</h1>
           </div>
-        </div>
-        <div className="topbar-right">
-          <div className="topbar-search">
-            <Search size={13} style={{ color: 'var(--text-3)', flexShrink: 0 }} />
-            <input type="text" placeholder="Pesquisar..." value={search} onChange={(e) => setSearch(e.target.value)} />
+          {/* Stats por status */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 22, paddingBottom: 3 }}>
+            {boardStats.map((s) => (
+              <div key={s.label} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ width: 8, height: 8, borderRadius: 2, background: s.color, boxShadow: `0 0 0 3px ${s.color}1f`, flexShrink: 0 }} />
+                <span className="mono" style={{ fontSize: '1.05rem', fontWeight: 600, color: 'var(--text)' }}>{s.value}</span>
+                <span className="mono" style={{ fontSize: '0.66rem', letterSpacing: '0.5px', textTransform: 'uppercase', color: 'var(--text-3)' }}>{s.label}</span>
+              </div>
+            ))}
           </div>
-          <button className="btn btn-secondary btn-sm" onClick={() => setImportModal(true)}><FileUp size={13} />Importar</button>
-          <button className="btn btn-secondary btn-sm" onClick={exportCSV} disabled={filteredTasks.length === 0}><Download size={13} />CSV</button>
-          <button className="btn btn-primary btn-sm" onClick={() => setActivityModal({ open: true, task: null })}><Plus size={13} />Nova atividade</button>
         </div>
       </div>
 
-      {/* Toolbar de filtros */}
-      <div className="toolbar">
-        <Funnel size={12} style={{ color: 'var(--text-3)', flexShrink: 0 }} />
-        <select className={`filter-chip${filterUser ? ' active' : ''}`} value={filterUser} onChange={(e) => setFilterUser(e.target.value)}>
-          <option value="">Responsável</option>
-          {users.map((u) => <option key={u.id} value={u.name}>{u.name}</option>)}
-        </select>
-        <select className={`filter-chip${filterPriority ? ' active' : ''}`} value={filterPriority} onChange={(e) => setFilterPriority(e.target.value)}>
-          <option value="">Prioridade</option>
-          <option value="Alta">Alta</option>
-          <option value="Média">Média</option>
-          <option value="Baixa">Baixa</option>
-        </select>
-        <select className={`filter-chip${filterProject ? ' active' : ''}`} value={filterProject} onChange={(e) => setFilterProject(e.target.value)}>
-          <option value="">Projeto</option>
-          {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-        </select>
-        <div className={`filter-date-range${filterDateFrom || filterDateTo ? ' filter-chip active' : ''}`}>
-          <span className="filter-date-label">Criado</span>
-          <input type="date" value={filterDateFrom} onChange={(e) => setFilterDateFrom(e.target.value)} className="filter-date-input" />
-          <span className="filter-date-label">→</span>
-          <input type="date" value={filterDateTo} onChange={(e) => setFilterDateTo(e.target.value)} className="filter-date-input" />
+      {/* ── Barra de abas + toolbar (Quadro/Lista/Calendário + busca + filtros) ── */}
+      <div style={{ borderBottom: '1px solid var(--line-1)', flexShrink: 0, background: 'var(--surface)' }}>
+        {/* Tab bar */}
+        <div style={{ display: 'flex', alignItems: 'stretch', overflow: 'hidden', padding: '0 28px', gap: 0 }}>
+          {(['kanban', 'list', 'calendar'] as const).map((v) => {
+            const labels = { kanban: 'Quadro', list: 'Lista', calendar: 'Calendário' };
+            const isActive = view === v;
+            return (
+              <button key={v} onClick={() => setView(v)}
+                style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0 16px', height: 40, border: 'none', borderBottom: isActive ? '2px solid #034EA2' : '2px solid transparent', background: 'transparent', color: isActive ? '#034EA2' : 'var(--text-2)', fontSize: '0.82rem', fontWeight: isActive ? 600 : 400, cursor: 'pointer', flexShrink: 0, fontFamily: 'inherit', transition: 'color 0.12s, border-color 0.12s' }}>
+                {labels[v]}
+              </button>
+            );
+          })}
+          {/* Nova atividade — direita da barra */}
+          <button onClick={() => setActivityModal({ open: true, task: null })}
+            style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '0 16px', height: 40, border: 'none', borderBottom: '2px solid transparent', background: 'transparent', color: '#034EA2', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', flexShrink: 0, marginLeft: 'auto', fontFamily: 'inherit' }}>
+            <Plus size={14} />
+            Nova atividade
+          </button>
         </div>
-        {hasFilters && (
-          <button className="filter-clear-btn" onClick={() => { setFilterUser(''); setFilterPriority(''); setFilterProject(''); setFilterDateFrom(''); setFilterDateTo(''); }}>✕ Limpar</button>
-        )}
+
+        {/* Toolbar de filtros */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 18, padding: '18px 32px', flexShrink: 0, flexWrap: 'wrap' }}>
+          {/* Busca */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '7px 11px', width: 230 }}>
+            <Search size={14} style={{ color: 'var(--text-3)', flexShrink: 0 }} />
+            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Pesquisar..." style={{ border: 'none', outline: 'none', background: 'none', fontSize: '0.82rem', color: 'var(--text)', width: '100%', fontFamily: 'inherit' }} />
+          </div>
+          <div style={{ width: 1, height: 20, background: 'var(--border)' }} />
+          <select value={filterUser} onChange={(e) => setFilterUser(e.target.value)} className={`filter-chip${filterUser ? ' active' : ''}`}>
+            <option value="">Responsável</option>
+            {users.map((u) => <option key={u.id} value={u.name}>{u.name}</option>)}
+          </select>
+          <select value={filterPriority} onChange={(e) => setFilterPriority(e.target.value)} className={`filter-chip${filterPriority ? ' active' : ''}`}>
+            <option value="">Prioridade</option>
+            <option value="Alta">Alta</option>
+            <option value="Média">Média</option>
+            <option value="Baixa">Baixa</option>
+          </select>
+          <select value={filterProject} onChange={(e) => setFilterProject(e.target.value)} className={`filter-chip${filterProject ? ' active' : ''}`}>
+            <option value="">Projeto</option>
+            {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+          </select>
+          {hasFilters && (
+            <button onClick={() => { setFilterUser(''); setFilterPriority(''); setFilterProject(''); setFilterDateFrom(''); setFilterDateTo(''); }}
+              className="mono" style={{ fontSize: '0.72rem', fontWeight: 500, color: '#034EA2', background: 'none', border: 'none', cursor: 'pointer', letterSpacing: '0.5px' }}>
+              LIMPAR
+            </button>
+          )}
+          <div style={{ flex: 1 }} />
+          <span className="mono" style={{ fontSize: '0.72rem', color: 'var(--text-3)', letterSpacing: '0.5px' }}>
+            {filteredTasks.length} ATIVIDADES
+          </span>
+          <button className="btn btn-secondary btn-sm" onClick={() => setImportModal(true)}><FileUp size={13} />Importar</button>
+          <button className="btn btn-secondary btn-sm" onClick={exportCSV} disabled={filteredTasks.length === 0}><Download size={13} />CSV</button>
+        </div>
       </div>
+
 
       {/* Conteúdo */}
       {loading ? (
@@ -399,7 +475,8 @@ export default function BoardPage() {
         </div>
       ) : (
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-          <div className="kanban-board" style={{ flex: 1 }}>
+          {/* Kanban: grid 4 colunas — separadas por hairline, sem padding lateral */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', alignItems: 'start', flex: 1, overflowY: 'auto', minHeight: 0 }}>
             {COLUMNS.map((col) => (
               <KanbanColumn
                 key={col.id}

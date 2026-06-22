@@ -5,8 +5,7 @@ import Link from 'next/link';
 import {
   LayoutGrid, User, CalendarDays, CalendarMinus, Folder,
   ChartPie, Logs, Settings, MessageSquareWarning,
-  UserRoundPlus, UsersRound, LogOut, Sun, Moon, Users,
-  Archive,
+  UserRoundPlus, UsersRound, Archive, LogOut, Moon, Sun,
 } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { getUser, clearAuth, canManageUsers } from '@/lib/auth';
@@ -15,13 +14,13 @@ import { onTasksChanged } from '@/lib/taskEvents';
 import { useRefetchOnFocus } from '@/lib/useRefetchOnFocus';
 
 const ROLE_LABELS: Record<string, string> = {
-  Estagiario: 'Estagiário(a)',
-  Funcionario: 'Funcionário(a)',
-  Tecnico: 'Técnico(a)',
-  Coordenador: 'Coordenador(a)',
-  Gerente: 'Gerente',
-  Diretor: 'Diretor(a)',
-  Admin: 'Administrador(a)',
+  Estagiario: 'ESTAGIÁRIO(A)',
+  Funcionario: 'FUNCIONÁRIO(A)',
+  Tecnico: 'TÉCNICO(A)',
+  Coordenador: 'COORDENADOR(A)',
+  Gerente: 'GERENTE',
+  Diretor: 'DIRETOR(A)',
+  Admin: 'ADMIN',
 };
 
 interface Props {
@@ -73,20 +72,20 @@ export default function Sidebar({ onToggleTheme, isDark }: Props) {
   useEffect(() => onTasksChanged(loadPendingFeedback), [loadPendingFeedback]);
 
   useEffect(() => {
-    function handleClick(e: MouseEvent) {
+    function handler(e: MouseEvent) {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
     }
-    if (menuOpen) document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
+    if (menuOpen) document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
   }, [menuOpen]);
 
-  function handleLogout() {
-    clearAuth();
-    router.replace('/login');
-  }
+  function handleLogout() { clearAuth(); router.replace('/login'); }
 
   function isActive(path: string) {
     return pathname === path ? 'sidebar-nav-link active' : 'sidebar-nav-link';
+  }
+  function isActivePrefix(prefix: string) {
+    return pathname.startsWith(prefix) ? 'sidebar-nav-link active' : 'sidebar-nav-link';
   }
 
   const isAdmin = canManageUsers(user?.role);
@@ -95,10 +94,10 @@ export default function Sidebar({ onToggleTheme, isDark }: Props) {
     <aside className="sidebar">
       {/* Logo */}
       <div className="sidebar-logo">
-        <div className="sidebar-logo-mark">TS</div>
-        <div>
-          <div className="sidebar-logo-name">Tasks SIA</div>
-          <div className="sidebar-logo-sub">DEDG · GOV-PI</div>
+        <div className="sidebar-logo-mark">★</div>
+        <div className="rail-hide" style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.2 }}>
+          <span className="sidebar-logo-name">Tasks SIA</span>
+          <span className="sidebar-logo-sub">DEDG · GOV-PI</span>
         </div>
       </div>
 
@@ -110,31 +109,37 @@ export default function Sidebar({ onToggleTheme, isDark }: Props) {
           <ul className="sidebar-nav">
             <li>
               <Link href="/" className={isActive('/')}>
-                <span className="nav-icon"><LayoutGrid size={16} /></span>
-                Atividades
+                <span className="nav-icon"><LayoutGrid size={17} /></span>
+                <span className="rail-label">Atividades</span>
               </Link>
             </li>
             <li>
               <Link href="/minhas-atividades" className={isActive('/minhas-atividades')} style={{ justifyContent: 'space-between' }}>
-                <span style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
-                  <span className="nav-icon"><User size={16} /></span>
-                  Minhas Atividades
+                <span style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
+                  <span className="nav-icon"><User size={17} /></span>
+                  <span className="rail-label">Minhas atividades</span>
                 </span>
                 {pendingCount > 0 && (
-                  <span className="sidebar-nav-badge">{pendingCount > 99 ? '99+' : pendingCount}</span>
+                  <span className="sidebar-nav-badge rail-label">{pendingCount > 99 ? '99+' : pendingCount}</span>
                 )}
               </Link>
             </li>
             <li>
               <Link href="/eventos" className={isActive('/eventos')}>
-                <span className="nav-icon"><CalendarDays size={16} /></span>
-                Eventos
+                <span className="nav-icon"><CalendarDays size={17} /></span>
+                <span className="rail-label">Eventos</span>
               </Link>
             </li>
             <li>
               <Link href="/faltas" className={isActive('/faltas')}>
-                <span className="nav-icon"><CalendarMinus size={16} /></span>
-                Faltas
+                <span className="nav-icon"><CalendarMinus size={17} /></span>
+                <span className="rail-label">Faltas</span>
+              </Link>
+            </li>
+            <li>
+              <Link href="/arquivadas" className={isActive('/arquivadas')}>
+                <span className="nav-icon"><Archive size={17} /></span>
+                <span className="rail-label">Arquivadas</span>
               </Link>
             </li>
           </ul>
@@ -148,20 +153,20 @@ export default function Sidebar({ onToggleTheme, isDark }: Props) {
           <ul className="sidebar-nav">
             <li>
               <Link href="/dashboards" className={isActive('/dashboards')}>
-                <span className="nav-icon"><ChartPie size={16} /></span>
-                Dashboards
+                <span className="nav-icon"><ChartPie size={17} /></span>
+                <span className="rail-label">Dashboards</span>
               </Link>
             </li>
             <li>
               <Link href="/projetos" className={isActive('/projetos')}>
-                <span className="nav-icon"><Folder size={16} /></span>
-                Projetos
+                <span className="nav-icon"><Folder size={17} /></span>
+                <span className="rail-label">Projetos</span>
               </Link>
             </li>
             <li>
               <Link href="/logs" className={isActive('/logs')}>
-                <span className="nav-icon"><Logs size={16} /></span>
-                Logs
+                <span className="nav-icon"><Logs size={17} /></span>
+                <span className="rail-label">Logs</span>
               </Link>
             </li>
           </ul>
@@ -175,66 +180,64 @@ export default function Sidebar({ onToggleTheme, isDark }: Props) {
           <ul className="sidebar-nav">
             <li>
               <Link href="/configuracoes" className={isActive('/configuracoes')}>
-                <span className="nav-icon"><Settings size={16} /></span>
-                Configurações
+                <span className="nav-icon"><Settings size={17} /></span>
+                <span className="rail-label">Configurações</span>
               </Link>
             </li>
             <li>
               <Link href="/feedback" className={isActive('/feedback')} style={{ justifyContent: 'space-between' }}>
-                <span style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
-                  <span className="nav-icon"><MessageSquareWarning size={16} /></span>
-                  Feedback
+                <span style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
+                  <span className="nav-icon"><MessageSquareWarning size={17} /></span>
+                  <span className="rail-label">Feedback</span>
                 </span>
                 {pendingCountFeedback > 0 && (
-                  <span className="sidebar-nav-badge">{pendingCountFeedback > 99 ? '99+' : pendingCountFeedback}</span>
+                  <span className="sidebar-nav-badge rail-label">{pendingCountFeedback > 99 ? '99+' : pendingCountFeedback}</span>
                 )}
               </Link>
             </li>
-            <li>
-              <Link href="/arquivadas" className={isActive('/arquivadas')}>
-                <span className="nav-icon"><Archive size={16} /></span>
-                Arquivadas
-              </Link>
-            </li>
-            <li>
-              <Link href="/equipe" className={isActive('/equipe')}>
-                <span className="nav-icon"><Users size={16} /></span>
-                Equipe
-              </Link>
-            </li>
-            {isAdmin && (
-              <li>
-                <Link href="/admin/registro" className={pathname.startsWith('/admin') ? 'sidebar-nav-link active' : 'sidebar-nav-link'}>
-                  <span className="nav-icon"><UserRoundPlus size={16} /></span>
-                  Cadastrar usuário
-                </Link>
-              </li>
-            )}
-            {isAdmin && (
-              <li>
-                <Link href="/admin/usuarios" className={isActive('/admin/usuarios')}>
-                  <span className="nav-icon"><UsersRound size={16} /></span>
-                  Gerenciar usuários
-                </Link>
-              </li>
-            )}
           </ul>
         </div>
+
+        {/* ADMIN — condicional */}
+        {isAdmin && (
+          <>
+            <div className="sidebar-divider" />
+            <div className="sidebar-group">
+              <span className="sidebar-group-label">Admin</span>
+              <ul className="sidebar-nav">
+                <li>
+                  <Link href="/admin/registro" className={isActivePrefix('/admin/registro')}>
+                    <span className="nav-icon"><UserRoundPlus size={17} /></span>
+                    <span className="rail-label">Cadastrar usuário</span>
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/admin/usuarios" className={isActive('/admin/usuarios')}>
+                    <span className="nav-icon"><UsersRound size={17} /></span>
+                    <span className="rail-label">Gerenciar usuários</span>
+                  </Link>
+                </li>
+              </ul>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Rodapé */}
       <div className="sidebar-footer">
+        {/* Botão alternar tema */}
         <button className="sidebar-theme-btn" onClick={onToggleTheme}>
           <span className="nav-icon">
-            {isDark ? <Sun size={15} /> : <Moon size={15} />}
+            {isDark ? <Sun size={16} /> : <Moon size={16} />}
           </span>
-          {isDark ? 'Tema claro' : 'Tema escuro'}
+          <span className="rail-label">{isDark ? 'Tema claro' : 'Tema escuro'}</span>
         </button>
 
+        {/* Usuário */}
         <div className="sidebar-user-wrap" ref={menuRef}>
           <button className="sidebar-user-btn" onClick={() => setMenuOpen((o) => !o)}>
             <div className="sidebar-avatar">{initials}</div>
-            <div className="sidebar-user-info">
+            <div className="sidebar-user-info rail-hide">
               <span className="sidebar-user-name">{user?.name ?? 'Usuário'}</span>
               <span className="sidebar-user-role">{ROLE_LABELS[user?.role ?? ''] ?? user?.role ?? ''}</span>
             </div>
@@ -242,11 +245,7 @@ export default function Sidebar({ onToggleTheme, isDark }: Props) {
 
           {menuOpen && (
             <div className="sidebar-user-menu">
-              <Link
-                href="/configuracoes"
-                className="sidebar-user-menu-item"
-                onClick={() => setMenuOpen(false)}
-              >
+              <Link href="/configuracoes" className="sidebar-user-menu-item" onClick={() => setMenuOpen(false)}>
                 <Settings size={14} />
                 Configurações
               </Link>

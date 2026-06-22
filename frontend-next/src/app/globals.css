@@ -1,5 +1,5 @@
-/* ── Fontes ──────────────────────────────────────────────────────────────── */
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+/* ── Fontes — IBM Plex Sans + IBM Plex Mono (design Tasks SIA.dc.html) ── */
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
 
 /* ── Animações globais ───────────────────────────────────────────────────── */
 @keyframes spin        { to   { transform: rotate(360deg); } }
@@ -84,16 +84,17 @@
   --topbar-height: var(--topbar-h);
 }
 
+/* Tema escuro — GitHub style (conforme Tasks SIA.dc.html) */
 .theme-dark {
-  --bg:        #0e131a;
-  --surface:   #141a22;
-  --surface-2: #1b222c;
-  --line-1:    #283341;
-  --line-2:    #222b36;
-  --border:    #2e3947;
-  --text:      #e9ecf0;
-  --text-2:    #a6aeba;
-  --text-3:    #717a88;
+  --bg:        #0d1117;
+  --surface:   #161b22;
+  --surface-2: #21262d;
+  --line-1:    #30363d;
+  --line-2:    #21262d;
+  --border:    #3a434e;
+  --text:      #e6edf3;
+  --text-2:    #9da7b3;
+  --text-3:    #6e7681;
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -104,7 +105,7 @@
 html { font-size: 14px; -webkit-font-smoothing: antialiased; }
 
 body {
-  font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
   background: var(--bg);
   color: var(--text);
   line-height: 1.5;
@@ -156,89 +157,140 @@ input::placeholder, textarea::placeholder { color: var(--text-3); opacity: 1; }
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
-   SIDEBAR
+   SIDEBAR — Rail navy colapsável (conforme Tasks SIA.dc.html)
    ══════════════════════════════════════════════════════════════════════════ */
-.sidebar {
-  width: var(--sidebar-w);
-  min-width: var(--sidebar-w);
-  background: var(--surface);
-  border-right: 1px solid var(--line-1);
-  display: flex;
-  flex-direction: column;
-  z-index: 10;
-  overflow: hidden;
+
+/* Wrapper: fixa a largura mínima para o rail */
+.sidebar-rail-wrapper {
+  flex: 0 0 64px;
+  position: relative;
+  z-index: 40;
+  align-self: stretch;
 }
 
+/* Rail: absoluto, expande no hover */
+.sidebar {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 64px;
+  background: #072f63;
+  border-right: 1px solid rgba(255,255,255,0.07);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: width 0.22s cubic-bezier(0.4,0,0.2,1);
+  z-index: 40;
+}
+.sidebar:hover {
+  width: 228px;
+  box-shadow: 6px 0 28px rgba(4,20,45,0.28);
+}
+
+/* Faixa de cores do Gov-PI no topo */
+.sidebar::before {
+  content: '';
+  display: block;
+  height: 3px;
+  background: linear-gradient(90deg, #034EA2 0 62%, #E0A92E 62% 100%);
+  flex-shrink: 0;
+}
+
+/* Textos/spans que ficam ocultos quando colapsado */
+.sidebar:not(:hover) .rail-label,
+.sidebar:not(:hover) .rail-hide {
+  opacity: 0;
+  pointer-events: none;
+}
+.rail-label, .rail-hide { transition: opacity 0.13s; }
+
+/* Seções de grupo — ocultas quando colapsado */
+.sidebar:not(:hover) .sidebar-group-label { display: none; }
+
+/* Logo */
 .sidebar-logo {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 16px 16px 14px;
-  border-bottom: 1px solid var(--line-1);
+  gap: 11px;
+  padding: 16px 20px 14px;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.04);
   flex-shrink: 0;
 }
 
 .sidebar-logo-mark {
-  width: 30px;
-  height: 30px;
-  background: var(--navy);
-  color: #fff;
-  font-size: 0.78rem;
-  font-weight: 800;
+  width: 34px;
+  height: 34px;
+  background: rgba(255,255,255,0.12);
+  color: #E0A92E;
+  font-size: 17px;
+  line-height: 1;
   border-radius: var(--radius);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  box-shadow: 0 0 0 3px rgba(255,255,255,0.05);
 }
 
-.sidebar-logo-name { font-size: 0.88rem; font-weight: 700; color: var(--text); line-height: 1.2; }
-.sidebar-logo-sub  { font-size: 0.6rem; font-weight: 500; color: var(--text-3); font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.08em; }
+.sidebar-logo-name { font-size: 0.95rem; font-weight: 600; color: #fff; letter-spacing: -0.2px; line-height: 1.2; white-space: nowrap; }
+.sidebar-logo-sub  { font-size: 0.64rem; color: rgba(255,255,255,0.5); font-family: var(--mono); letter-spacing: 0.8px; white-space: nowrap; }
 
 .sidebar-nav-area {
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 6px 0;
+  padding: 14px 0;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.1) transparent;
 }
 
-.sidebar-group { padding: 8px 0 2px; }
+.sidebar-group { padding: 0; }
+.sidebar-group + .sidebar-group { margin-top: 6px; }
 
 .sidebar-group-label {
   font-family: var(--mono);
-  font-size: 0.58rem;
-  font-weight: 600;
+  font-size: 0.62rem;
+  font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: var(--text-3);
-  padding: 0 14px 5px;
+  letter-spacing: 1.4px;
+  color: rgba(255,255,255,0.4);
+  padding: 16px 20px 8px;
   display: block;
+  white-space: nowrap;
 }
 
-.sidebar-nav { list-style: none; padding: 0 8px; }
-.sidebar-nav li { margin-bottom: 1px; }
+.sidebar-nav { list-style: none; padding: 0; }
+.sidebar-nav li { margin: 0; }
 
 .sidebar-nav-link {
   display: flex;
   align-items: center;
-  gap: 9px;
-  padding: 7px 10px;
-  border-radius: var(--radius);
-  font-size: 0.82rem;
-  font-weight: 500;
-  color: var(--text-2);
+  gap: 11px;
+  padding: 9px 20px;
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: rgba(255,255,255,0.7);
   cursor: pointer;
-  transition: background 0.12s, color 0.12s;
-  position: relative;
-  box-shadow: inset 0 0 0 0 var(--blue);
+  transition: background 0.12s, color 0.12s, border-left-color 0.12s;
+  text-decoration: none;
+  border-left: 2px solid transparent;
+  white-space: nowrap;
+  overflow: hidden;
   text-decoration: none;
 }
-.sidebar-nav-link:hover { background: var(--surface-2); color: var(--text); }
+/* Nav links — navy dark sidebar */
+.sidebar-nav-link:hover {
+  background: rgba(255,255,255,0.08);
+  color: #fff;
+  border-left-color: transparent;
+}
 .sidebar-nav-link.active {
-  background: var(--surface-2);
-  color: var(--blue);
+  background: rgba(255,255,255,0.1);
+  color: #fff;
   font-weight: 600;
-  box-shadow: inset 2px 0 0 var(--blue);
+  border-left-color: #E0A92E;
 }
 
 .sidebar-nav-link .nav-icon {
@@ -250,100 +302,94 @@ input::placeholder, textarea::placeholder { color: var(--text-3); opacity: 1; }
 
 .sidebar-nav-badge {
   margin-left: auto;
-  background: var(--red);
-  color: #fff;
   font-family: var(--mono);
-  font-size: 0.58rem;
-  font-weight: 600;
-  border-radius: 20px;
-  min-width: 16px;
-  height: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 4px;
+  font-size: 0.66rem;
+  font-weight: 500;
+  color: #E0A92E;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .sidebar-divider {
   height: 1px;
-  background: var(--line-1);
+  background: rgba(255,255,255,0.1);
   margin: 4px 12px;
 }
 
+/* Footer — usuário + botão de tema */
 .sidebar-footer {
-  border-top: 1px solid var(--line-1);
-  padding: 8px;
+  border-top: 1px solid rgba(255,255,255,0.1);
+  padding: 10px 0;
   flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
 }
 
 .sidebar-theme-btn {
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: 11px;
   width: 100%;
-  padding: 7px 10px;
+  padding: 9px 20px;
   border: none;
   background: none;
-  color: var(--text-2);
-  font-size: 0.82rem;
-  font-weight: 500;
+  color: rgba(255,255,255,0.6);
+  font-size: 0.875rem;
+  font-weight: 400;
   font-family: inherit;
   cursor: pointer;
-  border-radius: var(--radius);
   transition: background 0.12s, color 0.12s;
   text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
 }
-.sidebar-theme-btn:hover { background: var(--surface-2); color: var(--text); }
+.sidebar-theme-btn:hover { background: rgba(255,255,255,0.08); color: #fff; }
 
 .sidebar-user-wrap { position: relative; }
 
 .sidebar-user-btn {
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: 11px;
   width: 100%;
-  padding: 7px 10px;
+  padding: 8px 12px;
   border: none;
   background: none;
   cursor: pointer;
-  border-radius: var(--radius);
   text-align: left;
   transition: background 0.12s;
+  overflow: hidden;
 }
-.sidebar-user-btn:hover { background: var(--surface-2); }
+.sidebar-user-btn:hover { background: rgba(255,255,255,0.06); }
 
 .sidebar-avatar {
-  width: 28px;
-  height: 28px;
-  border-radius: var(--radius);
-  background: var(--navy);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.14);
   color: #fff;
-  font-size: 0.68rem;
-  font-weight: 700;
+  font-size: 0.7rem;
+  font-weight: 500;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  font-family: var(--mono);
 }
 
-.sidebar-user-info { display: flex; flex-direction: column; min-width: 0; }
-.sidebar-user-name { font-size: 0.8rem; font-weight: 600; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.sidebar-user-role { font-size: 0.62rem; color: var(--text-3); font-family: var(--mono); }
+.sidebar-user-info { display: flex; flex-direction: column; line-height: 1.25; flex: 1; min-width: 0; }
+.sidebar-user-name { font-size: 0.82rem; font-weight: 500; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sidebar-user-role { font-size: 0.62rem; color: rgba(255,255,255,0.5); font-family: var(--mono); letter-spacing: 0.5px; }
 
 .sidebar-user-menu {
   position: absolute;
   bottom: calc(100% + 4px);
-  left: 0;
-  right: 0;
+  left: 8px;
+  right: 8px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   overflow: hidden;
   z-index: 200;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.14);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.25);
 }
 
 .sidebar-user-menu-item {

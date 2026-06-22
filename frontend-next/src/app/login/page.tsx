@@ -10,10 +10,10 @@ export default function LoginPage() {
   const router = useRouter();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [remember, setRemember] = useState(false);
-  const [error, setError]       = useState('');
-  const [loading, setLoading]   = useState(false);
-  const [showPw, setShowPw]     = useState(false);
+  const [remember, setRemember]  = useState(false);
+  const [error, setError]        = useState('');
+  const [loading, setLoading]    = useState(false);
+  const [showPw, setShowPw]      = useState(false);
 
   useEffect(() => {
     if (isAuthenticated()) router.replace('/');
@@ -36,58 +36,123 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="login-page">
-      {/* Painel esquerdo — navy */}
-      <div className="login-panel-left">
-        <div className="login-brand">
-          <div className="login-brand-mark">TS</div>
-          <div className="login-brand-name">Tasks SIA</div>
-          <div className="login-brand-sub">DEDG · Governo do Piauí</div>
-        </div>
-        <div className="login-headline">
-          <h2>Gestão de atividades da Diretoria de Economia Digital</h2>
-          <p>Acompanhe projetos, atividades, faltas e eventos da equipe em um só lugar.</p>
+    <div style={{ height: '100vh', display: 'flex', fontFamily: "'IBM Plex Sans', sans-serif" }}>
+      {/* ── Esquerda: imagem com overlay escuro ── */}
+      <div style={{ flex: 1, minWidth: 0, height: '100%', position: 'relative', overflow: 'hidden', background: 'linear-gradient(135deg, #072f63 0%, #0a3d7a 50%, #05244a 100%)' }}>
+        {/* Listras sutis diagonais (sem imagem real, usamos padrão) */}
+        <div style={{
+          position: 'absolute', inset: 0,
+          background: 'repeating-linear-gradient(-45deg, transparent, transparent 40px, rgba(255,255,255,0.022) 40px, rgba(255,255,255,0.022) 41px)',
+          pointerEvents: 'none',
+        }} />
+        <div style={{ position: 'absolute', inset: 0, background: 'rgba(6,45,95,0.42)', backdropFilter: 'blur(1px)', pointerEvents: 'none' }} />
+
+        {/* Conteúdo sobre a imagem */}
+        <div style={{ position: 'relative', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '44px 48px' }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 40 }}>
+              <div style={{ width: 36, height: 36, borderRadius: 4, background: 'rgba(255,255,255,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#E0A92E', fontSize: 18, lineHeight: 1 }}>★</div>
+              <div>
+                <div style={{ fontWeight: 600, fontSize: '1rem', color: '#fff', letterSpacing: '-0.2px' }}>Tasks SIA</div>
+                <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '0.6rem', color: 'rgba(255,255,255,0.45)', letterSpacing: '1.2px', textTransform: 'uppercase' }}>Sistema de Gestão · DEDG</div>
+              </div>
+            </div>
+            <div style={{ maxWidth: 380 }}>
+              <h2 style={{ fontSize: '2rem', fontWeight: 700, color: '#fff', letterSpacing: '-0.5px', lineHeight: 1.25, marginBottom: 14 }}>
+                Gestão de atividades da DEDG
+              </h2>
+              <p style={{ fontSize: '0.92rem', color: 'rgba(255,255,255,0.6)', lineHeight: 1.7 }}>
+                Acompanhe projetos, atividades, eventos e faltas da equipe da Diretoria de Economia Digital e Governança.
+              </p>
+            </div>
+          </div>
+
+          <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '0.62rem', color: 'rgba(255,255,255,0.3)', letterSpacing: '0.5px', lineHeight: 1.7 }}>
+            © 2026 Secretaria de Inteligência Artificial<br />
+            Economia Digital, Ciência, Tecnologia e Inovação — SIA
+          </div>
         </div>
       </div>
 
-      {/* Painel direito — formulário */}
-      <div className="login-panel-right">
-        <div className="login-form-card">
-          <h1 className="login-form-title">Acesse sua conta</h1>
-          <p className="login-form-sub">Sistema de Gestão da DEDG — Governo do Piauí</p>
+      {/* ── Direita: formulário ── */}
+      <div style={{ width: 480, maxWidth: '100%', flexShrink: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '48px 56px', background: '#fff', position: 'relative', overflow: 'hidden' }}>
+        {/* Faixa de cores do Gov-PI no topo */}
+        <div style={{ position: 'absolute', left: 0, right: 0, top: 0, height: 4, background: 'linear-gradient(90deg, #034EA2 0 40%, #E0A92E 40% 55%, #b42318 55% 75%, #1B8A4B 75%)' }} />
 
-          <form className="login-form" onSubmit={handleSubmit} noValidate>
-            <div className="login-field">
-              <label className="login-label" htmlFor="username">Usuário</label>
-              <input id="username" type="text" className="login-input" placeholder="seu.usuario" value={username} onChange={(e) => setUsername(e.target.value)} autoComplete="username" autoFocus />
-            </div>
-
-            <div className="login-field">
-              <label className="login-label" htmlFor="password">Senha</label>
-              <div style={{ position: 'relative' }}>
-                <input id="password" type={showPw ? 'text' : 'password'} className="login-input" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" style={{ paddingRight: 40, width: '100%' }} />
-                <button type="button" onClick={() => setShowPw((v) => !v)} tabIndex={-1} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)', display: 'flex', padding: 3 }}>
-                  {showPw ? <Eye size={16} /> : <EyeOff size={16} />}
-                </button>
-              </div>
-            </div>
-
-            <label style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: '0.78rem', color: 'var(--text-2)', cursor: 'pointer', marginTop: -2 }}>
-              <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} style={{ accentColor: 'var(--blue)', cursor: 'pointer' }} />
-              Manter-me conectado
-            </label>
-
-            {error && <div className="login-error">{error}</div>}
-
-            <button type="submit" className="login-submit" disabled={loading}>
-              {loading ? 'Entrando…' : 'Entrar'}
-            </button>
-          </form>
-
-          <p style={{ marginTop: 28, fontSize: '0.68rem', color: 'var(--text-3)', textAlign: 'center', lineHeight: 1.5 }}>
-            © 2026 SIA — Secretaria de Inteligência Artificial
-          </p>
+        {/* Logo centralizado */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 32 }}>
+          <div style={{ width: 48, height: 48, borderRadius: 4, background: '#072f63', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#E0A92E', fontSize: 26, lineHeight: 1, boxShadow: '0 0 0 6px rgba(7,47,99,0.08)' }}>★</div>
+          <div style={{ marginTop: 11, fontWeight: 700, fontSize: '1.08rem', color: '#072f63', letterSpacing: '-0.2px' }}>Tasks SIA</div>
+          <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '0.62rem', color: '#9aa1ac', letterSpacing: '1.2px', textTransform: 'uppercase', marginTop: 3 }}>Sistema de Gestão · DEDG</div>
         </div>
+
+        <h1 style={{ fontSize: '1.45rem', fontWeight: 600, color: '#11161D', textAlign: 'center', letterSpacing: '-0.5px', margin: '0 0 6px' }}>Acesse sua conta</h1>
+        <p style={{ fontSize: '0.82rem', color: '#6b7280', textAlign: 'center', margin: '0 0 28px', lineHeight: 1.5 }}>Sistema de Gestão da DEDG</p>
+
+        <form onSubmit={handleSubmit} noValidate style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+          <div>
+            <label className="mono" style={{ display: 'block', fontSize: '0.66rem', fontWeight: 500, letterSpacing: '1px', textTransform: 'uppercase', color: '#6b7280', marginBottom: 7 }}>Usuário</label>
+            <input
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="seu.usuario"
+              autoFocus
+              autoComplete="username"
+              style={{ width: '100%', padding: '11px 14px', border: '1.5px solid #dde2ea', borderRadius: 3, fontSize: '0.9rem', background: '#f8f9fb', color: '#11161D', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', transition: 'border-color 0.12s, box-shadow 0.12s' }}
+              onFocus={(e) => { e.target.style.borderColor = '#034EA2'; e.target.style.background = '#fff'; e.target.style.boxShadow = '0 0 0 3px rgba(3,78,162,0.08)'; }}
+              onBlur={(e)  => { e.target.style.borderColor = '#dde2ea'; e.target.style.background = '#f8f9fb'; e.target.style.boxShadow = 'none'; }}
+            />
+          </div>
+
+          <div>
+            <label className="mono" style={{ display: 'block', fontSize: '0.66rem', fontWeight: 500, letterSpacing: '1px', textTransform: 'uppercase', color: '#6b7280', marginBottom: 7 }}>Senha</label>
+            <div style={{ position: 'relative' }}>
+              <input
+                type={showPw ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                autoComplete="current-password"
+                style={{ width: '100%', padding: '11px 44px 11px 14px', border: '1.5px solid #dde2ea', borderRadius: 3, fontSize: '0.9rem', background: '#f8f9fb', color: '#11161D', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', transition: 'border-color 0.12s, box-shadow 0.12s' }}
+                onFocus={(e) => { e.target.style.borderColor = '#034EA2'; e.target.style.background = '#fff'; e.target.style.boxShadow = '0 0 0 3px rgba(3,78,162,0.08)'; }}
+                onBlur={(e)  => { e.target.style.borderColor = '#dde2ea'; e.target.style.background = '#f8f9fb'; e.target.style.boxShadow = 'none'; }}
+              />
+              <button type="button" tabIndex={-1} onClick={() => setShowPw((v) => !v)}
+                style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#9aa1ac', display: 'flex', padding: 4 }}>
+                {showPw ? <Eye size={16} /> : <EyeOff size={16} />}
+              </button>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+              <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} style={{ width: 15, height: 15, accentColor: '#034EA2', cursor: 'pointer' }} />
+              <span style={{ fontSize: '0.82rem', color: '#344563' }}>Manter-me conectado</span>
+            </label>
+          </div>
+
+          {error && (
+            <div style={{ padding: '10px 14px', background: 'rgba(180,35,24,0.06)', border: '1px solid rgba(180,35,24,0.2)', borderRadius: 3, fontSize: '0.82rem', color: '#b42318' }}>
+              {error}
+            </div>
+          )}
+
+          <button
+            type="submit"
+            disabled={loading}
+            style={{ width: '100%', padding: 13, border: 'none', borderRadius: 3, background: loading ? '#5a8ad4' : '#072f63', color: '#fff', fontSize: '0.92rem', fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', letterSpacing: '0.2px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, minHeight: 46, fontFamily: 'inherit', transition: 'background 0.12s' }}
+            onMouseEnter={(e) => { if (!loading) (e.currentTarget as HTMLButtonElement).style.background = '#0a3d7a'; }}
+            onMouseLeave={(e) => { if (!loading) (e.currentTarget as HTMLButtonElement).style.background = '#072f63'; }}
+          >
+            {loading ? 'Entrando…' : (
+              <>
+                Entrar
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+              </>
+            )}
+          </button>
+        </form>
       </div>
     </div>
   );
