@@ -24,6 +24,7 @@ import {
 import type { UserPublic } from '@/lib/api';
 import { useRefetchOnFocus } from '@/lib/useRefetchOnFocus';
 import type { Task, StatusGroup, Project } from '@/types';
+import { useTabs, useActiveTab } from '@/context/TabsContext';
 
 const COLUMNS: { id: StatusGroup; title: string; color: string }[] = [
   { id: 'pending',    title: 'Pendente',    color: 'var(--s-pending)' },
@@ -150,26 +151,37 @@ function KanbanColumn({
   );
 }
 
-type View = 'kanban' | 'list' | 'calendar';
-
 export default function BoardPage() {
   const { toasts, addToast, dismissToast } = useToast();
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
+  // ── Tab context ──────────────────────────────────────────────────────────
+  const { patchActiveTab } = useTabs();
+  const activeTab = useActiveTab();
+  const filters = activeTab?.filters;
+
+  // Derived filter state from the active tab
+  const search        = filters?.search    ?? '';
+  const filterUser    = filters?.fUser     ?? '';
+  const filterPriority= filters?.fPrio     ?? '';
+  const filterProject = filters?.fProj     ?? '';
+  const filterDateFrom= filters?.fDateFrom ?? '';
+  const filterDateTo  = filters?.fDateTo   ?? '';
+  const view          = filters?.view      ?? 'kanban';
+
+  // Reset selection when switching tabs
+  useEffect(() => {
+    setSelectionMode(null);
+    setSelectedTaskIds(new Set());
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab?.id]);
+
+  // ── API data ─────────────────────────────────────────────────────────────
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [projects, setProjects] = useState<Project[]>([]);
   const [users, setUsers] = useState<UserPublic[]>([]);
-
-  const [search, setSearch] = useState('');
-  const [filterUser, setFilterUser] = useState('');
-  const [filterPriority, setFilterPriority] = useState('');
-  const [filterProject, setFilterProject] = useState('');
-  const [filterDateFrom, setFilterDateFrom] = useState('');
-  const [filterDateTo, setFilterDateTo] = useState('');
-
-  const [view, setView] = useState<View>('kanban');
   const [activityModal, setActivityModal] = useState<{ open: boolean; task: Task | null; defaultStatus?: string }>({ open: false, task: null });
   const [drawer, setDrawer] = useState<Task | null>(null);
   const [importModal, setImportModal] = useState(false);
@@ -373,7 +385,7 @@ export default function BoardPage() {
             const labels = { kanban: 'Quadro', list: 'Lista', calendar: 'Calendário' };
             const isActive = view === v;
             return (
-              <button key={v} onClick={() => setView(v)}
+              <button key={v} onClick={() => patchActiveTab({ view: v })}
                 style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0 16px', height: 40, border: 'none', borderBottom: isActive ? '2px solid #034EA2' : '2px solid transparent', background: 'transparent', color: isActive ? '#034EA2' : 'var(--text-2)', fontSize: '0.82rem', fontWeight: isActive ? 600 : 400, cursor: 'pointer', flexShrink: 0, fontFamily: 'inherit', transition: 'color 0.12s, border-color 0.12s' }}>
                 {labels[v]}
               </button>
@@ -392,25 +404,25 @@ export default function BoardPage() {
           {/* Busca */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '7px 11px', width: 230 }}>
             <Search size={14} style={{ color: 'var(--text-3)', flexShrink: 0 }} />
-            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Pesquisar..." style={{ border: 'none', outline: 'none', background: 'none', fontSize: '0.82rem', color: 'var(--text)', width: '100%', fontFamily: 'inherit' }} />
+            <input value={search} onChange={(e) => patchActiveTab({ search: e.target.value })} placeholder="Pesquisar..." style={{ border: 'none', outline: 'none', background: 'none', fontSize: '0.82rem', color: 'var(--text)', width: '100%', fontFamily: 'inherit' }} />
           </div>
           <div style={{ width: 1, height: 20, background: 'var(--border)' }} />
-          <select value={filterUser} onChange={(e) => setFilterUser(e.target.value)} className={`filter-chip${filterUser ? ' active' : ''}`}>
+          <select value={filterUser} onChange={(e) => patchActiveTab({ fUser: e.target.value })} className={`filter-chip${filterUser ? ' active' : ''}`}>
             <option value="">Responsável</option>
             {users.map((u) => <option key={u.id} value={u.name}>{u.name}</option>)}
           </select>
-          <select value={filterPriority} onChange={(e) => setFilterPriority(e.target.value)} className={`filter-chip${filterPriority ? ' active' : ''}`}>
+          <select value={filterPriority} onChange={(e) => patchActiveTab({ fPrio: e.target.value })} className={`filter-chip${filterPriority ? ' active' : ''}`}>
             <option value="">Prioridade</option>
             <option value="Alta">Alta</option>
             <option value="Média">Média</option>
             <option value="Baixa">Baixa</option>
           </select>
-          <select value={filterProject} onChange={(e) => setFilterProject(e.target.value)} className={`filter-chip${filterProject ? ' active' : ''}`}>
+          <select value={filterProject} onChange={(e) => patchActiveTab({ fProj: e.target.value })} className={`filter-chip${filterProject ? ' active' : ''}`}>
             <option value="">Projeto</option>
             {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
           </select>
           {hasFilters && (
-            <button onClick={() => { setFilterUser(''); setFilterPriority(''); setFilterProject(''); setFilterDateFrom(''); setFilterDateTo(''); }}
+            <button onClick={() => patchActiveTab({ fUser: '', fPrio: '', fProj: '', fDateFrom: '', fDateTo: '' })}
               className="mono" style={{ fontSize: '0.72rem', fontWeight: 500, color: '#034EA2', background: 'none', border: 'none', cursor: 'pointer', letterSpacing: '0.5px' }}>
               LIMPAR
             </button>

@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import Sidebar from './Sidebar';
+import TabBar from './TabBar';
+import { TabsProvider } from '@/context/TabsContext';
 
 const THEME_KEY = 'sia-theme';
 
@@ -14,7 +16,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   }, []);
 
   function toggleTheme() {
-    setTheme((t) => {
+    setTheme(t => {
       const next = t === 'light' ? 'dark' : 'light';
       if (typeof window !== 'undefined') localStorage.setItem(THEME_KEY, next);
       return next;
@@ -22,17 +24,19 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className={`app-container${theme === 'dark' ? ' theme-dark' : ''}`}>
-      {/* Wrapper do rail: mantém 64px de espaço no layout mas o rail expande absolutamente */}
-      <div className="sidebar-rail-wrapper">
-        <Sidebar onToggleTheme={toggleTheme} isDark={theme === 'dark'} />
-      </div>
-
-      <main className="main-content">
-        <div className="page-scroll">
-          {children}
+    <TabsProvider>
+      <div className={`app-container${theme === 'dark' ? ' theme-dark' : ''}`}>
+        <div className="sidebar-rail-wrapper">
+          <Sidebar onToggleTheme={toggleTheme} isDark={theme === 'dark'} />
         </div>
-      </main>
-    </div>
+
+        <main className="main-content">
+          <TabBar />
+          <div className="page-scroll">
+            {children}
+          </div>
+        </main>
+      </div>
+    </TabsProvider>
   );
 }

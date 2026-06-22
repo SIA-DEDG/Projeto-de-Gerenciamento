@@ -278,7 +278,14 @@ input::placeholder, textarea::placeholder { color: var(--text-3); opacity: 1; }
   border-left: 2px solid transparent;
   white-space: nowrap;
   overflow: hidden;
-  text-decoration: none;
+  /* reset button defaults */
+  border-top: none;
+  border-right: none;
+  border-bottom: none;
+  background: none;
+  font-family: inherit;
+  width: 100%;
+  text-align: left;
 }
 /* Nav links — navy dark sidebar */
 .sidebar-nav-link:hover {
@@ -1536,6 +1543,126 @@ input::placeholder, textarea::placeholder { color: var(--text-3); opacity: 1; }
 .empty-state p { font-size: 0.845rem; }
 
 .hairline { height: 1px; background: var(--line-1); }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   TAB BAR — browser-like tabs (conforme Tasks SIA.html)
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* Scrollbar estilo design — polegar flutuante */
+.ssel::-webkit-scrollbar          { width: 10px; height: 10px; }
+.ssel::-webkit-scrollbar-thumb    { background: var(--border); border: 3px solid var(--surface); background-clip: padding-box; }
+.ssel::-webkit-scrollbar-thumb:hover { background: var(--text-3); background-clip: padding-box; }
+.ssel::-webkit-scrollbar-track   { background: transparent; }
+
+.tab-bar {
+  display: flex;
+  align-items: stretch;
+  border-bottom: 1px solid var(--line-1);
+  flex-shrink: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  background: var(--surface);
+  height: 40px;
+  /* Oculta scrollbar em navegadores que suportam scrollbar-width */
+  scrollbar-width: none;
+}
+.tab-bar::-webkit-scrollbar { display: none; }
+
+.tab-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 12px;
+  height: 100%;
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--text-3);
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  flex-shrink: 0;
+  transition: color 0.12s, background 0.12s;
+  user-select: none;
+  max-width: 200px;
+  min-width: 0;
+  white-space: nowrap;
+  position: relative;
+}
+.tab-item:hover { color: var(--text-2); background: var(--surface-2); }
+.tab-item.active {
+  font-weight: 600;
+  color: var(--blue);
+  border-bottom-color: var(--blue);
+  background: var(--surface-2);
+}
+
+.tab-view-icon {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  opacity: 0.55;
+  color: inherit;
+}
+
+.tab-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.tab-filter-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--blue);
+  flex-shrink: 0;
+}
+
+.tab-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 2px;
+  color: var(--text-3);
+  font-size: 14px;
+  flex-shrink: 0;
+  cursor: pointer;
+  line-height: 1;
+  transition: background 0.12s, color 0.12s;
+  margin-left: 2px;
+}
+.tab-close:hover { background: var(--line-1); color: var(--text); }
+
+.tab-rename-input {
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--blue);
+  width: 90px;
+  font-family: inherit;
+}
+
+.tab-add-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 100%;
+  border: none;
+  background: transparent;
+  color: var(--text-3);
+  font-size: 18px;
+  cursor: pointer;
+  flex-shrink: 0;
+  border-bottom: 2px solid transparent;
+  transition: color 0.12s, background 0.12s;
+}
+.tab-add-btn:hover { color: var(--text); background: var(--surface-2); }
 
 .pagination { display: flex; align-items: center; justify-content: center; gap: 5px; padding: 14px 32px; }
 .page-btn {

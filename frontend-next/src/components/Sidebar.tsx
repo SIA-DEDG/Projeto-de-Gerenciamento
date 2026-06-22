@@ -1,17 +1,18 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import Link from 'next/link';
 import {
   LayoutGrid, User, CalendarDays, CalendarMinus, Folder,
   ChartPie, Logs, Settings, MessageSquareWarning,
   UserRoundPlus, UsersRound, Archive, LogOut, Moon, Sun,
 } from 'lucide-react';
-import { usePathname, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { getUser, clearAuth, canManageUsers } from '@/lib/auth';
 import { fetchTasks, fetchFeedbacks } from '@/lib/api';
 import { onTasksChanged } from '@/lib/taskEvents';
 import { useRefetchOnFocus } from '@/lib/useRefetchOnFocus';
+import { useTabs, useActiveTab, type PageType } from '@/context/TabsContext';
+import Link from 'next/link';
 
 const ROLE_LABELS: Record<string, string> = {
   Estagiario: 'ESTAGIÁRIO(A)',
@@ -29,13 +30,15 @@ interface Props {
 }
 
 export default function Sidebar({ onToggleTheme, isDark }: Props) {
-  const pathname = usePathname();
   const router = useRouter();
   const [user, setUser] = useState<ReturnType<typeof getUser>>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
   const [pendingCountFeedback, setPendingCountFeedback] = useState(0);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  const { openTab } = useTabs();
+  const activeTab = useActiveTab();
 
   const initials = user?.name
     ? user.name.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase()
@@ -81,11 +84,13 @@ export default function Sidebar({ onToggleTheme, isDark }: Props) {
 
   function handleLogout() { clearAuth(); router.replace('/login'); }
 
-  function isActive(path: string) {
-    return pathname === path ? 'sidebar-nav-link active' : 'sidebar-nav-link';
+  // Navigate via tab system
+  function nav(type: PageType) {
+    openTab(type);
   }
-  function isActivePrefix(prefix: string) {
-    return pathname.startsWith(prefix) ? 'sidebar-nav-link active' : 'sidebar-nav-link';
+
+  function isActiveType(type: PageType) {
+    return activeTab?.type === type ? 'sidebar-nav-link active' : 'sidebar-nav-link';
   }
 
   const isAdmin = canManageUsers(user?.role);
@@ -108,13 +113,13 @@ export default function Sidebar({ onToggleTheme, isDark }: Props) {
           <span className="sidebar-group-label">Planejamento</span>
           <ul className="sidebar-nav">
             <li>
-              <Link href="/" className={isActive('/')}>
+              <button onClick={() => nav('board')} className={isActiveType('board')}>
                 <span className="nav-icon"><LayoutGrid size={17} /></span>
                 <span className="rail-label">Atividades</span>
-              </Link>
+              </button>
             </li>
             <li>
-              <Link href="/minhas-atividades" className={isActive('/minhas-atividades')} style={{ justifyContent: 'space-between' }}>
+              <button onClick={() => nav('minhas-atividades')} className={isActiveType('minhas-atividades')} style={{ justifyContent: 'space-between' }}>
                 <span style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
                   <span className="nav-icon"><User size={17} /></span>
                   <span className="rail-label">Minhas atividades</span>
@@ -122,25 +127,25 @@ export default function Sidebar({ onToggleTheme, isDark }: Props) {
                 {pendingCount > 0 && (
                   <span className="sidebar-nav-badge rail-label">{pendingCount > 99 ? '99+' : pendingCount}</span>
                 )}
-              </Link>
+              </button>
             </li>
             <li>
-              <Link href="/eventos" className={isActive('/eventos')}>
+              <button onClick={() => nav('eventos')} className={isActiveType('eventos')}>
                 <span className="nav-icon"><CalendarDays size={17} /></span>
                 <span className="rail-label">Eventos</span>
-              </Link>
+              </button>
             </li>
             <li>
-              <Link href="/faltas" className={isActive('/faltas')}>
+              <button onClick={() => nav('faltas')} className={isActiveType('faltas')}>
                 <span className="nav-icon"><CalendarMinus size={17} /></span>
                 <span className="rail-label">Faltas</span>
-              </Link>
+              </button>
             </li>
             <li>
-              <Link href="/arquivadas" className={isActive('/arquivadas')}>
+              <button onClick={() => nav('arquivadas')} className={isActiveType('arquivadas')}>
                 <span className="nav-icon"><Archive size={17} /></span>
                 <span className="rail-label">Arquivadas</span>
-              </Link>
+              </button>
             </li>
           </ul>
         </div>
@@ -152,22 +157,22 @@ export default function Sidebar({ onToggleTheme, isDark }: Props) {
           <span className="sidebar-group-label">Análise</span>
           <ul className="sidebar-nav">
             <li>
-              <Link href="/dashboards" className={isActive('/dashboards')}>
+              <button onClick={() => nav('dashboards')} className={isActiveType('dashboards')}>
                 <span className="nav-icon"><ChartPie size={17} /></span>
                 <span className="rail-label">Dashboards</span>
-              </Link>
+              </button>
             </li>
             <li>
-              <Link href="/projetos" className={isActive('/projetos')}>
+              <button onClick={() => nav('projetos')} className={isActiveType('projetos')}>
                 <span className="nav-icon"><Folder size={17} /></span>
                 <span className="rail-label">Projetos</span>
-              </Link>
+              </button>
             </li>
             <li>
-              <Link href="/logs" className={isActive('/logs')}>
+              <button onClick={() => nav('logs')} className={isActiveType('logs')}>
                 <span className="nav-icon"><Logs size={17} /></span>
                 <span className="rail-label">Logs</span>
-              </Link>
+              </button>
             </li>
           </ul>
         </div>
@@ -179,13 +184,13 @@ export default function Sidebar({ onToggleTheme, isDark }: Props) {
           <span className="sidebar-group-label">Sistema</span>
           <ul className="sidebar-nav">
             <li>
-              <Link href="/configuracoes" className={isActive('/configuracoes')}>
+              <button onClick={() => nav('configuracoes')} className={isActiveType('configuracoes')}>
                 <span className="nav-icon"><Settings size={17} /></span>
                 <span className="rail-label">Configurações</span>
-              </Link>
+              </button>
             </li>
             <li>
-              <Link href="/feedback" className={isActive('/feedback')} style={{ justifyContent: 'space-between' }}>
+              <button onClick={() => nav('feedback')} className={isActiveType('feedback')} style={{ justifyContent: 'space-between' }}>
                 <span style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
                   <span className="nav-icon"><MessageSquareWarning size={17} /></span>
                   <span className="rail-label">Feedback</span>
@@ -193,7 +198,7 @@ export default function Sidebar({ onToggleTheme, isDark }: Props) {
                 {pendingCountFeedback > 0 && (
                   <span className="sidebar-nav-badge rail-label">{pendingCountFeedback > 99 ? '99+' : pendingCountFeedback}</span>
                 )}
-              </Link>
+              </button>
             </li>
           </ul>
         </div>
@@ -206,16 +211,16 @@ export default function Sidebar({ onToggleTheme, isDark }: Props) {
               <span className="sidebar-group-label">Admin</span>
               <ul className="sidebar-nav">
                 <li>
-                  <Link href="/admin/registro" className={isActivePrefix('/admin/registro')}>
+                  <button onClick={() => nav('admin-registro')} className={isActiveType('admin-registro')}>
                     <span className="nav-icon"><UserRoundPlus size={17} /></span>
                     <span className="rail-label">Cadastrar usuário</span>
-                  </Link>
+                  </button>
                 </li>
                 <li>
-                  <Link href="/admin/usuarios" className={isActive('/admin/usuarios')}>
+                  <button onClick={() => nav('admin-usuarios')} className={isActiveType('admin-usuarios')}>
                     <span className="nav-icon"><UsersRound size={17} /></span>
                     <span className="rail-label">Gerenciar usuários</span>
-                  </Link>
+                  </button>
                 </li>
               </ul>
             </div>
@@ -245,10 +250,10 @@ export default function Sidebar({ onToggleTheme, isDark }: Props) {
 
           {menuOpen && (
             <div className="sidebar-user-menu">
-              <Link href="/configuracoes" className="sidebar-user-menu-item" onClick={() => setMenuOpen(false)}>
+              <button className="sidebar-user-menu-item" onClick={() => { nav('configuracoes'); setMenuOpen(false); }}>
                 <Settings size={14} />
                 Configurações
-              </Link>
+              </button>
               <button className="sidebar-user-menu-item danger" onClick={handleLogout}>
                 <LogOut size={14} />
                 Sair
