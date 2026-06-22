@@ -22,6 +22,7 @@ import { LayoutGrid, List, Calendar, Search, Funnel, Plus, Ellipsis } from 'luci
 import type { UserPublic } from '@/lib/api';
 import { useRefetchOnFocus } from '@/lib/useRefetchOnFocus';
 import type { Task, StatusGroup, Project } from '@/types';
+import { useTabs, useActiveTab } from '@/context/TabsContext';
 
 const COLUMNS: { id: StatusGroup; title: string; color: string }[] = [
   { id: 'pending',    title: 'Pendente',    color: 'var(--s-pending)' },
@@ -93,13 +94,26 @@ export default function MinhasAtividadesPage() {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
   const currentUser = getUser();
 
+  // ── Tab context ──────────────────────────────────────────────────────────
+  const { patchActiveTab } = useTabs();
+  const activeTab = useActiveTab();
+  const tabFilters = activeTab?.filters;
+  const search         = tabFilters?.search    ?? '';
+  const filterPriority = tabFilters?.fPrio     ?? '';
+  const view           = tabFilters?.view      ?? 'kanban';
+
+  // Reset selection on tab switch
+  useEffect(() => {
+    setSelectionMode(null);
+    setSelectedTaskIds(new Set());
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab?.id]);
+
+  // ── API data ─────────────────────────────────────────────────────────────
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [projects, setProjects] = useState<Project[]>([]);
   const [users, setUsers] = useState<UserPublic[]>([]);
-  const [search, setSearch] = useState('');
-  const [filterPriority, setFilterPriority] = useState('');
-  const [view, setView] = useState<View>('kanban');
   const [activityModal, setActivityModal] = useState<{ open: boolean; task: Task | null; defaultStatus?: string }>({ open: false, task: null });
   const [drawer, setDrawer] = useState<Task | null>(null);
   const [confirm, setConfirm] = useState<{ title: string; message?: string; onConfirm: () => void } | null>(null);
@@ -201,33 +215,54 @@ export default function MinhasAtividadesPage() {
 
   return (
     <>
-      <div className="topbar">
-        <div className="topbar-left">
-          <h1 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text)' }}>Minhas Atividades</h1>
-          <div className="view-toggle">
-            <button className={`view-toggle-btn${view === 'kanban' ? ' active' : ''}`} onClick={() => setView('kanban')}><LayoutGrid size={13} />Quadro</button>
-            <button className={`view-toggle-btn${view === 'list' ? ' active' : ''}`} onClick={() => setView('list')}><List size={13} />Lista</button>
-            <button className={`view-toggle-btn${view === 'calendar' ? ' active' : ''}`} onClick={() => setView('calendar')}><Calendar size={13} />Calendário</button>
+      {/* ── Header de tela ── */}
+      <div style={{ padding: '26px 32px 0', flexShrink: 0, background: 'var(--surface)' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 20 }}>
+          <div>
+            <div className="mono" style={{ fontSize: '0.68rem', fontWeight: 500, color: 'var(--text-3)', letterSpacing: '1.4px', textTransform: 'uppercase' }}>
+              Atribuídas a você
+            </div>
+            <h1 style={{ fontSize: '1.65rem', fontWeight: 600, letterSpacing: '-0.7px', color: 'var(--text)', marginTop: 6 }}>Minhas atividades</h1>
           </div>
-        </div>
-        <div className="topbar-right">
-          <div className="topbar-search">
-            <Search size={13} style={{ color: 'var(--text-3)', flexShrink: 0 }} />
-            <input type="text" placeholder="Pesquisar..." value={search} onChange={(e) => setSearch(e.target.value)} />
-          </div>
-          <button className="btn btn-primary btn-sm" onClick={() => setActivityModal({ open: true, task: null, defaultStatus: 'Pendente' })}><Plus size={13} />Nova atividade</button>
         </div>
       </div>
 
-      <div className="toolbar">
-        <Funnel size={12} style={{ color: 'var(--text-3)', flexShrink: 0 }} />
-        <select className={`filter-chip${filterPriority ? ' active' : ''}`} value={filterPriority} onChange={(e) => setFilterPriority(e.target.value)}>
-          <option value="">Prioridade</option>
-          <option value="Alta">Alta</option>
-          <option value="Média">Média</option>
-          <option value="Baixa">Baixa</option>
-        </select>
-        {filterPriority && <button className="filter-clear-btn" onClick={() => setFilterPriority('')}>✕ Limpar</button>}
+      {/* ── View toggle + filtros ── */}
+      <div style={{ borderBottom: '1px solid var(--line-1)', flexShrink: 0, background: 'var(--surface)' }}>
+        <div style={{ display: 'flex', alignItems: 'stretch', padding: '0 28px' }}>
+          {(['kanban', 'list', 'calendar'] as const).map((v) => {
+            const labels = { kanban: 'Quadro', list: 'Lista', calendar: 'Calendário' };
+            const isAct = view === v;
+            return (
+              <button key={v} onClick={() => patchActiveTab({ view: v })}
+                style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0 16px', height: 40, border: 'none', borderBottom: isAct ? '2px solid #034EA2' : '2px solid transparent', background: 'transparent', color: isAct ? '#034EA2' : 'var(--text-2)', fontSize: '0.82rem', fontWeight: isAct ? 600 : 400, cursor: 'pointer', flexShrink: 0, fontFamily: 'inherit', transition: 'color 0.12s, border-color 0.12s' }}>
+                {labels[v]}
+              </button>
+            );
+          })}
+          <button onClick={() => setActivityModal({ open: true, task: null, defaultStatus: 'Pendente' })}
+            style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '0 16px', height: 40, border: 'none', borderBottom: '2px solid transparent', background: 'transparent', color: '#034EA2', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', flexShrink: 0, marginLeft: 'auto', fontFamily: 'inherit' }}>
+            <Plus size={14} />Nova atividade
+          </button>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 18, padding: '18px 32px', flexShrink: 0, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '7px 11px', width: 230 }}>
+            <Search size={14} style={{ color: 'var(--text-3)', flexShrink: 0 }} />
+            <input value={search} onChange={(e) => patchActiveTab({ search: e.target.value })} placeholder="Pesquisar..." style={{ border: 'none', outline: 'none', background: 'none', fontSize: '0.82rem', color: 'var(--text)', width: '100%', fontFamily: 'inherit' }} />
+          </div>
+          <div style={{ width: 1, height: 20, background: 'var(--border)' }} />
+          <select value={filterPriority} onChange={(e) => patchActiveTab({ fPrio: e.target.value })} className={`filter-chip${filterPriority ? ' active' : ''}`}>
+            <option value="">Prioridade</option>
+            <option value="Alta">Alta</option>
+            <option value="Média">Média</option>
+            <option value="Baixa">Baixa</option>
+          </select>
+          {filterPriority && (
+            <button onClick={() => patchActiveTab({ fPrio: '' })} className="mono" style={{ fontSize: '0.72rem', fontWeight: 500, color: '#034EA2', background: 'none', border: 'none', cursor: 'pointer', letterSpacing: '0.5px' }}>LIMPAR</button>
+          )}
+          <div style={{ flex: 1 }} />
+          <span className="mono" style={{ fontSize: '0.72rem', color: 'var(--text-3)', letterSpacing: '0.5px' }}>{myTasks.length} ATIVIDADES</span>
+        </div>
       </div>
 
       {loading ? (

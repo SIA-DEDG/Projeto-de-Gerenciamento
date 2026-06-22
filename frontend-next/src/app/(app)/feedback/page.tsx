@@ -170,12 +170,11 @@ export default function FeedbackPage() {
 
   return (
     <>
-      {/* Topbar */}
-      <header className="topbar">
-        <div className="topbar-left">
-          <h1>Feedback & Sugestões</h1>
-        </div>
-      </header>
+      {/* ── Header ── */}
+      <div style={{ padding: '26px 32px 16px', flexShrink: 0, background: 'var(--surface)', borderBottom: '1px solid var(--line-1)' }}>
+        <div className="mono" style={{ fontSize: '0.68rem', fontWeight: 500, color: 'var(--text-3)', letterSpacing: '1.4px', textTransform: 'uppercase' }}>Sistema · Comunicação</div>
+        <h1 style={{ fontSize: '1.65rem', fontWeight: 600, letterSpacing: '-0.7px', color: 'var(--text)', marginTop: 6 }}>Feedback & Sugestões</h1>
+      </div>
 
       {/* Body */}
       <div style={{ flex: 1, overflow: 'hidden', display: 'flex', minHeight: 0 }}>

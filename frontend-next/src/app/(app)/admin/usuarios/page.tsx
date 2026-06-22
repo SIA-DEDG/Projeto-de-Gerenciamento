@@ -163,15 +163,18 @@ export default function UsuariosPage() {
 
   return (
     <>
-      <header className="topbar">
-        <div className="topbar-left"><h1>Gerenciar Usuários</h1></div>
-        <div className="topbar-right">
-          <div className="topbar-search">
-            <Search size={16} />
-            <input type="text" placeholder="Buscar usuário..." value={search} onChange={(e) => setSearch(e.target.value)} />
+      <div style={{ padding: '26px 32px 16px', flexShrink: 0, background: 'var(--surface)', borderBottom: '1px solid var(--line-1)' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 20 }}>
+          <div>
+            <div className="mono" style={{ fontSize: '0.68rem', fontWeight: 500, color: 'var(--text-3)', letterSpacing: '1.4px', textTransform: 'uppercase' }}>Controle de acesso · Admin</div>
+            <h1 style={{ fontSize: '1.65rem', fontWeight: 600, letterSpacing: '-0.7px', color: 'var(--text)', marginTop: 6 }}>Gerenciar usuários</h1>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7, border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '6px 10px', background: 'var(--surface)', marginBottom: 4 }}>
+            <Search size={13} style={{ color: 'var(--text-3)', flexShrink: 0 }} />
+            <input type="text" placeholder="Buscar usuário..." value={search} onChange={(e) => setSearch(e.target.value)} style={{ border: 'none', outline: 'none', background: 'none', fontSize: '0.82rem', color: 'var(--text)', width: 180, fontFamily: 'inherit' }} />
           </div>
         </div>
-      </header>
+      </div>
 
       <div style={{ flex: 1, overflowY: 'auto', padding: '28px 40px' }}>
         {successMsg && (

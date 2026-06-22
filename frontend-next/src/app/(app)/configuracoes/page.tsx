@@ -723,10 +723,9 @@ function SistemaSection() {
 export default function ConfiguracoesPage() {
   return (
     <>
-      <div className="topbar">
-        <div className="topbar-left">
-          <h1 style={{ fontSize: '0.98rem', fontWeight: 600, color: 'var(--text)' }}>Configurações</h1>
-        </div>
+      <div style={{ padding: '26px 32px 16px', flexShrink: 0, background: 'var(--surface)', borderBottom: '1px solid var(--line-1)' }}>
+        <div className="mono" style={{ fontSize: '0.68rem', fontWeight: 500, color: 'var(--text-3)', letterSpacing: '1.4px', textTransform: 'uppercase' }}>Sistema · Conta</div>
+        <h1 style={{ fontSize: '1.65rem', fontWeight: 600, letterSpacing: '-0.7px', color: 'var(--text)', marginTop: 6 }}>Configurações</h1>
       </div>
 
       <div style={{ flex: 1, overflowY: 'auto', padding: '32px 32px 60px', minHeight: 0 }}>
