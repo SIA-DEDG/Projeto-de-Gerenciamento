@@ -1,38 +1,45 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { Archive, Search, Trash2, RotateCcw } from 'lucide-react';
+import { Archive, Search, RotateCcw } from 'lucide-react';
 import { fetchArchivedTasks, unarchiveTask, deleteTask } from '@/lib/api';
 import ConfirmModal from '@/components/ConfirmModal';
 import { useToast } from '@/hooks/useToast';
 import ToastContainer from '@/components/ToastContainer';
 import type { Task } from '@/types';
 
-const PRIORITY_COLOR: Record<string, string> = {
-  Alta: '#ef4444',
-  Média: '#f59e0b',
-  Baixa: '#22c55e',
+const PRIO_COLOR: Record<string, string> = {
+  Alta:  '#b42318',
+  Média: '#A87A00',
+  Baixa: '#157F3C',
+};
+
+const STATUS_COLOR: Record<string, string> = {
+  pending:     '#9aa1ac',
+  in_progress: '#034EA2',
+  review:      '#E0A92E',
+  done:        '#1B8A4B',
+};
+
+const STATUS_LABEL: Record<string, string> = {
+  pending:     'Pendente',
+  in_progress: 'Em Andamento',
+  review:      'Em Revisão',
+  done:        'Concluído',
 };
 
 export default function ArquivadasPage() {
   const { toasts, addToast, dismissToast } = useToast();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
   const [search, setSearch] = useState('');
-  const [confirmDialog, setConfirmDialog] = useState<{ title: string; message?: string; onConfirm: () => void } | null>(null);
-  const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [confirm, setConfirm] = useState<{ title: string; message?: string; onConfirm: () => void } | null>(null);
+  const [acting, setActing] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
-    try {
-      const data = await fetchArchivedTasks();
-      setTasks(data);
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Erro ao carregar atividades arquivadas');
-    } finally {
-      setLoading(false);
-    }
+    try { setTasks(await fetchArchivedTasks()); }
+    finally { setLoading(false); }
   }, []);
 
   useEffect(() => { load(); }, [load]);
@@ -40,170 +47,113 @@ export default function ArquivadasPage() {
   const filtered = useMemo(() => {
     if (!search.trim()) return tasks;
     const q = search.toLowerCase();
-    return tasks.filter(t =>
-      t.activity.toLowerCase().includes(q) ||
-      t.responsible.toLowerCase().includes(q) ||
-      t.category.toLowerCase().includes(q)
-    );
+    return tasks.filter(t => t.activity.toLowerCase().includes(q) || t.responsible.toLowerCase().includes(q) || t.category.toLowerCase().includes(q));
   }, [tasks, search]);
 
-  async function handleUnarchive(task: Task) {
-    setActionLoading(task.id);
+  async function handleRestore(task: Task) {
+    setActing(task.id);
     try {
       await unarchiveTask(task.id);
       setTasks(prev => prev.filter(t => t.id !== task.id));
-      addToast('success', 'Restaurada', `"${task.activity}" foi restaurada ao quadro.`);
-    } catch {
-      addToast('error', 'Erro', 'Não foi possível restaurar a atividade.');
-    } finally {
-      setActionLoading(null);
-    }
-  }
-
-  function handleDelete(task: Task) {
-    setConfirmDialog({
-      title: 'Excluir atividade',
-      message: `"${task.activity}" será excluída permanentemente. Esta ação não pode ser desfeita.`,
-      onConfirm: async () => {
-        setActionLoading(task.id);
-        try {
-          await deleteTask(task.id);
-          setTasks(prev => prev.filter(t => t.id !== task.id));
-          addToast('success', 'Excluída', `"${task.activity}" foi excluída.`);
-        } catch {
-          addToast('error', 'Erro', 'Não foi possível excluir a atividade.');
-        } finally {
-          setActionLoading(null);
-        }
-      },
-    });
+      addToast('success', 'Restaurada', `"${task.activity}" voltou ao quadro.`);
+    } catch { addToast('error', 'Erro', 'Não foi possível restaurar.'); }
+    finally { setActing(null); }
   }
 
   return (
     <>
-      <div className="topbar">
-        <div className="topbar-left">
-          <h1>Arquivadas</h1>
-        </div>
-        <div className="topbar-right">
-          <div className="topbar-search">
-            <Search width={14} />
-            <input
-              type="text"
-              placeholder="Pesquisar arquivadas..."
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-            />
+      {/* Header */}
+      <div style={{ padding: '26px 32px 0', background: 'var(--surface)', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+          <div>
+            <div className="mono" style={{ fontSize: '0.68rem', fontWeight: 500, color: 'var(--text-3)', letterSpacing: '1.4px', textTransform: 'uppercase' }}>
+              Atividades concluídas e arquivadas
+            </div>
+            <h1 style={{ fontSize: '1.65rem', fontWeight: 600, letterSpacing: '-0.7px', color: 'var(--text)', marginTop: 6 }}>Arquivadas</h1>
+          </div>
+          <div className="topbar-search" style={{ alignSelf: 'flex-end', marginBottom: 4 }}>
+            <Search size={13} style={{ color: 'var(--text-3)', flexShrink: 0 }} />
+            <input type="text" placeholder="Pesquisar arquivadas..." value={search} onChange={e => setSearch(e.target.value)} />
           </div>
         </div>
       </div>
 
-      <div style={{ padding: '24px 28px' }}>
-        {loading ? (
-          <div className="loading-state">Carregando atividades arquivadas...</div>
-        ) : error ? (
-          <div className="loading-state" style={{ color: '#BF2600' }}>{error}</div>
-        ) : filtered.length === 0 ? (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, padding: '64px 0', color: 'var(--text-muted)' }}>
-            <Archive size={40} strokeWidth={1.5} style={{ opacity: 0.4 }} />
-            <span style={{ fontSize: '0.9rem' }}>
-              {search ? 'Nenhuma atividade encontrada para esta busca.' : 'Nenhuma atividade arquivada.'}
+      {loading ? (
+        <div className="loading-state">Carregando atividades arquivadas…</div>
+      ) : filtered.length === 0 ? (
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16, padding: '80px 32px', textAlign: 'center' }}>
+          <div style={{ width: 54, height: 54, borderRadius: '50%', background: 'var(--surface-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-3)' }}>
+            <Archive size={24} strokeWidth={1.6} />
+          </div>
+          <div style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text)', marginTop: 0 }}>
+            {search ? 'Nenhum resultado' : 'Nenhuma atividade arquivada'}
+          </div>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-2)', lineHeight: 1.6, maxWidth: '38ch' }}>
+            {search ? 'Tente outra busca.' : <>Conclua uma atividade e use <span style={{ fontWeight: 500, color: 'var(--text)' }}>Arquivar</span> no quadro ou no detalhe para guardá-la aqui.</>}
+          </p>
+        </div>
+      ) : (
+        <div style={{ flex: 1, overflow: 'auto' }}>
+          {/* Contagem */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '16px 32px', borderBottom: '1px solid var(--line-1)' }}>
+            <span className="mono" style={{ fontSize: '0.72rem', color: 'var(--text-3)', letterSpacing: '0.5px' }}>
+              {filtered.length} ATIVIDADES ARQUIVADAS
             </span>
           </div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-            <div style={{ marginBottom: 12, fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 500 }}>
-              {filtered.length} atividade{filtered.length !== 1 ? 's' : ''} arquivada{filtered.length !== 1 ? 's' : ''}
-            </div>
-            <div style={{ background: '#fff', borderRadius: 12, border: '1px solid var(--border-light)', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
-              {filtered.map((task, idx) => (
-                <div
-                  key={task.id}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 12,
-                    padding: '12px 16px',
-                    borderBottom: idx < filtered.length - 1 ? '1px solid var(--border-light)' : 'none',
-                    transition: 'background 0.12s',
-                  }}
-                  onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-subtle)')}
-                  onMouseLeave={e => (e.currentTarget.style.background = '')}
-                >
-                  <Archive size={14} style={{ color: 'var(--text-muted)', flexShrink: 0, opacity: 0.6 }} />
 
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {task.activity}
-                    </div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 2, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                      <span>{task.category}</span>
-                      {task.responsible && <span>· {task.responsible}</span>}
-                      {task.deadline && <span>· Prazo: {task.deadline}</span>}
-                    </div>
-                  </div>
-
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-                    {task.priority && (
-                      <span style={{
-                        fontSize: '0.68rem', fontWeight: 700,
-                        color: PRIORITY_COLOR[task.priority] ?? 'var(--text-muted)',
-                        background: `${PRIORITY_COLOR[task.priority] ?? '#94a3b8'}18`,
-                        borderRadius: 4, padding: '2px 7px',
-                      }}>
-                        {task.priority}
-                      </span>
-                    )}
-                    <button
-                      onClick={() => handleUnarchive(task)}
-                      disabled={actionLoading === task.id}
-                      title="Restaurar"
-                      style={{
-                        display: 'flex', alignItems: 'center', gap: 4,
-                        padding: '5px 10px', borderRadius: 6,
-                        border: '1px solid var(--border-light)',
-                        background: 'var(--primary-light)', color: 'var(--primary)',
-                        fontSize: '0.75rem', fontWeight: 600,
-                        cursor: actionLoading === task.id ? 'not-allowed' : 'pointer',
-                        fontFamily: 'inherit', transition: 'background 0.15s',
-                      }}
-                      onMouseEnter={e => (e.currentTarget.style.background = 'var(--primary-glow)')}
-                      onMouseLeave={e => (e.currentTarget.style.background = 'var(--primary-light)')}
-                    >
-                      <RotateCcw size={11} strokeWidth={2} />
-                      Restaurar
-                    </button>
-                    <button
-                      onClick={() => handleDelete(task)}
-                      disabled={actionLoading === task.id}
-                      title="Excluir permanentemente"
-                      style={{
-                        display: 'flex', alignItems: 'center',
-                        padding: '5px', borderRadius: 6,
-                        border: 'none', background: '#fff5f5', color: '#ef4444',
-                        cursor: actionLoading === task.id ? 'not-allowed' : 'pointer',
-                        transition: 'background 0.15s',
-                      }}
-                      onMouseEnter={e => (e.currentTarget.style.background = '#fee2e2')}
-                      onMouseLeave={e => (e.currentTarget.style.background = '#fff5f5')}
-                    >
-                      <Trash2 size={13} />
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
+          {/* Cabeçalho da tabela */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 190px 130px 150px 120px', gap: 24, padding: '13px 32px', borderBottom: '1px solid var(--line-1)', background: 'var(--surface-2)' }}>
+            {['Atividade', 'Projeto', 'Status', 'Criado em', 'Ação'].map(h => (
+              <span key={h} className="mono" style={{ fontSize: '0.64rem', fontWeight: 500, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--text-3)' }}>{h}</span>
+            ))}
           </div>
-        )}
-      </div>
 
-      <ConfirmModal
-        open={!!confirmDialog}
-        title={confirmDialog?.title ?? ''}
-        message={confirmDialog?.message}
-        confirmLabel="Excluir"
-        danger
-        onConfirm={() => confirmDialog?.onConfirm()}
-        onClose={() => setConfirmDialog(null)}
-      />
+          {/* Linhas */}
+          {filtered.map(task => (
+            <div key={task.id}
+              style={{ display: 'grid', gridTemplateColumns: '1fr 190px 130px 150px 120px', gap: 24, alignItems: 'center', padding: '16px 32px', borderBottom: '1px solid var(--line-2)', cursor: 'default', transition: 'background 0.1s' }}
+              onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'var(--surface-2)'}
+              onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = ''}>
+              {/* Atividade */}
+              <div style={{ minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5 }}>
+                  <span className="mono" style={{ fontSize: '0.6rem', fontWeight: 500, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--text-3)' }}>{task.category}</span>
+                  <span style={{ color: 'var(--border)' }}>·</span>
+                  <span className="mono" style={{ fontSize: '0.6rem', fontWeight: 500, letterSpacing: '0.5px', textTransform: 'uppercase', color: PRIO_COLOR[task.priority] ?? 'var(--text-3)' }}>{task.priority}</span>
+                </div>
+                <span style={{ fontSize: '0.9rem', fontWeight: 500, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}>{task.activity}</span>
+              </div>
+
+              {/* Projeto */}
+              <span style={{ fontSize: '0.8rem', color: 'var(--text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {task.category || '—'}
+              </span>
+
+              {/* Status */}
+              <span className="mono" style={{ fontSize: '0.68rem', fontWeight: 500, letterSpacing: '0.5px', textTransform: 'uppercase', color: STATUS_COLOR[task.status_group] ?? 'var(--text-3)' }}>
+                {STATUS_LABEL[task.status_group] ?? task.status}
+              </span>
+
+              {/* Data */}
+              <span className="mono" style={{ fontSize: '0.74rem', color: 'var(--text-3)', letterSpacing: '0.3px' }}>{task.created_at?.slice(0, 10) ?? '—'}</span>
+
+              {/* Ação */}
+              <div>
+                <button onClick={() => handleRestore(task)} disabled={acting === task.id}
+                  className="mono"
+                  style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', border: '1px solid var(--border)', borderRadius: 3, background: 'var(--surface)', color: 'var(--text-2)', fontSize: '0.66rem', fontWeight: 500, letterSpacing: '0.5px', textTransform: 'uppercase', cursor: acting === task.id ? 'not-allowed' : 'pointer', fontFamily: 'inherit', transition: 'color 0.12s, border-color 0.12s' }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = '#034EA2'; (e.currentTarget as HTMLButtonElement).style.borderColor = '#034EA2'; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-2)'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--border)'; }}>
+                  <RotateCcw size={12} />
+                  Restaurar
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <ConfirmModal open={!!confirm} title={confirm?.title ?? ''} message={confirm?.message} confirmLabel="Excluir" danger onConfirm={() => confirm?.onConfirm()} onClose={() => setConfirm(null)} />
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />
     </>
   );
