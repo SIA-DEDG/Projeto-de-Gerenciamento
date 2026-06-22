@@ -1,4 +1,4 @@
-export type StatusGroup = 'pending' | 'in_progress' | 'done';
+export type StatusGroup = 'pending' | 'in_progress' | 'review' | 'done';
 
 export interface Task {
   id: string;

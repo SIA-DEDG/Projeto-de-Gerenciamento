@@ -1,58 +1,34 @@
 'use client';
 
-import { useState } from 'react';
-import { usePathname } from 'next/navigation';
-import Image from 'next/image';
+import { useEffect, useState } from 'react';
 import Sidebar from './Sidebar';
-import RightPanel from './RightPanel';
-import { getUser } from '@/lib/auth';
+
+const THEME_KEY = 'sia-theme';
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
-  const isBoard = pathname === '/';
-  const isConfigurations = pathname === '/configuracoes';
-  const isMyActivities = pathname === '/minhas-atividades';
-  const showPanel = isBoard || isMyActivities;
-  const [panelOpen, setPanelOpen] = useState(true);
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
 
-  const filterUser = isMyActivities ? (getUser()?.name ?? undefined) : undefined;
+  useEffect(() => {
+    const saved = localStorage.getItem(THEME_KEY);
+    if (saved === 'dark') setTheme('dark');
+  }, []);
+
+  function toggleTheme() {
+    setTheme((t) => {
+      const next = t === 'light' ? 'dark' : 'light';
+      localStorage.setItem(THEME_KEY, next);
+      return next;
+    });
+  }
 
   return (
-    <div className="app-container">
-      <Sidebar />
-
-      <main
-        className={`main-content${isBoard ? '' : ' has-logo-corner'}${showPanel ? ' has-right-panel' : ''}`}
-        data-right-panel={showPanel && panelOpen ? 'open' : 'closed'}
-      >
+    <div className={`app-container${theme === 'dark' ? ' theme-dark' : ''}`}>
+      <Sidebar onToggleTheme={toggleTheme} isDark={theme === 'dark'} />
+      <main className="main-content">
         <div className="page-scroll">
-          <div className="page-inner">
-            {children}
-          </div>
+          {children}
         </div>
-
-        {/* Logo no topbar — só em páginas que NÃO são o Board */}
-        {!isBoard && !isMyActivities && !isConfigurations &&(
-          <div className="app-logo-corner">
-            <Image
-              src="/logo-sia.svg"
-              alt="SIA — Governo do Piauí"
-              width={120}
-              height={36}
-              style={{ objectFit: 'contain' }}
-              priority
-            />
-          </div>
-        )}
       </main>
-
-      {showPanel && (
-        <RightPanel
-          open={panelOpen}
-          onToggle={() => setPanelOpen((o) => !o)}
-          filterUser={filterUser}
-        />
-      )}
     </div>
   );
 }

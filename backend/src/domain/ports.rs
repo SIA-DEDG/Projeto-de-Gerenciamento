@@ -5,10 +5,12 @@ use uuid::Uuid;
 #[async_trait]
 pub trait TaskRepository: Send + Sync {
     async fn get_all_tasks(&self) -> Result<Vec<Task>, String>;
+    async fn get_archived_tasks(&self) -> Result<Vec<Task>, String>;
     async fn add_task(&self, task: Task, co_responsible_ids: Vec<Uuid>) -> Result<Task, String>;
     async fn add_tasks_batch(&self, tasks: Vec<Task>, co_ids: Vec<Vec<Uuid>>) -> Result<Vec<Task>, String>;
     async fn get_task_by_id(&self, id: Uuid) -> Result<Option<Task>, String>;
     async fn update_task(&self, task: Task, co_responsible_ids: Vec<Uuid>) -> Result<Task, String>;
+    async fn set_task_archived(&self, id: Uuid, archived: bool) -> Result<Task, String>;
     async fn delete_task(&self, id: Uuid) -> Result<(), String>;
 }
 
@@ -40,6 +42,7 @@ pub trait AbsenceRepository: Send + Sync {
     async fn add(&self, absence: Absence) -> Result<Absence, String>;
     async fn get_all(&self) -> Result<Vec<Absence>, String>;
     async fn update(&self, id: Uuid, reason: String, justification: Option<String>, start_date: String, end_date: String) -> Result<Absence, String>;
+    async fn set_approval_status(&self, id: Uuid, status: String) -> Result<Absence, String>;
     async fn delete(&self, id: Uuid) -> Result<(), String>;
 }
 
@@ -48,6 +51,7 @@ pub trait EventRepository: Send + Sync {
     async fn add(&self, event: Event, responsible_ids: Vec<Uuid>) -> Result<Event, String>;
     async fn get_all(&self) -> Result<Vec<Event>, String>;
     async fn update(&self, event: Event, responsible_ids: Vec<Uuid>) -> Result<Event, String>;
+    async fn set_minutes(&self, id: Uuid, file_name: Option<String>, file_data: Option<String>) -> Result<Event, String>;
     async fn delete(&self, id: Uuid) -> Result<(), String>;
 }
 

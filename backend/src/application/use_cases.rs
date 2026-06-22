@@ -16,6 +16,14 @@ impl TaskService {
         self.repository.get_all_tasks().await
     }
 
+    pub async fn fetch_archived_tasks(&self) -> Result<Vec<Task>, String> {
+        self.repository.get_archived_tasks().await
+    }
+
+    pub async fn set_task_archived(&self, id: Uuid, archived: bool) -> Result<Task, String> {
+        self.repository.set_task_archived(id, archived).await
+    }
+
     pub async fn create_task(
         &self,
         task: Task,
@@ -91,6 +99,9 @@ impl AbsenceService {
     pub async fn update(&self, id: uuid::Uuid, reason: String, justification: Option<String>, start_date: String, end_date: String) -> Result<Absence, String> {
         self.repository.update(id, reason, justification, start_date, end_date).await
     }
+    pub async fn set_approval_status(&self, id: uuid::Uuid, status: String) -> Result<Absence, String> {
+        self.repository.set_approval_status(id, status).await
+    }
     pub async fn delete(&self, id: uuid::Uuid) -> Result<(), String> {
         self.repository.delete(id).await
     }
@@ -111,6 +122,9 @@ impl EventService {
     }
     pub async fn update(&self, event: Event, responsible_ids: Vec<Uuid>) -> Result<Event, String> {
         self.repository.update(event, responsible_ids).await
+    }
+    pub async fn set_minutes(&self, id: uuid::Uuid, file_name: Option<String>, file_data: Option<String>) -> Result<Event, String> {
+        self.repository.set_minutes(id, file_name, file_data).await
     }
     pub async fn delete(&self, id: uuid::Uuid) -> Result<(), String> {
         self.repository.delete(id).await
@@ -189,7 +203,10 @@ mod tests {
     #[async_trait]
     impl TaskRepository for MockTaskRepo {
         async fn get_all_tasks(&self) -> Result<Vec<Task>, String> {
-            Ok(self.tasks.lock().unwrap().clone())
+            Ok(self.tasks.lock().unwrap().iter().filter(|t| !t.archived).cloned().collect())
+        }
+        async fn get_archived_tasks(&self) -> Result<Vec<Task>, String> {
+            Ok(self.tasks.lock().unwrap().iter().filter(|t| t.archived).cloned().collect())
         }
         async fn add_task(
             &self,
@@ -232,6 +249,13 @@ mod tests {
             Ok(created)
         }
 
+        async fn set_task_archived(&self, id: Uuid, archived: bool) -> Result<Task, String> {
+            let mut tasks = self.tasks.lock().unwrap();
+            match tasks.iter_mut().find(|t| t.id == id) {
+                Some(t) => { t.archived = archived; Ok(t.clone()) }
+                None => Err(format!("Task {} não encontrada", id)),
+            }
+        }
         async fn delete_task(&self, id: Uuid) -> Result<(), String> {
             let mut tasks = self.tasks.lock().unwrap();
             let before = tasks.len();
@@ -334,6 +358,13 @@ mod tests {
                 None => Err(format!("Falta {} não encontrada", id)),
             }
         }
+        async fn set_approval_status(&self, id: Uuid, status: String) -> Result<Absence, String> {
+            let mut absences = self.absences.lock().unwrap();
+            match absences.iter_mut().find(|a| a.id == id) {
+                Some(a) => { a.approval_status = status; Ok(a.clone()) }
+                None => Err(format!("Falta {} não encontrada", id)),
+            }
+        }
         async fn delete(&self, id: Uuid) -> Result<(), String> {
             let mut absences = self.absences.lock().unwrap();
             let before = absences.len();
@@ -363,6 +394,7 @@ mod tests {
             co_responsibles: None,
             external_collaborators: None,
             deadline: None,
+            archived: false,
         }
     }
 
@@ -392,6 +424,7 @@ mod tests {
             file_data: None,
             start_date: "2024-01-10".to_string(),
             end_date: "2024-01-12".to_string(),
+            approval_status: "pendente".to_string(),
             created_at: String::new(),
         }
     }

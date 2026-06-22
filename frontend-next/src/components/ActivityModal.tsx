@@ -1,21 +1,22 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, X } from 'lucide-react';
 import type { Task, Project } from '@/types';
 import type { UserPublic } from '@/lib/api';
 import RichTextEditor from './RichTextEditor';
 
 const PIPELINE_OPTIONS = [
-  { value: 'Pendente',     label: 'Pendente'     },
-  { value: 'Em Andamento', label: 'Em Andamento' },
-  { value: 'Concluído',    label: 'Concluído'    },
+  { value: 'Pendente',    label: 'Pendente' },
+  { value: 'Em Andamento',label: 'Em Andamento' },
+  { value: 'Em Revisão',  label: 'Em Revisão' },
+  { value: 'Concluído',   label: 'Concluído' },
 ];
 
 const PRIORITY_OPTIONS = [
-  { value: 'Baixa', label: 'Baixa', color: '#007932', bg: '#e8f7ee' },
-  { value: 'Média', label: 'Média', color: '#c07800', bg: '#fff8e0' },
-  { value: 'Alta',  label: 'Alta',  color: '#ef4123', bg: '#fff0ed' },
+  { value: 'Baixa', color: 'var(--green-t)', bg: 'rgba(27,138,75,0.08)' },
+  { value: 'Média', color: 'var(--gold-t)',  bg: 'rgba(224,169,46,0.1)' },
+  { value: 'Alta',  color: 'var(--red)',     bg: 'rgba(180,35,24,0.08)' },
 ];
 
 interface Props {
@@ -55,12 +56,8 @@ const EMPTY = {
   deadline: '',
 };
 
-// ── Multi-select dropdown ─────────────────────────────────────────────────────
 function CoResponsaveisSelect({
-  users,
-  selected,
-  exclude,
-  onChange,
+  users, selected, exclude, onChange,
 }: {
   users: UserPublic[];
   selected: string[];
@@ -69,7 +66,7 @@ function CoResponsaveisSelect({
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-  const available = users.filter((user) => user.name !== exclude);
+  const available = users.filter((u) => u.name !== exclude);
 
   useEffect(() => {
     function handler(e: MouseEvent) {
@@ -80,73 +77,45 @@ function CoResponsaveisSelect({
   }, [open]);
 
   function toggle(name: string) {
-    onChange(selected.includes(name) ? selected.filter((selectedName) => selectedName !== name) : [...selected, name]);
+    onChange(selected.includes(name) ? selected.filter((n) => n !== name) : [...selected, name]);
   }
 
   return (
     <div ref={ref} style={{ position: 'relative' }}>
       <button
         type="button"
-        onClick={() => setOpen((isOpen) => !isOpen)}
-        style={{
-          width: '100%', textAlign: 'left', padding: '8px 10px',
-          border: '1px solid #dfe1e6', borderRadius: '4px',
-          background: '#fff', fontSize: '0.9rem', cursor: 'pointer',
-          display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', minHeight: 36,
-          fontFamily: 'inherit',
-        }}
+        onClick={() => setOpen((o) => !o)}
+        className="form-input"
+        style={{ display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap', minHeight: 36, cursor: 'pointer', textAlign: 'left' }}
       >
         {selected.length === 0 ? (
-          <span style={{ color: '#adb5bd' }}>— Nenhum —</span>
-        ) : (
-          selected.map((name) => (
-            <span key={name} style={{
-              background: '#e8f0fe', color: '#0052cc', borderRadius: 4,
-              padding: '2px 6px', fontSize: '0.78rem', fontWeight: 600,
-              display: 'flex', alignItems: 'center', gap: 4,
-            }}>
-              {name}
-              <span
-                onClick={(e) => { e.stopPropagation(); toggle(name); }}
-                style={{ cursor: 'pointer', lineHeight: 1 }}
-              >×</span>
-            </span>
-          ))
-        )}
-        <ChevronDown size={12} style={{ marginLeft: 'auto', flexShrink: 0, color: '#6b778c', transform: open ? 'rotate(180deg)' : undefined }} />
+          <span style={{ color: 'var(--text-3)', fontSize: '0.82rem' }}>— Nenhum —</span>
+        ) : selected.map((name) => (
+          <span key={name} style={{ background: 'rgba(3,78,162,0.08)', color: 'var(--blue)', borderRadius: 2, padding: '1px 6px', fontSize: '0.72rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 3 }}>
+            {name}
+            <span onClick={(e) => { e.stopPropagation(); toggle(name); }} style={{ cursor: 'pointer', lineHeight: 1 }}>×</span>
+          </span>
+        ))}
+        <ChevronDown size={12} style={{ marginLeft: 'auto', flexShrink: 0, color: 'var(--text-3)', transform: open ? 'rotate(180deg)' : undefined }} />
       </button>
 
       {open && (
-        <div style={{
-          position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 200,
-          background: '#fff', border: '1px solid #dfe1e6', borderRadius: 4,
-          boxShadow: '0 4px 12px rgba(0,0,0,0.12)', maxHeight: 180, overflowY: 'auto', marginTop: 2,
-        }}>
-          {available.length === 0 ? (
-            <div style={{ padding: '10px 12px', color: '#a5adba', fontSize: '0.85rem' }}>Nenhum usuário disponível</div>
-          ) : available.map((user) => (
-            <label key={user.id} style={{
-              display: 'flex', alignItems: 'center', gap: 8,
-              padding: '8px 12px', cursor: 'pointer', fontSize: '0.88rem',
-              background: selected.includes(user.name) ? '#f0f4ff' : 'transparent',
-            }}>
-              <input
-                type="checkbox"
-                checked={selected.includes(user.name)}
-                onChange={() => toggle(user.name)}
-                style={{ accentColor: '#0052cc', width: 14, height: 14, cursor: 'pointer' }}
-              />
-              {user.name}
-              <span style={{ marginLeft: 'auto', fontSize: '0.72rem', color: '#6b778c' }}>{user.role}</span>
-            </label>
-          ))}
+        <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 200, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', maxHeight: 180, overflowY: 'auto', marginTop: 2 }}>
+          {available.length === 0
+            ? <div style={{ padding: '10px 12px', color: 'var(--text-3)', fontSize: '0.82rem' }}>Nenhum usuário disponível</div>
+            : available.map((u) => (
+              <label key={u.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', cursor: 'pointer', fontSize: '0.82rem', background: selected.includes(u.name) ? 'rgba(3,78,162,0.04)' : 'transparent' }}>
+                <input type="checkbox" checked={selected.includes(u.name)} onChange={() => toggle(u.name)} style={{ accentColor: 'var(--blue)', cursor: 'pointer' }} />
+                {u.name}
+                <span style={{ marginLeft: 'auto', fontSize: '0.68rem', color: 'var(--text-3)' }}>{u.role}</span>
+              </label>
+            ))
+          }
         </div>
       )}
     </div>
   );
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
 
 export default function ActivityModal({
   open, task, defaultStatus, defaultResponsible, projects, users, fixedProjectId, onClose, onSave,
@@ -158,22 +127,11 @@ export default function ActivityModal({
     if (!open) return;
     if (task) {
       const sg = task.status_group;
-      const mapped = sg === 'done' ? 'Concluído' : sg === 'in_progress' ? 'Em Andamento' : 'Pendente';
-      let coResponsibles: string[] = [];
-      try { coResponsibles = task.co_responsibles ? JSON.parse(task.co_responsibles) : []; } catch { coResponsibles = []; }
+      const mapped = sg === 'done' ? 'Concluído' : sg === 'review' ? 'Em Revisão' : sg === 'in_progress' ? 'Em Andamento' : 'Pendente';
+      let co: string[] = [];
+      try { co = task.co_responsibles ? JSON.parse(task.co_responsibles) : []; } catch { co = []; }
       setNoDeadline(!task.deadline);
-      setForm({
-        activity:               task.activity,
-        description:            task.description ?? '',
-        project_id:             task.project_id ?? null,
-        status:                 mapped,
-        responsible:            task.responsible,
-        date:                   task.date ?? '',
-        priority:               task.priority ?? 'Média',
-        co_responsibles:        coResponsibles,
-        external_collaborators: task.external_collaborators ?? '',
-        deadline:               task.deadline ?? '',
-      });
+      setForm({ activity: task.activity, description: task.description ?? '', project_id: task.project_id ?? null, status: mapped, responsible: task.responsible, date: task.date ?? '', priority: task.priority ?? 'Média', co_responsibles: co, external_collaborators: task.external_collaborators ?? '', deadline: task.deadline ?? '' });
     } else {
       const pid = fixedProjectId ?? projects[0]?.id ?? null;
       setNoDeadline(false);
@@ -186,200 +144,119 @@ export default function ActivityModal({
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!form.activity.trim()) return;
-    const project = projects.find((proj) => proj.id === form.project_id);
-    onSave({
-      ...form,
-      category:               project?.name ?? '',
-      co_responsibles:        form.co_responsibles.length > 0 ? JSON.stringify(form.co_responsibles) : null,
-      external_collaborators: form.external_collaborators.trim() || null,
-      deadline:               noDeadline ? null : (form.deadline.trim() || null),
-    });
+    if (!form.description.replace(/<[^>]*>/g, '').trim()) return;
+    const project = projects.find((p) => p.id === form.project_id);
+    onSave({ ...form, category: project?.name ?? '', co_responsibles: form.co_responsibles.length > 0 ? JSON.stringify(form.co_responsibles) : null, external_collaborators: form.external_collaborators.trim() || null, deadline: noDeadline ? null : (form.deadline.trim() || null) });
   }
 
   const showProjectSelect = fixedProjectId == null;
-  const fixedProject = fixedProjectId != null ? projects.find((proj) => proj.id === fixedProjectId) : null;
-
-  const inp: React.CSSProperties = {
-    width: '100%', padding: '8px 10px', borderRadius: 'var(--radius-sm)',
-    border: '1px solid var(--border-light)', fontSize: '0.85rem',
-    fontFamily: 'inherit', background: '#fff', color: 'var(--text-primary)',
-    outline: 'none', boxSizing: 'border-box',
-  };
-  const lbl: React.CSSProperties = {
-    display: 'block', fontSize: '0.72rem', fontWeight: 700,
-    color: 'var(--text-muted)', marginBottom: 5,
-    textTransform: 'uppercase', letterSpacing: '0.04em',
-  };
+  const fixedProject = fixedProjectId != null ? projects.find((p) => p.id === fixedProjectId) : null;
 
   return (
-    <div
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
-      style={{ position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(3,78,162,0.22)', backdropFilter: 'blur(2px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
-    >
-      <div style={{
-        background: '#fff', borderRadius: 'var(--radius-lg)',
-        width: '100%', maxWidth: 520, maxHeight: '90vh',
-        boxShadow: '0 20px 60px rgba(3,78,162,0.18), 0 4px 16px rgba(0,0,0,0.10)',
-        overflow: 'hidden', display: 'flex', flexDirection: 'column',
-        animation: 'modal-pop-in-flex 0.2s cubic-bezier(0.34,1.56,0.64,1) forwards',
-      }}>
-        {/* Piauí flag stripe */}
-        <div style={{ height: 5, flexShrink: 0, background: 'linear-gradient(to right, #034ea2 40%, #fdb913 40% 55%, #ef4123 55% 75%, #007932 75%)' }} />
-
-        {/* Header */}
-        <div style={{ padding: '16px 20px 14px', borderBottom: '1px solid var(--border-light)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10, flexShrink: 0 }}>
+    <div className="modal-backdrop" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="modal-card modal-card-lg" style={{ display: 'flex', flexDirection: 'column' }}>
+        <div className="modal-header">
           <div>
-            <div style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-muted)', marginBottom: 4 }}>
+            <div style={{ fontFamily: 'var(--mono)', fontSize: '0.6rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-3)', marginBottom: 3 }}>
               {task ? 'Editar atividade' : 'Nova atividade'}
             </div>
-            <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'inherit' }}>
-              {task ? (task.activity || 'Editar Atividade') : 'Preencha os dados abaixo'}
-            </h2>
+            <h2 className="modal-title">{task ? (task.activity || 'Editar Atividade') : 'Preencha os dados abaixo'}</h2>
           </div>
-          <button type="button" onClick={onClose} style={{ flexShrink: 0, width: 28, height: 28, borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-light)', background: 'var(--bg-subtle)', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'inherit' }}>✕</button>
+          <button type="button" className="modal-close" onClick={onClose}><X size={18} /></button>
         </div>
 
-        {/* Scrollable body */}
-        <form id="activity-form" onSubmit={handleSubmit} noValidate style={{ flex: 1, overflowY: 'auto', padding: '20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <form id="activity-form" onSubmit={handleSubmit} noValidate className="modal-body">
           {fixedProject && (
-            <div style={{ padding: '6px 10px', background: 'var(--primary-light)', borderRadius: 'var(--radius-sm)', fontSize: '0.8rem', color: 'var(--primary)', fontWeight: 600 }}>
+            <div style={{ padding: '5px 10px', background: 'rgba(3,78,162,0.06)', borderRadius: 'var(--radius)', fontSize: '0.78rem', color: 'var(--blue)', fontWeight: 600 }}>
               Projeto: {fixedProject.name}
             </div>
           )}
 
-          <div>
-            <label style={lbl}>Título da Atividade *</label>
-            <input
-              type="text"
-              value={form.activity}
-              onChange={(e) => setForm({ ...form, activity: e.target.value })}
-              placeholder="O que precisa ser feito?"
-              required
-              style={inp}
-            />
+          <div className="form-field">
+            <label className="form-label">Título da Atividade *</label>
+            <input className="form-input" type="text" value={form.activity} onChange={(e) => setForm({ ...form, activity: e.target.value })} placeholder="O que precisa ser feito?" required />
           </div>
 
-          <div>
-            <label style={lbl}>Descrição</label>
-            <div style={{ marginTop: 4 }}>
-              <RichTextEditor
-                value={form.description}
-                onChange={(html) => setForm((f) => ({ ...f, description: html }))}
-              />
-            </div>
+          <div className="form-field">
+            <label className="form-label">Descrição *</label>
+            <RichTextEditor value={form.description} onChange={(html) => setForm((f) => ({ ...f, description: html }))} />
           </div>
 
-          <div>
-            <label style={lbl}>Prioridade</label>
-            <div style={{ display: 'flex', gap: 8 }}>
+          {/* Prioridade */}
+          <div className="form-field">
+            <label className="form-label">Prioridade</label>
+            <div style={{ display: 'flex', gap: 6 }}>
               {PRIORITY_OPTIONS.map((opt) => {
                 const active = form.priority === opt.value;
                 return (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    onClick={() => setForm({ ...form, priority: opt.value })}
-                    style={{
-                      flex: 1, padding: '7px 4px',
-                      border: `2px solid ${active ? opt.color : 'var(--border-light)'}`,
-                      borderRadius: 'var(--radius-sm)',
-                      background: active ? opt.bg : '#fafbfc',
-                      color: active ? opt.color : 'var(--text-muted)',
-                      fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                      fontFamily: 'inherit',
-                    }}
+                  <button key={opt.value} type="button" onClick={() => setForm({ ...form, priority: opt.value })}
+                    style={{ flex: 1, padding: '6px 4px', border: `1px solid ${active ? opt.color : 'var(--border)'}`, borderRadius: 'var(--radius)', background: active ? opt.bg : 'var(--surface)', color: active ? opt.color : 'var(--text-2)', fontWeight: active ? 700 : 500, fontSize: '0.78rem', cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}
                   >
-                    <span style={{ width: 9, height: 9, borderRadius: '50%', background: opt.color, display: 'inline-block', flexShrink: 0 }} />
-                    {opt.label}
+                    <span style={{ width: 7, height: 7, borderRadius: '50%', background: opt.color, flexShrink: 0 }} />
+                    {opt.value}
                   </button>
                 );
               })}
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: showProjectSelect ? '1fr 1fr' : '1fr', gap: 12 }}>
+          <div className={showProjectSelect ? 'form-row' : undefined}>
             {showProjectSelect && (
-              <div>
-                <label style={lbl}>Projeto</label>
-                <select value={form.project_id ?? ''} onChange={(e) => setForm({ ...form, project_id: e.target.value || null })} style={inp}>
+              <div className="form-field">
+                <label className="form-label">Projeto</label>
+                <select className="form-select" value={form.project_id ?? ''} onChange={(e) => setForm({ ...form, project_id: e.target.value || null })}>
                   <option value="">— Sem projeto —</option>
-                  {projects.map((project) => <option key={project.id} value={project.id}>{project.name}</option>)}
+                  {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
                 </select>
               </div>
             )}
-            <div>
-              <label style={lbl}>Pipeline / Status</label>
-              <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} style={inp}>
-                {PIPELINE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+            <div className="form-field">
+              <label className="form-label">Status</label>
+              <select className="form-select" value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
+                {PIPELINE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-            <div>
-              <label style={lbl}>Responsável principal</label>
-              <select value={form.responsible} onChange={(e) => setForm({ ...form, responsible: e.target.value, co_responsibles: form.co_responsibles.filter((n) => n !== e.target.value) })} style={inp}>
+          <div className="form-row">
+            <div className="form-field">
+              <label className="form-label">Responsável principal</label>
+              <select className="form-select" value={form.responsible} onChange={(e) => setForm({ ...form, responsible: e.target.value, co_responsibles: form.co_responsibles.filter((n) => n !== e.target.value) })}>
                 <option value="">— Sem responsável —</option>
-                {users.map((user) => <option key={user.id} value={user.name}>{user.name}</option>)}
+                {users.map((u) => <option key={u.id} value={u.name}>{u.name}</option>)}
               </select>
             </div>
-            <div>
-              <label style={lbl}>Data</label>
-              <input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} style={inp} />
+            <div className="form-field">
+              <label className="form-label">Data</label>
+              <input className="form-input" type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
             </div>
           </div>
 
-          <div>
+          <div className="form-field">
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 5 }}>
-              <label style={{ ...lbl, marginBottom: 0 }}>Prazo de Finalização</label>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.78rem', color: 'var(--text-muted)', cursor: 'pointer', fontWeight: 500 }}>
-                <input
-                  type="checkbox"
-                  checked={noDeadline}
-                  onChange={(e) => { setNoDeadline(e.target.checked); if (e.target.checked) setForm({ ...form, deadline: '' }); }}
-                  style={{ cursor: 'pointer', accentColor: 'var(--primary)' }}
-                />
+              <label className="form-label" style={{ marginBottom: 0 }}>Prazo de Finalização</label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: '0.72rem', color: 'var(--text-2)', cursor: 'pointer' }}>
+                <input type="checkbox" checked={noDeadline} onChange={(e) => { setNoDeadline(e.target.checked); if (e.target.checked) setForm({ ...form, deadline: '' }); }} style={{ accentColor: 'var(--blue)', cursor: 'pointer' }} />
                 Indeterminado
               </label>
             </div>
-            <input
-              type="date"
-              value={form.deadline}
-              onChange={(e) => setForm({ ...form, deadline: e.target.value })}
-              disabled={noDeadline}
-              style={{ ...inp, opacity: noDeadline ? 0.4 : 1 }}
-            />
+            <input className="form-input" type="date" value={form.deadline} onChange={(e) => setForm({ ...form, deadline: e.target.value })} disabled={noDeadline} style={{ opacity: noDeadline ? 0.4 : 1 }} />
           </div>
 
-          <div>
-            <label style={lbl}>Co-responsáveis</label>
-            <div style={{ marginTop: 4 }}>
-              <CoResponsaveisSelect
-                users={users}
-                selected={form.co_responsibles}
-                exclude={form.responsible}
-                onChange={(v) => setForm({ ...form, co_responsibles: v })}
-              />
-            </div>
+          <div className="form-field">
+            <label className="form-label">Co-responsáveis</label>
+            <CoResponsaveisSelect users={users} selected={form.co_responsibles} exclude={form.responsible} onChange={(v) => setForm({ ...form, co_responsibles: v })} />
           </div>
 
-          <div>
-            <label style={lbl}>Colaboração externa</label>
-            <input
-              type="text"
-              value={form.external_collaborators}
-              onChange={(e) => setForm({ ...form, external_collaborators: e.target.value })}
-              placeholder="Nomes externos, separados por vírgula"
-              style={inp}
-            />
+          <div className="form-field">
+            <label className="form-label">Colaboração externa</label>
+            <input className="form-input" type="text" value={form.external_collaborators} onChange={(e) => setForm({ ...form, external_collaborators: e.target.value })} placeholder="Nomes externos, separados por vírgula" />
           </div>
         </form>
 
-        {/* Footer */}
-        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', padding: '12px 20px', borderTop: '1px solid var(--border-light)', background: 'var(--bg-subtle)', flexShrink: 0 }}>
-          <button type="button" onClick={onClose} style={{ padding: '6px 14px', background: '#fff', border: '1px solid var(--border-light)', borderRadius: 'var(--radius-sm)', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', color: 'var(--text-secondary)' }}>Cancelar</button>
-          <button type="submit" form="activity-form" style={{ padding: '6px 18px', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: 'var(--radius-sm)', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>{task ? 'Salvar' : 'Criar'}</button>
+        <div className="modal-footer" style={{ background: 'var(--surface-2)' }}>
+          <button type="button" className="btn btn-secondary btn-sm" onClick={onClose}>Cancelar</button>
+          <button type="submit" form="activity-form" className="btn btn-primary btn-sm">{task ? 'Salvar' : 'Criar'}</button>
         </div>
       </div>
     </div>

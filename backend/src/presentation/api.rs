@@ -62,14 +62,19 @@ pub fn create_router(state: AppState) -> Router {
         .route("/api/users/{id}/password", put(admin_reset_password_handler))
         .route("/api/tasks", get(get_tasks_handler).post(create_task_handler))
         .route("/api/tasks/batch", post(create_tasks_batch_handler))
+        .route("/api/tasks/archived", get(get_archived_tasks_handler))
         .route("/api/tasks/{id}", get(get_task_handler).put(update_task_handler).delete(delete_task_handler))
+        .route("/api/tasks/{id}/archive", put(archive_task_handler))
+        .route("/api/tasks/{id}/unarchive", put(unarchive_task_handler))
         .route("/api/projects", get(get_projects_handler).post(create_project_handler))
         .route("/api/projects/{id}", get(get_project_handler).put(update_project_handler).delete(delete_project_handler))
         .route("/api/logs", get(get_logs_handler).delete(clear_logs_handler))
         .route("/api/absences", get(get_absences_handler).post(create_absence_handler))
         .route("/api/absences/{id}", put(update_absence_handler).delete(delete_absence_handler))
+        .route("/api/absences/{id}/approval", put(approve_absence_handler))
         .route("/api/events", get(get_events_handler).post(create_event_handler))
         .route("/api/events/{id}", put(update_event_handler).delete(delete_event_handler))
+        .route("/api/events/{id}/minutes", put(set_event_minutes_handler).delete(remove_event_minutes_handler))
         .route("/api/feedback", get(get_feedbacks_handler).post(create_feedback_handler))
         .route("/api/feedback/{id}", put(update_feedback_handler).delete(delete_feedback_handler))
         .route("/api/feedback/{id}/upvote", post(upvote_feedback_handler))
@@ -133,6 +138,17 @@ struct AbsenceUpdateDto {
     justification: Option<String>,
     start_date: String,
     end_date: String,
+}
+
+#[derive(Deserialize)]
+struct AbsenceApprovalDto {
+    approval_status: String,
+}
+
+#[derive(Deserialize)]
+struct EventMinutesDto {
+    file_name: String,
+    file_data: String,
 }
 
 #[derive(Deserialize)]
@@ -360,6 +376,7 @@ async fn create_task_handler(
         co_responsibles: None,
         external_collaborators: dto.external_collaborators,
         deadline: dto.deadline,
+        archived: false,
     };
     let co_ids = dto.co_responsible_ids.unwrap_or_default();
     let created = state
@@ -405,6 +422,7 @@ async fn create_tasks_batch_handler(
                 co_responsibles: None,
                 external_collaborators: dto.external_collaborators,
                 deadline: dto.deadline,
+                archived: false,
             };
             (task, ids)
         })
@@ -460,6 +478,7 @@ async fn update_task_handler(
         co_responsibles: None,
         external_collaborators: dto.external_collaborators,
         deadline: dto.deadline,
+        archived: false,
     };
     let co_ids = dto.co_responsible_ids.unwrap_or_default();
     let updated = state
@@ -497,6 +516,64 @@ async fn delete_task_handler(
                     "task",
                     &id.to_string(),
                     "Excluiu atividade",
+                )
+                .await;
+            StatusCode::NO_CONTENT
+        }
+        Err(_) => StatusCode::NOT_FOUND,
+    }
+}
+
+async fn get_archived_tasks_handler(
+    _auth: AuthUser,
+    State(state): State<AppState>,
+) -> Json<Vec<Task>> {
+    match state.task_service.fetch_archived_tasks().await {
+        Ok(tasks) => Json(tasks),
+        Err(_) => Json(vec![]),
+    }
+}
+
+async fn archive_task_handler(
+    auth: AuthUser,
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+) -> StatusCode {
+    match state.task_service.set_task_archived(id, true).await {
+        Ok(_) => {
+            let _ = state
+                .log_service
+                .add(
+                    parse_uid(&auth.0.sub),
+                    &auth.0.username,
+                    "ARCHIVE",
+                    "task",
+                    &id.to_string(),
+                    "Arquivou atividade",
+                )
+                .await;
+            StatusCode::NO_CONTENT
+        }
+        Err(_) => StatusCode::NOT_FOUND,
+    }
+}
+
+async fn unarchive_task_handler(
+    auth: AuthUser,
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+) -> StatusCode {
+    match state.task_service.set_task_archived(id, false).await {
+        Ok(_) => {
+            let _ = state
+                .log_service
+                .add(
+                    parse_uid(&auth.0.sub),
+                    &auth.0.username,
+                    "UNARCHIVE",
+                    "task",
+                    &id.to_string(),
+                    "Restaurou atividade",
                 )
                 .await;
             StatusCode::NO_CONTENT
@@ -822,6 +899,7 @@ async fn create_absence_handler(
         file_data: dto.file_data,
         start_date: dto.start_date,
         end_date: dto.end_date,
+        approval_status: "pendente".to_string(),
         created_at: String::new(),
     };
     let created = state
@@ -893,6 +971,30 @@ async fn delete_absence_handler(
     }
 }
 
+async fn approve_absence_handler(
+    auth: AuthUser,
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+    Json(dto): Json<AbsenceApprovalDto>,
+) -> Result<Json<Absence>, (StatusCode, String)> {
+    let updated = state
+        .absence_service
+        .set_approval_status(id, dto.approval_status.clone())
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e))?;
+    let _ = state
+        .log_service
+        .add(
+            parse_uid(&auth.0.sub),
+            &auth.0.username,
+            "UPDATE",
+            "absence",
+            &id.to_string(),
+            &format!("Alterou aprovação de falta para '{}'", dto.approval_status),
+        )
+        .await;
+    Ok(Json(updated))
+}
 
 async fn get_events_handler(_auth: AuthUser, State(state): State<AppState>) -> Json<Vec<Event>> {
     match state.event_service.get_all().await {
@@ -915,6 +1017,8 @@ async fn create_event_handler(
         start_date: dto.start_date,
         end_date: dto.end_date,
         start_time: dto.start_time,
+        minutes_file_name: None,
+        minutes_file_data: None,
         created_at: String::new(),
     };
     let responsible_ids = dto.responsible_ids.unwrap_or_default();
@@ -952,6 +1056,8 @@ async fn update_event_handler(
         start_date: dto.start_date,
         end_date: dto.end_date,
         start_time: dto.start_time,
+        minutes_file_name: None,
+        minutes_file_data: None,
         created_at: String::new(),
     };
     let responsible_ids = dto.responsible_ids.unwrap_or_default();
@@ -999,6 +1105,54 @@ async fn delete_event_handler(
     }
 }
 
+async fn set_event_minutes_handler(
+    auth: AuthUser,
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+    Json(dto): Json<EventMinutesDto>,
+) -> Result<Json<Event>, (StatusCode, String)> {
+    let updated = state
+        .event_service
+        .set_minutes(id, Some(dto.file_name.clone()), Some(dto.file_data))
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e))?;
+    let _ = state
+        .log_service
+        .add(
+            parse_uid(&auth.0.sub),
+            &auth.0.username,
+            "UPDATE",
+            "event",
+            &id.to_string(),
+            &format!("Anexou ata '{}' ao evento", dto.file_name),
+        )
+        .await;
+    Ok(Json(updated))
+}
+
+async fn remove_event_minutes_handler(
+    auth: AuthUser,
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+) -> Result<Json<Event>, (StatusCode, String)> {
+    let updated = state
+        .event_service
+        .set_minutes(id, None, None)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e))?;
+    let _ = state
+        .log_service
+        .add(
+            parse_uid(&auth.0.sub),
+            &auth.0.username,
+            "UPDATE",
+            "event",
+            &id.to_string(),
+            "Removeu ata do evento",
+        )
+        .await;
+    Ok(Json(updated))
+}
 
 async fn get_feedbacks_handler(
     _auth: AuthUser,

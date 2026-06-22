@@ -21,6 +21,8 @@ pub struct Task {
     pub co_responsibles: Option<String>,
     pub external_collaborators: Option<String>,
     pub deadline: Option<String>,
+    #[serde(default)]
+    pub archived: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
@@ -86,6 +88,8 @@ pub struct Absence {
     pub file_data: Option<String>,
     pub start_date: String,
     pub end_date: String,
+    #[serde(default = "default_pendente_absence")]
+    pub approval_status: String,
     #[serde(default)]
     pub created_at: String,
 }
@@ -103,6 +107,8 @@ pub struct Event {
     pub start_date: String,
     pub end_date: String,
     pub start_time: Option<String>,
+    pub minutes_file_name: Option<String>,
+    pub minutes_file_data: Option<String>,
     #[serde(default)]
     pub created_at: String,
 }
@@ -133,6 +139,7 @@ pub struct Feedback {
 }
 
 fn default_pendente() -> String { "pendente".to_string() }
+fn default_pendente_absence() -> String { "pendente".to_string() }
 fn default_empty_array() -> String { "[]".to_string() }
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]

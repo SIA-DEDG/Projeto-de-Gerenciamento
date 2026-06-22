@@ -198,6 +198,23 @@ export async function deleteTask(id: string): Promise<void> {
   emitTasksChanged();
 }
 
+export async function fetchArchivedTasks(): Promise<Task[]> {
+  const data = await apiFetch<RawTask[]>('/api/tasks/archived');
+  return data.map(enrichTask);
+}
+
+export async function archiveTask(id: string): Promise<void> {
+  await apiFetch<void>(`/api/tasks/${id}/archive`, { method: 'PUT' });
+  cacheInvalidate('tasks');
+  emitTasksChanged();
+}
+
+export async function unarchiveTask(id: string): Promise<void> {
+  await apiFetch<void>(`/api/tasks/${id}/unarchive`, { method: 'PUT' });
+  cacheInvalidate('tasks');
+  emitTasksChanged();
+}
+
 export async function importTasks(rows: {
   category: string;
   activity: string;
@@ -344,13 +361,14 @@ export async function clearLogs(): Promise<void> {
 export interface Absence {
   id: string;
   user_id: string | null;
-  employee_name: string;        // name from JOIN — display only
+  employee_name: string;
   reason: string;
   justification: string | null;
   file_name: string | null;
   file_data: string | null;
   start_date: string;
   end_date: string;
+  approval_status: string;
   created_at: string;
 }
 
@@ -389,15 +407,24 @@ export async function updateAbsence(id: string, payload: {
   });
 }
 
+export async function approveAbsence(id: string, approval_status: 'aprovada' | 'recusada' | 'pendente'): Promise<Absence> {
+  return apiFetch<Absence>(`/api/absences/${id}/approval`, {
+    method: 'PUT',
+    body: JSON.stringify({ approval_status }),
+  });
+}
+
 export interface CalendarEvent {
   id: string;
   name: string;
-  responsibles: string;      // JSON array of names from junction — display only
+  responsibles: string;
   event_type: string;
   attendees: string | null;
   start_date: string;
   end_date: string;
   start_time: string | null;
+  minutes_file_name: string | null;
+  minutes_file_data: string | null;
   is_private: boolean;
   is_company_wide: boolean;
   created_at: string;
@@ -444,6 +471,17 @@ export async function updateEvent(id: string, payload: {
 
 export async function deleteEvent(id: string): Promise<void> {
   await apiFetch<void>(`/api/events/${id}`, { method: 'DELETE' });
+}
+
+export async function setEventMinutes(id: string, file_name: string, file_data: string): Promise<CalendarEvent> {
+  return apiFetch<CalendarEvent>(`/api/events/${id}/minutes`, {
+    method: 'PUT',
+    body: JSON.stringify({ file_name, file_data }),
+  });
+}
+
+export async function removeEventMinutes(id: string): Promise<CalendarEvent> {
+  return apiFetch<CalendarEvent>(`/api/events/${id}/minutes`, { method: 'DELETE' });
 }
 
 export async function deleteUser(id: string): Promise<void> {

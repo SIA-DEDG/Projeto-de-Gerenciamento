@@ -1,0 +1,1263 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#ffffff;--surface:#ffffff;--surface-2:#f9fafb;--line-1:#ececef;--line-2:#f1f1f3;--border:#e1e3e7;--text:#11161D;--text-2:#6b7280;--text-3:#9aa1ac;}
+  .theme-dark{--bg:#0e131a;--surface:#141a22;--surface-2:#1b222c;--line-1:#283341;--line-2:#222b36;--border:#2e3947;--text:#e9ecf0;--text-2:#a6aeba;--text-3:#717a88;}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{font-family:'IBM Plex Sans',-apple-system,BlinkMacSystemFont,sans-serif;-webkit-font-smoothing:antialiased;color:var(--text)}
+  .mono{font-family:'IBM Plex Mono',monospace}
+  .ssel::-webkit-scrollbar{width:10px;height:10px}
+  .ssel::-webkit-scrollbar-thumb{background:var(--border);border-radius:0;border:3px solid var(--surface);background-clip:padding-box}
+  .ssel::-webkit-scrollbar-thumb:hover{background:var(--text-3);background-clip:padding-box}
+  .ssel::-webkit-scrollbar-track{background:transparent}
+  @keyframes drawin{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:none}}
+  input,select,button,textarea{font-family:inherit}
+  select{appearance:none;-webkit-appearance:none}
+  ::placeholder{color:var(--text-3)}
+</style>
+</helmet>
+
+<div class="{{ themeClass }}" style="height:100vh;width:100%;overflow:hidden;background:var(--surface)">
+
+  <!-- ════════ LOGIN ════════ -->
+  <sc-if value="{{ isLogin }}" hint-placeholder-val="{{ true }}">
+  <div style="height:100vh;display:flex">
+    <!-- left brand -->
+    <div style="flex:1;background:#072f63;position:relative;overflow:hidden;display:flex;flex-direction:column;justify-content:space-between;padding:54px 56px">
+      <div style="position:absolute;left:0;right:0;top:0;height:6px;background:#034EA2"></div>
+      <div style="position:absolute;right:-120px;bottom:-120px;width:340px;height:340px;border:1px solid rgba(255,255,255,.1);border-radius:50%"></div>
+      <div style="position:absolute;right:-60px;bottom:-60px;width:220px;height:220px;border:1px solid rgba(255,255,255,.08);border-radius:50%"></div>
+      <div style="position:relative;display:flex;align-items:center;gap:12px">
+        <div style="width:34px;height:34px;border-radius:4px;background:var(--surface);display:flex;align-items:center;justify-content:center;color:#072f63;font-size:18px;line-height:1">★</div>
+        <div style="color:#fff;font-weight:600;font-size:1rem;letter-spacing:.5px">SIA</div>
+        <div class="mono" style="color:rgba(255,255,255,.5);font-size:.72rem;letter-spacing:1px;padding-left:12px;border-left:1px solid rgba(255,255,255,.2)">DEDG</div>
+      </div>
+      <div style="position:relative">
+        <div class="mono" style="color:#7fa8da;font-size:.72rem;letter-spacing:2px;text-transform:uppercase;margin-bottom:22px">Governo do Estado do Piauí</div>
+        <h1 style="color:#fff;font-size:2.5rem;line-height:1.12;font-weight:600;letter-spacing:-1px;max-width:15ch">Gestão de atividades da Diretoria de Economia Digital.</h1>
+        <p style="color:rgba(255,255,255,.6);font-size:.98rem;line-height:1.65;margin-top:20px;max-width:44ch;font-weight:400">Acompanhe atividades, projetos e equipe num só painel — com a clareza que o trabalho público exige.</p>
+      </div>
+      <div class="mono" style="position:relative;color:rgba(255,255,255,.4);font-size:.7rem;letter-spacing:.5px">SECRETARIA DE INTELIGÊNCIA ARTIFICIAL, ECONOMIA DIGITAL, CIÊNCIA, TECNOLOGIA E INOVAÇÃO</div>
+    </div>
+    <!-- right form -->
+    <div style="width:480px;max-width:100%;flex-shrink:0;display:flex;flex-direction:column;justify-content:center;padding:48px 60px;background:var(--surface)">
+      <div class="mono" style="font-size:.7rem;letter-spacing:2px;text-transform:uppercase;color:var(--text-3)">Acesso institucional</div>
+      <h2 style="font-weight:600;font-size:1.7rem;letter-spacing:-.6px;color:var(--text);margin-top:10px">Entrar no painel</h2>
+
+      <div style="margin-top:34px">
+        <label class="mono" style="display:block;font-size:.68rem;font-weight:500;letter-spacing:1px;text-transform:uppercase;color:var(--text-2);margin-bottom:8px">Usuário</label>
+        <input value="vinicius.yan" style="width:100%;padding:12px 14px;border:1px solid var(--border);border-radius:3px;font-size:.92rem;background:var(--surface);color:var(--text);outline:none" style-focus="border-color:#034EA2;box-shadow:inset 0 0 0 1px #034EA2">
+      </div>
+      <div style="margin-top:18px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <label class="mono" style="font-size:.68rem;font-weight:500;letter-spacing:1px;text-transform:uppercase;color:var(--text-2)">Senha</label>
+          <span style="font-size:.78rem;color:#034EA2;font-weight:500;cursor:pointer">Esqueci a senha</span>
+        </div>
+        <input type="password" value="senhasegura" style="width:100%;padding:12px 14px;border:1px solid var(--border);border-radius:3px;font-size:.92rem;background:var(--surface);color:var(--text);outline:none" style-focus="border-color:#034EA2;box-shadow:inset 0 0 0 1px #034EA2">
+      </div>
+      <button onClick="{{ enterApp }}" style="margin-top:26px;width:100%;padding:13px;border:none;border-radius:3px;background:#034EA2;color:#fff;font-size:.92rem;font-weight:600;cursor:pointer;letter-spacing:.2px;display:flex;align-items:center;justify-content:center;gap:8px" style-hover="background:#023e82">
+        Entrar
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+      </button>
+      <div style="margin-top:auto;padding-top:48px">
+        <div style="height:1px;background:var(--line-1)"></div>
+        <div class="mono" style="font-size:.68rem;color:var(--text-3);letter-spacing:.5px;margin-top:16px">v2.4.0 · ambiente de produção</div>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- ════════ APP ════════ -->
+  <sc-if value="{{ isApp }}" hint-placeholder-val="{{ true }}">
+  <div style="height:100vh;display:flex;overflow:hidden;background:var(--surface)">
+
+    <!-- ───── SIDEBAR ───── -->
+    <aside style="width:228px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--line-1);display:flex;flex-direction:column">
+      <div style="height:3px;background:linear-gradient(90deg,#034EA2 0 62%,#E0A92E 62% 100%)"></div>
+      <div style="padding:18px 20px 16px;display:flex;align-items:center;gap:11px;border-bottom:1px solid var(--line-2);background:var(--surface-2)">
+        <div style="width:34px;height:34px;border-radius:4px;background:#072f63;display:flex;align-items:center;justify-content:center;color:#fff;font-size:17px;line-height:1;flex-shrink:0;box-shadow:0 0 0 3px #072f6314">★</div>
+        <div style="display:flex;flex-direction:column;line-height:1.2">
+          <span style="font-weight:600;font-size:.95rem;color:var(--text);letter-spacing:-.2px">Tasks SIA</span>
+          <span class="mono" style="font-size:.64rem;color:var(--text-3);letter-spacing:.8px">DEDG · GOV-PI</span>
+        </div>
+      </div>
+
+      <div class="ssel" style="flex:1;overflow-y:auto;padding:14px 0">
+        <div class="mono" style="font-size:.62rem;font-weight:500;color:var(--text-3);letter-spacing:1.4px;padding:8px 20px 8px">PLANEJAMENTO</div>
+        <a onClick="{{ go.atividades }}" style="{{ navStyles.atividades }}">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+          <span style="flex:1">Atividades</span>
+        </a>
+        <a onClick="{{ go.minhas }}" style="{{ navStyles.minhas }}">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <span style="flex:1">Minhas atividades</span>
+          <span class="mono" style="font-size:.66rem;font-weight:500;color:#034EA2">3</span>
+        </a>
+        <a onClick="{{ go.eventos }}" style="{{ navStyles.eventos }}">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></svg>
+          <span style="flex:1">Eventos</span>
+        </a>
+        <a onClick="{{ go.faltas }}" style="{{ navStyles.faltas }}">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/><path d="m14 14-4 4"/><path d="m10 14 4 4"/></svg>
+          <span style="flex:1">Faltas</span>
+        </a>
+
+        <div class="mono" style="font-size:.62rem;font-weight:500;color:var(--text-3);letter-spacing:1.4px;padding:18px 20px 8px">ANÁLISE</div>
+        <a onClick="{{ go.dashboards }}" style="{{ navStyles.dashboards }}">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
+          <span style="flex:1">Dashboards</span>
+        </a>
+        <a onClick="{{ go.projetos }}" style="{{ navStyles.projetos }}">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>
+          <span style="flex:1">Projetos</span>
+        </a>
+        <a onClick="{{ go.logs }}" style="{{ navStyles.logs }}">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/><path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/></svg>
+          <span style="flex:1">Logs</span>
+        </a>
+
+        <div class="mono" style="font-size:.62rem;font-weight:500;color:var(--text-3);letter-spacing:1.4px;padding:18px 20px 8px">SISTEMA</div>
+        <a onClick="{{ go.config }}" style="{{ navStyles.config }}">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+          <span style="flex:1">Configurações</span>
+        </a>
+        <a onClick="{{ go.feedback }}" style="{{ navStyles.feedback }}">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          <span style="flex:1">Feedback</span>
+        </a>
+      </div>
+
+      <div style="border-top:1px solid var(--line-2);padding:12px">
+        <div onClick="{{ toggleTheme }}" style="display:flex;align-items:center;gap:11px;padding:8px;cursor:pointer;border-radius:3px;margin-bottom:2px" style-hover="background:var(--surface-2)">
+          <span style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;color:var(--text-2);flex-shrink:0"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg></span>
+          <span style="flex:1;font-size:.82rem;color:var(--text-2);font-weight:500">Alternar tema</span>
+        </div>
+        <div onClick="{{ go.logout }}" style="display:flex;align-items:center;gap:11px;padding:8px;cursor:pointer;border-radius:3px" style-hover="background:var(--surface-2)">
+          <div style="width:32px;height:32px;border-radius:3px;background:#072f63;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:500;font-size:.7rem;flex-shrink:0" class="mono">VY</div>
+          <div style="display:flex;flex-direction:column;line-height:1.25;flex:1;min-width:0">
+            <span style="font-size:.82rem;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Vinícius Yan</span>
+            <span class="mono" style="font-size:.62rem;color:var(--text-3);letter-spacing:.5px">COORDENADOR</span>
+          </div>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#a7adb6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ───── MAIN ───── -->
+    <main style="flex:1;min-width:0;background:var(--surface);overflow:hidden;display:flex;flex-direction:column">
+
+      <!-- BOARD -->
+      <sc-if value="{{ showBoard }}" hint-placeholder-val="{{ true }}">
+      <div style="display:flex;flex-direction:column;height:100%;min-height:0">
+        <!-- header -->
+        <div style="padding:26px 32px 0;flex-shrink:0">
+          <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:20px">
+            <div>
+              <div class="mono" style="font-size:.68rem;font-weight:500;color:var(--text-3);letter-spacing:1.4px;text-transform:uppercase">{{ boardEyebrow }}</div>
+              <h1 style="font-size:1.7rem;font-weight:600;letter-spacing:-.7px;color:var(--text);margin-top:6px">{{ boardTitle }}</h1>
+            </div>
+            <div style="display:flex;align-items:center;gap:22px;padding-bottom:3px">
+              <sc-for list="{{ boardStats }}" as="b" hint-placeholder-count="3">
+                <div style="display:flex;align-items:center;gap:8px">
+                  <span style="width:8px;height:8px;border-radius:2px;background:{{ b.color }};box-shadow:0 0 0 3px {{ b.color }}1f"></span>
+                  <span class="mono" style="font-size:1.05rem;font-weight:600;color:var(--text)">{{ b.value }}</span>
+                  <span class="mono" style="font-size:.66rem;letter-spacing:.5px;text-transform:uppercase;color:var(--text-3)">{{ b.label }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+          <div style="height:2px;background:#034EA2;width:36px;margin-top:18px"></div>
+        </div>
+
+        <!-- toolbar -->
+        <div style="display:flex;align-items:center;gap:18px;padding:18px 32px;flex-shrink:0;border-bottom:1px solid var(--line-1);flex-wrap:wrap">
+          <div style="display:flex;gap:18px">
+            <button onClick="{{ setKanban }}" style="{{ tabKanban }}">Quadro</button>
+            <button onClick="{{ setLista }}" style="{{ tabLista }}">Lista</button>
+            <button onClick="{{ setCalendar }}" style="{{ tabCalendar }}">Calendário</button>
+          </div>
+          <div style="width:1px;height:20px;background:var(--border)"></div>
+          <div style="display:flex;align-items:center;gap:8px;border:1px solid var(--border);border-radius:3px;padding:7px 11px;width:230px">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a7adb6" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            <input value="{{ search }}" onInput="{{ onSearch }}" placeholder="Pesquisar..." style="border:none;outline:none;background:none;font-size:.82rem;color:var(--text);width:100%">
+          </div>
+          <select value="{{ fUser }}" onChange="{{ onFilterUser }}" style="{{ chipUser }}">
+            <option value="">Responsável</option>
+            <sc-for list="{{ users }}" as="u" hint-placeholder-count="3"><option value="{{ u }}">{{ u }}</option></sc-for>
+          </select>
+          <select value="{{ fPrio }}" onChange="{{ onFilterPrio }}" style="{{ chipPrio }}">
+            <option value="">Prioridade</option>
+            <option value="Alta">Alta</option>
+            <option value="Média">Média</option>
+            <option value="Baixa">Baixa</option>
+          </select>
+          <select value="{{ fProj }}" onChange="{{ onFilterProj }}" style="{{ chipProj }}">
+            <option value="">Projeto</option>
+            <sc-for list="{{ projectNames }}" as="p" hint-placeholder-count="3"><option value="{{ p }}">{{ p }}</option></sc-for>
+          </select>
+          <sc-if value="{{ hasFilters }}" hint-placeholder-val="{{ false }}">
+            <button onClick="{{ clearFilters }}" class="mono" style="font-size:.72rem;font-weight:500;color:#034EA2;background:none;border:none;cursor:pointer;letter-spacing:.5px">LIMPAR</button>
+          </sc-if>
+          <div style="flex:1"></div>
+          <div class="mono" style="font-size:.72rem;color:var(--text-3);letter-spacing:.5px">{{ visibleCount }} ATIVIDADES</div>
+          <div style="width:1px;height:20px;background:var(--border)"></div>
+          <button onClick="{{ addToPending }}" style="display:flex;align-items:center;gap:7px;padding:8px 13px;border:none;border-radius:3px;background:#034EA2;color:#fff;font-size:.8rem;font-weight:600;cursor:pointer" style-hover="background:#023e82"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>Nova atividade</button>
+        </div>
+
+        <!-- KANBAN -->
+        <sc-if value="{{ isKanban }}" hint-placeholder-val="{{ true }}">
+        <div class="ssel" style="flex:1;min-height:0;overflow-y:auto">
+          <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));align-items:start;min-height:100%">
+            <sc-for list="{{ cols }}" as="col" hint-placeholder-count="3">
+              <div onDrop="{{ col.onDrop }}" onDragOver="{{ col.onDragOver }}" style="border-right:1px solid var(--line-1);border-top:2px solid {{ col.dot }};min-height:100%;display:flex;flex-direction:column">
+                <div style="display:flex;align-items:center;gap:9px;padding:14px 20px;position:sticky;top:0;background:var(--surface);z-index:1;border-bottom:1px solid var(--line-2)">
+                  <span style="width:9px;height:9px;border-radius:2px;background:{{ col.dot }};box-shadow:0 0 0 3px {{ col.tint }}"></span>
+                  <span class="mono" style="font-weight:600;font-size:.72rem;color:{{ col.titleColor }};letter-spacing:1.2px;text-transform:uppercase">{{ col.title }}</span>
+                  <span class="mono" style="font-size:.68rem;font-weight:600;color:{{ col.titleColor }};background:{{ col.tint }};padding:1px 8px;border-radius:3px;margin-left:2px">{{ col.count }}</span>
+                </div>
+                <div style="flex:1">
+                  <sc-for list="{{ col.tasks }}" as="t" hint-placeholder-count="2">
+                    <div draggable="true" onDragStart="{{ t.onDragStart }}" onDragEnd="{{ t.onDragEnd }}" onClick="{{ t.onOpen }}" style="position:relative;padding:15px 22px 15px 26px;cursor:pointer;border-top:1px solid var(--line-2);background:var(--surface);transition:background .14s,box-shadow .16s,transform .16s" style-hover="background:var(--surface-2);box-shadow:0 8px 20px rgba(7,22,45,.09);transform:translateY(-1px);z-index:2">
+                      <span style="position:absolute;left:0;top:0;bottom:0;width:3px;background:{{ t.spine }}"></span>
+                      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+                        <span class="mono" style="font-size:.6rem;font-weight:500;letter-spacing:1px;text-transform:uppercase;color:var(--text-3)">{{ t.category }}</span>
+                        <span style="color:var(--border)">·</span>
+                        <span class="mono" style="font-size:.6rem;font-weight:500;letter-spacing:.5px;text-transform:uppercase;color:{{ t.prioColor }}">{{ t.priority }}</span>
+                      </div>
+                      <p style="font-size:.92rem;font-weight:500;color:var(--text);line-height:1.4;letter-spacing:-.1px">{{ t.title }}</p>
+                      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:13px">
+                        <div style="display:flex;align-items:center;gap:6px;color:var(--text-3);font-size:.74rem">
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>
+                          <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px">{{ t.project }}</span>
+                        </div>
+                        <div style="display:flex;align-items:center">
+                          <sc-for list="{{ t.avatars }}" as="av" hint-placeholder-count="2">
+                            <div class="mono" style="{{ av.style }}" title="{{ av.name }}">{{ av.initials }}</div>
+                          </sc-for>
+                        </div>
+                      </div>
+                      <sc-if value="{{ t.hasDue }}" hint-placeholder-val="{{ false }}">
+                        <div class="mono" style="display:inline-flex;align-items:center;gap:5px;margin-top:11px;font-size:.66rem;font-weight:500;letter-spacing:.5px;color:{{ t.dueColor }}">
+                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                          {{ t.dueText }}
+                        </div>
+                      </sc-if>
+                    </div>
+                  </sc-for>
+                  <button onClick="{{ col.onAdd }}" style="display:flex;align-items:center;gap:7px;width:100%;padding:13px 24px;border:none;border-top:1px solid var(--line-2);background:none;color:var(--text-3);font-size:.78rem;font-weight:500;cursor:pointer;text-align:left" style-hover="color:#034EA2;background:var(--surface-2)">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+                    Adicionar
+                  </button>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        </sc-if>
+
+        <!-- LISTA -->
+        <sc-if value="{{ isLista }}" hint-placeholder-val="{{ false }}">
+        <div class="ssel" style="flex:1;min-height:0;overflow-y:auto">
+          <div style="display:grid;grid-template-columns:18px 1fr 150px 96px 130px 96px;gap:18px;padding:13px 32px;border-bottom:1px solid var(--line-1);position:sticky;top:0;background:var(--surface)">
+            <span></span>
+            <span class="mono" style="font-size:.64rem;font-weight:500;letter-spacing:1px;text-transform:uppercase;color:var(--text-3)">Atividade</span>
+            <span class="mono" style="font-size:.64rem;font-weight:500;letter-spacing:1px;text-transform:uppercase;color:var(--text-3)">Projeto</span>
+            <span class="mono" style="font-size:.64rem;font-weight:500;letter-spacing:1px;text-transform:uppercase;color:var(--text-3)">Prioridade</span>
+            <span class="mono" style="font-size:.64rem;font-weight:500;letter-spacing:1px;text-transform:uppercase;color:var(--text-3)">Status</span>
+            <span class="mono" style="font-size:.64rem;font-weight:500;letter-spacing:1px;text-transform:uppercase;color:var(--text-3);text-align:right">Prazo</span>
+          </div>
+          <sc-for list="{{ listRows }}" as="t" hint-placeholder-count="6">
+            <div onClick="{{ t.onOpen }}" style="display:grid;grid-template-columns:18px 1fr 150px 96px 130px 96px;gap:18px;padding:15px 32px;align-items:center;border-bottom:1px solid var(--line-2);cursor:pointer" style-hover="background:var(--surface-2)">
+              <span style="width:2px;height:30px;background:{{ t.spine }}"></span>
+              <div style="min-width:0">
+                <div style="font-size:.88rem;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ t.title }}</div>
+                <div class="mono" style="font-size:.62rem;font-weight:500;text-transform:uppercase;letter-spacing:.8px;color:var(--text-3);margin-top:2px">{{ t.category }}</div>
+              </div>
+              <span style="font-size:.8rem;color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ t.project }}</span>
+              <span class="mono" style="font-size:.68rem;font-weight:500;text-transform:uppercase;letter-spacing:.5px;color:{{ t.prioColor }}">{{ t.priority }}</span>
+              <span class="mono" style="font-size:.68rem;font-weight:500;letter-spacing:.5px;color:{{ t.statusColor }}">{{ t.statusLabel }}</span>
+              <span class="mono" style="font-size:.72rem;font-weight:400;color:{{ t.dueColor }};text-align:right">{{ t.dueShort }}</span>
+            </div>
+          </sc-for>
+        </div>
+        </sc-if>
+
+        <!-- CALENDÁRIO -->
+        <sc-if value="{{ isCalBoard }}" hint-placeholder-val="{{ false }}">
+        <div class="ssel" style="flex:1;min-height:0;overflow-y:auto;padding:4px 28px 28px">
+          <dc-import name="Calendario" items="{{ taskCalItems }}" legend="{{ taskCalLegend }}" on-open="{{ openTaskCal }}" today-str="2026-06-19" hint-size="100%,560px"></dc-import>
+        </div>
+        </sc-if>
+      </div>
+      </sc-if>
+
+      <!-- DASHBOARDS -->
+      <sc-if value="{{ isDash }}" hint-placeholder-val="{{ false }}">
+      <div class="ssel" style="height:100%;overflow-y:auto">
+        <div style="padding:26px 32px 0">
+          <div class="mono" style="font-size:.68rem;font-weight:500;color:var(--text-3);letter-spacing:1.4px;text-transform:uppercase">Visão geral · 2º trimestre</div>
+          <h1 style="font-size:1.65rem;font-weight:600;letter-spacing:-.7px;color:var(--text);margin-top:6px">Dashboards</h1>
+          <div style="height:2px;background:#034EA2;width:36px;margin-top:18px"></div>
+        </div>
+
+        <!-- stat strip -->
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--line-1);border-bottom:1px solid var(--line-1);margin-top:24px">
+          <sc-for list="{{ stats }}" as="s" hint-placeholder-count="4">
+            <div style="position:relative;padding:22px 26px 22px 32px;border-right:1px solid var(--line-1);border-top:2px solid {{ s.accent }};background:{{ s.tint }}">
+              <div class="mono" style="font-size:.66rem;font-weight:500;color:var(--text-3);letter-spacing:1px;text-transform:uppercase">{{ s.label }}</div>
+              <div class="mono" style="font-size:2.4rem;font-weight:500;letter-spacing:-1.5px;color:{{ s.valueColor }};margin-top:8px;line-height:1">{{ s.value }}</div>
+              <div class="mono" style="font-size:.7rem;font-weight:400;color:{{ s.deltaColor }};margin-top:6px;letter-spacing:.3px">{{ s.delta }}</div>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;border-bottom:1px solid var(--line-1)">
+          <!-- distribution -->
+          <div style="padding:26px 32px;border-right:1px solid var(--line-1)">
+            <div style="font-weight:600;font-size:.95rem;color:var(--text);letter-spacing:-.2px">Distribuição por status</div>
+            <div style="display:flex;height:10px;margin-top:22px;border:1px solid var(--line-1)">
+              <sc-for list="{{ legend }}" as="l" hint-placeholder-count="3">
+                <div style="width:{{ l.pct }};background:{{ l.color }}"></div>
+              </sc-for>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:0;margin-top:20px">
+              <sc-for list="{{ legend }}" as="l" hint-placeholder-count="3">
+                <div style="display:flex;align-items:center;gap:11px;padding:11px 0;border-bottom:1px solid var(--line-2)">
+                  <span style="width:9px;height:9px;background:{{ l.color }}"></span>
+                  <span style="font-size:.84rem;font-weight:500;color:var(--text);flex:1">{{ l.label }}</span>
+                  <span class="mono" style="font-size:.8rem;font-weight:500;color:var(--text-2)">{{ l.value }}</span>
+                  <span class="mono" style="font-size:.72rem;color:var(--text-3);width:42px;text-align:right">{{ l.pct }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+          <!-- by project -->
+          <div style="padding:26px 32px">
+            <div style="font-weight:600;font-size:.95rem;color:var(--text);letter-spacing:-.2px">Atividades por projeto</div>
+            <div style="display:flex;flex-direction:column;gap:16px;margin-top:24px">
+              <sc-for list="{{ projectBars }}" as="b" hint-placeholder-count="5">
+                <div>
+                  <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:7px">
+                    <span style="font-size:.82rem;font-weight:500;color:var(--text)">{{ b.name }}</span>
+                    <span class="mono" style="font-size:.74rem;color:var(--text-3)">{{ b.count }}</span>
+                  </div>
+                  <div style="height:6px;background:var(--line-2)"><div style="height:100%;width:{{ b.pct }};background:#034EA2"></div></div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+
+        <!-- upcoming -->
+        <div style="padding:26px 32px 40px">
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <div style="font-weight:600;font-size:.95rem;color:var(--text);letter-spacing:-.2px">Prazos próximos</div>
+            <span class="mono" style="font-size:.7rem;font-weight:500;color:#034EA2;cursor:pointer;letter-spacing:.5px">VER AGENDA →</span>
+          </div>
+          <div style="margin-top:8px">
+            <sc-for list="{{ upcoming }}" as="u" hint-placeholder-count="3">
+              <div style="display:flex;align-items:center;gap:18px;padding:15px 0;border-bottom:1px solid var(--line-2)">
+                <div class="mono" style="display:flex;flex-direction:column;align-items:center;line-height:1.1;width:42px;flex-shrink:0">
+                  <span style="font-size:1.3rem;font-weight:500;color:var(--text)">{{ u.day }}</span>
+                  <span style="font-size:.58rem;font-weight:500;letter-spacing:1px;color:var(--text-3)">{{ u.mon }}</span>
+                </div>
+                <div style="width:1px;height:32px;background:var(--line-1)"></div>
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:.86rem;font-weight:500;color:var(--text)">{{ u.title }}</div>
+                  <div class="mono" style="font-size:.66rem;color:var(--text-3);margin-top:2px;letter-spacing:.3px">{{ u.meta }}</div>
+                </div>
+                <span class="mono" style="font-size:.66rem;font-weight:500;letter-spacing:.5px;color:{{ u.color }};text-transform:uppercase">{{ u.tag }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- PROJETOS -->
+      <sc-if value="{{ isProj }}" hint-placeholder-val="{{ false }}">
+      <div class="ssel" style="height:100%;overflow-y:auto">
+        <div style="padding:26px 32px 0">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between">
+            <div>
+              <div class="mono" style="font-size:.68rem;font-weight:500;color:var(--text-3);letter-spacing:1.4px;text-transform:uppercase">Portfólio da DEDG</div>
+              <h1 style="font-size:1.65rem;font-weight:600;letter-spacing:-.7px;color:var(--text);margin-top:6px">Projetos</h1>
+            </div>
+          </div>
+          <div style="height:2px;background:#034EA2;width:36px;margin-top:18px"></div>
+        </div>
+        <div style="border-top:1px solid var(--line-1);margin-top:24px">
+          <sc-for list="{{ projects }}" as="p" hint-placeholder-count="5">
+            <div style="display:grid;grid-template-columns:1fr 200px 130px 140px;gap:24px;align-items:center;padding:20px 32px;border-bottom:1px solid var(--line-2);cursor:pointer" style-hover="background:var(--surface-2)">
+              <div style="min-width:0">
+                <div style="display:flex;align-items:center;gap:10px">
+                  <span style="width:7px;height:7px;background:{{ p.dot }}"></span>
+                  <span style="font-weight:600;font-size:1rem;color:var(--text);letter-spacing:-.3px">{{ p.name }}</span>
+                </div>
+                <p style="font-size:.8rem;color:var(--text-2);line-height:1.5;margin-top:6px;padding-left:17px;max-width:52ch">{{ p.desc }}</p>
+              </div>
+              <div>
+                <div class="mono" style="font-size:.62rem;font-weight:500;letter-spacing:1px;text-transform:uppercase;color:{{ p.statusColor }};margin-bottom:6px">{{ p.status }}</div>
+                <div style="display:flex;align-items:center">
+                  <sc-for list="{{ p.members }}" as="m" hint-placeholder-count="3">
+                    <div class="mono" style="{{ m.style }}" title="{{ m.name }}">{{ m.initials }}</div>
+                  </sc-for>
+                </div>
+              </div>
+              <div>
+                <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
+                  <span class="mono" style="font-size:.62rem;letter-spacing:1px;text-transform:uppercase;color:var(--text-3)">Progresso</span>
+                  <span class="mono" style="font-size:.74rem;font-weight:500;color:var(--text)">{{ p.pct }}</span>
+                </div>
+                <div style="height:5px;background:var(--line-2)"><div style="height:100%;width:{{ p.pct }};background:#034EA2"></div></div>
+              </div>
+              <div class="mono" style="font-size:.74rem;color:var(--text-3);text-align:right;letter-spacing:.3px">{{ p.tasksLabel }}</div>
+            </div>
+          </sc-for>
+          <button style="display:flex;align-items:center;gap:8px;width:100%;padding:18px 32px;border:none;border-top:1px solid var(--line-2);background:none;color:var(--text-3);font-size:.82rem;font-weight:500;cursor:pointer;text-align:left" style-hover="color:#034EA2;background:var(--surface-2)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>Novo projeto</button>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- EVENTOS -->
+      <sc-if value="{{ isEventos }}" hint-placeholder-val="{{ false }}">
+      <div class="ssel" style="height:100%;overflow-y:auto">
+        <div style="padding:26px 32px 0">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between">
+            <div>
+              <div class="mono" style="font-size:.68rem;font-weight:500;color:var(--text-3);letter-spacing:1.4px;text-transform:uppercase">Agenda da equipe · DEDG</div>
+              <h1 style="font-size:1.65rem;font-weight:600;letter-spacing:-.7px;color:var(--text);margin-top:6px">Eventos</h1>
+            </div>
+          </div>
+          <div style="height:2px;background:#034EA2;width:36px;margin-top:18px"></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:18px;padding:18px 32px;border-bottom:1px solid var(--line-1)">
+          <button onClick="{{ setEvAgenda }}" style="{{ evTabAgenda }}">Agenda</button>
+          <button onClick="{{ setEvAtas }}" style="{{ evTabAtas }}">Atas de reunião</button>
+          <button onClick="{{ setEvCal }}" style="{{ evTabCal }}">Calendário</button>
+          <div style="flex:1"></div>
+          <div class="mono" style="font-size:.72rem;color:var(--text-3);letter-spacing:.5px">{{ evCount }} EVENTOS</div>
+          <div style="width:1px;height:20px;background:var(--border)"></div>
+          <button style="display:flex;align-items:center;gap:7px;padding:8px 13px;border:none;border-radius:3px;background:#034EA2;color:#fff;font-size:.8rem;font-weight:600;cursor:pointer" style-hover="background:#023e82"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>Novo evento</button>
+        </div>
+
+        <!-- AGENDA -->
+        <sc-if value="{{ evIsAgenda }}" hint-placeholder-val="{{ true }}">
+        <div>
+          <sc-for list="{{ evGroups }}" as="g" hint-placeholder-count="2">
+            <div class="mono" style="font-size:.66rem;font-weight:500;letter-spacing:1.4px;text-transform:uppercase;color:var(--text-3);padding:22px 32px 10px">{{ g.label }}</div>
+            <sc-for list="{{ g.items }}" as="ev" hint-placeholder-count="2">
+              <div onClick="{{ ev.onOpen }}" style="display:flex;align-items:center;gap:18px;padding:16px 32px;border-top:1px solid var(--line-2);cursor:pointer" style-hover="background:var(--surface-2)">
+                <div class="mono" style="display:flex;flex-direction:column;align-items:center;width:46px;flex-shrink:0;line-height:1.1">
+                  <span style="font-size:.56rem;font-weight:500;letter-spacing:1px;color:var(--text-3)">{{ ev.wd }}</span>
+                  <span style="font-size:1.4rem;font-weight:500;color:{{ ev.dateColor }};margin-top:1px">{{ ev.d }}</span>
+                  <span style="font-size:.54rem;font-weight:500;letter-spacing:1px;color:var(--text-3)">{{ ev.m }}</span>
+                </div>
+                <div style="width:1px;height:44px;background:var(--line-1);flex-shrink:0"></div>
+                <div style="flex:1;min-width:0">
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <span class="mono" style="font-size:.6rem;font-weight:500;letter-spacing:1px;text-transform:uppercase;color:var(--text-3)">{{ ev.type }}</span>
+                    <span style="color:var(--border)">·</span>
+                    <span class="mono" style="font-size:.6rem;font-weight:500;letter-spacing:.5px;text-transform:uppercase;color:{{ ev.statusColor }}">{{ ev.statusLabel }}</span>
+                  </div>
+                  <div style="font-size:.95rem;font-weight:500;color:var(--text);margin-top:5px;letter-spacing:-.1px">{{ ev.title }}</div>
+                  <div style="display:flex;align-items:center;gap:16px;margin-top:8px">
+                    <span style="display:flex;align-items:center;gap:5px;color:var(--text-3);font-size:.74rem"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>{{ ev.time }}</span>
+                    <span style="display:flex;align-items:center;gap:5px;color:var(--text-3);font-size:.74rem"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg>{{ ev.modal }}</span>
+                  </div>
+                </div>
+                <div style="display:flex;flex-direction:column;align-items:flex-end;gap:10px;flex-shrink:0">
+                  <div style="display:flex;align-items:center">
+                    <sc-for list="{{ ev.avatars }}" as="av" hint-placeholder-count="2"><div class="mono" style="{{ av.style }}" title="{{ av.name }}">{{ av.initials }}</div></sc-for>
+                  </div>
+                  <sc-if value="{{ ev.showBadge }}" hint-placeholder-val="{{ false }}">
+                    <span class="mono" style="display:inline-flex;align-items:center;gap:5px;font-size:.62rem;font-weight:500;letter-spacing:.5px;text-transform:uppercase;color:{{ ev.badgeColor }}">
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+                      {{ ev.badgeText }}
+                    </span>
+                  </sc-if>
+                </div>
+              </div>
+            </sc-for>
+          </sc-for>
+        </div>
+        </sc-if>
+
+        <!-- ATAS -->
+        <sc-if value="{{ evIsAtas }}" hint-placeholder-val="{{ false }}">
+        <div style="border-top:1px solid var(--line-1)">
+          <sc-if value="{{ hasAtas }}" hint-placeholder-val="{{ true }}">
+          <div>
+            <sc-for list="{{ atas }}" as="a" hint-placeholder-count="3">
+              <div style="display:flex;align-items:center;gap:16px;padding:16px 32px;border-bottom:1px solid var(--line-2);cursor:pointer" style-hover="background:var(--surface-2)">
+                <div style="width:38px;height:38px;border:1px solid var(--border);border-radius:3px;display:flex;align-items:center;justify-content:center;color:#034EA2;flex-shrink:0">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
+                </div>
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:.88rem;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ a.name }}</div>
+                  <div class="mono" style="font-size:.64rem;color:var(--text-3);letter-spacing:.3px;margin-top:3px">{{ a.meta }}</div>
+                </div>
+                <div style="font-size:.8rem;color:var(--text-2);max-width:230px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ a.event }}</div>
+                <button style="width:34px;height:34px;border:1px solid var(--border);border-radius:3px;background:var(--surface);color:var(--text-2);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0" style-hover="border-color:#034EA2;color:#034EA2">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                </button>
+              </div>
+            </sc-for>
+          </div>
+          </sc-if>
+          <sc-if value="{{ noAtas }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:60px;text-align:center;color:var(--text-3)">
+            <div class="mono" style="font-size:.8rem;letter-spacing:.5px">Nenhuma ata anexada ainda. Abra um evento realizado para anexar.</div>
+          </div>
+          </sc-if>
+        </div>
+        </sc-if>
+
+        <!-- CALENDÁRIO -->
+        <sc-if value="{{ evIsCal }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:18px 32px 28px"><dc-import name="Calendario" items="{{ evCalItems }}" legend="{{ evCalLegend }}" on-open="{{ openEvCal }}" today-str="2026-06-19" hint-size="100%,560px"></dc-import></div>
+        </sc-if>
+      </div>
+      </sc-if>
+
+      <!-- FALTAS -->
+      <sc-if value="{{ isFaltas }}" hint-placeholder-val="{{ false }}">
+      <div class="ssel" style="height:100%;overflow-y:auto">
+        <div style="padding:26px 32px 0">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between">
+            <div>
+              <div class="mono" style="font-size:.68rem;font-weight:500;color:var(--text-3);letter-spacing:1.4px;text-transform:uppercase">Controle de frequência · Junho 2026</div>
+              <h1 style="font-size:1.65rem;font-weight:600;letter-spacing:-.7px;color:var(--text);margin-top:6px">Faltas</h1>
+            </div>
+          </div>
+          <div style="height:2px;background:#034EA2;width:36px;margin-top:18px"></div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--line-1);border-bottom:1px solid var(--line-1);margin-top:24px">
+          <sc-for list="{{ fSummary }}" as="s" hint-placeholder-count="4">
+            <div style="padding:20px 32px;border-right:1px solid var(--line-1)">
+              <div class="mono" style="font-size:.66rem;font-weight:500;color:var(--text-3);letter-spacing:1px;text-transform:uppercase">{{ s.label }}</div>
+              <div class="mono" style="font-size:2rem;font-weight:500;letter-spacing:-1px;color:{{ s.color }};margin-top:8px;line-height:1">{{ s.value }}</div>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:18px;padding:18px 32px 0">
+          <button onClick="{{ setFaLista }}" style="{{ faTabLista }}">Lista</button>
+          <button onClick="{{ setFaCal }}" style="{{ faTabCal }}">Calendário</button>
+          <div style="flex:1"></div>
+          <button style="display:flex;align-items:center;gap:7px;padding:8px 13px;border:none;border-radius:3px;background:#034EA2;color:#fff;font-size:.8rem;font-weight:600;cursor:pointer" style-hover="background:#023e82"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>Registrar falta</button>
+        </div>
+        <sc-if value="{{ isFaTable }}" hint-placeholder-val="{{ true }}">
+        <div style="display:grid;grid-template-columns:1.3fr 150px 120px 1.4fr 160px;gap:18px;padding:14px 32px;border-bottom:1px solid var(--line-1);margin-top:18px">
+          <span class="mono" style="font-size:.64rem;font-weight:500;letter-spacing:1px;text-transform:uppercase;color:var(--text-3)">Servidor</span>
+          <span class="mono" style="font-size:.64rem;font-weight:500;letter-spacing:1px;text-transform:uppercase;color:var(--text-3)">Tipo</span>
+          <span class="mono" style="font-size:.64rem;font-weight:500;letter-spacing:1px;text-transform:uppercase;color:var(--text-3)">Período</span>
+          <span class="mono" style="font-size:.64rem;font-weight:500;letter-spacing:1px;text-transform:uppercase;color:var(--text-3)">Justificativa</span>
+          <span class="mono" style="font-size:.64rem;font-weight:500;letter-spacing:1px;text-transform:uppercase;color:var(--text-3);text-align:right">Situação</span>
+        </div>
+        <sc-for list="{{ faltasRows }}" as="row" hint-placeholder-count="5">
+          <div style="display:grid;grid-template-columns:1.3fr 150px 120px 1.4fr 160px;gap:18px;padding:15px 32px;align-items:center;border-bottom:1px solid var(--line-2)">
+            <div style="display:flex;align-items:center;gap:11px;min-width:0">
+              <div class="mono" style="{{ row.avatarStyle }}">{{ row.initials }}</div>
+              <span style="font-size:.86rem;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ row.person }}</span>
+            </div>
+            <span class="mono" style="font-size:.68rem;font-weight:500;letter-spacing:.4px;text-transform:uppercase;color:var(--text-2)">{{ row.type }}</span>
+            <div>
+              <div class="mono" style="font-size:.76rem;font-weight:500;color:var(--text)">{{ row.period }}</div>
+              <div class="mono" style="font-size:.62rem;color:var(--text-3);margin-top:1px">{{ row.days }}</div>
+            </div>
+            <span style="font-size:.8rem;color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ row.reason }}</span>
+            <div style="justify-self:end">
+              <sc-if value="{{ row.isPending }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;gap:6px">
+                  <button onClick="{{ row.approve }}" style="padding:6px 11px;border:none;border-radius:3px;background:#034EA2;color:#fff;font-size:.7rem;font-weight:600;cursor:pointer" style-hover="background:#023e82">Aprovar</button>
+                  <button onClick="{{ row.reject }}" style="padding:6px 10px;border:1px solid var(--border);border-radius:3px;background:var(--surface);color:var(--text-2);font-size:.7rem;font-weight:500;cursor:pointer" style-hover="border-color:#b42318;color:#b42318">Recusar</button>
+                </div>
+              </sc-if>
+              <sc-if value="{{ row.notPending }}" hint-placeholder-val="{{ true }}">
+                <span class="mono" style="display:inline-flex;align-items:center;gap:6px;font-size:.72rem;font-weight:500;letter-spacing:.5px;text-transform:uppercase;color:{{ row.statusColor }}">
+                  <span style="width:6px;height:6px;border-radius:50%;background:{{ row.statusColor }}"></span>{{ row.status }}
+                </span>
+              </sc-if>
+            </div>
+          </div>
+        </sc-for>
+        </sc-if>
+        <sc-if value="{{ isFaCal }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:18px 32px 28px"><dc-import name="Calendario" items="{{ faCalItems }}" legend="{{ faCalLegend }}" today-str="2026-06-19" hint-size="100%,560px"></dc-import></div>
+        </sc-if>
+      </div>
+      </sc-if>
+
+      <!-- LOGS -->
+      <sc-if value="{{ isLogs }}" hint-placeholder-val="{{ false }}">
+      <div class="ssel" style="height:100%;overflow-y:auto">
+        <div style="padding:26px 32px 0">
+          <div class="mono" style="font-size:.68rem;font-weight:500;color:var(--text-3);letter-spacing:1.4px;text-transform:uppercase">Auditoria do sistema · DEDG</div>
+          <h1 style="font-size:1.65rem;font-weight:600;letter-spacing:-.7px;color:var(--text);margin-top:6px">Logs</h1>
+          <div style="height:2px;background:#034EA2;width:36px;margin-top:18px"></div>
+        </div>
+        <div style="border-top:1px solid var(--line-1);margin-top:24px">
+          <sc-for list="{{ logsRows }}" as="l" hint-placeholder-count="8">
+            <div style="display:grid;grid-template-columns:88px 1fr 120px;gap:20px;align-items:center;padding:14px 32px;border-bottom:1px solid var(--line-2)">
+              <div>
+                <div class="mono" style="font-size:.78rem;font-weight:500;color:var(--text)">{{ l.time }}</div>
+                <div class="mono" style="font-size:.6rem;color:var(--text-3);letter-spacing:.5px;margin-top:1px">{{ l.date }}</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:11px;min-width:0">
+                <div class="mono" style="{{ l.avatarStyle }}">{{ l.initials }}</div>
+                <div style="font-size:.85rem;color:var(--text-2);line-height:1.45">
+                  <span style="font-weight:600;color:var(--text)">{{ l.actor }}</span> {{ l.action }} <sc-if value="{{ l.hasTarget }}" hint-placeholder-val="{{ false }}"><span style="font-weight:500;color:{{ l.color }}">{{ l.target }}</span></sc-if>
+                </div>
+              </div>
+              <span class="mono" style="justify-self:end;font-size:.66rem;font-weight:500;letter-spacing:.5px;text-transform:uppercase;color:{{ l.color }}">{{ l.type }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- CONFIGURAÇÕES -->
+      <sc-if value="{{ isConfig }}" hint-placeholder-val="{{ false }}">
+      <div class="ssel" style="height:100%;overflow-y:auto">
+        <div style="padding:26px 32px 0">
+          <div class="mono" style="font-size:.68rem;font-weight:500;color:var(--text-3);letter-spacing:1.4px;text-transform:uppercase">Preferências</div>
+          <h1 style="font-size:1.65rem;font-weight:600;letter-spacing:-.7px;color:var(--text);margin-top:6px">Configurações</h1>
+          <div style="height:2px;background:#034EA2;width:36px;margin-top:18px"></div>
+        </div>
+        <div style="max-width:740px;padding:0 32px 44px">
+          <div class="mono" style="font-size:.66rem;font-weight:500;letter-spacing:1.4px;text-transform:uppercase;color:var(--text-3);padding:28px 0 6px">Perfil</div>
+          <div style="border-top:1px solid var(--line-1)">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:15px 0;border-bottom:1px solid var(--line-2)">
+              <div style="font-size:.86rem;font-weight:500;color:var(--text)">Nome</div>
+              <div style="font-size:.84rem;color:var(--text-2)">Vinícius Yan</div>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:15px 0;border-bottom:1px solid var(--line-2)">
+              <div style="font-size:.86rem;font-weight:500;color:var(--text)">E-mail</div>
+              <div class="mono" style="font-size:.8rem;color:var(--text-2)">vinicius.yan@sia.pi.gov.br</div>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:15px 0;border-bottom:1px solid var(--line-2)">
+              <div style="font-size:.86rem;font-weight:500;color:var(--text)">Cargo</div>
+              <div style="font-size:.84rem;color:var(--text-2)">Coordenador · DEDG</div>
+            </div>
+          </div>
+
+          <div class="mono" style="font-size:.66rem;font-weight:500;letter-spacing:1.4px;text-transform:uppercase;color:var(--text-3);padding:28px 0 6px">Aparência</div>
+          <div style="border-top:1px solid var(--line-1)">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:15px 0;border-bottom:1px solid var(--line-2)">
+              <div><div style="font-size:.86rem;font-weight:500;color:var(--text)">Tema</div><div style="font-size:.76rem;color:var(--text-3);margin-top:2px">Alterne entre claro e escuro.</div></div>
+              <div style="display:flex;border:1px solid var(--border);border-radius:3px;overflow:hidden">
+                <button onClick="{{ setLight }}" style="{{ themeLightStyle }}">Claro</button>
+                <button onClick="{{ setDark }}" style="{{ themeDarkStyle }}">Escuro</button>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:15px 0;border-bottom:1px solid var(--line-2)">
+              <div><div style="font-size:.86rem;font-weight:500;color:var(--text)">Cor de destaque</div><div style="font-size:.76rem;color:var(--text-3);margin-top:2px">Azul institucional do Governo do Piauí.</div></div>
+              <div style="display:flex;align-items:center;gap:8px"><span style="width:20px;height:20px;border-radius:3px;background:#034EA2"></span><span class="mono" style="font-size:.74rem;color:var(--text-2)">#034EA2</span></div>
+            </div>
+          </div>
+
+          <div class="mono" style="font-size:.66rem;font-weight:500;letter-spacing:1.4px;text-transform:uppercase;color:var(--text-3);padding:28px 0 6px">Notificações</div>
+          <div style="border-top:1px solid var(--line-1)">
+            <sc-for list="{{ notifRows }}" as="r" hint-placeholder-count="3">
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:15px 0;border-bottom:1px solid var(--line-2);gap:24px">
+                <div><div style="font-size:.86rem;font-weight:500;color:var(--text)">{{ r.label }}</div><div style="font-size:.76rem;color:var(--text-3);margin-top:2px">{{ r.desc }}</div></div>
+                <div onClick="{{ r.toggle }}" style="{{ r.trackStyle }}"><div style="{{ r.knobStyle }}"></div></div>
+              </div>
+            </sc-for>
+          </div>
+
+          <div class="mono" style="font-size:.66rem;font-weight:500;letter-spacing:1.4px;text-transform:uppercase;color:var(--text-3);padding:28px 0 6px">Conta</div>
+          <div style="border-top:1px solid var(--line-1)">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:15px 0">
+              <div><div style="font-size:.86rem;font-weight:500;color:var(--text)">Encerrar sessão</div><div style="font-size:.76rem;color:var(--text-3);margin-top:2px">Sair da sua conta neste dispositivo.</div></div>
+              <button onClick="{{ go.logout }}" style="display:flex;align-items:center;gap:7px;padding:9px 15px;border:1px solid var(--border);border-radius:3px;background:var(--surface);color:#b42318;font-size:.8rem;font-weight:600;cursor:pointer" style-hover="border-color:#b42318;background:#fdf3f2">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
+                Sair
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- FEEDBACK -->
+      <sc-if value="{{ isFeedback }}" hint-placeholder-val="{{ false }}">
+      <div class="ssel" style="height:100%;overflow-y:auto">
+        <div style="padding:26px 32px 0">
+          <div class="mono" style="font-size:.68rem;font-weight:500;color:var(--text-3);letter-spacing:1.4px;text-transform:uppercase">Fale com a equipe</div>
+          <h1 style="font-size:1.65rem;font-weight:600;letter-spacing:-.7px;color:var(--text);margin-top:6px">Feedback</h1>
+          <div style="height:2px;background:#034EA2;width:36px;margin-top:18px"></div>
+        </div>
+        <div style="max-width:640px;padding:26px 32px 44px">
+          <label class="mono" style="display:block;font-size:.68rem;font-weight:500;letter-spacing:1px;text-transform:uppercase;color:var(--text-2);margin-bottom:8px">Tipo</label>
+          <div style="display:inline-flex;border:1px solid var(--border);border-radius:3px;overflow:hidden">
+            <button onClick="{{ setFbSugestao }}" style="{{ fbSugStyle }}">Sugestão</button>
+            <button onClick="{{ setFbProblema }}" style="{{ fbProbStyle }}">Problema</button>
+            <button onClick="{{ setFbDuvida }}" style="{{ fbDuvStyle }}">Dúvida</button>
+          </div>
+
+          <label class="mono" style="display:block;font-size:.68rem;font-weight:500;letter-spacing:1px;text-transform:uppercase;color:var(--text-2);margin:22px 0 8px">Assunto</label>
+          <input value="{{ fbSubject }}" onInput="{{ onFbSubject }}" placeholder="Resuma em poucas palavras" style="width:100%;padding:12px 14px;border:1px solid var(--border);border-radius:3px;font-size:.9rem;background:var(--surface);color:var(--text);outline:none" style-focus="border-color:#034EA2;box-shadow:inset 0 0 0 1px #034EA2">
+
+          <label class="mono" style="display:block;font-size:.68rem;font-weight:500;letter-spacing:1px;text-transform:uppercase;color:var(--text-2);margin:18px 0 8px">Mensagem</label>
+          <textarea value="{{ fbMsg }}" onInput="{{ onFbMsg }}" placeholder="Descreva sua sugestão, problema ou dúvida..." style="width:100%;min-height:130px;resize:vertical;padding:12px 14px;border:1px solid var(--border);border-radius:3px;font-size:.9rem;line-height:1.55;background:var(--surface);color:var(--text);outline:none" style-focus="border-color:#034EA2;box-shadow:inset 0 0 0 1px #034EA2"></textarea>
+
+          <button onClick="{{ submitFeedback }}" style="margin-top:18px;display:flex;align-items:center;gap:8px;padding:11px 18px;border:none;border-radius:3px;background:#034EA2;color:#fff;font-size:.86rem;font-weight:600;cursor:pointer" style-hover="background:#023e82">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4Z"/></svg>
+            Enviar feedback
+          </button>
+
+          <sc-if value="{{ hasFbSent }}" hint-placeholder-val="{{ false }}">
+          <div>
+            <div class="mono" style="font-size:.66rem;font-weight:500;letter-spacing:1.4px;text-transform:uppercase;color:var(--text-3);padding:30px 0 6px">Enviados</div>
+            <div style="border-top:1px solid var(--line-1)">
+              <sc-for list="{{ fbSent }}" as="f" hint-placeholder-count="1">
+                <div style="padding:14px 0;border-bottom:1px solid var(--line-2)">
+                  <div style="display:flex;align-items:center;gap:9px">
+                    <span class="mono" style="font-size:.62rem;font-weight:500;letter-spacing:.5px;text-transform:uppercase;color:#034EA2">{{ f.type }}</span>
+                    <span style="color:var(--border)">·</span>
+                    <span style="font-size:.86rem;font-weight:600;color:var(--text)">{{ f.subject }}</span>
+                    <span class="mono" style="margin-left:auto;font-size:.66rem;color:var(--text-3)">{{ f.date }}</span>
+                  </div>
+                  <p style="font-size:.82rem;color:var(--text-2);line-height:1.55;margin-top:6px">{{ f.msg }}</p>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+          </sc-if>
+        </div>
+      </div>
+      </sc-if>
+
+    </main>
+
+    <!-- DETAIL DRAWER -->
+    <sc-if value="{{ hasSelected }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closeDetail }}" style="position:fixed;inset:0;background:rgba(7,22,45,.28);z-index:50;display:flex;justify-content:flex-end">
+      <div onClick="{{ stop }}" class="ssel" style="width:440px;max-width:92%;height:100%;background:var(--surface);overflow-y:auto;animation:drawin .24s cubic-bezier(.4,0,.2,1) both;border-left:1px solid var(--line-1)">
+        <div style="padding:22px 28px;border-bottom:1px solid var(--line-1);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--surface);z-index:1">
+          <span class="mono" style="font-size:.7rem;font-weight:500;letter-spacing:1px;color:var(--text-3)">{{ sel.key }}</span>
+          <button onClick="{{ closeDetail }}" style="width:30px;height:30px;border-radius:3px;border:1px solid var(--border);background:var(--surface);color:var(--text-2);cursor:pointer;display:flex;align-items:center;justify-content:center" style-hover="background:var(--surface-2)">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+          </button>
+        </div>
+        <div style="padding:26px 28px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span class="mono" style="font-size:.62rem;font-weight:500;letter-spacing:1px;text-transform:uppercase;color:var(--text-3)">{{ sel.category }}</span>
+            <span style="color:var(--border)">·</span>
+            <span class="mono" style="font-size:.62rem;font-weight:500;letter-spacing:.5px;text-transform:uppercase;color:{{ sel.prioColor }}">{{ sel.priority }}</span>
+          </div>
+          <h2 style="font-size:1.4rem;font-weight:600;letter-spacing:-.5px;color:var(--text);line-height:1.3;margin-top:12px">{{ sel.title }}</h2>
+
+          <div style="border-top:1px solid var(--line-1);margin-top:24px">
+            <div style="display:flex;align-items:center;padding:13px 0;border-bottom:1px solid var(--line-2)">
+              <span class="mono" style="font-size:.66rem;letter-spacing:1px;text-transform:uppercase;color:var(--text-3);width:110px">Status</span>
+              <span class="mono" style="font-size:.82rem;font-weight:500;color:{{ sel.statusColor }}">{{ sel.statusLabel }}</span>
+            </div>
+            <div style="display:flex;align-items:center;padding:13px 0;border-bottom:1px solid var(--line-2)">
+              <span class="mono" style="font-size:.66rem;letter-spacing:1px;text-transform:uppercase;color:var(--text-3);width:110px">Projeto</span>
+              <span style="font-size:.85rem;font-weight:500;color:var(--text)">{{ sel.project }}</span>
+            </div>
+            <div style="display:flex;align-items:center;padding:13px 0;border-bottom:1px solid var(--line-2)">
+              <span class="mono" style="font-size:.66rem;letter-spacing:1px;text-transform:uppercase;color:var(--text-3);width:110px">Prazo</span>
+              <span class="mono" style="font-size:.82rem;font-weight:500;color:{{ sel.dueColor }}">{{ sel.dueFull }}</span>
+            </div>
+          </div>
+
+          <div class="mono" style="font-size:.66rem;font-weight:500;letter-spacing:1px;text-transform:uppercase;color:var(--text-3);margin-top:26px;margin-bottom:12px">Responsáveis</div>
+          <div style="display:flex;flex-direction:column">
+            <sc-for list="{{ sel.people }}" as="m" hint-placeholder-count="2">
+              <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line-2)">
+                <div class="mono" style="{{ m.style }}">{{ m.initials }}</div>
+                <div style="flex:1"><div style="font-size:.85rem;font-weight:500;color:var(--text)">{{ m.name }}</div><div class="mono" style="font-size:.62rem;letter-spacing:.5px;text-transform:uppercase;color:var(--text-3);margin-top:1px">{{ m.role }}</div></div>
+              </div>
+            </sc-for>
+          </div>
+
+          <div class="mono" style="font-size:.66rem;font-weight:500;letter-spacing:1px;text-transform:uppercase;color:var(--text-3);margin-top:26px;margin-bottom:10px">Descrição</div>
+          <p style="font-size:.86rem;color:var(--text-2);line-height:1.65">{{ sel.desc }}</p>
+
+          <div style="display:flex;gap:10px;margin-top:28px">
+            <button onClick="{{ advanceSel }}" style="flex:1;padding:12px;border:none;border-radius:3px;background:#034EA2;color:#fff;font-size:.84rem;font-weight:600;cursor:pointer" style-hover="background:#023e82">{{ sel.advanceLabel }}</button>
+            <button onClick="{{ closeDetail }}" style="padding:12px 18px;border:1px solid var(--border);border-radius:3px;background:var(--surface);color:var(--text);font-size:.84rem;font-weight:500;cursor:pointer" style-hover="background:var(--surface-2)">Fechar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- EVENT DRAWER -->
+    <sc-if value="{{ hasEvent }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closeEvent }}" style="position:fixed;inset:0;background:rgba(7,22,45,.28);z-index:50;display:flex;justify-content:flex-end">
+      <div onClick="{{ stop }}" class="ssel" style="width:440px;max-width:92%;height:100%;background:var(--surface);overflow-y:auto;animation:drawin .24s cubic-bezier(.4,0,.2,1) both;border-left:1px solid var(--line-1)">
+        <div style="padding:22px 28px;border-bottom:1px solid var(--line-1);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--surface);z-index:1">
+          <span class="mono" style="font-size:.7rem;font-weight:500;letter-spacing:1px;color:var(--text-3)">EVENTO</span>
+          <button onClick="{{ closeEvent }}" style="width:30px;height:30px;border-radius:3px;border:1px solid var(--border);background:var(--surface);color:var(--text-2);cursor:pointer;display:flex;align-items:center;justify-content:center" style-hover="background:var(--surface-2)">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+          </button>
+        </div>
+        <div style="padding:26px 28px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span class="mono" style="font-size:.62rem;font-weight:500;letter-spacing:1px;text-transform:uppercase;color:var(--text-3)">{{ evSel.type }}</span>
+            <span style="color:var(--border)">·</span>
+            <span class="mono" style="font-size:.62rem;font-weight:500;letter-spacing:.5px;text-transform:uppercase;color:{{ evSel.statusColor }}">{{ evSel.statusLabel }}</span>
+          </div>
+          <h2 style="font-size:1.4rem;font-weight:600;letter-spacing:-.5px;color:var(--text);line-height:1.3;margin-top:12px">{{ evSel.title }}</h2>
+
+          <div style="border-top:1px solid var(--line-1);margin-top:24px">
+            <div style="display:flex;align-items:center;padding:13px 0;border-bottom:1px solid var(--line-2)">
+              <span class="mono" style="font-size:.66rem;letter-spacing:1px;text-transform:uppercase;color:var(--text-3);width:110px">Data</span>
+              <span class="mono" style="font-size:.82rem;font-weight:500;color:var(--text)">{{ evSel.dateFull }}</span>
+            </div>
+            <div style="display:flex;align-items:center;padding:13px 0;border-bottom:1px solid var(--line-2)">
+              <span class="mono" style="font-size:.66rem;letter-spacing:1px;text-transform:uppercase;color:var(--text-3);width:110px">Horário</span>
+              <span class="mono" style="font-size:.82rem;font-weight:500;color:var(--text)">{{ evSel.time }}</span>
+            </div>
+            <div style="display:flex;align-items:center;padding:13px 0;border-bottom:1px solid var(--line-2)">
+              <span class="mono" style="font-size:.66rem;letter-spacing:1px;text-transform:uppercase;color:var(--text-3);width:110px">Modalidade</span>
+              <span style="font-size:.85rem;font-weight:500;color:var(--text)">{{ evSel.modal }}</span>
+            </div>
+          </div>
+
+          <div class="mono" style="font-size:.66rem;font-weight:500;letter-spacing:1px;text-transform:uppercase;color:var(--text-3);margin-top:26px;margin-bottom:12px">Participantes</div>
+          <div style="display:flex;flex-direction:column">
+            <sc-for list="{{ evSel.people }}" as="m" hint-placeholder-count="2">
+              <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line-2)">
+                <div class="mono" style="{{ m.style }}">{{ m.initials }}</div>
+                <div style="flex:1"><div style="font-size:.85rem;font-weight:500;color:var(--text)">{{ m.name }}</div><div class="mono" style="font-size:.62rem;letter-spacing:.5px;text-transform:uppercase;color:var(--text-3);margin-top:1px">{{ m.role }}</div></div>
+              </div>
+            </sc-for>
+          </div>
+
+          <div class="mono" style="font-size:.66rem;font-weight:500;letter-spacing:1px;text-transform:uppercase;color:var(--text-3);margin-top:26px;margin-bottom:12px">Ata da reunião</div>
+          <sc-if value="{{ evSel.hasAta }}" hint-placeholder-val="{{ false }}">
+          <div>
+            <div style="display:flex;align-items:center;gap:13px;border:1px solid var(--border);border-radius:3px;padding:13px 14px">
+              <div style="width:36px;height:36px;border:1px solid var(--border);border-radius:3px;display:flex;align-items:center;justify-content:center;color:#034EA2;flex-shrink:0">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
+              </div>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:.82rem;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ evSel.ataName }}</div>
+                <div class="mono" style="font-size:.62rem;color:var(--text-3);letter-spacing:.3px;margin-top:2px">{{ evSel.ataMeta }}</div>
+              </div>
+              <button style="width:32px;height:32px;border:1px solid var(--border);border-radius:3px;background:var(--surface);color:var(--text-2);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0" style-hover="border-color:#034EA2;color:#034EA2">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+              </button>
+            </div>
+            <button onClick="{{ removeAtaSel }}" class="mono" style="margin-top:10px;display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border:1px solid var(--border);border-radius:3px;background:var(--surface);color:#b42318;font-size:.7rem;font-weight:500;letter-spacing:.5px;text-transform:uppercase;cursor:pointer" style-hover="border-color:#b42318;background:#fdf3f2">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+              Remover ata
+            </button>
+          </div>
+          </sc-if>
+          <sc-if value="{{ evSel.noAta }}" hint-placeholder-val="{{ true }}">
+          <div style="border:1px dashed #d2d6dd;border-radius:3px;padding:26px 20px;text-align:center">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a7adb6" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="margin:0 auto"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
+            <div class="mono" style="font-size:.72rem;letter-spacing:.5px;color:var(--text-3);margin-top:10px">Nenhuma ata anexada</div>
+            <button onClick="{{ attachAtaSel }}" style="margin-top:14px;display:inline-flex;align-items:center;gap:7px;padding:9px 16px;border:none;border-radius:3px;background:#034EA2;color:#fff;font-size:.8rem;font-weight:600;cursor:pointer" style-hover="background:#023e82">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+              Anexar ata (.pdf)
+            </button>
+          </div>
+          </sc-if>
+
+          <button onClick="{{ closeEvent }}" style="margin-top:24px;width:100%;padding:12px;border:1px solid var(--border);border-radius:3px;background:var(--surface);color:var(--text);font-size:.84rem;font-weight:500;cursor:pointer" style-hover="background:var(--surface-2)">Fechar</button>
+        </div>
+      </div>
+    </div>
+    </sc-if>
+
+  </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:900}}">
+class Component extends DCLogic {
+  state = {
+    screen: 'login', nav: 'atividades', view: 'kanban',
+    search: '', fUser: '', fPrio: '', fProj: '',
+    selId: null, tasks: null,
+    events: null, faltas: null, evView: 'agenda', evSel: null, faView: 'lista',
+    theme: 'light', notif: { email: true, prazos: true, mencoes: false },
+    fbType: 'Sugestão', fbSubject: '', fbMsg: '', fbSent: [],
+  };
+
+  USERS = {
+    'Vinícius Yan': 'Coordenador', 'Ana Sousa': 'Analista de Capacitação',
+    'Pedro Lima': 'Estagiário de Dev', 'Marina Castro': 'Designer',
+    'João Netto': 'Desenvolvedor', 'Gabriela Reis': 'Gerente de Projetos',
+  };
+  PROJECTS = ['Portal SIA Piauí', 'Chat IAI', 'Satélites & NDVI', 'Capacitação Servidores', 'Batalha de Prompts'];
+
+  // restrained palette — ink scale + single blue, red only for overdue/high
+  PRIO = {
+    Alta:  '#034EA2',
+    Média: 'var(--text-2)',
+    Baixa: 'var(--text-3)',
+    '':    'var(--text-3)',
+  };
+  STATUS = {
+    pending:     { label: 'Pendente',     color: 'var(--text-2)', dot: '#c7cbd2', spine: 'var(--border)' },
+    in_progress: { label: 'Em andamento', color: '#034EA2', dot: '#034EA2', spine: '#034EA2' },
+    review:      { label: 'Em revisão',   color: '#A87A00', dot: '#E0A92E', spine: '#E0A92E' },
+    done:        { label: 'Concluído',    color: '#157F3C', dot: '#1B8A4B', spine: '#1B8A4B' },
+  };
+
+  seed() {
+    return [
+      { id: 't1', title: 'Revisar roteiro da Batalha de Prompts', category: 'Evento', project: 'Batalha de Prompts', people: ['Gabriela Reis'], priority: 'Alta', status: 'pending', due: { k: 'soon', t: 'Vence sexta', full: 'Sexta, 21 jun 2026', short: '21 JUN', d: '21', m: 'JUN' } },
+      { id: 't2', title: 'Mapear dados de NDVI do semiárido', category: 'Pesquisa', project: 'Satélites & NDVI', people: ['João Netto', 'Pedro Lima'], priority: 'Média', status: 'pending', due: { k: 'date', t: 'Em 5 dias', full: '24 jun 2026', short: '24 JUN', d: '24', m: 'JUN' } },
+      { id: 't3', title: 'Briefing visual do novo Portal SIA', category: 'Design', project: 'Portal SIA Piauí', people: ['Marina Castro'], priority: 'Baixa', status: 'pending', due: { k: 'none' } },
+      { id: 't4', title: 'Treinar modelo de intenções do Chat IAI', category: 'Dev', project: 'Chat IAI', people: ['Pedro Lima', 'Ana Sousa'], priority: 'Alta', status: 'in_progress', due: { k: 'soon', t: 'Vence amanhã', full: 'Amanhã, 20 jun 2026', short: '20 JUN', d: '20', m: 'JUN' } },
+      { id: 't5', title: 'Onboarding de 12 novos servidores', category: 'Capacitação', project: 'Capacitação Servidores', people: ['Ana Sousa'], priority: 'Média', status: 'review', due: { k: 'none' } },
+      { id: 't6', title: 'Integração Supabase e autenticação', category: 'Dev', project: 'Portal SIA Piauí', people: ['João Netto'], priority: 'Alta', status: 'in_progress', due: { k: 'over', t: 'Atrasada', full: 'Atrasada · 17 jun 2026', short: 'ATRASADA', d: '17', m: 'JUN' } },
+      { id: 't7', title: 'Identidade visual da Batalha de Prompts', category: 'Design', project: 'Batalha de Prompts', people: ['Marina Castro'], priority: 'Média', status: 'review', due: { k: 'none' } },
+      { id: 't8', title: 'Coleta de feedback do piloto do IAI', category: 'Pesquisa', project: 'Chat IAI', people: ['Vinícius Yan', 'Ana Sousa'], priority: 'Baixa', status: 'done', due: { k: 'none' } },
+      { id: 't9', title: 'Cronograma do trimestre da DEDG', category: 'Planejamento', project: 'Capacitação Servidores', people: ['Gabriela Reis'], priority: 'Média', status: 'done', due: { k: 'none' } },
+    ];
+  }
+  tasks() { return this.state.tasks || this.seed(); }
+  initials(n) { return n.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase(); }
+
+  avStyle(i, sz) {
+    const s = sz || 24;
+    return { width: s + 'px', height: s + 'px', borderRadius: '3px', background: '#072f63', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 500, fontSize: (s * 0.36) + 'px', flexShrink: 0, marginLeft: i > 0 ? '-6px' : 0, border: '1.5px solid var(--surface)', letterSpacing: '.5px' };
+  }
+  buildAvatars(people, sz) { return people.map((n, i) => ({ name: n, initials: this.initials(n), style: this.avStyle(i, sz) })); }
+
+  dueMeta(due) {
+    if (!due || due.k === 'none') return { has: false, color: 'var(--text-3)', text: '', short: '—', full: 'Sem prazo' };
+    const c = { over: '#b42318', soon: '#034EA2', date: 'var(--text-2)' }[due.k] || '#6b7280';
+    return { has: true, color: c, text: due.t, short: due.short, full: due.full, day: due.d, mon: due.m, tag: due.k === 'over' ? 'Atrasada' : due.k === 'soon' ? 'Em breve' : 'A vencer' };
+  }
+
+  go(nav) { return () => this.setState({ nav, selId: null, evSel: null }); }
+  move(id, status) { if (!id) return; this.setState({ tasks: this.tasks().map(t => t.id === id ? { ...t, status } : t) }); }
+  addTo(status) {
+    const id = 'n' + Date.now();
+    this.setState({ tasks: [{ id, title: 'Nova atividade', category: 'Planejamento', project: 'Portal SIA Piauí', people: ['Vinícius Yan'], priority: 'Média', status, due: { k: 'none' } }, ...this.tasks()], selId: id });
+  }
+  advance(id) { const o = { pending: 'in_progress', in_progress: 'review', review: 'done', done: 'done' }; const t = this.tasks().find(x => x.id === id); if (t) this.move(id, o[t.status]); }
+
+  displayTask(t) {
+    const prio = this.PRIO[t.priority] ?? 'var(--text-3)';
+    const st = this.STATUS[t.status];
+    const due = this.dueMeta(t.due);
+    const isDone = t.status === 'done';
+    return {
+      id: t.id, title: t.title, category: t.category, project: t.project, priority: t.priority || '—',
+      spine: st.spine, prioColor: prio,
+      statusLabel: st.label, statusColor: st.color,
+      hasDue: due.has, dueText: due.text, dueColor: due.color, dueShort: due.short,
+      avatars: this.buildAvatars(t.people, 24),
+      onOpen: () => this.setState({ selId: t.id }),
+      onDragStart: () => { this._drag = t.id; },
+      onDragEnd: () => { this._drag = null; },
+    };
+  }
+
+  filtered() {
+    const { search, fUser, fPrio, fProj, nav } = this.state;
+    const q = search.trim().toLowerCase();
+    return this.tasks().filter(t => {
+      if (nav === 'minhas' && !t.people.includes('Vinícius Yan')) return false;
+      if (fUser && !t.people.includes(fUser)) return false;
+      if (fPrio && t.priority !== fPrio) return false;
+      if (fProj && t.project !== fProj) return false;
+      if (q && !(t.title.toLowerCase().includes(q) || t.category.toLowerCase().includes(q) || t.people.join(' ').toLowerCase().includes(q))) return false;
+      return true;
+    });
+  }
+
+  navStyle(id) {
+    const active = this.state.nav === id;
+    const base = { display: 'flex', alignItems: 'center', gap: '11px', padding: '9px 20px', fontSize: '.86rem', cursor: 'pointer', textDecoration: 'none', position: 'relative', transition: 'color .12s,background .12s' };
+    if (active) return { ...base, color: '#034EA2', fontWeight: 600, background: 'var(--surface-2)', boxShadow: 'inset 2px 0 0 #034EA2' };
+    return { ...base, color: 'var(--text-2)', fontWeight: 400 };
+  }
+  tabStyle(on) {
+    return { background: 'none', border: 'none', padding: '0 0 4px', fontSize: '.86rem', fontWeight: on ? 600 : 400, color: on ? 'var(--text)' : 'var(--text-3)', cursor: 'pointer', borderBottom: on ? '2px solid #034EA2' : '2px solid transparent', letterSpacing: '-.1px' };
+  }
+  chipStyle(on) {
+    return { padding: '7px 11px', borderRadius: '3px', border: on ? '1px solid #034EA2' : '1px solid var(--border)', background: 'var(--surface)', color: on ? '#034EA2' : 'var(--text-2)', fontSize: '.8rem', fontWeight: on ? 600 : 400, cursor: 'pointer', outline: 'none' };
+  }
+
+  EVSTATUS = { agendado: { label: 'Agendado', color: '#034EA2' }, realizado: { label: 'Realizado', color: 'var(--text-2)' } };
+  FSTATUS = { Aprovada: '#157F3C', Pendente: '#A87A00', Recusada: '#b42318' };
+  events() { return this.state.events || this.eventsSeed(); }
+  faltas() { return this.state.faltas || this.faltasSeed(); }
+  eventsSeed() {
+    return [
+      { id: 'e1', title: 'Reunião de planejamento — 2º trimestre', type: 'Reunião', d: '18', m: 'JUN', wd: 'QUA', time: '09:00', modal: 'Presencial · Sala DEDG', people: ['Vinícius Yan', 'Gabriela Reis', 'Ana Sousa'], status: 'realizado', ata: { name: 'ata-planejamento-2t.pdf', author: 'Gabriela Reis', date: '18 jun 2026', size: '240 KB' } },
+      { id: 'e2', title: 'Workshop de IA Generativa para servidores', type: 'Workshop', d: '19', m: 'JUN', wd: 'QUI', time: '14:00', modal: 'Auditório SIA', people: ['Ana Sousa', 'Pedro Lima', 'Marina Castro'], status: 'realizado', ata: null },
+      { id: 'e3', title: 'Alinhamento do Chat IAI com a SEAD', type: 'Reunião', d: '23', m: 'JUN', wd: 'SEG', time: '10:30', modal: 'Online · Google Meet', people: ['Vinícius Yan', 'João Netto'], status: 'agendado', ata: null },
+      { id: 'e4', title: 'Comitê de Governança de Dados', type: 'Comitê', d: '25', m: 'JUN', wd: 'QUA', time: '15:00', modal: 'Presencial · Sala 3', people: ['Gabriela Reis', 'Vinícius Yan'], status: 'agendado', ata: null },
+      { id: 'e5', title: 'Retrospectiva da Batalha de Prompts', type: 'Reunião', d: '16', m: 'JUN', wd: 'SEG', time: '16:00', modal: 'Auditório SIA', people: ['Gabriela Reis', 'Marina Castro', 'Pedro Lima'], status: 'realizado', ata: { name: 'ata-retro-batalha.pdf', author: 'Marina Castro', date: '16 jun 2026', size: '180 KB' } },
+    ];
+  }
+  faltasSeed() {
+    return [
+      { id: 'f1', person: 'Pedro Lima', type: 'Atestado médico', period: '19 jun', days: '1 dia', reason: 'Consulta médica agendada', status: 'Aprovada' },
+      { id: 'f2', person: 'Ana Sousa', type: 'Falta justificada', period: '17 jun', days: '1 dia', reason: 'Capacitação externa na SEAD', status: 'Aprovada' },
+      { id: 'f3', person: 'João Netto', type: 'Licença', period: '24–28 jun', days: '5 dias', reason: 'Licença para tratamento de saúde', status: 'Pendente' },
+      { id: 'f4', person: 'Marina Castro', type: 'Falta injustificada', period: '12 jun', days: '1 dia', reason: '—', status: 'Recusada' },
+      { id: 'f5', person: 'Gabriela Reis', type: 'Férias', period: '01–15 jul', days: '15 dias', reason: 'Período aquisitivo 2025/2026', status: 'Pendente' },
+    ];
+  }
+  attachAta(id) { this.setState({ events: this.events().map(e => e.id === id ? { ...e, ata: { name: 'ata-' + id + '-' + String(Date.now()).slice(-4) + '.pdf', author: 'Vinícius Yan', date: '19 jun 2026', size: '210 KB' } } : e) }); }
+  removeAta(id) { this.setState({ events: this.events().map(e => e.id === id ? { ...e, ata: null } : e) }); }
+  setFalta(id, status) { this.setState({ faltas: this.faltas().map(x => x.id === id ? { ...x, status } : x) }); }
+
+  logsSeed() {
+    return [
+      { id: 'l1', actor: 'Vinícius Yan', action: 'concluiu a atividade', target: 'Identidade visual da Batalha', type: 'Concluiu', time: '09:42', date: '19 JUN' },
+      { id: 'l2', actor: 'Pedro Lima', action: 'moveu para Em andamento', target: 'Treinar modelo do Chat IAI', type: 'Editou', time: '09:15', date: '19 JUN' },
+      { id: 'l3', actor: 'Marina Castro', action: 'anexou uma ata em', target: 'Retrospectiva da Batalha', type: 'Anexou', time: '17:30', date: '18 JUN' },
+      { id: 'l4', actor: 'Gabriela Reis', action: 'criou o evento', target: 'Comitê de Governança de Dados', type: 'Criou', time: '16:04', date: '18 JUN' },
+      { id: 'l5', actor: 'Ana Sousa', action: 'registrou falta de', target: 'Pedro Lima', type: 'Registrou', time: '11:20', date: '18 JUN' },
+      { id: 'l6', actor: 'João Netto', action: 'excluiu a atividade', target: 'Teste de deploy antigo', type: 'Excluiu', time: '15:48', date: '17 JUN' },
+      { id: 'l7', actor: 'Vinícius Yan', action: 'entrou no sistema', target: '', type: 'Acesso', time: '08:30', date: '17 JUN' },
+      { id: 'l8', actor: 'Marina Castro', action: 'editou o projeto', target: 'Portal SIA Piauí', type: 'Editou', time: '14:12', date: '16 JUN' },
+    ];
+  }
+  componentDidMount() { try { const t = localStorage.getItem('sia-theme'); if (t === 'dark' || t === 'light') this.setState({ theme: t }); } catch (e) {} }
+  setTheme(t) { this.setState({ theme: t }); try { localStorage.setItem('sia-theme', t); } catch (e) {} }
+  toggleTheme() { this.setTheme(this.state.theme === 'dark' ? 'light' : 'dark'); }
+  toggleNotif(k) { this.setState({ notif: { ...this.state.notif, [k]: !this.state.notif[k] } }); }
+  submitFeedback() { const msg = (this.state.fbMsg || '').trim(); if (!msg) return; const entry = { id: 'fb' + Date.now(), type: this.state.fbType, subject: (this.state.fbSubject || '').trim() || '(sem assunto)', msg, date: '19 jun 2026' }; this.setState({ fbSent: [entry, ...this.state.fbSent], fbMsg: '', fbSubject: '' }); }
+  switchTrack(on) { return { width: '38px', height: '22px', borderRadius: '20px', background: on ? '#034EA2' : 'var(--border)', position: 'relative', cursor: 'pointer', transition: 'background .15s', flexShrink: 0 }; }
+  switchKnob(on) { return { position: 'absolute', top: '2px', left: on ? '18px' : '2px', width: '18px', height: '18px', borderRadius: '50%', background: 'var(--surface)', transition: 'left .15s', boxShadow: '0 1px 2px rgba(0,0,0,.25)' }; }
+  segStyle(on) { return { padding: '8px 18px', fontSize: '.82rem', fontWeight: on ? 600 : 500, fontFamily: 'inherit', border: 'none', background: on ? '#034EA2' : 'var(--surface)', color: on ? '#fff' : 'var(--text-2)', cursor: 'pointer' }; }
+
+  renderVals() {
+    const s = this.state;
+    const isStub = false;
+    const showBoard = s.nav === 'atividades' || s.nav === 'minhas';
+
+    const f = this.filtered();
+    const colDefs = ['pending', 'in_progress', 'review', 'done'];
+    const cols = colDefs.map(id => { const st = this.STATUS[id]; return {
+      id, title: st.label, dot: st.dot, titleColor: st.color, tint: st.dot + '24',
+      count: f.filter(t => t.status === id).length,
+      tasks: f.filter(t => t.status === id).map(t => this.displayTask(t)),
+      onAdd: () => this.addTo(id),
+      onDrop: (e) => { e.preventDefault(); this.move(this._drag, id); this._drag = null; },
+      onDragOver: (e) => e.preventDefault(),
+    }; });
+    const listRows = f.map(t => this.displayTask(t));
+
+    const all = this.tasks();
+    const cnt = { pending: 0, in_progress: 0, review: 0, done: 0 };
+    all.forEach(t => cnt[t.status]++);
+    const total = all.length;
+    const overdue = all.filter(t => t.due && t.due.k === 'over').length;
+    const donePct = Math.round(cnt.done / total * 100);
+    const boardStats = [
+      { label: 'abertas', value: total - cnt.done, color: '#034EA2' },
+      { label: 'atrasadas', value: overdue, color: '#b42318' },
+      { label: 'concluído', value: donePct + '%', color: '#1B8A4B' },
+    ];
+    const pctOf = (n) => Math.round(n / total * 100) + '%';
+    const legend = [
+      { label: 'Pendente', color: '#c7cbd2', value: cnt.pending, pct: pctOf(cnt.pending) },
+      { label: 'Em andamento', color: '#034EA2', value: cnt.in_progress, pct: pctOf(cnt.in_progress) },
+      { label: 'Em revisão', color: '#E0A92E', value: cnt.review, pct: pctOf(cnt.review) },
+      { label: 'Concluído', color: '#1B8A4B', value: cnt.done, pct: pctOf(cnt.done) },
+    ];
+    const projectBars = this.PROJECTS.map(name => {
+      const c = all.filter(t => t.project === name).length;
+      return { name, count: c, pct: Math.round(c / total * 100) + '%' };
+    });
+    const stats = [
+      { label: 'Total', value: total, valueColor: 'var(--text)', accent: '#034EA2', tint: '#034EA20f', delta: '+3 nesta semana', deltaColor: 'var(--text-2)' },
+      { label: 'Concluídas', value: donePct + '%', valueColor: '#157F3C', accent: '#1B8A4B', tint: '#1B8A4B0f', delta: cnt.done + ' de ' + total, deltaColor: 'var(--text-2)' },
+      { label: 'Atrasadas', value: overdue, valueColor: overdue ? '#b42318' : 'var(--text)', accent: '#b42318', tint: '#b423180f', delta: overdue ? 'requer atenção' : 'em dia', deltaColor: overdue ? '#b42318' : 'var(--text-2)' },
+      { label: 'Equipe', value: 6, valueColor: 'var(--text)', accent: '#E0A92E', tint: '#E0A92E0f', delta: 'servidores ativos', deltaColor: 'var(--text-2)' },
+    ];
+    const upcoming = all.filter(t => t.due && t.due.k !== 'none').map(t => {
+      const d = this.dueMeta(t.due);
+      return { title: t.title, meta: t.project.toUpperCase() + ' · ' + t.people[0].toUpperCase(), day: d.day, mon: d.mon, tag: d.tag, color: d.color };
+    });
+
+    const projMeta = [
+      { name: 'Portal SIA Piauí', desc: 'Nova plataforma institucional de serviços digitais do estado.', status: 'Em andamento', dot: '#034EA2' },
+      { name: 'Chat IAI', desc: 'Assistente de IA para atendimento ao cidadão piauiense.', status: 'Em andamento', dot: '#034EA2' },
+      { name: 'Satélites & NDVI', desc: 'Detecção precoce de estresse vegetativo no semiárido.', status: 'Pesquisa', dot: '#c7cbd2' },
+      { name: 'Capacitação Servidores', desc: 'Trilha de formação em IA e dados para a administração pública.', status: 'Em andamento', dot: '#034EA2' },
+      { name: 'Batalha de Prompts', desc: 'Competição estadual de prompts — Piauí para o Mundo.', status: 'Planejamento', dot: '#072f63' },
+    ];
+    const pStatusColor = { 'Em andamento': '#034EA2', 'Pesquisa': '#A87A00', 'Planejamento': '#157F3C' };
+    const projects = projMeta.map(p => {
+      const list = all.filter(t => t.project === p.name);
+      const done = list.filter(t => t.status === 'done').length;
+      const pct = list.length ? Math.round(done / list.length * 100) : 0;
+      const members = [...new Set(list.flatMap(t => t.people))].slice(0, 4);
+      return { name: p.name, desc: p.desc, dot: p.dot, status: p.status, statusColor: pStatusColor[p.status] || '#9aa1ac', pct: pct + '%', members: this.buildAvatars(members, 24), tasksLabel: list.length + ' atividades' };
+    });
+
+    // ── eventos ──
+    const allEv = this.events();
+    const dispEv = (e) => { const st = this.EVSTATUS[e.status]; return {
+      id: e.id, title: e.title, type: e.type, d: e.d, m: e.m, wd: e.wd, time: e.time, modal: e.modal,
+      statusLabel: st.label, statusColor: st.color, dateColor: st.color,
+      avatars: this.buildAvatars(e.people, 24),
+      showBadge: !!e.ata || e.status === 'realizado',
+      badgeText: e.ata ? 'Ata anexada' : 'Ata pendente',
+      badgeColor: e.ata ? '#157F3C' : '#A87A00',
+      onOpen: () => this.setState({ evSel: e.id }),
+    }; };
+    const evGroups = [
+      { label: 'Agendados', items: allEv.filter(e => e.status === 'agendado').map(dispEv) },
+      { label: 'Realizados', items: allEv.filter(e => e.status === 'realizado').map(dispEv) },
+    ];
+    const atas = allEv.filter(e => e.ata).map(e => ({ id: e.id, name: e.ata.name, event: e.title, meta: (e.ata.author + ' · ' + e.ata.date + ' · ' + e.ata.size).toUpperCase() }));
+    const evSelRaw = s.evSel ? allEv.find(e => e.id === s.evSel) : null;
+    let evSel = null;
+    if (evSelRaw) { const st = this.EVSTATUS[evSelRaw.status]; evSel = {
+      id: evSelRaw.id, title: evSelRaw.title, type: evSelRaw.type, statusLabel: st.label, statusColor: st.color,
+      dateFull: evSelRaw.wd + ', ' + evSelRaw.d + ' ' + evSelRaw.m + ' 2026', time: evSelRaw.time, modal: evSelRaw.modal,
+      people: evSelRaw.people.map(n => ({ name: n, role: this.USERS[n] || 'Servidor', initials: this.initials(n), style: this.avStyle(0, 32) })),
+      hasAta: !!evSelRaw.ata, noAta: !evSelRaw.ata,
+      ataName: evSelRaw.ata ? evSelRaw.ata.name : '',
+      ataMeta: evSelRaw.ata ? (evSelRaw.ata.author.toUpperCase() + ' · ' + evSelRaw.ata.size) : '',
+    }; }
+
+    // ── faltas ──
+    const allF = this.faltas();
+    const faltasRows = allF.map(x => ({
+      id: x.id, person: x.person, initials: this.initials(x.person), avatarStyle: this.avStyle(0, 28),
+      type: x.type, period: x.period, days: x.days, reason: x.reason, status: x.status,
+      statusColor: this.FSTATUS[x.status] || '#6b7280',
+      isPending: x.status === 'Pendente', notPending: x.status !== 'Pendente',
+      approve: () => this.setFalta(x.id, 'Aprovada'), reject: () => this.setFalta(x.id, 'Recusada'),
+    }));
+    const fSummary = [
+      { label: 'Registros', value: allF.length, color: 'var(--text)' },
+      { label: 'Aprovadas', value: allF.filter(x => x.status === 'Aprovada').length, color: '#157F3C' },
+      { label: 'Pendentes', value: allF.filter(x => x.status === 'Pendente').length, color: '#A87A00' },
+      { label: 'Servidores', value: new Set(allF.map(x => x.person)).size, color: 'var(--text)' },
+    ];
+
+    // ── calendário ──
+    const TCAL = { pending: 'var(--text-3)', in_progress: '#034EA2', review: '#E0A92E', done: '#1B8A4B' };
+    const TDATE = { t1: '2026-06-21', t2: '2026-06-24', t3: '2026-06-26', t4: '2026-06-20', t5: '2026-06-23', t6: '2026-06-17', t7: '2026-06-16', t8: '2026-06-12', t9: '2026-06-19' };
+    const taskCalItems = this.tasks().filter(t => TDATE[t.id]).map(t => ({ id: t.id, start: TDATE[t.id], end: TDATE[t.id], title: t.title, sub: t.people[0] || '', color: TCAL[t.status] || '#9aa1ac' }));
+    const taskCalLegend = [{ label: 'Pendente', color: 'var(--text-3)' }, { label: 'Em andamento', color: '#034EA2' }, { label: 'Em revisão', color: '#E0A92E' }, { label: 'Concluído', color: '#1B8A4B' }];
+
+    const evCalItems = allEv.map(e => ({ id: e.id, start: '2026-06-' + String(e.d).padStart(2, '0'), end: '2026-06-' + String(e.d).padStart(2, '0'), title: e.title, sub: e.time + ' · ' + e.type, color: e.status === 'agendado' ? '#034EA2' : 'var(--text-2)' }));
+    const evCalLegend = [{ label: 'Agendado', color: '#034EA2' }, { label: 'Realizado', color: 'var(--text-2)' }];
+
+    const FDATE = { f1: { s: '2026-06-19' }, f2: { s: '2026-06-17' }, f3: { s: '2026-06-24', e: '2026-06-28' }, f4: { s: '2026-06-12' }, f5: { s: '2026-07-01', e: '2026-07-15' } };
+    const FCAL = { Aprovada: '#1B8A4B', Pendente: '#E0A92E', Recusada: '#b42318' };
+    const faCalItems = allF.filter(x => FDATE[x.id]).map(x => ({ id: x.id, start: FDATE[x.id].s, end: FDATE[x.id].e || FDATE[x.id].s, title: x.person, sub: x.type, color: FCAL[x.status] || '#9aa1ac' }));
+    const faCalLegend = [{ label: 'Aprovada', color: '#1B8A4B' }, { label: 'Pendente', color: '#E0A92E' }, { label: 'Recusada', color: '#b42318' }];
+
+    const selRaw = s.selId ? this.tasks().find(t => t.id === s.selId) : null;
+    let sel = null;
+    if (selRaw) {
+      const d = this.displayTask(selRaw);
+      const due = this.dueMeta(selRaw.due);
+      sel = { ...d, key: 'SIA-' + selRaw.id.toUpperCase(), dueFull: due.full,
+        people: selRaw.people.map(n => ({ name: n, role: this.USERS[n] || 'Servidor', initials: this.initials(n), style: this.avStyle(0, 32) })),
+        desc: 'Atividade vinculada ao projeto ' + selRaw.project + '. Acompanhe o andamento e atualize o status conforme a execução avança junto à equipe da DEDG.',
+        advanceLabel: ({ pending: 'Iniciar atividade', in_progress: 'Enviar para revisão', review: 'Marcar como concluída', done: 'Reabrir atividade' })[selRaw.status],
+      };
+    }
+
+    const LOGCOLOR = { Concluiu: '#157F3C', Editou: '#034EA2', Anexou: '#A87A00', Criou: '#034EA2', Registrou: '#A87A00', Excluiu: '#b42318', Acesso: 'var(--text-2)' };
+    const logsRows = this.logsSeed().map(l => ({ ...l, initials: this.initials(l.actor), avatarStyle: this.avStyle(0, 28), color: LOGCOLOR[l.type] || '#6b7280', hasTarget: !!l.target }));
+    const notif = s.notif;
+    const notifRows = [
+      { k: 'email', label: 'Resumo por e-mail', desc: 'Um resumo diário das atividades da equipe.', on: notif.email },
+      { k: 'prazos', label: 'Alertas de prazo', desc: 'Avisos quando uma atividade se aproxima do vencimento.', on: notif.prazos },
+      { k: 'mencoes', label: 'Menções', desc: 'Quando você for citado em uma atividade ou comentário.', on: notif.mencoes },
+    ].map(r => ({ label: r.label, desc: r.desc, toggle: () => this.toggleNotif(r.k), trackStyle: this.switchTrack(r.on), knobStyle: this.switchKnob(r.on) }));
+
+    const stubTitles = { eventos: 'Eventos', faltas: 'Faltas', logs: 'Logs do sistema', config: 'Configurações', feedback: 'Feedback' };
+    const keys = ['atividades', 'minhas', 'eventos', 'faltas', 'dashboards', 'projetos', 'logs', 'config', 'feedback'];
+    const go = {}; keys.forEach(k => go[k] = this.go(k));
+    go.logout = () => this.setState({ screen: 'login', selId: null });
+    const navStyles = {}; keys.forEach(k => navStyles[k] = this.navStyle(k));
+
+    return {
+      isLogin: s.screen === 'login', isApp: s.screen === 'app',
+      enterApp: () => this.setState({ screen: 'app' }),
+      go, navStyles,
+      showBoard, isDash: s.nav === 'dashboards', isProj: s.nav === 'projetos', isStub,
+      stubTitle: stubTitles[s.nav] || '',
+      isLogs: s.nav === 'logs', isConfig: s.nav === 'config', isFeedback: s.nav === 'feedback',
+      logsRows, notifRows,
+      themeClass: s.theme === 'dark' ? 'theme-dark' : '', isDark: s.theme === 'dark',
+      toggleTheme: () => this.toggleTheme(),
+      themeLightStyle: this.segStyle(s.theme !== 'dark'), themeDarkStyle: this.segStyle(s.theme === 'dark'),
+      setLight: () => this.setTheme('light'), setDark: () => this.setTheme('dark'),
+      fbType: s.fbType, fbSubject: s.fbSubject, fbMsg: s.fbMsg,
+      setFbSugestao: () => this.setState({ fbType: 'Sugestão' }), setFbProblema: () => this.setState({ fbType: 'Problema' }), setFbDuvida: () => this.setState({ fbType: 'Dúvida' }),
+      fbSugStyle: this.segStyle(s.fbType === 'Sugestão'), fbProbStyle: this.segStyle(s.fbType === 'Problema'), fbDuvStyle: this.segStyle(s.fbType === 'Dúvida'),
+      onFbSubject: (e) => this.setState({ fbSubject: e.target.value }), onFbMsg: (e) => this.setState({ fbMsg: e.target.value }),
+      submitFeedback: () => this.submitFeedback(), fbSent: s.fbSent, hasFbSent: s.fbSent.length > 0,
+      boardTitle: s.nav === 'minhas' ? 'Minhas atividades' : 'Atividades',
+      boardEyebrow: s.nav === 'minhas' ? 'Atribuídas a você' : 'Quadro da equipe · DEDG',
+      search: s.search, onSearch: (e) => this.setState({ search: e.target.value }),
+      users: Object.keys(this.USERS), projectNames: this.PROJECTS,
+      fUser: s.fUser, fPrio: s.fPrio, fProj: s.fProj,
+      onFilterUser: (e) => this.setState({ fUser: e.target.value }),
+      onFilterPrio: (e) => this.setState({ fPrio: e.target.value }),
+      onFilterProj: (e) => this.setState({ fProj: e.target.value }),
+      chipUser: this.chipStyle(!!s.fUser), chipPrio: this.chipStyle(!!s.fPrio), chipProj: this.chipStyle(!!s.fProj),
+      hasFilters: !!(s.fUser || s.fPrio || s.fProj),
+      clearFilters: () => this.setState({ fUser: '', fPrio: '', fProj: '' }),
+      visibleCount: f.length,
+      isKanban: s.view === 'kanban', isLista: s.view === 'lista',
+      setKanban: () => this.setState({ view: 'kanban' }), setLista: () => this.setState({ view: 'lista' }),
+      tabKanban: this.tabStyle(s.view === 'kanban'), tabLista: this.tabStyle(s.view === 'lista'),
+      cols, listRows, boardStats, addToPending: () => this.addTo('pending'),
+
+      isCalBoard: showBoard && s.view === 'calendar',
+      tabCalendar: this.tabStyle(s.view === 'calendar'),
+      setCalendar: () => this.setState({ view: 'calendar' }),
+      taskCalItems, taskCalLegend, openTaskCal: (id) => this.setState({ selId: id }),
+      evIsCal: s.evView === 'calendar', evTabCal: this.tabStyle(s.evView === 'calendar'),
+      setEvCal: () => this.setState({ evView: 'calendar' }),
+      evCalItems, evCalLegend, openEvCal: (id) => this.setState({ evSel: id }),
+      isFaTable: s.faView === 'lista', isFaCal: s.faView === 'calendar',
+      faTabLista: this.tabStyle(s.faView === 'lista'), faTabCal: this.tabStyle(s.faView === 'calendar'),
+      setFaLista: () => this.setState({ faView: 'lista' }), setFaCal: () => this.setState({ faView: 'calendar' }),
+      faCalItems, faCalLegend,
+      totalTasks: total, legend, stats, projectBars, upcoming, projects,
+      isEventos: s.nav === 'eventos', isFaltas: s.nav === 'faltas',
+      evIsAgenda: s.evView === 'agenda', evIsAtas: s.evView === 'atas',
+      evTabAgenda: this.tabStyle(s.evView === 'agenda'), evTabAtas: this.tabStyle(s.evView === 'atas'),
+      setEvAgenda: () => this.setState({ evView: 'agenda' }), setEvAtas: () => this.setState({ evView: 'atas' }),
+      evGroups, atas, evCount: allEv.length,
+      hasAtas: atas.length > 0, noAtas: atas.length === 0,
+      hasEvent: !!evSel, evSel,
+      closeEvent: () => this.setState({ evSel: null }),
+      attachAtaSel: () => { if (evSelRaw) this.attachAta(evSelRaw.id); },
+      removeAtaSel: () => { if (evSelRaw) this.removeAta(evSelRaw.id); },
+      faltasRows, fSummary,
+
+      hasSelected: !!sel, sel,
+      closeDetail: () => this.setState({ selId: null }),
+      stop: (e) => e.stopPropagation(),
+      advanceSel: () => { if (selRaw) this.advance(selRaw.id); },
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -17,6 +17,7 @@ const TASK_SELECT: &str = r#"
       COALESCE(u.name, '') AS responsible,
       t.external_collaborators,
       t.deadline::text AS deadline,
+      t.archived,
       (SELECT json_agg(u2.name ORDER BY u2.name)::text
        FROM task_co_responsibles tcr
        JOIN users u2 ON u2.id = tcr.user_id
@@ -43,6 +44,7 @@ const ABSENCE_SELECT: &str = r#"
       a.reason, a.justification, a.file_name, a.file_data,
       to_char(a.start_date, 'YYYY-MM-DD') AS start_date,
       to_char(a.end_date,   'YYYY-MM-DD') AS end_date,
+      COALESCE(a.approval_status, 'pendente') AS approval_status,
       to_char(a.created_at - INTERVAL '3 hours', 'DD/MM/YYYY HH24:MI') AS created_at
     FROM absences a
     LEFT JOIN users u ON u.id = a.user_id
@@ -51,6 +53,7 @@ const ABSENCE_SELECT: &str = r#"
 const EVENT_SELECT: &str = r#"
     SELECT
       e.id, e.name, e.event_type, e.attendees, e.start_time,
+      e.minutes_file_name, e.minutes_file_data,
       to_char(e.start_date, 'YYYY-MM-DD') AS start_date,
       to_char(e.end_date,   'YYYY-MM-DD') AS end_date,
       to_char(e.created_at - INTERVAL '3 hours', 'DD/MM/YYYY HH24:MI') AS created_at,
@@ -78,7 +81,15 @@ impl PostgresTaskRepository {
 #[async_trait]
 impl TaskRepository for PostgresTaskRepository {
     async fn get_all_tasks(&self) -> Result<Vec<Task>, String> {
-        let sql = format!("{} ORDER BY t.created_at ASC", TASK_SELECT);
+        let sql = format!("{} WHERE t.archived = false ORDER BY t.created_at ASC", TASK_SELECT);
+        sqlx::query_as::<_, Task>(&sql)
+            .fetch_all(&self.pool)
+            .await
+            .map_err(|e| e.to_string())
+    }
+
+    async fn get_archived_tasks(&self) -> Result<Vec<Task>, String> {
+        let sql = format!("{} WHERE t.archived = true ORDER BY t.created_at DESC", TASK_SELECT);
         sqlx::query_as::<_, Task>(&sql)
             .fetch_all(&self.pool)
             .await
@@ -245,6 +256,19 @@ impl TaskRepository for PostgresTaskRepository {
         self.get_task_by_id(task.id)
             .await
             .map(|task| task.expect("just updated"))
+    }
+
+    async fn set_task_archived(&self, id: Uuid, archived: bool) -> Result<Task, String> {
+        let rows = sqlx::query("UPDATE tasks SET archived = $2 WHERE id = $1")
+            .bind(id)
+            .bind(archived)
+            .execute(&self.pool)
+            .await
+            .map_err(|e| e.to_string())?;
+        if rows.rows_affected() == 0 {
+            return Err(format!("Task {} não encontrada", id));
+        }
+        self.get_task_by_id(id).await.map(|t| t.expect("just updated"))
     }
 
     async fn delete_task(&self, id: Uuid) -> Result<(), String> {
@@ -647,6 +671,23 @@ impl AbsenceRepository for PostgresAbsenceRepository {
             .map(|a| a.expect("falta recém-atualizada"))
     }
 
+    async fn set_approval_status(&self, id: Uuid, status: String) -> Result<Absence, String> {
+        let rows = sqlx::query(
+            "UPDATE absences SET approval_status=$2 WHERE id=$1",
+        )
+        .bind(id)
+        .bind(&status)
+        .execute(&self.pool)
+        .await
+        .map_err(|e| e.to_string())?;
+        if rows.rows_affected() == 0 {
+            return Err(format!("Falta {} não encontrada", id));
+        }
+        self.get_absence_by_id(id)
+            .await
+            .map(|a| a.expect("falta recém-atualizada"))
+    }
+
     async fn delete(&self, id: Uuid) -> Result<(), String> {
         let delete_result = sqlx::query("DELETE FROM absences WHERE id = $1")
             .bind(id)
@@ -773,6 +814,24 @@ impl EventRepository for PostgresEventRepository {
         self.get_event_by_id(event.id)
             .await
             .map(|event| event.expect("just updated"))
+    }
+
+    async fn set_minutes(&self, id: Uuid, file_name: Option<String>, file_data: Option<String>) -> Result<Event, String> {
+        let rows = sqlx::query(
+            "UPDATE events SET minutes_file_name=$2, minutes_file_data=$3 WHERE id=$1",
+        )
+        .bind(id)
+        .bind(&file_name)
+        .bind(&file_data)
+        .execute(&self.pool)
+        .await
+        .map_err(|e| e.to_string())?;
+        if rows.rows_affected() == 0 {
+            return Err(format!("Evento {} não encontrado", id));
+        }
+        self.get_event_by_id(id)
+            .await
+            .map(|e| e.expect("evento recém-atualizado"))
     }
 
     async fn delete(&self, id: Uuid) -> Result<(), String> {

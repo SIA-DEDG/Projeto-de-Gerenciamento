@@ -35,9 +35,11 @@ const IN_PROGRESS_STATUSES = [
   'Design/Conteúdo', 'Se necessário', 'Identidade Visual', 'Técnico', 'Redação',
   'Em Andamento',
 ];
+const REVIEW_STATUSES = ['Em Revisão'];
 
 export function statusGroup(status: string): StatusGroup {
   if (COMPLETED_STATUSES.includes(status)) return 'done';
+  if (REVIEW_STATUSES.includes(status)) return 'review';
   if (IN_PROGRESS_STATUSES.includes(status)) return 'in_progress';
   return 'pending';
 }
@@ -51,6 +53,7 @@ export function categoryColor(category: string): string {
 
 export function statusGroupLabel(g: StatusGroup | string): string {
   if (g === 'done') return 'Concluído';
+  if (g === 'review') return 'Em Revisão';
   if (g === 'in_progress') return 'Em Andamento';
   return 'Pendente';
 }
@@ -59,13 +62,15 @@ export function statusLabelToDb(sg: StatusGroup): string {
   const map: Record<StatusGroup, string> = {
     pending: 'Pendente',
     in_progress: 'Em Andamento',
+    review: 'Em Revisão',
     done: 'Concluído',
   };
   return map[sg] ?? 'Pendente';
 }
 
 export function statusClass(g: StatusGroup | string): string {
-  if (g === 'done') return 'status-tag status-done';
-  if (g === 'in_progress') return 'status-tag status-progress';
-  return 'status-tag status-todo';
+  if (g === 'done') return 'status-chip done';
+  if (g === 'review') return 'status-chip review';
+  if (g === 'in_progress') return 'status-chip progress';
+  return 'status-chip pending';
 }
