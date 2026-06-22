@@ -1,6 +1,6 @@
 'use client';
 
-import { X, Pencil, Trash2, ChevronRight } from 'lucide-react';
+import { X, Archive } from 'lucide-react';
 import type { Task } from '@/types';
 import { avatarColor, initials, statusGroupLabel } from '@/lib/utils';
 
@@ -10,19 +10,20 @@ interface Props {
   onEdit: (task: Task) => void;
   onDelete: (id: string) => void;
   onAdvanceStatus?: () => void;
+  onArchive?: () => void;
 }
 
 const PRIORITY_COLORS: Record<string, string> = {
-  Alta: 'var(--red)',
-  Média: 'var(--gold-t)',
-  Baixa: 'var(--green-t)',
+  Alta:  '#b42318',
+  Média: '#A87A00',
+  Baixa: '#157F3C',
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  pending:    'var(--s-pending)',
-  in_progress:'var(--s-progress)',
-  review:     'var(--s-review)',
-  done:       'var(--s-done)',
+  pending:     '#9aa1ac',
+  in_progress: '#034EA2',
+  review:      '#E0A92E',
+  done:        '#1B8A4B',
 };
 
 const NEXT_STATUS: Record<string, string> = {
@@ -42,106 +43,306 @@ function parseNames(json: string | null | undefined): string[] {
   try { return JSON.parse(json) as string[]; } catch { return []; }
 }
 
-export default function DrawerDetalhe({ task, onClose, onEdit, onDelete, onAdvanceStatus }: Props) {
+function isOverdue(deadline: string | null | undefined): boolean {
+  if (!deadline) return false;
+  return new Date(deadline) < new Date();
+}
+
+function SectionTitle({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="mono" style={{
+      fontSize: '0.66rem',
+      fontWeight: 500,
+      textTransform: 'uppercase',
+      letterSpacing: '1px',
+      color: 'var(--text-3)',
+      marginTop: 26,
+      marginBottom: 12,
+    }}>
+      {children}
+    </div>
+  );
+}
+
+function InfoRow({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
+      padding: '13px 0',
+      borderBottom: '1px solid var(--line-2)',
+    }}>
+      <span className="mono" style={{
+        width: 110,
+        flexShrink: 0,
+        fontSize: '0.66rem',
+        fontWeight: 500,
+        textTransform: 'uppercase',
+        letterSpacing: '1px',
+        color: 'var(--text-3)',
+      }}>
+        {label}
+      </span>
+      <span style={{ flex: 1 }}>{children}</span>
+    </div>
+  );
+}
+
+export default function DrawerDetalhe({ task, onClose, onEdit, onDelete, onAdvanceStatus, onArchive }: Props) {
   const coResponsibles = parseNames(task.co_responsibles);
   const nextStatus = NEXT_STATUS[task.status_group];
-  const statusColor = STATUS_COLORS[task.status_group] ?? 'var(--text-3)';
+  const statusColor = STATUS_COLORS[task.status_group] ?? '#9aa1ac';
+  const prioColor = PRIORITY_COLORS[task.priority] ?? 'var(--text-2)';
+  const overdue = isOverdue(task.deadline);
+  const isArchived = task.status === 'Arquivada';
 
   return (
     <>
-      <div className="drawer-overlay" onClick={onClose} />
-      <div className="drawer">
-        {/* Header */}
-        <div className="drawer-header">
-          <h2 className="drawer-title">{task.activity}</h2>
-          <button className="drawer-close" onClick={onClose} title="Fechar">
-            <X size={18} />
+      {/* Overlay */}
+      <div
+        onClick={onClose}
+        style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(7,22,45,.28)',
+          zIndex: 50,
+          animation: 'overlayIn 0.2s ease',
+        }}
+      />
+
+      {/* Drawer */}
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        right: 0,
+        bottom: 0,
+        width: 440,
+        maxWidth: '100vw',
+        background: 'var(--surface)',
+        borderLeft: '1px solid var(--line-1)',
+        zIndex: 51,
+        display: 'flex',
+        flexDirection: 'column',
+        animation: 'slideInRight .24s cubic-bezier(.4,0,.2,1)',
+        overflow: 'hidden',
+      }}>
+
+        {/* Sticky header */}
+        <div style={{
+          padding: '22px 28px',
+          borderBottom: '1px solid var(--line-1)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexShrink: 0,
+        }}>
+          <span className="mono" style={{
+            fontSize: '0.7rem',
+            fontWeight: 500,
+            color: 'var(--text-3)',
+            letterSpacing: '1px',
+          }}>
+            {task.id.slice(0, 8).toUpperCase()}
+          </span>
+          <button
+            onClick={onClose}
+            title="Fechar"
+            style={{
+              width: 30,
+              height: 30,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: 3,
+              border: '1px solid var(--border)',
+              background: 'none',
+              color: 'var(--text-3)',
+              cursor: 'pointer',
+              transition: 'background 0.12s, color 0.12s',
+              fontFamily: 'inherit',
+            }}
+            onMouseEnter={e => {
+              (e.currentTarget as HTMLButtonElement).style.background = 'var(--surface-2)';
+              (e.currentTarget as HTMLButtonElement).style.color = 'var(--text)';
+            }}
+            onMouseLeave={e => {
+              (e.currentTarget as HTMLButtonElement).style.background = 'none';
+              (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-3)';
+            }}
+          >
+            <X size={14} />
           </button>
         </div>
 
         {/* Body */}
-        <div className="drawer-body">
-          {/* Status + prioridade em linha */}
-          <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-            <div className="drawer-field">
-              <span className="drawer-field-label">Status</span>
-              <span
-                className="mono"
-                style={{
-                  fontSize: '0.72rem', fontWeight: 700,
-                  textTransform: 'uppercase', letterSpacing: '0.07em',
-                  color: statusColor,
-                  display: 'flex', alignItems: 'center', gap: 5,
-                }}
-              >
-                <span style={{ width: 6, height: 6, borderRadius: '50%', background: statusColor, flexShrink: 0, display: 'inline-block' }} />
-                {statusGroupLabel(task.status_group)}
-              </span>
-            </div>
-            <div className="drawer-field">
-              <span className="drawer-field-label">Prioridade</span>
-              <span className="mono" style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: PRIORITY_COLORS[task.priority] ?? 'var(--text-2)' }}>
-                {task.priority}
-              </span>
-            </div>
-          </div>
+        <div style={{ flex: 1, overflowY: 'auto', padding: '26px 28px' }}>
 
-          <div className="drawer-divider" />
-
-          {/* Categoria + Projeto */}
-          <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-            <div className="drawer-field">
-              <span className="drawer-field-label">Categoria</span>
-              <span className="drawer-field-value">{task.category || '—'}</span>
-            </div>
-            {task.project_id && (
-              <div className="drawer-field">
-                <span className="drawer-field-label">Projeto</span>
-                <span className="drawer-field-value">{task.project_id}</span>
-              </div>
+          {/* Categoria · Prioridade */}
+          <div className="mono" style={{
+            fontSize: '0.62rem',
+            fontWeight: 500,
+            textTransform: 'uppercase',
+            color: 'var(--text-3)',
+            letterSpacing: '0.8px',
+          }}>
+            {task.category || '—'}
+            {task.priority && (
+              <>
+                <span style={{ margin: '0 6px', opacity: 0.4 }}>·</span>
+                <span style={{ color: prioColor }}>{task.priority}</span>
+              </>
             )}
           </div>
 
-          {/* Prazo */}
-          <div className="drawer-field">
-            <span className="drawer-field-label">Prazo</span>
-            <span className="drawer-field-value mono" style={{ fontSize: '0.82rem' }}>
-              {formatDate(task.deadline)}
-            </span>
+          {/* Título */}
+          <h2 style={{
+            fontSize: '1.4rem',
+            fontWeight: 600,
+            letterSpacing: '-0.5px',
+            color: 'var(--text)',
+            marginTop: 12,
+            lineHeight: 1.3,
+          }}>
+            {task.activity}
+          </h2>
+
+          {/* Info rows */}
+          <div style={{ borderTop: '1px solid var(--line-1)', marginTop: 24 }}>
+            <InfoRow label="Status">
+              <span className="mono" style={{ fontSize: '0.82rem', fontWeight: 500, color: statusColor }}>
+                {statusGroupLabel(task.status_group)}
+              </span>
+            </InfoRow>
+
+            {task.project_id && (
+              <InfoRow label="Projeto">
+                <span className="mono" style={{ fontSize: '0.82rem', fontWeight: 500, color: 'var(--text)' }}>
+                  {task.project_id}
+                </span>
+              </InfoRow>
+            )}
+
+            <InfoRow label="Prazo">
+              <span className="mono" style={{
+                fontSize: '0.82rem',
+                fontWeight: 500,
+                color: overdue ? '#b42318' : 'var(--text)',
+              }}>
+                {formatDate(task.deadline)}
+              </span>
+            </InfoRow>
+
+            <InfoRow label="Criado em">
+              <span className="mono" style={{ fontSize: '0.82rem', fontWeight: 500, color: 'var(--text)' }}>
+                {formatDate(task.created_at.slice(0, 10))}
+              </span>
+            </InfoRow>
           </div>
 
-          {/* Criado em */}
-          <div className="drawer-field">
-            <span className="drawer-field-label">Criado em</span>
-            <span className="drawer-field-value mono" style={{ fontSize: '0.82rem' }}>
-              {formatDate(task.created_at.slice(0,10))}
-            </span>
-          </div>
+          {/* Responsáveis */}
+          <SectionTitle>Responsáveis</SectionTitle>
 
-          <div className="drawer-divider" />
-
-          {/* Responsável */}
-          <div className="drawer-field">
-            <span className="drawer-field-label">Responsável</span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 2 }}>
-              <div className="task-avatar" style={{ background: avatarColor(task.responsible) }}>
-                {initials(task.responsible)}
+          {/* Responsável principal */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10,
+            padding: '10px 0',
+            borderBottom: '1px solid var(--line-2)',
+          }}>
+            <div style={{
+              width: 32,
+              height: 32,
+              borderRadius: '50%',
+              background: avatarColor(task.responsible),
+              color: '#fff',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontFamily: 'var(--mono)',
+              fontSize: '0.68rem',
+              fontWeight: 700,
+              flexShrink: 0,
+            }}>
+              {initials(task.responsible)}
+            </div>
+            <div>
+              <div style={{ fontSize: '0.85rem', fontWeight: 500, color: 'var(--text)' }}>
+                {task.responsible}
               </div>
-              <span className="drawer-field-value">{task.responsible}</span>
+              <div className="mono" style={{ fontSize: '0.62rem', textTransform: 'uppercase', color: 'var(--text-3)', letterSpacing: '0.5px' }}>
+                Responsável
+              </div>
             </div>
           </div>
 
           {/* Co-responsáveis */}
-          {coResponsibles.length > 0 && (
-            <div className="drawer-field">
-              <span className="drawer-field-label">Co-responsáveis</span>
-              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 4 }}>
-                {coResponsibles.map((name) => (
-                  <div key={name} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                    <div className="task-avatar" style={{ background: avatarColor(name) }}>{initials(name)}</div>
-                    <span style={{ fontSize: '0.78rem', color: 'var(--text-2)' }}>{name}</span>
-                  </div>
-                ))}
+          {coResponsibles.map(name => (
+            <div key={name} style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              padding: '10px 0',
+              borderBottom: '1px solid var(--line-2)',
+            }}>
+              <div style={{
+                width: 32,
+                height: 32,
+                borderRadius: '50%',
+                background: avatarColor(name),
+                color: '#fff',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontFamily: 'var(--mono)',
+                fontSize: '0.68rem',
+                fontWeight: 700,
+                flexShrink: 0,
+              }}>
+                {initials(name)}
+              </div>
+              <div>
+                <div style={{ fontSize: '0.85rem', fontWeight: 500, color: 'var(--text)' }}>{name}</div>
+                <div className="mono" style={{ fontSize: '0.62rem', textTransform: 'uppercase', color: 'var(--text-3)', letterSpacing: '0.5px' }}>
+                  Co-responsável
+                </div>
+              </div>
+            </div>
+          ))}
+
+          {/* Colaboradores externos */}
+          {task.external_collaborators && (
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              padding: '10px 0',
+              borderBottom: '1px solid var(--line-2)',
+            }}>
+              <div style={{
+                width: 32,
+                height: 32,
+                borderRadius: '50%',
+                background: 'var(--surface-2)',
+                border: '1px solid var(--border)',
+                color: 'var(--text-3)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontFamily: 'var(--mono)',
+                fontSize: '0.68rem',
+                fontWeight: 700,
+                flexShrink: 0,
+              }}>
+                EX
+              </div>
+              <div>
+                <div style={{ fontSize: '0.85rem', fontWeight: 500, color: 'var(--text)' }}>
+                  {task.external_collaborators}
+                </div>
+                <div className="mono" style={{ fontSize: '0.62rem', textTransform: 'uppercase', color: 'var(--text-3)', letterSpacing: '0.5px' }}>
+                  Externo
+                </div>
               </div>
             </div>
           )}
@@ -149,41 +350,143 @@ export default function DrawerDetalhe({ task, onClose, onEdit, onDelete, onAdvan
           {/* Descrição */}
           {task.description && (
             <>
-              <div className="drawer-divider" />
-              <div className="drawer-field">
-                <span className="drawer-field-label">Descrição</span>
-                <div className="drawer-field-value rich-content" dangerouslySetInnerHTML={{ __html: task.description }} />
-              </div>
+              <SectionTitle>Descrição</SectionTitle>
+              <div
+                className="rich-content"
+                style={{ fontSize: '0.86rem', color: 'var(--text-2)', lineHeight: 1.65 }}
+                dangerouslySetInnerHTML={{ __html: task.description }}
+              />
             </>
           )}
-
-          {/* Colaboradores externos */}
-          {task.external_collaborators && (
-            <div className="drawer-field">
-              <span className="drawer-field-label">Colaboradores externos</span>
-              <span className="drawer-field-value" style={{ fontSize: '0.78rem', color: 'var(--text-2)' }}>
-                {task.external_collaborators}
-              </span>
-            </div>
-          )}
         </div>
 
-        {/* Footer */}
-        <div className="drawer-footer">
-          {nextStatus && onAdvanceStatus && (
-            <button className="btn btn-primary btn-sm" onClick={onAdvanceStatus} style={{ flex: 1 }}>
-              <ChevronRight size={14} />
-              Avançar para {statusGroupLabel(nextStatus)}
+        {/* Footer — botões (só se não arquivada) */}
+        {!isArchived && (
+          <div style={{
+            borderTop: '1px solid var(--line-1)',
+            padding: '16px 28px',
+            display: 'flex',
+            gap: 10,
+            flexShrink: 0,
+          }}>
+            {nextStatus && onAdvanceStatus && (
+              <button
+                onClick={onAdvanceStatus}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  borderRadius: 3,
+                  border: 'none',
+                  background: '#034EA2',
+                  color: '#fff',
+                  fontSize: '0.82rem',
+                  fontWeight: 600,
+                  fontFamily: 'inherit',
+                  cursor: 'pointer',
+                  transition: 'background 0.12s',
+                }}
+                onMouseEnter={e => (e.currentTarget.style.background = '#023e82')}
+                onMouseLeave={e => (e.currentTarget.style.background = '#034EA2')}
+              >
+                Avançar para {statusGroupLabel(nextStatus)}
+              </button>
+            )}
+
+            {/* Editar */}
+            <button
+              onClick={() => onEdit(task)}
+              title="Editar"
+              style={{
+                padding: '12px 16px',
+                borderRadius: 3,
+                border: '1px solid var(--border)',
+                background: 'var(--surface)',
+                color: 'var(--text-2)',
+                fontSize: '0.82rem',
+                fontWeight: 500,
+                fontFamily: 'inherit',
+                cursor: 'pointer',
+                transition: 'background 0.12s',
+              }}
+              onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-2)')}
+              onMouseLeave={e => (e.currentTarget.style.background = 'var(--surface)')}
+            >
+              Editar
             </button>
-          )}
-          <button className="btn btn-ghost btn-sm" onClick={() => onEdit(task)} title="Editar">
-            <Pencil size={14} />
-            Editar
-          </button>
-          <button className="btn btn-danger btn-sm" onClick={() => onDelete(task.id)} title="Excluir">
-            <Trash2 size={14} />
-          </button>
-        </div>
+
+            {/* Arquivar */}
+            {onArchive && (
+              <button
+                onClick={onArchive}
+                title="Arquivar"
+                style={{
+                  padding: '12px 16px',
+                  borderRadius: 3,
+                  border: '1px solid var(--border)',
+                  background: 'var(--surface)',
+                  color: 'var(--text-2)',
+                  fontSize: '0.82rem',
+                  fontWeight: 500,
+                  fontFamily: 'inherit',
+                  cursor: 'pointer',
+                  transition: 'background 0.12s',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                }}
+                onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-2)')}
+                onMouseLeave={e => (e.currentTarget.style.background = 'var(--surface)')}
+              >
+                <Archive size={14} />
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Footer para arquivadas — apenas editar/excluir */}
+        {isArchived && (
+          <div style={{
+            borderTop: '1px solid var(--line-1)',
+            padding: '16px 28px',
+            display: 'flex',
+            gap: 10,
+            flexShrink: 0,
+          }}>
+            <button
+              onClick={() => onEdit(task)}
+              style={{
+                flex: 1,
+                padding: '12px',
+                borderRadius: 3,
+                border: '1px solid var(--border)',
+                background: 'var(--surface)',
+                color: 'var(--text-2)',
+                fontSize: '0.82rem',
+                fontWeight: 500,
+                fontFamily: 'inherit',
+                cursor: 'pointer',
+              }}
+            >
+              Editar
+            </button>
+            <button
+              onClick={() => onDelete(task.id)}
+              style={{
+                padding: '12px 16px',
+                borderRadius: 3,
+                border: '1px solid rgba(180,35,24,0.2)',
+                background: 'rgba(180,35,24,0.06)',
+                color: '#b42318',
+                fontSize: '0.82rem',
+                fontWeight: 500,
+                fontFamily: 'inherit',
+                cursor: 'pointer',
+              }}
+            >
+              Excluir
+            </button>
+          </div>
+        )}
       </div>
     </>
   );

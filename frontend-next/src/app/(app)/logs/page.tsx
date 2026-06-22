@@ -7,25 +7,31 @@ import type { ActivityLog } from '@/lib/api';
 import ConfirmModal from '@/components/ConfirmModal';
 import { useToast } from '@/hooks/useToast';
 import ToastContainer from '@/components/ToastContainer';
-import { Trash2, Search, ChevronDown, X } from 'lucide-react';
+import { Trash2, Search, X } from 'lucide-react';
 
-const ACTION_LABELS: Record<string, string> = { CREATE: 'Criou', UPDATE: 'Atualizou', DELETE: 'Excluiu' };
-const ENTITY_LABELS: Record<string, string> = { task: 'Atividade', project: 'Projeto', user: 'Usuário', absence: 'Falta', event: 'Evento' };
-const PAGE_SIZE = 20;
-
-const ACTION_STYLE: Record<string, { bg: string; color: string; dot: string }> = {
-  CREATE: { bg: '#dcfce7', color: '#15803d', dot: '#22c55e' },
-  UPDATE: { bg: '#fef9c3', color: '#92400e', dot: '#eab308' },
-  DELETE: { bg: '#fee2e2', color: '#b91c1c', dot: '#ef4444' },
+const ACTION_LABELS: Record<string, string> = {
+  CREATE: 'Criou',
+  UPDATE: 'Editou',
+  DELETE: 'Excluiu',
 };
 
-const ENTITY_STYLE: Record<string, { bg: string; color: string }> = {
-  task:    { bg: '#dbeafe', color: '#1d4ed8' },
-  project: { bg: '#f3e8ff', color: '#7c3aed' },
-  user:    { bg: '#e0f2fe', color: '#0369a1' },
-  absence: { bg: '#fee2e2', color: '#b91c1c' },
-  event:   { bg: '#dcfce7', color: '#15803d' },
+const ACTION_COLORS: Record<string, string> = {
+  CREATE:    '#034EA2',
+  UPDATE:    '#034EA2',
+  DELETE:    '#b42318',
+  absences:  '#A87A00',
+  completed: '#1B8A4B',
 };
+
+const ENTITY_LABELS: Record<string, string> = {
+  task:    'Atividade',
+  project: 'Projeto',
+  user:    'Usuário',
+  absence: 'Falta',
+  event:   'Evento',
+};
+
+const PAGE_SIZE = 25;
 
 function formatDateTime(iso: string) {
   const d = new Date(iso);
@@ -40,15 +46,37 @@ function formatDateTime(iso: string) {
 }
 
 function UserAvatar({ name }: { name: string }) {
-  const initials = name.split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase();
-  const colors = ['#034ea2','#15803d','#9333ea','#b91c1c','#0369a1','#be185d'];
-  let h = 0; for (const c of name) h = (h * 31 + c.charCodeAt(0)) | 0;
+  const inits = name.split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase();
+  const colors = ['#034ea2', '#1b8a4b', '#9333ea', '#b42318', '#0369a1', '#be185d'];
+  let h = 0;
+  for (const c of name) h = (h * 31 + c.charCodeAt(0)) | 0;
   const color = colors[Math.abs(h) % colors.length];
   return (
-    <div style={{ width: 30, height: 30, borderRadius: '50%', background: color + '18', color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '0.68rem', flexShrink: 0 }}>
-      {initials}
+    <div style={{
+      width: 32,
+      height: 32,
+      borderRadius: '50%',
+      background: color,
+      color: '#fff',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      fontFamily: 'var(--mono)',
+      fontSize: '0.62rem',
+      fontWeight: 600,
+      flexShrink: 0,
+    }}>
+      {inits}
     </div>
   );
+}
+
+function actionColor(action: string): string {
+  return ACTION_COLORS[action] ?? 'var(--text-3)';
+}
+
+function actionLabel(action: string): string {
+  return ACTION_LABELS[action] ?? action;
 }
 
 export default function LogsPage() {
@@ -62,7 +90,6 @@ export default function LogsPage() {
   const [search, setSearch]       = useState('');
   const [page, setPage]           = useState(1);
   const [confirmClear, setConfirmClear] = useState(false);
-  const [selectedLog, setSelectedLog]   = useState<ActivityLog | null>(null);
 
   const isAdmin = getUser()?.role === 'Admin';
   const { toasts, addToast, dismissToast } = useToast();
@@ -80,11 +107,14 @@ export default function LogsPage() {
   async function executeClearLogs() {
     setClearing(true);
     try {
-      await clearLogs(); await load();
+      await clearLogs();
+      await load();
       addToast('success', 'Logs limpos', 'Todos os registros foram apagados.');
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Erro ao limpar logs');
-    } finally { setClearing(false); }
+    } finally {
+      setClearing(false);
+    }
   }
 
   const uniqueUsers    = useMemo(() => [...new Set(logs.map(l => l.user_name))].sort(), [logs]);
@@ -110,258 +140,303 @@ export default function LogsPage() {
 
   return (
     <>
-      <header className="topbar">
-        <div className="topbar-left"><h1>Logs de Atividade</h1></div>
-        <div className="topbar-right">
+      {/* Header */}
+      <div className="page-header" style={{ padding: '26px 32px 0' }}>
+        <div className="mono page-eyebrow" style={{
+          fontSize: '0.68rem',
+          color: 'var(--text-3)',
+          textTransform: 'uppercase',
+          letterSpacing: '1.4px',
+          marginBottom: 6,
+        }}>
+          Auditoria do sistema · DEDG
+        </div>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
+          <h1 className="page-title">Logs</h1>
           {isAdmin && (
-            <button type="button" onClick={() => setConfirmClear(true)}
+            <button
+              type="button"
+              onClick={() => setConfirmClear(true)}
               disabled={clearing || logs.length === 0}
-              style={{ display:'flex', alignItems:'center', gap:6, padding:'7px 16px', background:'#fff5f5', border:'1px solid #fecaca', borderRadius:8, color:'#dc2626', fontSize:'0.82rem', fontWeight:700, cursor: clearing || logs.length === 0 ? 'not-allowed' : 'pointer', opacity: logs.length === 0 ? 0.5 : 1, fontFamily:'inherit' }}>
-              <Trash2 size={13} />
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '7px 14px',
+                background: 'rgba(180,35,24,0.06)',
+                border: '1px solid rgba(180,35,24,0.2)',
+                borderRadius: 3,
+                color: '#b42318',
+                fontSize: '0.78rem',
+                fontWeight: 600,
+                fontFamily: 'inherit',
+                cursor: clearing || logs.length === 0 ? 'not-allowed' : 'pointer',
+                opacity: logs.length === 0 ? 0.5 : 1,
+                flexShrink: 0,
+                marginTop: 4,
+              }}
+            >
+              <Trash2 size={12} />
               {clearing ? 'Limpando…' : 'Limpar logs'}
             </button>
           )}
         </div>
-      </header>
+        <div style={{ borderTop: '1px solid var(--line-1)', marginTop: 24 }} />
+      </div>
 
-      <div style={{ padding:'24px 28px', overflowY:'auto', flex:1, minHeight:0, display:'flex', flexDirection:'column', gap:16 }}>
+      {/* Body */}
+      <div style={{ padding: '0 32px 32px', overflowY: 'auto', flex: 1, minHeight: 0 }}>
+
+        {/* Error */}
         {error && (
-          <div style={{ padding:'10px 16px', background:'#fee2e2', borderRadius:8, color:'#b91c1c', fontSize:'0.88rem', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            padding: '10px 14px',
+            background: 'rgba(180,35,24,0.06)',
+            border: '1px solid rgba(180,35,24,0.18)',
+            borderRadius: 3,
+            color: '#b42318',
+            fontSize: '0.82rem',
+            marginTop: 16,
+          }}>
             <span>{error}</span>
-            <button type="button" onClick={() => setError('')} style={{ background:'none', border:'none', cursor:'pointer', color:'#b91c1c', fontWeight:700, fontSize:'1rem' }}>×</button>
+            <button
+              type="button"
+              onClick={() => setError('')}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#b42318', fontWeight: 700, fontSize: '1rem', lineHeight: 1, fontFamily: 'inherit' }}
+            >
+              ×
+            </button>
           </div>
         )}
 
-        {/* Filters bar */}
-        <div style={{ background:'#fff', borderRadius:12, border:'1px solid var(--border-light)', padding:'14px 16px', display:'flex', gap:10, alignItems:'center', flexWrap:'wrap', boxShadow:'0 1px 4px rgba(3,78,162,0.05)' }}>
+        {/* Filtros */}
+        <div style={{
+          display: 'flex',
+          gap: 8,
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          padding: '16px 0',
+        }}>
           {/* Search */}
-          <div style={{ display:'flex', alignItems:'center', gap:8, background:'var(--bg-app)', border:'1px solid var(--border-light)', borderRadius:8, padding:'6px 12px', minWidth:220, flex:1 }}>
-            <Search size={14} color="var(--text-muted)" style={{ flexShrink:0 }} />
-            <input type="text" value={search} onChange={e => changeFilter(() => setSearch(e.target.value))}
-              placeholder="Buscar usuário ou detalhes..."
-              style={{ border:'none', outline:'none', background:'none', fontSize:'0.85rem', color:'var(--text-primary)', width:'100%', fontFamily:'inherit' }} />
-            {search && <button onClick={() => changeFilter(() => setSearch(''))} style={{ background:'none', border:'none', cursor:'pointer', color:'var(--text-muted)', lineHeight:1, padding:0, fontSize:'1rem' }}>×</button>}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            background: 'var(--surface-2)',
+            border: '1px solid var(--border)',
+            borderRadius: 3,
+            padding: '6px 12px',
+            minWidth: 200,
+            flex: 1,
+          }}>
+            <Search size={13} color="var(--text-3)" style={{ flexShrink: 0 }} />
+            <input
+              type="text"
+              value={search}
+              onChange={e => changeFilter(() => setSearch(e.target.value))}
+              placeholder="Buscar usuário ou detalhes…"
+              style={{
+                border: 'none',
+                outline: 'none',
+                background: 'none',
+                fontSize: '0.82rem',
+                color: 'var(--text)',
+                width: '100%',
+                fontFamily: 'inherit',
+              }}
+            />
+            {search && (
+              <button
+                onClick={() => changeFilter(() => setSearch(''))}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)', lineHeight: 1, padding: 0, fontFamily: 'inherit' }}
+              >
+                <X size={12} />
+              </button>
+            )}
           </div>
 
-          {/* Select — Usuário */}
-          <div style={{ position:'relative' }}>
-            <select value={filterUser} onChange={e => changeFilter(() => setFilterUser(e.target.value))}
-              style={{ appearance:'none', background: filterUser ? 'var(--primary-light)' : 'var(--bg-app)', border:`1px solid ${filterUser ? 'var(--primary)' : 'var(--border-light)'}`, borderRadius:8, padding:'6px 32px 6px 10px', fontSize:'0.83rem', fontFamily:'inherit', color: filterUser ? 'var(--primary)' : 'var(--text-secondary)', fontWeight: filterUser ? 600 : 400, cursor:'pointer', outline:'none' }}>
+          {/* Filtro usuário */}
+          <div style={{ position: 'relative' }}>
+            <select
+              value={filterUser}
+              onChange={e => changeFilter(() => setFilterUser(e.target.value))}
+              className="filter-chip"
+              style={{ color: filterUser ? '#034EA2' : undefined, borderColor: filterUser ? '#034EA2' : undefined }}
+            >
               <option value="">Todos os usuários</option>
               {uniqueUsers.map(u => <option key={u} value={u}>{u}</option>)}
             </select>
-            <ChevronDown size={12} style={{ position:'absolute', right:10, top:'50%', transform:'translateY(-50%)', pointerEvents:'none', color: filterUser ? 'var(--primary)' : 'var(--text-muted)' }} />
           </div>
 
-          {/* Select — Tipo */}
-          <div style={{ position:'relative' }}>
-            <select value={filterEntity} onChange={e => changeFilter(() => setFilterEntity(e.target.value))}
-              style={{ appearance:'none', background: filterEntity ? 'var(--primary-light)' : 'var(--bg-app)', border:`1px solid ${filterEntity ? 'var(--primary)' : 'var(--border-light)'}`, borderRadius:8, padding:'6px 32px 6px 10px', fontSize:'0.83rem', fontFamily:'inherit', color: filterEntity ? 'var(--primary)' : 'var(--text-secondary)', fontWeight: filterEntity ? 600 : 400, cursor:'pointer', outline:'none' }}>
+          {/* Filtro tipo */}
+          <div style={{ position: 'relative' }}>
+            <select
+              value={filterEntity}
+              onChange={e => changeFilter(() => setFilterEntity(e.target.value))}
+              className="filter-chip"
+              style={{ color: filterEntity ? '#034EA2' : undefined, borderColor: filterEntity ? '#034EA2' : undefined }}
+            >
               <option value="">Todos os tipos</option>
               {uniqueEntities.map(e => <option key={e} value={e}>{ENTITY_LABELS[e] ?? e}</option>)}
             </select>
-            <ChevronDown size={12} style={{ position:'absolute', right:10, top:'50%', transform:'translateY(-50%)', pointerEvents:'none', color: filterEntity ? 'var(--primary)' : 'var(--text-muted)' }} />
           </div>
 
-          {/* Select — Ação */}
-          <div style={{ position:'relative' }}>
-            <select value={filterAction} onChange={e => changeFilter(() => setFilterAction(e.target.value))}
-              style={{ appearance:'none', background: filterAction ? 'var(--primary-light)' : 'var(--bg-app)', border:`1px solid ${filterAction ? 'var(--primary)' : 'var(--border-light)'}`, borderRadius:8, padding:'6px 32px 6px 10px', fontSize:'0.83rem', fontFamily:'inherit', color: filterAction ? 'var(--primary)' : 'var(--text-secondary)', fontWeight: filterAction ? 600 : 400, cursor:'pointer', outline:'none' }}>
+          {/* Filtro ação */}
+          <div style={{ position: 'relative' }}>
+            <select
+              value={filterAction}
+              onChange={e => changeFilter(() => setFilterAction(e.target.value))}
+              className="filter-chip"
+              style={{ color: filterAction ? '#034EA2' : undefined, borderColor: filterAction ? '#034EA2' : undefined }}
+            >
               <option value="">Todas as ações</option>
               {uniqueActions.map(a => <option key={a} value={a}>{ACTION_LABELS[a] ?? a}</option>)}
             </select>
-            <ChevronDown size={12} style={{ position:'absolute', right:10, top:'50%', transform:'translateY(-50%)', pointerEvents:'none', color: filterAction ? 'var(--primary)' : 'var(--text-muted)' }} />
           </div>
 
           {activeFilters > 0 && (
-            <button onClick={() => { changeFilter(() => { setFilterUser(''); setFilterEntity(''); setFilterAction(''); setSearch(''); }); }}
-              style={{ background:'none', border:'1px solid var(--border-light)', borderRadius:8, padding:'6px 12px', fontSize:'0.8rem', color:'var(--text-secondary)', cursor:'pointer', display:'flex', alignItems:'center', gap:5, whiteSpace:'nowrap' }}>
-              <X size={12} />
+            <button
+              className="filter-clear-btn"
+              onClick={() => changeFilter(() => { setFilterUser(''); setFilterEntity(''); setFilterAction(''); setSearch(''); })}
+              style={{ display: 'flex', alignItems: 'center', gap: 5 }}
+            >
+              <X size={11} />
               Limpar filtros
             </button>
           )}
 
-          <span style={{ marginLeft:'auto', fontSize:'0.78rem', color:'var(--text-muted)', whiteSpace:'nowrap' }}>
+          <span className="mono" style={{
+            marginLeft: 'auto',
+            fontSize: '0.65rem',
+            color: 'var(--text-3)',
+            whiteSpace: 'nowrap',
+            letterSpacing: '0.5px',
+          }}>
             {filtered.length} registro{filtered.length !== 1 ? 's' : ''}
           </span>
         </div>
 
-        {/* Table */}
+        {/* Log feed */}
         {loading ? (
-          <div style={{ padding:48, textAlign:'center', color:'var(--text-muted)' }}>Carregando…</div>
+          <div className="loading-state">Carregando…</div>
+        ) : pageItems.length === 0 ? (
+          <div className="empty-state">
+            <p>Nenhum log encontrado.</p>
+          </div>
         ) : (
-          <div style={{ background:'#fff', borderRadius:14, border:'1px solid var(--border-light)', overflow:'hidden', boxShadow:'0 2px 12px rgba(3,78,162,0.06)', flexShrink:0 }}>
-            <table style={{ width:'100%', borderCollapse:'collapse', fontSize:'0.845rem' }}>
-              <thead>
-                <tr style={{ background:'var(--bg-app)' }}>
-                  {['Data / Hora','Usuário','Ação','Tipo','Detalhes'].map(h => (
-                    <th key={h} style={{ padding:'10px 16px', textAlign:'left', fontWeight:700, color:'var(--text-muted)', fontSize:'0.7rem', textTransform:'uppercase', letterSpacing:'0.06em', borderBottom:'1px solid var(--border-light)', whiteSpace:'nowrap' }}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {pageItems.length === 0 && (
-                  <tr><td colSpan={5} style={{ padding:48, textAlign:'center', color:'var(--text-muted)' }}>Nenhum log encontrado.</td></tr>
-                )}
-                {pageItems.map((log, idx) => {
-                  const { date, time } = formatDateTime(log.created_at);
-                  const actionStyle = ACTION_STYLE[log.action] ?? { bg: '#f1f5f9', color: '#475569', dot: '#94a3b8' };
-                  const entityStyle = ENTITY_STYLE[log.entity_type] ?? { bg: '#f1f5f9', color: '#475569' };
-                  return (
-                    <tr key={log.id}
-                      onClick={() => setSelectedLog(log)}
-                      style={{ borderBottom: idx < pageItems.length - 1 ? '1px solid var(--border-light)' : 'none', transition:'background 0.12s', cursor:'pointer' }}
-                      onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-app)')}
-                      onMouseLeave={e => (e.currentTarget.style.background = '')}>
-                      {/* Date */}
-                      <td style={{ padding:'11px 16px', whiteSpace:'nowrap' }}>
-                        <div style={{ fontSize:'0.82rem', fontWeight:600, color:'var(--text-primary)' }}>{date}</div>
-                        <div style={{ fontSize:'0.72rem', color:'var(--text-muted)', marginTop:1 }}>{time}</div>
-                      </td>
-                      {/* User */}
-                      <td style={{ padding:'11px 16px' }}>
-                        <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-                          <UserAvatar name={log.user_name} />
-                          <span style={{ fontWeight:600, color:'var(--text-primary)', whiteSpace:'nowrap' }}>{log.user_name}</span>
-                        </div>
-                      </td>
-                      {/* Action */}
-                      <td style={{ padding:'11px 16px' }}>
-                        <span style={{ display:'inline-flex', alignItems:'center', gap:5, background:actionStyle.bg, color:actionStyle.color, borderRadius:20, padding:'3px 10px', fontSize:'0.72rem', fontWeight:700, whiteSpace:'nowrap' }}>
-                          <span style={{ width:6, height:6, borderRadius:'50%', background:actionStyle.dot, flexShrink:0 }} />
-                          {ACTION_LABELS[log.action] ?? log.action}
-                        </span>
-                      </td>
-                      {/* Entity */}
-                      <td style={{ padding:'11px 16px' }}>
-                        <span style={{ background:entityStyle.bg, color:entityStyle.color, borderRadius:6, padding:'2px 9px', fontSize:'0.72rem', fontWeight:600, whiteSpace:'nowrap' }}>
-                          {ENTITY_LABELS[log.entity_type] ?? log.entity_type}
-                        </span>
-                      </td>
-                      {/* Details */}
-                      <td style={{ padding:'11px 16px', color:'var(--text-secondary)', fontSize:'0.83rem', maxWidth:360 }}>
-                        <span style={{ display:'block', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{log.details}</span>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+          <div>
+            {pageItems.map((log) => {
+              const { date, time } = formatDateTime(log.created_at);
+              const aColor = actionColor(log.action);
+              const aLabel = actionLabel(log.action);
 
-            {/* Pagination */}
-            <div style={{ padding:'12px 16px', borderTop:'1px solid var(--border-light)', display:'flex', alignItems:'center', justifyContent:'center', flexWrap:'wrap', gap:8 }}>
-              <div style={{ display:'flex', gap:4, alignItems:'center' }}>
-                <button onClick={() => setPage(1)} disabled={safePage === 1} style={pgBtn(safePage === 1)} title="Primeira">«</button>
-                <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={safePage === 1} style={pgBtn(safePage === 1)} title="Anterior">‹</button>
-                {Array.from({ length: Math.min(7, totalPages) }, (_, i) => {
-                  let p: number;
-                  if (totalPages <= 7) p = i + 1;
-                  else if (safePage <= 4) p = i + 1;
-                  else if (safePage >= totalPages - 3) p = totalPages - 6 + i;
-                  else p = safePage - 3 + i;
-                  return (
-                    <button key={p} onClick={() => setPage(p)}
-                      style={{ ...pgBtn(false), background: p === safePage ? 'var(--primary)' : 'transparent', color: p === safePage ? '#fff' : 'var(--text-secondary)', fontWeight: p === safePage ? 700 : 400, border: p === safePage ? 'none' : '1px solid var(--border-light)' }}>
-                      {p}
-                    </button>
-                  );
-                })}
-                <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={safePage === totalPages} style={pgBtn(safePage === totalPages)} title="Próxima">›</button>
-                <button onClick={() => setPage(totalPages)} disabled={safePage === totalPages} style={pgBtn(safePage === totalPages)} title="Última">»</button>
-              </div>
-            </div>
+              return (
+                <div
+                  key={log.id}
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: '88px 1fr 120px',
+                    gap: 20,
+                    padding: '14px 0',
+                    borderBottom: '1px solid var(--line-2)',
+                    alignItems: 'center',
+                  }}
+                >
+                  {/* Col 1 — tempo */}
+                  <div>
+                    <div className="mono" style={{ fontSize: '0.78rem', fontWeight: 500, color: 'var(--text)' }}>
+                      {time}
+                    </div>
+                    <div className="mono" style={{
+                      fontSize: '0.6rem',
+                      color: 'var(--text-3)',
+                      letterSpacing: '0.5px',
+                      marginTop: 1,
+                    }}>
+                      {date}
+                    </div>
+                  </div>
+
+                  {/* Col 2 — conteúdo */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+                    <UserAvatar name={log.user_name} />
+                    <span style={{ fontSize: '0.82rem', color: 'var(--text-2)', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <strong style={{ color: 'var(--text)', fontWeight: 600 }}>{log.user_name}</strong>
+                      {' '}
+                      {aLabel.toLowerCase()}
+                      {log.details && (
+                        <>
+                          {' '}
+                          <span style={{ color: 'var(--blue)', fontWeight: 500 }}>
+                            {ENTITY_LABELS[log.entity_type] ?? log.entity_type}
+                          </span>
+                          {' — '}
+                          {log.details}
+                        </>
+                      )}
+                    </span>
+                  </div>
+
+                  {/* Col 3 — tipo */}
+                  <div style={{ justifySelf: 'end', textAlign: 'right' }}>
+                    <span className="mono" style={{
+                      fontSize: '0.66rem',
+                      fontWeight: 500,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                      color: aColor,
+                      whiteSpace: 'nowrap',
+                    }}>
+                      {aLabel}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Paginação */}
+        {totalPages > 1 && (
+          <div className="pagination">
+            <button className="page-btn" onClick={() => setPage(1)} disabled={safePage === 1}>«</button>
+            <button className="page-btn" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={safePage === 1}>‹</button>
+            {Array.from({ length: Math.min(7, totalPages) }, (_, i) => {
+              let p: number;
+              if (totalPages <= 7) p = i + 1;
+              else if (safePage <= 4) p = i + 1;
+              else if (safePage >= totalPages - 3) p = totalPages - 6 + i;
+              else p = safePage - 3 + i;
+              return (
+                <button
+                  key={p}
+                  className={`page-btn${p === safePage ? ' active' : ''}`}
+                  onClick={() => setPage(p)}
+                >
+                  {p}
+                </button>
+              );
+            })}
+            <button className="page-btn" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={safePage === totalPages}>›</button>
+            <button className="page-btn" onClick={() => setPage(totalPages)} disabled={safePage === totalPages}>»</button>
           </div>
         )}
       </div>
 
-      {selectedLog && <LogPreviewModal log={selectedLog} onClose={() => setSelectedLog(null)} />}
-
-      <ConfirmModal open={confirmClear} title="Limpar todos os logs"
+      <ConfirmModal
+        open={confirmClear}
+        title="Limpar todos os logs"
         message="Todos os registros serão apagados permanentemente. Esta ação não pode ser desfeita."
-        confirmLabel="Limpar" danger onConfirm={executeClearLogs} onClose={() => setConfirmClear(false)} />
+        confirmLabel="Limpar"
+        danger
+        onConfirm={executeClearLogs}
+        onClose={() => setConfirmClear(false)}
+      />
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />
     </>
   );
 }
 
-function LogPreviewModal({ log, onClose }: { log: ActivityLog; onClose: () => void }) {
-  const { date, time } = formatDateTime(log.created_at);
-  const actionStyle = ACTION_STYLE[log.action] ?? { bg: '#f1f5f9', color: '#475569', dot: '#94a3b8' };
-  const entityStyle = ENTITY_STYLE[log.entity_type] ?? { bg: '#f1f5f9', color: '#475569' };
-
-  return (
-    <div
-      onClick={onClose}
-      style={{ position:'fixed', inset:0, background:'rgba(3,20,50,0.45)', zIndex:1000, display:'flex', alignItems:'center', justifyContent:'center', padding:24 }}>
-      <div
-        onClick={e => e.stopPropagation()}
-        style={{ background:'#fff', borderRadius:16, boxShadow:'0 8px 40px rgba(3,78,162,0.18)', width:'100%', maxWidth:480, padding:'28px 28px 24px' }}>
-
-        {/* Header */}
-        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20 }}>
-          <span style={{ fontWeight:700, fontSize:'1rem', color:'var(--text-primary)' }}>Detalhes do registro</span>
-          <button onClick={onClose} style={{ background:'none', border:'none', cursor:'pointer', color:'var(--text-muted)', display:'flex', padding:4, borderRadius:6 }}>
-            <X size={16} />
-          </button>
-        </div>
-
-        {/* User */}
-        <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:20, padding:'12px 14px', background:'var(--bg-app)', borderRadius:10 }}>
-          <UserAvatar name={log.user_name} />
-          <div>
-            <div style={{ fontWeight:700, fontSize:'0.9rem', color:'var(--text-primary)' }}>{log.user_name}</div>
-            <div style={{ fontSize:'0.72rem', color:'var(--text-muted)', marginTop:1 }}>ID: {log.user_id}</div>
-          </div>
-        </div>
-
-        {/* Fields grid */}
-        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginBottom:16 }}>
-          <Field label="Data">
-            <span style={{ fontWeight:600, color:'var(--text-primary)' }}>{date}</span>
-            <span style={{ color:'var(--text-muted)', fontSize:'0.8rem', marginLeft:6 }}>{time}</span>
-          </Field>
-          <Field label="Ação">
-            <span style={{ display:'inline-flex', alignItems:'center', gap:5, background:actionStyle.bg, color:actionStyle.color, borderRadius:20, padding:'3px 10px', fontSize:'0.75rem', fontWeight:700 }}>
-              <span style={{ width:6, height:6, borderRadius:'50%', background:actionStyle.dot, flexShrink:0 }} />
-              {ACTION_LABELS[log.action] ?? log.action}
-            </span>
-          </Field>
-          <Field label="Tipo">
-            <span style={{ background:entityStyle.bg, color:entityStyle.color, borderRadius:6, padding:'2px 9px', fontSize:'0.75rem', fontWeight:600 }}>
-              {ENTITY_LABELS[log.entity_type] ?? log.entity_type}
-            </span>
-          </Field>
-          <Field label="ID do registro">
-            <span style={{ fontFamily:'monospace', fontSize:'0.78rem', color:'var(--text-secondary)', wordBreak:'break-all' }}>{log.entity_id || '—'}</span>
-          </Field>
-        </div>
-
-        {/* Details */}
-        <Field label="Detalhes">
-          <p style={{ margin:0, fontSize:'0.86rem', color:'var(--text-secondary)', lineHeight:1.6, whiteSpace:'pre-wrap', wordBreak:'break-word' }}>
-            {log.details || '—'}
-          </p>
-        </Field>
-      </div>
-    </div>
-  );
-}
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <div style={{ fontSize:'0.68rem', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.06em', color:'var(--text-muted)', marginBottom:4 }}>{label}</div>
-      <div>{children}</div>
-    </div>
-  );
-}
-
-function pgBtn(disabled: boolean): React.CSSProperties {
-  return {
-    minWidth: 32, height: 32, borderRadius: 8, border: '1px solid var(--border-light)',
-    background: 'transparent', color: disabled ? 'var(--text-muted)' : 'var(--text-secondary)',
-    cursor: disabled ? 'not-allowed' : 'pointer', fontSize: '0.82rem', fontWeight: 500,
-    opacity: disabled ? 0.4 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
-    padding: '0 4px',
-  };
-}
