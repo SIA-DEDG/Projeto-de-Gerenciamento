@@ -42,11 +42,12 @@ const STATUS_MAP: Record<StatusGroup, string> = {
 };
 
 function KanbanColumn({
-  col, tasks, onAddCard, onViewCard, onDeleteCard,
+  col, tasks, projects, onAddCard, onViewCard, onDeleteCard,
   isSelecting, selectedTaskIds, onToggleSelect, onStartSelect,
 }: {
   col: typeof COLUMNS[0];
   tasks: Task[];
+  projects: Project[];
   onAddCard: (sg: StatusGroup) => void;
   onViewCard: (t: Task) => void;
   onDeleteCard: (id: string) => void;
@@ -129,6 +130,7 @@ function KanbanColumn({
           <KanbanCard
             key={task.id}
             task={task}
+            projectName={projects.find(p => p.id === task.project_id)?.name}
             onView={onViewCard}
             onDelete={onDeleteCard}
             selectionMode={isSelecting}
@@ -346,13 +348,19 @@ export default function BoardPage() {
 
   const hasFilters = filterUser || filterPriority || filterProject || filterDateFrom || filterDateTo;
 
-  /* Stats por status (conforme design — mostrado no header) */
-  const boardStats = useMemo(() => [
-    { label: 'PENDENTE',    value: filteredTasks.filter((t) => t.status_group === 'pending').length,    color: '#9aa1ac' },
-    { label: 'ANDAMENTO',  value: filteredTasks.filter((t) => t.status_group === 'in_progress').length, color: '#034EA2' },
-    { label: 'REVISÃO',    value: filteredTasks.filter((t) => t.status_group === 'review').length,      color: '#E0A92E' },
-    { label: 'CONCLUÍDO',  value: filteredTasks.filter((t) => t.status_group === 'done').length,        color: '#1B8A4B' },
-  ], [filteredTasks]);
+  /* Stats do header: abertas / atrasadas / % concluído — conforme Tasks SIA.html */
+  const todayStr = new Date().toISOString().split('T')[0];
+  const boardStats = useMemo(() => {
+    const done = filteredTasks.filter(t => t.status_group === 'done').length;
+    const abertas = filteredTasks.length - done;
+    const atrasadas = filteredTasks.filter(t => t.status_group !== 'done' && t.deadline && t.deadline < todayStr).length;
+    const pct = filteredTasks.length > 0 ? Math.round((done / filteredTasks.length) * 100) : 0;
+    return [
+      { label: 'ABERTAS',   value: String(abertas), color: '#034EA2' },
+      { label: 'ATRASADAS', value: String(atrasadas), color: '#b42318' },
+      { label: 'CONCLUÍDO', value: `${pct}%`, color: '#1B8A4B' },
+    ];
+  }, [filteredTasks, todayStr]);
 
   return (
     <>
@@ -482,6 +490,7 @@ export default function BoardPage() {
                 key={col.id}
                 col={col}
                 tasks={tasksByGroup(col.id)}
+                projects={projects}
                 onAddCard={(sg) => setActivityModal({ open: true, task: null, defaultStatus: STATUS_MAP[sg] })}
                 onViewCard={(t) => setDrawer(t)}
                 onDeleteCard={handleDeleteCard}

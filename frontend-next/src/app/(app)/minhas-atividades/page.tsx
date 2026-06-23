@@ -37,10 +37,10 @@ const STATUS_MAP: Record<StatusGroup, string> = {
 };
 
 function KanbanColumn({
-  col, tasks, onAddCard, onViewCard, onDeleteCard,
+  col, tasks, projects, onAddCard, onViewCard, onDeleteCard,
   isSelecting, selectedTaskIds, onToggleSelect, onStartSelect,
 }: {
-  col: typeof COLUMNS[0]; tasks: Task[];
+  col: typeof COLUMNS[0]; tasks: Task[]; projects: import('@/types').Project[];
   onAddCard: (sg: StatusGroup) => void; onViewCard: (t: Task) => void; onDeleteCard: (id: string) => void;
   isSelecting: boolean; selectedTaskIds: Set<string>; onToggleSelect: (id: string) => void; onStartSelect: () => void;
 }) {
@@ -75,7 +75,9 @@ function KanbanColumn({
       </div>
       <div className="kanban-cards">
         {tasks.map((task) => (
-          <KanbanCard key={task.id} task={task} onView={onViewCard} onDelete={onDeleteCard}
+          <KanbanCard key={task.id} task={task}
+            projectName={projects.find(p => p.id === task.project_id)?.name}
+            onView={onViewCard} onDelete={onDeleteCard}
             selectionMode={isSelecting} isSelected={selectedTaskIds.has(task.id)} onToggleSelect={onToggleSelect} />
         ))}
       </div>
@@ -286,7 +288,7 @@ export default function MinhasAtividadesPage() {
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <div className="kanban-board" style={{ flex: 1 }}>
             {COLUMNS.map((col) => (
-              <KanbanColumn key={col.id} col={col} tasks={tasksByGroup(col.id)}
+              <KanbanColumn key={col.id} col={col} tasks={tasksByGroup(col.id)} projects={projects}
                 onAddCard={(sg) => setActivityModal({ open: true, task: null, defaultStatus: STATUS_MAP[sg] })}
                 onViewCard={(t) => setDrawer(t)} onDeleteCard={handleDeleteCard}
                 isSelecting={selectionMode === col.id} selectedTaskIds={selectedTaskIds}

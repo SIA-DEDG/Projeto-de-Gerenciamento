@@ -46,6 +46,19 @@ export default function TabBar() {
     if (active) active.scrollIntoView({ inline: 'nearest', block: 'nearest' });
   }, [activeTabId]);
 
+  // Quando uma nova aba é criada com nome "Nova aba", auto-inicia rename
+  const prevTabCount = useRef(tabs.length);
+  useEffect(() => {
+    if (tabs.length > prevTabCount.current) {
+      const newest = tabs[tabs.length - 1];
+      if (newest && newest.name === 'Nova aba' && newest.id === activeTabId) {
+        setRenamingId(newest.id);
+        setRenameVal(newest.name);
+      }
+    }
+    prevTabCount.current = tabs.length;
+  }, [tabs, activeTabId]);
+
   function startRename(tab: Tab, e: React.MouseEvent) {
     e.stopPropagation();
     setRenamingId(tab.id);

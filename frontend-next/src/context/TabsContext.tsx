@@ -210,8 +210,12 @@ export function TabsProvider({ children }: { children: React.ReactNode }) {
     const tab = tabs.find(t => t.id === id);
     if (!tab || id === activeTabId) return;
     setActiveTabId(id);
-    router.push(PAGE_INFO[tab.type].path);
-  }, [tabs, activeTabId, router]);
+    const targetPath = PAGE_INFO[tab.type].path;
+    // Só navega se a página destino for diferente da atual — evita reload desnecessário
+    if (pathname !== targetPath) {
+      router.push(targetPath);
+    }
+  }, [tabs, activeTabId, router, pathname]);
 
   // ── patchActiveTab: update filter state of the active tab ─────────────────
 

@@ -2,38 +2,46 @@
 
 import { useDraggable } from '@dnd-kit/core';
 import { Check } from 'lucide-react';
-import { avatarColor, initials } from '@/lib/utils';
+import { initials } from '@/lib/utils';
 import type { Task } from '@/types';
 
-/* Cores do spine por status — conforme Tasks SIA.dc.html */
+/* Spine colorido por status */
 const SPINE_COLOR: Record<string, string> = {
-  pending:    '#9aa1ac',
-  in_progress:'#034EA2',
-  review:     '#E0A92E',
-  done:       '#1B8A4B',
+  pending:     '#9aa1ac',
+  in_progress: '#034EA2',
+  review:      '#E0A92E',
+  done:        '#1B8A4B',
 };
 
-/* Cor do texto de prioridade */
+/* Cor de prioridade conforme design: Alta=azul, Média=cinza, Baixa=cinza-claro */
 const PRIO_COLOR: Record<string, string> = {
-  Alta:  '#b42318',
-  Média: '#A87A00',
-  Baixa: '#157F3C',
+  Alta:  '#034EA2',
+  Média: 'var(--text-2)',
+  Baixa: 'var(--text-3)',
 };
 
-/* Cor de prazo */
-function dueColor(deadline: string | null | undefined, isDone: boolean): string {
-  if (!deadline || isDone) return 'var(--text-3)';
-  const today = new Date().toISOString().split('T')[0];
-  const soon  = new Date(Date.now() + 3 * 86400000).toISOString().split('T')[0];
-  if (deadline < today) return '#b42318';
-  if (deadline <= soon) return '#A87A00';
-  return 'var(--text-3)';
+/* Texto e cor do prazo (human-readable) */
+function dueText(deadline: string | null | undefined, isDone: boolean): { text: string; color: string } | null {
+  if (!deadline || isDone) return null;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const d = new Date(deadline + 'T00:00:00');
+  const diffDays = Math.round((d.getTime() - today.getTime()) / 86400000);
+
+  if (diffDays < 0)  return { text: `Atrasada ${Math.abs(diffDays)}d`, color: '#b42318' };
+  if (diffDays === 0) return { text: 'Vence hoje',   color: '#A87A00' };
+  if (diffDays === 1) return { text: 'Vence amanhã', color: '#A87A00' };
+  if (diffDays <= 7) return { text: `Em ${diffDays} dias`, color: 'var(--text-3)' };
+  const [, mm, dd] = deadline.split('-');
+  return { text: `${dd}/${mm}`, color: 'var(--text-3)' };
 }
 
 const MAX_AVATARS = 3;
+const AVATAR_BG = '#072f63'; /* Design: todos os avatares no kanban usam navy fixo */
 
 export default function KanbanCard({
   task,
+  projectName,
   onView,
   onDelete,
   selectionMode = false,
@@ -41,6 +49,7 @@ export default function KanbanCard({
   onToggleSelect,
 }: {
   task: Task;
+  projectName?: string;
   onView: (t: Task) => void;
   onDelete: (id: string) => void;
   selectionMode?: boolean;
@@ -59,7 +68,7 @@ export default function KanbanCard({
 
   const spineColor = SPINE_COLOR[task.status_group] ?? '#9aa1ac';
   const isDone = task.status_group === 'done';
-  const dc = dueColor(task.deadline, isDone);
+  const due = dueText(task.deadline, isDone);
 
   function handleClick() {
     if (isDragging) return;
@@ -72,7 +81,7 @@ export default function KanbanCard({
       ref={setNodeRef}
       style={{
         position: 'relative',
-        paddingLeft: 26,  /* espaço para o spine */
+        paddingLeft: 26,
         paddingRight: 22,
         paddingTop: 15,
         paddingBottom: 15,
@@ -94,34 +103,36 @@ export default function KanbanCard({
       {...(selectionMode ? {} : attributes)}
       onMouseEnter={(e) => {
         if (!isDragging && !isSelected) {
-          (e.currentTarget as HTMLElement).style.background = 'var(--surface-2)';
-          (e.currentTarget as HTMLElement).style.boxShadow = '0 8px 20px rgba(7,22,45,0.09)';
-          (e.currentTarget as HTMLElement).style.transform = transform
+          const el = e.currentTarget as HTMLElement;
+          el.style.background = 'var(--surface-2)';
+          el.style.boxShadow = '0 8px 20px rgba(7,22,45,0.09)';
+          el.style.transform = transform
             ? `translate3d(${transform.x}px,${transform.y}px,0) translateY(-1px)`
             : 'translateY(-1px)';
-          (e.currentTarget as HTMLElement).style.zIndex = '2';
+          el.style.zIndex = '2';
         }
       }}
       onMouseLeave={(e) => {
         if (!isDragging && !isSelected) {
-          (e.currentTarget as HTMLElement).style.background = 'var(--surface)';
-          (e.currentTarget as HTMLElement).style.boxShadow = '';
-          (e.currentTarget as HTMLElement).style.transform = '';
-          (e.currentTarget as HTMLElement).style.zIndex = '';
+          const el = e.currentTarget as HTMLElement;
+          el.style.background = 'var(--surface)';
+          el.style.boxShadow = '';
+          el.style.transform = '';
+          el.style.zIndex = '';
         }
       }}
     >
-      {/* Spine lateral colorido */}
+      {/* Spine lateral */}
       <span style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, background: spineColor }} />
 
       {/* Checkbox de seleção */}
       {selectionMode && (
-        <div style={{ position: 'absolute', left: 8, top: 15, width: 14, height: 14, borderRadius: 2, border: `1.5px solid ${isSelected ? 'var(--blue)' : 'rgba(255,255,255,0.3)'}`, background: isSelected ? 'var(--blue)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ position: 'absolute', left: 8, top: 15, width: 14, height: 14, borderRadius: 2, border: `1.5px solid ${isSelected ? 'var(--blue)' : 'rgba(0,0,0,0.2)'}`, background: isSelected ? 'var(--blue)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           {isSelected && <Check size={9} color="#fff" strokeWidth={3} />}
         </div>
       )}
 
-      {/* Linha 1: categoria · prioridade */}
+      {/* Linha 1: CATEGORIA · PRIORIDADE */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
         <span className="mono" style={{ fontSize: '0.6rem', fontWeight: 500, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--text-3)' }}>
           {task.category || 'Sem categoria'}
@@ -132,34 +143,36 @@ export default function KanbanCard({
         </span>
       </div>
 
-      {/* Título da atividade */}
+      {/* Título */}
       <p style={{ fontSize: '0.92rem', fontWeight: 500, color: 'var(--text)', lineHeight: 1.4, letterSpacing: '-0.1px', margin: 0 }}>
         {task.activity}
       </p>
 
-      {/* Linha 3: projeto + avatares */}
+      {/* Linha 3: ícone-pasta + nome-projeto | avatares */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 13 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--text-3)', fontSize: '0.74rem', minWidth: 0 }}>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>
-          <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 120 }}>
-            {task.category || '—'}
-          </span>
-        </div>
+        {(projectName || task.category) && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: 'var(--text-3)', fontSize: '0.72rem', minWidth: 0, flex: 1 }}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>
+            <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 120 }}>
+              {projectName || task.category}
+            </span>
+          </div>
+        )}
         {allAvatars.length > 0 && (
-          <div style={{ display: 'flex', alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
             {allAvatars.slice(0, MAX_AVATARS).map((name, i) => (
               <div
-                key={name}
+                key={name + i}
+                title={name}
                 style={{
                   width: 24, height: 24, borderRadius: '50%',
-                  background: avatarColor(name),
+                  background: AVATAR_BG,
                   color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: '0.62rem', fontWeight: 600, fontFamily: 'var(--mono)',
+                  fontSize: '0.6rem', fontWeight: 600, fontFamily: 'var(--mono)',
                   marginLeft: i > 0 ? -7 : 0,
                   border: '2px solid var(--surface)',
                   flexShrink: 0, zIndex: MAX_AVATARS - i,
                 }}
-                title={name}
               >
                 {initials(name)}
               </div>
@@ -173,11 +186,11 @@ export default function KanbanCard({
         )}
       </div>
 
-      {/* Prazo */}
-      {task.deadline && (
-        <div className="mono" style={{ display: 'inline-flex', alignItems: 'center', gap: 5, marginTop: 11, fontSize: '0.66rem', fontWeight: 500, letterSpacing: '0.5px', color: dc }}>
+      {/* Prazo (human-readable) */}
+      {due && (
+        <div className="mono" style={{ display: 'inline-flex', alignItems: 'center', gap: 5, marginTop: 11, fontSize: '0.66rem', fontWeight: 500, letterSpacing: '0.4px', color: due.color }}>
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-          {task.deadline}
+          {due.text}
         </div>
       )}
     </div>
