@@ -82,6 +82,8 @@ interface TabsContextValue {
   activateTab: (id: string) => void;
   patchActiveTab: (patch: Partial<TabFilters>) => void;
   renameTab: (id: string, name: string) => void;
+  /** Move tab from index to another index (drag-and-drop reorder) */
+  reorderTabs: (fromIndex: number, toIndex: number) => void;
 }
 
 const TabsContext = createContext<TabsContextValue | null>(null);
@@ -234,8 +236,20 @@ export function TabsProvider({ children }: { children: React.ReactNode }) {
     setTabs(prev => prev.map(t => t.id === id ? { ...t, name: name || 'Aba' } : t));
   }, []);
 
+  // ── reorderTabs ───────────────────────────────────────────────────────────
+
+  const reorderTabs = useCallback((fromIndex: number, toIndex: number) => {
+    setTabs(prev => {
+      if (fromIndex === toIndex) return prev;
+      const next = [...prev];
+      const [moved] = next.splice(fromIndex, 1);
+      next.splice(toIndex, 0, moved);
+      return next;
+    });
+  }, []);
+
   return (
-    <TabsContext.Provider value={{ tabs, activeTabId, openTab, closeTab, activateTab, patchActiveTab, renameTab }}>
+    <TabsContext.Provider value={{ tabs, activeTabId, openTab, closeTab, activateTab, patchActiveTab, renameTab, reorderTabs }}>
       {children}
     </TabsContext.Provider>
   );

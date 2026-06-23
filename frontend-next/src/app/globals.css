@@ -1589,6 +1589,9 @@ input::placeholder, textarea::placeholder { color: var(--text-3); opacity: 1; }
   position: relative;
 }
 .tab-item:hover { color: var(--text-2); background: var(--surface-2); }
+.tab-item.drag-over { border-left: 2px solid #034EA2; }
+.tab-item[draggable="true"] { cursor: grab; }
+.tab-item[draggable="true"]:active { cursor: grabbing; }
 .tab-item.active {
   font-weight: 600;
   color: var(--blue);

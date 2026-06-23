@@ -88,7 +88,7 @@ export default function KanbanCard({
         cursor: selectionMode ? 'pointer' : 'grab',
         borderTop: '1px solid var(--line-2)',
         background: isSelected ? 'var(--surface-2)' : 'var(--surface)',
-        transition: 'background 0.14s, box-shadow 0.16s, transform 0.16s',
+        transition: isDragging ? 'none' : 'background 0.14s, box-shadow 0.16s',
         transform: transform
           ? isDragging
             ? `translate3d(${transform.x}px,${transform.y}px,0) rotate(1deg) scale(1.02)`
@@ -106,9 +106,6 @@ export default function KanbanCard({
           const el = e.currentTarget as HTMLElement;
           el.style.background = 'var(--surface-2)';
           el.style.boxShadow = '0 8px 20px rgba(7,22,45,0.09)';
-          el.style.transform = transform
-            ? `translate3d(${transform.x}px,${transform.y}px,0) translateY(-1px)`
-            : 'translateY(-1px)';
           el.style.zIndex = '2';
         }
       }}
@@ -117,7 +114,6 @@ export default function KanbanCard({
           const el = e.currentTarget as HTMLElement;
           el.style.background = 'var(--surface)';
           el.style.boxShadow = '';
-          el.style.transform = '';
           el.style.zIndex = '';
         }
       }}
