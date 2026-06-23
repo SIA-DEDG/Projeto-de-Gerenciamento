@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { Trash2, Pencil, ChevronLeft, ChevronRight, Clock, ChevronDown, Check, Plus, FileText, Paperclip, X as XIcon, Calendar, Users, User } from 'lucide-react';
@@ -703,13 +703,13 @@ export default function EventosPage() {
 
   return (
     <>
-      <PageHeader eyebrow="Planejamento � DEDG" title="Eventos" />
+      <PageHeader title="Eventos" />
 
       {/* �"?�"? Tab bar �"?�"? */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 20, padding: '18px 32px 0', borderBottom: '1px solid var(--line-1)', flexShrink: 0 }}>
-        <button style={tabStyle(tab === 'agenda')} onClick={() => setTab('agenda')}>Agenda</button>
-        <button style={tabStyle(tab === 'atas')} onClick={() => setTab('atas')}>Atas de reuni�o</button>
-        <button style={tabStyle(tab === 'calendar')} onClick={() => setTab('calendar')}>Calend�rio</button>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 18, padding: '18px 32px', borderBottom: '1px solid var(--line-1)', flexShrink: 0 }}>
+        <button style={{ background: 'none', border: 'none', padding: '0 0 4px', fontSize: '.86rem', fontWeight: tab === 'agenda' ? 600 : 400, color: tab === 'agenda' ? 'var(--text)' : 'var(--text-3)', cursor: 'pointer', borderBottom: tab === 'agenda' ? '2px solid #034EA2' : '2px solid transparent', letterSpacing: '-.1px', fontFamily: 'inherit' }} onClick={() => setTab('agenda')}>Agenda</button>
+        <button style={{ background: 'none', border: 'none', padding: '0 0 4px', fontSize: '.86rem', fontWeight: tab === 'atas' ? 600 : 400, color: tab === 'atas' ? 'var(--text)' : 'var(--text-3)', cursor: 'pointer', borderBottom: tab === 'atas' ? '2px solid #034EA2' : '2px solid transparent', letterSpacing: '-.1px', fontFamily: 'inherit' }} onClick={() => setTab('atas')}>Atas de reuni�o</button>
+        <button style={{ background: 'none', border: 'none', padding: '0 0 4px', fontSize: '.86rem', fontWeight: tab === 'calendar' ? 600 : 400, color: tab === 'calendar' ? 'var(--text)' : 'var(--text-3)', cursor: 'pointer', borderBottom: tab === 'calendar' ? '2px solid #034EA2' : '2px solid transparent', letterSpacing: '-.1px', fontFamily: 'inherit' }} onClick={() => setTab('calendar')}>Calend�rio</button>
         <div style={{ flex: 1 }} />
         <span className="mono" style={{ fontSize: '0.72rem', color: 'var(--text-3)', letterSpacing: '0.5px' }}>
           {visibleEvents.length} EVENTOS

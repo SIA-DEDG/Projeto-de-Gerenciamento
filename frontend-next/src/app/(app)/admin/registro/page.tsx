@@ -6,18 +6,17 @@ import { getUser } from '@/lib/auth';
 import { useToast } from '@/hooks/useToast';
 import ToastContainer from '@/components/ToastContainer';
 import ConfirmModal from '@/components/ConfirmModal';
-import { GraduationCap, User, Wrench, ClipboardList, BarChart2, Landmark, ShieldAlert, Check, Copy, Trash2, RefreshCw, Lock } from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
+import { Check, Copy, Trash2, RefreshCw, Lock } from 'lucide-react';
 import PageHeader from '@/components/PageHeader';
 
-const ROLES: { value: string; label: string; desc: string; color: string; bg: string; Icon: LucideIcon }[] = [
-  { value: 'Estagiario',  label: 'Estagiário(a)',   desc: 'Tarefas atribuídas',      color: '#a21caf', bg: '#fdf4ff', Icon: GraduationCap },
-  { value: 'Funcionario', label: 'Funcionário(a)',   desc: 'Acesso padrão',           color: '#16a34a', bg: '#f0fdf4', Icon: User },
-  { value: 'Tecnico',     label: 'Técnico(a)',       desc: 'Projetos e atividades',   color: '#0369a1', bg: '#e0f2fe', Icon: Wrench },
-  { value: 'Coordenador', label: 'Coordenador(a)',   desc: 'Coordena equipes',        color: '#b45309', bg: '#fef9c3', Icon: ClipboardList },
-  { value: 'Gerente',     label: 'Gerente',          desc: 'Atividades e relatórios', color: '#1d4ed8', bg: '#dbeafe', Icon: BarChart2 },
-  { value: 'Diretor',     label: 'Diretor(a)',       desc: 'Visão estratégica',       color: '#7c3aed', bg: '#f3e8ff', Icon: Landmark },
-  { value: 'Admin',       label: 'Administrador(a)', desc: 'Acesso total ao sistema', color: '#ef4123', bg: '#FFF0ED', Icon: ShieldAlert },
+const ROLES: { value: string; label: string; desc: string; color: string }[] = [
+  { value: 'Estagiario',  label: 'Estagiário(a)',   desc: 'Tarefas atribuídas',      color: '#9333ea' },
+  { value: 'Funcionario', label: 'Funcionário(a)',   desc: 'Acesso padrão',           color: '#1B8A4B' },
+  { value: 'Tecnico',     label: 'Técnico(a)',       desc: 'Projetos e atividades',   color: '#034EA2' },
+  { value: 'Coordenador', label: 'Coordenador(a)',   desc: 'Coordena equipes',        color: '#A87A00' },
+  { value: 'Gerente',     label: 'Gerente',          desc: 'Atividades e relatórios', color: '#034EA2' },
+  { value: 'Diretor',     label: 'Diretor(a)',       desc: 'Visão estratégica',       color: '#072f63' },
+  { value: 'Admin',       label: 'Administrador(a)', desc: 'Acesso total ao sistema', color: '#b42318' },
 ];
 
 interface PasswordEntry {
@@ -117,192 +116,208 @@ export default function RegistroPage() {
   }
 
   const selectedRole = availableRoles.find(r => r.value === role) ?? availableRoles[0]!;
+  const [regTab, setRegTab] = useState<'form' | 'senhas'>('form');
+
+  const tabStyle = (active: boolean): React.CSSProperties => ({
+    background: 'none', border: 'none', padding: '0 0 4px',
+    fontSize: '0.86rem', fontWeight: active ? 600 : 400,
+    color: active ? 'var(--text)' : 'var(--text-3)',
+    cursor: 'pointer', borderBottom: active ? '2px solid #034EA2' : '2px solid transparent',
+    letterSpacing: '-0.1px', fontFamily: 'inherit',
+  });
+
+  const previewInitials = fullName.split(' ').map((w: string) => w[0]).filter(Boolean).slice(0, 2).join('').toUpperCase() || '??';
+  const previewRole = selectedRole;
 
   return (
     <>
       <PageHeader eyebrow="Controle de acesso · Admin" title="Cadastrar usuário" />
 
-      <div style={{ flex: 1, overflowY: 'auto', padding: '28px 32px', display: 'flex', gap: 28, alignItems: 'flex-start' }}>
+      {/* Sub-tabs: Cadastrar / Senhas pendentes */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 18, padding: '18px 32px 0' }}>
+        <button onClick={() => setRegTab('form')} style={tabStyle(regTab === 'form')}>Cadastrar</button>
+        <button onClick={() => setRegTab('senhas')} style={tabStyle(regTab === 'senhas')}>
+          Senhas pendentes
+          {history.length > 0 && (
+            <span className="mono" style={{ marginLeft: 8, background: 'rgba(224,169,46,0.15)', color: '#A87A00', padding: '1px 7px', borderRadius: 3, fontSize: '0.62rem', fontWeight: 600 }}>
+              {history.length}
+            </span>
+          )}
+        </button>
+      </div>
 
-        {/* ── Left: Form ── */}
-        <div style={{ flex: '0 0 480px', maxWidth: 480 }}>
+      {regTab === 'form' && (
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 328px', alignItems: 'start', borderTop: '1px solid var(--line-1)', marginTop: 18, flex: 1, overflowY: 'auto' }}>
 
-          {/* Success banner */}
-          {success && (
-            <div style={{ background: 'linear-gradient(135deg, #f0fdf4, #dcfce7)', border: '1.5px solid #86efac', borderRadius: 3, padding: '18px 20px', marginBottom: 20 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                <div style={{ width: 28, height: 28, borderRadius: 3, background: '#16a34a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Check size={14} color="#fff" strokeWidth={2.5} />
+        {/* LEFT: form */}
+        <div style={{ padding: '30px 32px 48px', borderRight: '1px solid var(--line-1)' }}>
+          <div style={{ maxWidth: 560 }}>
+
+            {/* Success banner */}
+            {success && (
+              <div style={{ background: '#f0fdf4', border: '1px solid #86efac', borderRadius: 3, padding: '16px 18px', marginBottom: 24 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                  <div style={{ width: 22, height: 22, borderRadius: 3, background: '#16a34a', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Check size={12} color="#fff" strokeWidth={2.5} />
+                  </div>
+                  <span style={{ fontWeight: 600, fontSize: '0.88rem', color: '#166534' }}>Colaborador criado!</span>
+                  <button onClick={() => setSuccess(null)} style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', color: '#166534', fontSize: '1rem', lineHeight: 1 }}>×</button>
                 </div>
-                <span style={{ fontWeight: 700, fontSize: '0.92rem', color: '#166534' }}>Colaborador criado!</span>
-                <button onClick={() => setSuccess(null)} style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', color: '#166534', fontSize: '1.1rem', lineHeight: 1 }}>×</button>
+                <p style={{ fontSize: '0.8rem', color: '#15803d', marginBottom: 10 }}>
+                  Senha temporária de <strong>{success.name}</strong>:
+                </p>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <code style={{ flex: 1, background: 'rgba(255,255,255,0.8)', borderRadius: 3, padding: '8px 12px', fontSize: '0.96rem', fontWeight: 700, color: '#14532d', letterSpacing: '0.08em', fontFamily: 'monospace' }}>
+                    {success.temp_password}
+                  </code>
+                  <button type="button" onClick={() => handleCopy(success.temp_password, 'success')}
+                    style={{ padding: '8px 14px', background: copied === 'success' ? '#166534' : '#16a34a', color: '#fff', border: 'none', borderRadius: 3, fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }}>
+                    {copied === 'success' ? '✓ Copiado' : 'Copiar'}
+                  </button>
+                </div>
               </div>
-              <p style={{ fontSize: '0.82rem', color: '#15803d', marginBottom: 10 }}>
-                Repasse a senha temporária para <strong>{success.name}</strong>:
-              </p>
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                <code style={{ flex: 1, background: 'rgba(255,255,255,0.7)', borderRadius: 3, padding: '9px 14px', fontSize: '1rem', fontWeight: 700, color: '#14532d', letterSpacing: '0.08em', fontFamily: 'monospace' }}>
-                  {success.temp_password}
-                </code>
-                <button type="button" onClick={() => handleCopy(success.temp_password, 'success')}
-                  style={{ padding: '9px 16px', background: copied === 'success' ? '#166534' : '#16a34a', color: '#fff', border: 'none', borderRadius: 3, fontSize: '0.82rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }}>
-                  {copied === 'success' ? '✓ Copiado' : 'Copiar'}
-                </button>
+            )}
+
+            {/* 01 · Dados do colaborador */}
+            <div className="mono" style={{ fontSize: '0.66rem', fontWeight: 600, letterSpacing: '1.2px', textTransform: 'uppercase', color: '#034EA2' }}>
+              01 · Dados do colaborador
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginTop: 16 }}>
+              <div>
+                <label className="mono" style={{ display: 'block', fontSize: '0.68rem', fontWeight: 500, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--text-3)', marginBottom: 7 }}>Nome completo</label>
+                <input type="text" placeholder="Ex: João Silva" value={fullName} onChange={e => setFullName(e.target.value)} autoFocus
+                  style={{ width: '100%', padding: '11px 13px', border: '1px solid var(--border)', borderRadius: 3, fontSize: '0.9rem', background: 'var(--surface)', color: 'var(--text)', outline: 'none', boxSizing: 'border-box' }}
+                  onFocus={e => { e.target.style.borderColor = '#034EA2'; e.target.style.boxShadow = 'inset 0 0 0 1px #034EA2'; }}
+                  onBlur={e => { e.target.style.borderColor = 'var(--border)'; e.target.style.boxShadow = 'none'; }} />
+              </div>
+              <div>
+                <label className="mono" style={{ display: 'block', fontSize: '0.68rem', fontWeight: 500, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--text-3)', marginBottom: 7 }}>
+                  Nome de usuário
+                  {!usernameTouched && fullName && <span className="mono" style={{ marginLeft: 6, fontSize: '0.62rem', color: '#034EA2', fontWeight: 600, background: '#034EA20d', borderRadius: 3, padding: '1px 5px' }}>auto</span>}
+                </label>
+                <div className="mono" style={{ display: 'flex', alignItems: 'center', border: '1px solid var(--border)', borderRadius: 3, background: 'var(--surface)', overflow: 'hidden' }}>
+                  <span style={{ padding: '11px 8px 11px 13px', color: 'var(--text-3)', fontSize: '0.84rem' }}>@</span>
+                  <input type="text" placeholder="joao.silva" value={username}
+                    onChange={e => { setUsername(e.target.value); setUsernameTouched(true); }}
+                    style={{ flex: 1, minWidth: 0, padding: '11px 13px 11px 2px', border: 'none', background: 'none', fontSize: '0.9rem', color: 'var(--text)', outline: 'none' }} />
+                </div>
               </div>
             </div>
-          )}
 
-          {/* Form card */}
-          <div style={{ background: '#fff', borderRadius: 3, border: '1px solid var(--border-light)', overflow: 'hidden', boxShadow: '0 2px 12px rgba(3,78,162,0.06)' }}>
-            <div style={{ height: 4, background: 'var(--primary)' }} />
+            {/* 02 · Perfil de acesso */}
+            <div className="mono" style={{ fontSize: '0.66rem', fontWeight: 600, letterSpacing: '1.2px', textTransform: 'uppercase', color: '#034EA2', marginTop: 32 }}>
+              02 · Perfil de acesso
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 16 }}>
+              {availableRoles.map(r => {
+                const active = role === r.value;
+                return (
+                  <div key={r.value} onClick={() => setRole(r.value)}
+                    style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '12px 13px', borderRadius: 3, border: `1.5px solid ${active ? r.color : 'var(--border)'}`, background: active ? r.color + '0d' : 'var(--surface)', cursor: 'pointer', transition: 'all 0.15s' }}>
+                    <span style={{ width: 9, height: 9, borderRadius: 2, background: r.color, flexShrink: 0, marginTop: 3 }} />
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text)' }}>{r.label}</div>
+                      <div style={{ fontSize: '0.7rem', color: 'var(--text-3)', marginTop: 2 }}>{r.desc}</div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
 
-            <form onSubmit={handleSubmit} noValidate style={{ padding: '22px 24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {error && (
+              <div style={{ color: '#b42318', background: 'rgba(180,35,24,0.07)', padding: '10px 13px', borderRadius: 3, fontSize: '0.83rem', border: '1px solid rgba(180,35,24,0.18)', marginTop: 16 }}>{error}</div>
+            )}
 
-              {/* Nome */}
-              <div>
-                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)', marginBottom: 6 }}>Nome completo</label>
-                <input type="text" placeholder="Ex: João Silva" value={fullName} onChange={e => setFullName(e.target.value)} autoFocus style={inp}
-                  onFocus={e => { e.target.style.borderColor = 'var(--primary)'; e.target.style.boxShadow = '0 0 0 3px var(--primary-glow)'; }}
-                  onBlur={e => { e.target.style.borderColor = 'var(--border-light)'; e.target.style.boxShadow = 'none'; }} />
-              </div>
-
-              {/* Username */}
-              <div>
-                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)', marginBottom: 6 }}>
-                  Nome de usuário
-                  {!usernameTouched && fullName && <span style={{ marginLeft: 6, fontSize: '0.68rem', color: 'var(--primary)', fontWeight: 600, background: 'var(--primary-light)', borderRadius: 3, padding: '1px 5px' }}>auto</span>}
-                </label>
-                <input type="text" placeholder="joao.silva" value={username}
-                  onChange={e => { setUsername(e.target.value); setUsernameTouched(true); }}
-                  style={inp}
-                  onFocus={e => { e.target.style.borderColor = 'var(--primary)'; e.target.style.boxShadow = '0 0 0 3px var(--primary-glow)'; }}
-                  onBlur={e => { e.target.style.borderColor = 'var(--border-light)'; e.target.style.boxShadow = 'none'; }} />
-              </div>
-
-              {/* Role grid */}
-              <div>
-                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)', marginBottom: 8 }}>Perfil de acesso</label>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
-                  {availableRoles.map(r => {
-                    const active = role === r.value;
-                    return (
-                      <button key={r.value} type="button" onClick={() => setRole(r.value)}
-                        style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '11px 13px', borderRadius: 3, border: `1.5px solid ${active ? r.color : 'var(--border-light)'}`, background: active ? r.bg : '#fff', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit', transition: 'all 0.15s', boxShadow: active ? `0 0 0 2px ${r.color}22` : 'none' }}>
-                        <div style={{ width: 28, height: 28, borderRadius: 3, background: active ? r.color + '22' : 'var(--bg-app)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
-                          <r.Icon size={14} color={active ? r.color : 'var(--text-muted)'} strokeWidth={2} />
-                        </div>
-                        <div style={{ minWidth: 0 }}>
-                          <div style={{ fontSize: '0.82rem', fontWeight: 700, color: active ? r.color : 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.label}</div>
-                          <div style={{ fontSize: '0.7rem', color: active ? r.color : 'var(--text-muted)', marginTop: 1, opacity: active ? 0.8 : 1 }}>{r.desc}</div>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {error && (
-                <div style={{ color: '#bf2600', background: '#ffebe6', padding: '10px 13px', borderRadius: 3, fontSize: '0.83rem', border: '1px solid #ffbdad' }}>{error}</div>
-              )}
-
-              <button type="submit" disabled={loading}
-                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '12px', fontSize: '0.9rem', fontWeight: 700, background: loading ? 'var(--text-muted)' : selectedRole.color, color: '#fff', border: 'none', borderRadius: 3, cursor: loading ? 'not-allowed' : 'pointer', fontFamily: 'inherit', transition: 'background 0.15s' }}>
-                {loading ? (
-                  <><RefreshCw size={14} strokeWidth={2} style={{ animation: 'spin 1s linear infinite' }} /> Criando…</>
-                ) : (
-                  <><selectedRole.Icon size={16} strokeWidth={2} /> Criar como {selectedRole.label}</>
-                )}
-              </button>
-            </form>
+            <button type="button" onClick={handleSubmit as unknown as React.MouseEventHandler} disabled={loading}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', padding: 13, border: 'none', borderRadius: 3, background: loading ? 'var(--text-3)' : '#034EA2', color: '#fff', fontSize: '0.9rem', fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', fontFamily: 'inherit', marginTop: 30, transition: 'background 0.12s' }}>
+              {loading ? <><RefreshCw size={14} strokeWidth={2} style={{ animation: 'spin 1s linear infinite' }} />Criando…</> : 'Criar colaborador'}
+            </button>
           </div>
         </div>
 
-        {/* ── Right: Password History ── */}
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ background: '#fff', borderRadius: 3, border: '1px solid var(--border-light)', overflow: 'hidden', boxShadow: '0 2px 12px rgba(3,78,162,0.06)' }}>
-            <div style={{ height: 4, background: '#eab308' }} />
-            <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-light)', display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div style={{ width: 32, height: 32, borderRadius: 3, background: '#fef9c3', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Lock size={15} color="#b45309" strokeWidth={2} />
-              </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 700, fontSize: '0.92rem', color: 'var(--text-primary)' }}>Senhas temporárias pendentes</div>
-                <div style={{ fontSize: '0.73rem', color: 'var(--text-muted)', marginTop: 1 }}>Colaboradores que ainda não fizeram o primeiro acesso</div>
-              </div>
-              <span style={{ background: history.length > 0 ? '#fef9c3' : 'var(--bg-app)', color: history.length > 0 ? '#b45309' : 'var(--text-muted)', borderRadius: 3, padding: '2px 10px', fontSize: '0.72rem', fontWeight: 700 }}>
-                {history.length} pendente{history.length !== 1 ? 's' : ''}
-              </span>
-            </div>
-
-            {removeErr && (
-              <div style={{ margin: '12px 20px 0', padding: '10px 13px', background: '#fee2e2', border: '1px solid #fecaca', borderRadius: 3, color: '#b91c1c', fontSize: '0.83rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span>{removeErr}</span>
-                <button onClick={() => setRemoveErr(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#b91c1c', fontWeight: 700 }}>×</button>
-              </div>
-            )}
-
-            {history.length === 0 ? (
-              <div style={{ padding: '48px 24px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
-                <div style={{ width: 52, height: 52, borderRadius: 3, background: '#f0fdf4', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Check size={24} color="#22c55e" strokeWidth={1.5} />
+        {/* RIGHT: preview card */}
+        <div style={{ padding: '30px 28px 48px', display: 'flex', flexDirection: 'column', gap: 28 }}>
+          <div>
+            <div className="mono" style={{ fontSize: '0.64rem', fontWeight: 500, letterSpacing: '1.2px', textTransform: 'uppercase', color: 'var(--text-3)', marginBottom: 12 }}>Pré-visualização</div>
+            <div style={{ border: '1px solid var(--border)', borderRadius: 3, overflow: 'hidden', background: 'var(--surface)' }}>
+              <div style={{ height: 58, background: '#072f63' }} />
+              <div style={{ padding: '0 18px 20px', marginTop: -30 }}>
+                <div className="mono" style={{ width: 60, height: 60, borderRadius: '50%', background: previewRole.color, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.15rem', fontWeight: 600, border: '3px solid var(--surface)', boxShadow: '0 1px 4px rgba(7,22,45,.18)' }}>
+                  {previewInitials}
                 </div>
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', margin: 0, fontWeight: 500 }}>Nenhuma senha temporária pendente.</p>
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.78rem', margin: 0 }}>Todos os colaboradores já definiram suas senhas.</p>
+                <div style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text)', marginTop: 12, letterSpacing: '-0.2px' }}>
+                  {fullName || 'Nome do colaborador'}
+                </div>
+                <div className="mono" style={{ fontSize: '0.7rem', color: 'var(--text-3)', letterSpacing: '0.3px', marginTop: 2 }}>
+                  @{username || 'usuario'}
+                </div>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, marginTop: 14, padding: '4px 11px', border: '1px solid var(--border)', borderRadius: 3 }}>
+                  <span style={{ width: 8, height: 8, borderRadius: 2, background: previewRole.color, flexShrink: 0 }} />
+                  <span className="mono" style={{ fontSize: '0.66rem', fontWeight: 600, letterSpacing: '0.5px', textTransform: 'uppercase', color: previewRole.color }}>{previewRole.label}</span>
+                </div>
+                <p style={{ fontSize: '0.74rem', color: 'var(--text-2)', lineHeight: 1.55, marginTop: 12 }}>{previewRole.desc}</p>
               </div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                {history.map((entry, idx) => {
-                  const roleInfo = ROLES.find(r => r.value === entry.role);
-                  const avatarColors = ['#034ea2','#15803d','#9333ea','#b91c1c','#0369a1'];
-                  let h = 0; for (const c of entry.name) h = (h * 31 + c.charCodeAt(0)) | 0;
-                  const aColor = avatarColors[Math.abs(h) % avatarColors.length];
-                  const initials = entry.name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
-                  return (
-                    <div key={entry.user_id}
-                      style={{ padding: '14px 20px', borderBottom: idx < history.length - 1 ? '1px solid var(--border-light)' : 'none' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-                        <div style={{ width: 36, height: 36, borderRadius: '50%', background: aColor + '18', color: aColor, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', fontWeight: 800, flexShrink: 0 }}>{initials}</div>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontWeight: 700, fontSize: '0.88rem', color: 'var(--text-primary)' }}>{entry.name}</div>
-                          <div style={{ fontSize: '0.73rem', color: 'var(--text-muted)' }}>@{entry.username}</div>
-                        </div>
-                        {roleInfo && (
-                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: '0.68rem', fontWeight: 700, padding: '2px 8px', borderRadius: 3, background: roleInfo.bg, color: roleInfo.color, whiteSpace: 'nowrap' }}>
-                            <roleInfo.Icon size={10} strokeWidth={2.5} />
-                            {roleInfo.label}
-                          </span>
-                        )}
-                        <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
-                          {new Date(entry.created_at).toLocaleDateString('pt-BR')}
-                        </span>
-                      </div>
-                      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                        <code style={{ flex: 1, background: 'var(--bg-app)', borderRadius: 3, padding: '8px 12px', fontSize: '0.92rem', fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '0.06em', fontFamily: 'monospace', border: '1px solid var(--border-light)' }}>
-                          {entry.temp_password}
-                        </code>
-                        <button type="button" onClick={() => handleCopy(entry.temp_password, entry.user_id)}
-                          style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '8px 13px', background: copied === entry.user_id ? '#16a34a' : 'var(--primary)', color: '#fff', border: 'none', borderRadius: 3, fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap', flexShrink: 0, transition: 'background 0.15s' }}>
-                          {copied === entry.user_id
-                            ? <><Check size={11} strokeWidth={2.5} /> Copiado</>
-                            : <><Copy size={11} strokeWidth={2} /> Copiar</>
-                          }
-                        </button>
-                        <button type="button" onClick={() => setConfirmDelete(entry)} disabled={removing === entry.user_id}
-                          style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '8px 11px', background: '#fff5f5', border: 'none', borderRadius: 3, color: '#dc2626', fontSize: '0.78rem', fontWeight: 600, cursor: removing === entry.user_id ? 'not-allowed' : 'pointer', fontFamily: 'inherit', flexShrink: 0, transition: 'background 0.15s', opacity: removing === entry.user_id ? 0.6 : 1 }}
-                          onMouseEnter={e => { if (removing !== entry.user_id) e.currentTarget.style.background = '#fee2e2'; }}
-                          onMouseLeave={e => (e.currentTarget.style.background = '#fff5f5')}>
-                          <Trash2 size={11} strokeWidth={2} />
-                          {removing === entry.user_id ? '…' : 'Excluir'}
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+            </div>
           </div>
         </div>
       </div>
+      )}
+
+      {regTab === 'senhas' && (
+      <div style={{ flex: 1, overflowY: 'auto', padding: '28px 32px' }}>
+        <div style={{ background: 'var(--surface)', borderRadius: 3, border: '1px solid var(--border)', overflow: 'hidden' }}>
+          <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--line-1)', display: 'flex', alignItems: 'center', gap: 10 }}>
+            <Lock size={15} color="#A87A00" strokeWidth={2} />
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: 600, fontSize: '0.88rem', color: 'var(--text)' }}>Senhas temporárias aguardando entrega</div>
+            </div>
+            <span className="mono" style={{ background: history.length > 0 ? 'rgba(224,169,46,0.1)' : 'var(--surface-2)', color: history.length > 0 ? '#A87A00' : 'var(--text-3)', borderRadius: 3, padding: '2px 10px', fontSize: '0.72rem', fontWeight: 700 }}>
+              {history.length} pendente{history.length !== 1 ? 's' : ''}
+            </span>
+          </div>
+
+          {removeErr && (
+            <div style={{ margin: '12px 20px 0', padding: '10px 13px', background: 'rgba(180,35,24,0.07)', border: '1px solid rgba(180,35,24,0.18)', borderRadius: 3, color: '#b42318', fontSize: '0.83rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span>{removeErr}</span>
+              <button onClick={() => setRemoveErr(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#b42318', fontWeight: 700 }}>×</button>
+            </div>
+          )}
+
+          {history.length === 0 ? (
+            <div style={{ padding: '48px 24px', textAlign: 'center', color: 'var(--text-3)', fontSize: '0.85rem' }}>
+              Nenhuma senha temporária pendente.
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              {history.map((entry, idx) => {
+                const roleInfo = ROLES.find(r => r.value === entry.role);
+                const eInitials = entry.name.split(' ').map((w: string) => w[0]).slice(0, 2).join('').toUpperCase();
+                let h = 0; for (const c of entry.name) h = (h * 31 + c.charCodeAt(0)) | 0;
+                const aColor = roleInfo?.color ?? '#034EA2';
+                return (
+                  <div key={entry.user_id} style={{ display: 'grid', gridTemplateColumns: '1fr 170px 150px 150px', gap: 18, alignItems: 'center', padding: '14px 20px', borderBottom: idx < history.length - 1 ? '1px solid var(--line-2)' : 'none' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+                      <div className="mono" style={{ width: 32, height: 32, borderRadius: '50%', background: aColor, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.62rem', fontWeight: 600, flexShrink: 0 }}>{eInitials}</div>
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ fontSize: '0.86rem', fontWeight: 500, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{entry.name}</div>
+                        <div className="mono" style={{ fontSize: '0.64rem', color: 'var(--text-3)', letterSpacing: '0.3px' }}>@{entry.username}</div>
+                      </div>
+                    </div>
+                    <span className="mono" style={{ fontSize: '0.66rem', fontWeight: 600, letterSpacing: '0.5px', textTransform: 'uppercase', color: aColor, background: aColor + '14', padding: '3px 8px', borderRadius: 3 }}>{roleInfo?.label ?? entry.role}</span>
+                    <span className="mono" style={{ fontSize: '0.66rem', color: 'var(--text-3)' }}>{new Date(entry.created_at).toLocaleDateString('pt-BR')}</span>
+                    <button onClick={() => setConfirmDelete(entry)} disabled={removing === entry.user_id}
+                      style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 11px', border: '1px solid var(--border)', borderRadius: 3, background: 'var(--surface)', color: 'var(--text-2)', fontSize: '0.7rem', fontWeight: 500, cursor: removing === entry.user_id ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}>
+                      <Trash2 size={11} />Remover
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+      )}
+
 
       <ConfirmModal
         open={!!confirmDelete}

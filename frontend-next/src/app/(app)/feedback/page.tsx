@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { getUser } from '@/lib/auth';
 import { fetchFeedbacks, toggleFeedbackUpvote, setFeedbackStatus, deleteFeedback, type FeedbackItem } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
-import { CircleQuestionMark, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, ChevronLeft, ChevronRight } from 'lucide-react';
 import ToastContainer from '@/components/ToastContainer';
 import ConfirmModal from '@/components/ConfirmModal';
 import FormModal from './_components/FormModal';
@@ -150,31 +150,14 @@ export default function FeedbackPage() {
   const totalPages = Math.ceil(visible.length / PAGE_SIZE);
   const paginated = visible.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
-  const sortBtn = (value: Sort, label: string) => (
-    <button
-      onClick={() => setSort(value)}
-      style={{
-        padding: '6px 16px',
-        borderRadius: 3,
-        border: `1.5px solid ${sort === value ? 'var(--primary)' : 'var(--border-light)'}`,
-        background: sort === value ? 'var(--primary)' : 'var(--bg-card)',
-        color: sort === value ? '#fff' : 'var(--text-secondary)',
-        fontWeight: sort === value ? 700 : 500,
-        fontSize: '0.82rem',
-        cursor: 'pointer',
-        fontFamily: 'inherit',
-        transition: 'all 0.15s',
-      }}>
-      {label}
-    </button>
-  );
-
   return (
     <>
       <PageHeader eyebrow="Sistema · Comunicação" title="Feedback & Sugestões" />
 
-      {/* Body */}
-      <div style={{ flex: 1, overflow: 'hidden', display: 'flex', minHeight: 0 }}>
+      {/* 3-column layout */}
+      <div style={{ height: '100%', display: 'flex', overflow: 'hidden', flex: 1, minHeight: 0 }}>
+
+        {/* LEFT: sidebar */}
         <FeedbackSidebar
           items={items}
           search={search} setSearch={setSearch}
@@ -185,137 +168,100 @@ export default function FeedbackPage() {
           currentUserId={currentUserId}
         />
 
-        <main style={{ flex: 1, overflowY: 'auto', background: 'var(--bg-app)', padding: '24px 28px' }}>
-          {/* Feed header */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-            <div>
-              <h2 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                {myOnly ? 'Minhas publicações' : 'Feed de Sugestões'}
-              </h2>
-              <p style={{ margin: '3px 0 0', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                {loading ? 'Carregando…' : `${visible.length} publicaç${visible.length === 1 ? 'ão' : 'ões'} encontrada${visible.length === 1 ? '' : 's'}`}
-              </p>
+        {/* CENTER: main feed */}
+        <div className="ssel" style={{ flex: 1, minWidth: 0, overflowY: 'auto', background: 'var(--surface-2)' }}>
+          {/* Sticky header */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 24px', background: 'var(--surface)', borderBottom: '1px solid var(--line-1)', position: 'sticky', top: 0, zIndex: 2 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+              <div>
+                <span style={{ fontWeight: 600, fontSize: '0.95rem', color: 'var(--text)' }}>
+                  {myOnly ? 'Minhas publicações' : 'Feed de Sugestões'}
+                </span>
+                <span className="mono" style={{ fontSize: '0.7rem', color: 'var(--text-3)', marginLeft: 10, letterSpacing: '0.3px' }}>
+                  {visible.length} publicações
+                </span>
+              </div>
             </div>
-            <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-              {!selectionMode && sortBtn('votos', 'Populares')}
-              {!selectionMode && sortBtn('recentes', 'Recentes')}
-              <button
-                onClick={() => { setSelectionMode(s => !s); setSelectedIds(new Set()); }}
-                style={{
-                  padding: '6px 14px', borderRadius: 3, fontSize: '0.82rem', fontWeight: 600,
-                  border: `1.5px solid ${selectionMode ? 'var(--primary)' : 'var(--border-light)'}`,
-                  background: selectionMode ? 'var(--primary-light)' : 'var(--bg-card)',
-                  color: selectionMode ? 'var(--primary)' : 'var(--text-secondary)',
-                  cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s',
-                }}
-              >
-                {selectionMode ? 'Cancelar' : 'Selecionar'}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <button onClick={() => setSort('votos')} className="mono"
+                style={{ padding: '5px 13px', borderRadius: 20, border: `1.5px solid ${sort === 'votos' ? '#034EA2' : 'var(--border)'}`, background: sort === 'votos' ? '#034EA2' : 'var(--surface)', color: sort === 'votos' ? '#fff' : 'var(--text-2)', fontSize: '0.72rem', fontWeight: 600, cursor: 'pointer', letterSpacing: '0.5px', fontFamily: 'inherit' }}>
+                POPULARES
+              </button>
+              <button onClick={() => setSort('recentes')} className="mono"
+                style={{ padding: '5px 13px', borderRadius: 20, border: `1.5px solid ${sort === 'recentes' ? '#034EA2' : 'var(--border)'}`, background: sort === 'recentes' ? '#034EA2' : 'var(--surface)', color: sort === 'recentes' ? '#fff' : 'var(--text-2)', fontSize: '0.72rem', fontWeight: 600, cursor: 'pointer', letterSpacing: '0.5px', fontFamily: 'inherit' }}>
+                RECENTES
+              </button>
+              <div style={{ width: 1, height: 22, background: 'var(--line-1)', margin: '0 2px' }} />
+              <button onClick={() => setShowForm(s => !s)}
+                style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '7px 14px', borderRadius: 3, border: 'none', background: '#034EA2', color: '#fff', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+                <Plus size={14} />Novo feedback
               </button>
             </div>
           </div>
 
-          {/* Cards */}
-          {loading ? (
-            <div style={{ padding: '64px 0', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-              Carregando…
-            </div>
-          ) : visible.length === 0 ? (
-            <div style={{ padding: '72px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
-              <CircleQuestionMark size={48} color="var(--border-light)" />
-              <p style={{ color: 'var(--text-secondary)', margin: 0, fontWeight: 600 }}>Nenhuma publicação encontrada.</p>
-              <button onClick={() => setShowForm(true)}
-                style={{ padding: '8px 20px', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: 3, fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
-                Nova publicação
+          {/* Feed cards */}
+          <div style={{ padding: '16px 24px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {loading ? (
+              <div style={{ padding: '64px 0', textAlign: 'center', color: 'var(--text-3)', fontSize: '0.9rem' }}>Carregando…</div>
+            ) : paginated.length === 0 ? (
+              <div style={{ padding: '64px 0', textAlign: 'center', color: 'var(--text-3)', fontSize: '0.85rem' }}>Nenhuma publicação encontrada.</div>
+            ) : paginated.map(item => (
+              <FeedbackCard
+                key={item.id}
+                item={item}
+                currentUserId={currentUserId}
+                currentUserName={currentUserName}
+                isAdmin={isAdmin}
+                onUpvote={handleUpvote}
+                onEdit={it => setEditTarget(it)}
+                onDelete={handleDelete}
+                onRespond={setRespondTarget}
+                onStatusChange={handleStatusChange}
+                upvoting={upvoting}
+                selectionMode={selectionMode}
+                isSelected={selectedIds.has(item.id)}
+                onToggleSelect={handleToggleSelect}
+              />
+            ))}
+          </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '16px 24px' }}>
+              <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page <= 1}
+                style={{ width: 30, height: 30, borderRadius: 3, border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text-2)', cursor: page <= 1 ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: page <= 1 ? 0.4 : 1 }}>
+                <ChevronLeft size={14} />
+              </button>
+              <span className="mono" style={{ fontSize: '0.72rem', color: 'var(--text-3)', minWidth: 80, textAlign: 'center' }}>{page} / {totalPages}</span>
+              <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page >= totalPages}
+                style={{ width: 30, height: 30, borderRadius: 3, border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text-2)', cursor: page >= totalPages ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: page >= totalPages ? 0.4 : 1 }}>
+                <ChevronRight size={14} />
               </button>
             </div>
-          ) : (
-            <>
-              {paginated.map(item => (
-                <FeedbackCard
-                  key={item.id}
-                  item={item}
-                  currentUserId={currentUserId}
-                  currentUserName={currentUserName}
-                  isAdmin={isAdmin}
-                  onUpvote={handleUpvote}
-                  onEdit={it => setEditTarget(it)}
-                  onDelete={handleDelete}
-                  onRespond={setRespondTarget}
-                  onStatusChange={handleStatusChange}
-                  upvoting={upvoting}
-                  selectionMode={selectionMode}
-                  isSelected={selectedIds.has(item.id)}
-                  onToggleSelect={handleToggleSelect}
-                />
-              ))}
-              {totalPages > 1 && (
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 24, paddingBottom: 8 }}>
-                  <button
-                    onClick={() => setPage(p => Math.max(1, p - 1))}
-                    disabled={page === 1}
-                    style={{
-                      width: 34, height: 34, borderRadius: 3, border: '1.5px solid var(--border-light)',
-                      background: 'var(--bg-card)', color: 'var(--text-secondary)',
-                      cursor: page === 1 ? 'not-allowed' : 'pointer', opacity: page === 1 ? 0.4 : 1,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'inherit',
-                    }}
-                  >
-                    <ChevronLeft width={14} height={14} />
-                  </button>
-
-                  {(() => {
-                    const pageNums: (number | '…')[] = [];
-                    if (totalPages <= 7) {
-                      for (let i = 1; i <= totalPages; i++) pageNums.push(i);
-                    } else {
-                      pageNums.push(1);
-                      if (page > 3) pageNums.push('…');
-                      for (let i = Math.max(2, page - 1); i <= Math.min(totalPages - 1, page + 1); i++) pageNums.push(i);
-                      if (page < totalPages - 2) pageNums.push('…');
-                      pageNums.push(totalPages);
-                    }
-                    return pageNums.map((n, i) => n === '…' ? (
-                      <span key={`ellipsis-${i}`} style={{ width: 34, textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem' }}>…</span>
-                    ) : (
-                      <button
-                        key={n}
-                        onClick={() => setPage(n as number)}
-                        style={{
-                          width: 34, height: 34, borderRadius: 3, fontFamily: 'inherit',
-                          border: `1.5px solid ${n === page ? 'var(--primary)' : 'var(--border-light)'}`,
-                          background: n === page ? 'var(--primary)' : 'var(--bg-card)',
-                          color: n === page ? '#fff' : 'var(--text-secondary)',
-                          fontWeight: n === page ? 700 : 500, fontSize: '0.85rem',
-                          cursor: 'pointer', transition: 'all 0.15s',
-                        }}
-                      >
-                        {n}
-                      </button>
-                    ));
-                  })()}
-
-                  <button
-                    onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                    disabled={page === totalPages}
-                    style={{
-                      width: 34, height: 34, borderRadius: 3, border: '1.5px solid var(--border-light)',
-                      background: 'var(--bg-card)', color: 'var(--text-secondary)',
-                      cursor: page === totalPages ? 'not-allowed' : 'pointer', opacity: page === totalPages ? 0.4 : 1,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'inherit',
-                    }}
-                  >
-                    <ChevronRight width={14} height={14} />
-                  </button>
-                </div>
-              )}
-            </>
           )}
-        </main>
+        </div>
+
+        {/* RIGHT: "Enviar feedback" panel */}
+        {showForm && (
+          <div className="ssel" style={{ width: 276, flexShrink: 0, borderLeft: '1px solid var(--line-1)', overflowY: 'auto', background: 'var(--surface)', padding: '20px 20px 28px' }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10, marginBottom: 4 }}>
+              <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text)' }}>Enviar feedback</div>
+              <button onClick={() => setShowForm(false)}
+                style={{ width: 26, height: 26, flexShrink: 0, borderRadius: 3, border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text-2)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem', fontFamily: 'inherit' }}>✕</button>
+            </div>
+            <p style={{ fontSize: '0.76rem', color: 'var(--text-3)', lineHeight: 1.5, margin: '0 0 18px' }}>
+              Relate um bug, sugestão ou dúvida para a equipe.
+            </p>
+            <button
+              onClick={() => { setShowForm(false); setEditTarget(null); }}
+              style={{ width: '100%', padding: '9px 0', borderRadius: 3, border: 'none', background: '#034EA2', color: '#fff', fontSize: '0.82rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}>
+              <Plus size={14} />Nova publicação
+            </button>
+          </div>
+        )}
       </div>
 
-      {showForm && (
-        <FormModal onClose={() => setShowForm(false)} onCreated={handleCreated} />
-      )}
+      {/* Modals */}
       {editTarget && (
         <FormModal
           editItem={editTarget}
@@ -331,83 +277,61 @@ export default function FeedbackPage() {
           onSaved={updated => { handleResponded(updated); addToast('success', 'Resposta salva', ''); }}
         />
       )}
+
+      {/* Selection mode bulk toolbar */}
       {selectionMode && (
         <div style={{
           position: 'fixed', bottom: 28, left: '50%', transform: 'translateX(-50%)',
           display: 'flex', alignItems: 'center', gap: 6,
-          background: '#fff', border: '1px solid var(--border-light)',
-          borderRadius: 'var(--radius-lg)', padding: '8px 12px',
+          background: '#fff', border: '1px solid var(--border)',
+          borderRadius: 6, padding: '8px 12px',
           boxShadow: '0 4px 24px rgba(3,78,162,0.13), 0 1px 4px rgba(3,78,162,0.07)',
           zIndex: 200, whiteSpace: 'nowrap',
         }}>
-          <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 700, marginRight: 4 }}>
+          <span style={{ fontSize: '0.8rem', color: 'var(--text-2)', fontWeight: 700, marginRight: 4 }}>
             {selectedIds.size} selecionado(s)
           </span>
-          <div style={{ width: 1, height: 18, background: 'var(--border-light)', margin: '0 4px' }} />
+          <div style={{ width: 1, height: 18, background: 'var(--line-1)', margin: '0 4px' }} />
           <button
             onClick={handleSelectAll}
             style={{
-              padding: '5px 12px', borderRadius: 'var(--radius-sm)',
-              border: '1px solid var(--border-light)', background: 'var(--bg-subtle)',
-              color: 'var(--text-secondary)', fontSize: '0.78rem', fontWeight: 600,
+              padding: '5px 12px', borderRadius: 3,
+              border: '1px solid var(--border)', background: 'var(--surface-2)',
+              color: 'var(--text-2)', fontSize: '0.78rem', fontWeight: 600,
               cursor: 'pointer', fontFamily: 'inherit',
             }}
-            onMouseEnter={e => (e.currentTarget.style.background = 'var(--primary-light)')}
-            onMouseLeave={e => (e.currentTarget.style.background = 'var(--bg-subtle)')}
           >
             Selecionar todos
           </button>
-          <div style={{ width: 1, height: 18, background: 'var(--border-light)', margin: '0 4px' }} />
+          <div style={{ width: 1, height: 18, background: 'var(--line-1)', margin: '0 4px' }} />
           <button
             onClick={() => { if (selectedIds.size > 0) setBulkDeletePending(true); }}
             disabled={selectedIds.size === 0}
             style={{
-              padding: '5px 12px', borderRadius: 'var(--radius-sm)',
-              border: '1px solid var(--border-light)',
+              padding: '5px 12px', borderRadius: 3,
+              border: '1px solid var(--border)',
               background: selectedIds.size > 0 ? 'rgba(239,65,35,0.07)' : 'transparent',
-              color: selectedIds.size > 0 ? '#ef4123' : 'var(--text-muted)',
+              color: selectedIds.size > 0 ? '#ef4123' : 'var(--text-3)',
               fontSize: '0.78rem', fontWeight: 600,
               cursor: selectedIds.size > 0 ? 'pointer' : 'not-allowed',
               fontFamily: 'inherit',
             }}
-            onMouseEnter={e => { if (selectedIds.size > 0) e.currentTarget.style.background = 'rgba(239,65,35,0.14)'; }}
-            onMouseLeave={e => { e.currentTarget.style.background = selectedIds.size > 0 ? 'rgba(239,65,35,0.07)' : 'transparent'; }}
           >
             Excluir
           </button>
-          <div style={{ width: 1, height: 18, background: 'var(--border-light)', margin: '0 4px' }} />
+          <div style={{ width: 1, height: 18, background: 'var(--line-1)', margin: '0 4px' }} />
           <button
             onClick={handleCancelSelect}
             style={{
-              padding: '5px 10px', borderRadius: 'var(--radius-sm)',
+              padding: '5px 10px', borderRadius: 3,
               border: '1px solid transparent', background: 'transparent',
-              color: 'var(--text-muted)', fontSize: '0.78rem',
+              color: 'var(--text-3)', fontSize: '0.78rem',
               cursor: 'pointer', fontFamily: 'inherit',
             }}
-            onMouseEnter={e => (e.currentTarget.style.color = 'var(--text-primary)')}
-            onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-muted)')}
           >
             Cancelar
           </button>
         </div>
-      )}
-
-      {/* FAB */}
-      {!selectionMode && (
-        <button
-          onClick={() => setShowForm(true)}
-          title="Nova publicação"
-          style={{
-            position: 'fixed', bottom: 32, right: 32, zIndex: 900,
-            width: 52, height: 52, borderRadius: '50%',
-            background: 'var(--primary)', color: '#fff', border: 'none',
-            boxShadow: '0 4px 16px rgba(3,78,162,0.35)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            cursor: 'pointer',
-          }}
-        >
-          <Plus width={24} height={24} />
-        </button>
       )}
 
       <ConfirmModal

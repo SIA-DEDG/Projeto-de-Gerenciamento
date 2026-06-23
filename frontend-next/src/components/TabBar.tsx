@@ -24,7 +24,12 @@ const BOARD_LIKE: Set<Tab['type']> = new Set(['board', 'minhas-atividades']);
 
 // ── TabBar ────────────────────────────────────────────────────────────────────
 
-export default function TabBar() {
+interface TabBarProps {
+  /** Conteúdo renderizado na direita da tab bar (ex: botão "Nova atividade") */
+  rightSlot?: React.ReactNode;
+}
+
+export default function TabBar({ rightSlot }: TabBarProps = {}) {
   const { tabs, activeTabId, openTab, closeTab, activateTab, renameTab } = useTabs();
 
   const [renamingId, setRenamingId] = useState<string | null>(null);
@@ -147,6 +152,9 @@ export default function TabBar() {
 
       {/* Spacer */}
       <div style={{ flex: 1 }} />
+
+      {/* Slot direito (ex: "Nova atividade") */}
+      {rightSlot}
     </div>
   );
 }

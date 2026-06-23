@@ -9,13 +9,15 @@ interface Props {
   right?: React.ReactNode;
   /** Conteúdo entre o header e a TabBar (ex.: sub-tabs de página) */
   below?: React.ReactNode;
+  /** Conteúdo no lado direito da tab bar (ex.: botão "Nova atividade") */
+  tabBarRight?: React.ReactNode;
 }
 
 /**
  * Header padronizado de página: eyebrow + título + conteúdo direita,
  * seguido automaticamente da TabBar global de navegação.
  */
-export default function PageHeader({ eyebrow, title, right, below }: Props) {
+export default function PageHeader({ eyebrow, title, right, below, tabBarRight }: Props) {
   return (
     <>
       <div style={{
@@ -42,7 +44,7 @@ export default function PageHeader({ eyebrow, title, right, below }: Props) {
       </div>
 
       {/* Tab bar global — sempre abaixo do título */}
-      <TabBar />
+      <TabBar rightSlot={tabBarRight} />
     </>
   );
 }

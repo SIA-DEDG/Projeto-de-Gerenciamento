@@ -133,17 +133,19 @@ export default function ProjetosPage() {
         eyebrow="Portfólio da DEDG"
         title="Projetos"
         right={
-          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 7, border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '6px 10px', background: 'var(--surface)' }}>
-              <Search size={13} style={{ color: 'var(--text-3)', flexShrink: 0 }} />
-              <input type="text" placeholder="Buscar projeto..." value={search} onChange={(e) => setSearch(e.target.value)} style={{ border: 'none', outline: 'none', background: 'none', fontSize: '0.82rem', color: 'var(--text)', width: 180, fontFamily: 'inherit' }} />
-            </div>
-            <button className="btn btn-primary btn-sm" onClick={() => setProjectModal({ open: true, project: null })}>
-              <Plus size={13} />Novo projeto
-            </button>
-          </div>
+          <button className="btn btn-primary btn-sm" onClick={() => setProjectModal({ open: true, project: null })}>
+            <Plus size={13} />Novo projeto
+          </button>
         }
       />
+
+      {/* ── Search bar ── */}
+      <div style={{ padding: '14px 32px 0', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 7, border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '6px 10px', background: 'var(--surface)', maxWidth: 320 }}>
+          <Search size={13} style={{ color: 'var(--text-3)', flexShrink: 0 }} />
+          <input type="text" placeholder="Buscar projeto..." value={search} onChange={(e) => setSearch(e.target.value)} style={{ border: 'none', outline: 'none', background: 'none', fontSize: '0.82rem', color: 'var(--text)', width: '100%', fontFamily: 'inherit' }} />
+        </div>
+      </div>
 
       {loading ? (
         <div className="loading-state">Carregando projetos…</div>
@@ -158,34 +160,77 @@ export default function ProjetosPage() {
                 const pPct   = pTasks.length > 0 ? Math.round((pDone / pTasks.length) * 100) : 0;
                 const color  = projectColor(project.id);
                 const isSelected = selectedProject?.id === project.id;
+                // Build member list from users linked to this project's tasks
+                const memberNames = Array.from(new Set(
+                  pTasks.flatMap(t => [t.responsible, ...(t.co_responsibles ? (() => { try { return JSON.parse(t.co_responsibles!) as string[]; } catch { return []; } })() : [])]).filter(Boolean)
+                )) as string[];
                 return (
                   <div
                     key={project.id}
-                    className="project-row"
                     onClick={() => setSelectedProject(isSelected ? null : project)}
-                    style={{ background: isSelected ? 'var(--surface-2)' : undefined }}
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: '1fr 200px 130px 100px',
+                      gap: 24,
+                      padding: '18px 32px',
+                      alignItems: 'center',
+                      borderBottom: '1px solid var(--line-2)',
+                      cursor: 'pointer',
+                      background: isSelected ? 'var(--surface-2)' : undefined,
+                      transition: 'background 0.1s',
+                    }}
+                    onMouseEnter={(e) => { if (!isSelected) (e.currentTarget as HTMLElement).style.background = 'var(--surface-2)'; }}
+                    onMouseLeave={(e) => { if (!isSelected) (e.currentTarget as HTMLElement).style.background = ''; }}
                   >
-                    <div className="project-row-dot" style={{ background: statusDot(project.executive_status ?? '') }} />
-                    <span className="project-row-name">{project.name}</span>
-                    {project.executive_status && (
-                      <span className="project-row-status">{project.executive_status}</span>
-                    )}
-                    <div className="project-row-progress">
-                      <div className="project-row-progress-fill" style={{ width: `${pPct}%`, background: color }} />
-                    </div>
-                    <span className="project-row-count mono">{pTasks.length} ativ.</span>
-                    {project.owner && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0 }}>
-                        <div className="task-avatar" style={{ background: avatarColor(project.owner) }}>{initials(project.owner)}</div>
+                    {/* Col 1: dot + name + status chip + description */}
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <div style={{ width: 7, height: 7, borderRadius: '50%', background: statusDot(project.executive_status ?? ''), flexShrink: 0 }} />
+                        <span style={{ fontSize: '0.96rem', fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{project.name}</span>
+                        {project.executive_status && (
+                          <span style={{ fontSize: '0.68rem', fontWeight: 600, color: 'var(--text-3)', background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 3, padding: '2px 7px', flexShrink: 0, fontFamily: 'var(--mono)', letterSpacing: '0.3px', textTransform: 'uppercase' }}>{project.executive_status}</span>
+                        )}
+                        <div style={{ display: 'flex', gap: 4, marginLeft: 'auto', opacity: 0, transition: 'opacity 0.1s' }} className="project-row-actions"
+                          onClick={(e) => e.stopPropagation()}
+                          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.opacity = '1'; }}
+                          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = '0'; }}
+                        >
+                          <button className="btn btn-ghost btn-xs" onClick={() => setProjectModal({ open: true, project })}><Pencil size={12} /></button>
+                          <button className="btn btn-danger btn-xs" onClick={(e) => handleDeleteProject(project.id, e)}><Trash2 size={12} /></button>
+                        </div>
                       </div>
-                    )}
-                    <div style={{ display: 'flex', gap: 4, flexShrink: 0, opacity: 0 }} className="project-row-actions"
-                      onClick={(e) => e.stopPropagation()}
-                      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.opacity = '1'; }}
-                      onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = '0'; }}
-                    >
-                      <button className="btn btn-ghost btn-xs" onClick={() => setProjectModal({ open: true, project })}><Pencil size={12} /></button>
-                      <button className="btn btn-danger btn-xs" onClick={(e) => handleDeleteProject(project.id, e)}><Trash2 size={12} /></button>
+                      {project.objective && (
+                        <div style={{ fontSize: '0.79rem', color: 'var(--text-2)', marginTop: 5, paddingLeft: 17, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{project.objective}</div>
+                      )}
+                    </div>
+
+                    {/* Col 2: overlapping member avatars */}
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                      {(memberNames.length > 0 ? memberNames : project.owner ? [project.owner] : []).slice(0, 5).map((name, i) => {
+                        const bg = avatarColor(name);
+                        const inits = name.split(' ').filter(Boolean).map((w: string) => w[0]).slice(0, 2).join('').toUpperCase();
+                        return (
+                          <div key={name} title={name} style={{ width: 24, height: 24, borderRadius: '50%', background: bg, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.58rem', fontWeight: 600, marginLeft: i > 0 ? -5 : 0, border: '1.5px solid var(--surface)', flexShrink: 0, zIndex: 5 - i, fontFamily: 'var(--mono)' }}>
+                            {inits}
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Col 3: progress label + bar */}
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 5 }}>
+                        <span className="mono" style={{ fontSize: '0.6rem', color: 'var(--text-3)' }}>Progresso</span>
+                        <span className="mono" style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text)' }}>{pPct}%</span>
+                      </div>
+                      <div style={{ height: 5, background: 'var(--line-1)', borderRadius: 3, overflow: 'hidden' }}>
+                        <div style={{ height: '100%', width: `${pPct}%`, background: color, borderRadius: 3, transition: 'width 0.3s' }} />
+                      </div>
+                    </div>
+
+                    {/* Col 4: task count */}
+                    <div style={{ textAlign: 'right' }}>
+                      <span className="mono" style={{ fontSize: '0.7rem', color: 'var(--text-3)' }}>{pTasks.length} atividades</span>
                     </div>
                   </div>
                 );

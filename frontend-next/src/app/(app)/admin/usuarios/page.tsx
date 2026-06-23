@@ -175,40 +175,88 @@ export default function UsuariosPage() {
         }
       />
 
-      <div style={{ flex: 1, overflowY: 'auto', padding: '28px 40px' }}>
-        {successMsg && (
-          <div style={{ marginBottom: 16, padding: '12px 16px', background: '#e3fcef', borderRadius: 3, color: '#006644', fontSize: '0.88rem', display: 'flex', justifyContent: 'space-between', border: '1px solid #abf5d1' }}>
-            <span>{successMsg}</span>
-            <button type="button" onClick={() => setSuccessMsg('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#006644', fontWeight: 700 }}>×</button>
-          </div>
-        )}
-        {error && (
-          <div style={{ marginBottom: 16, padding: '12px 16px', background: '#ffebe6', borderRadius: 3, color: '#bf2600', fontSize: '0.88rem', display: 'flex', justifyContent: 'space-between', border: '1px solid #ffbdad' }}>
-            <span>{error}</span>
-            <button type="button" onClick={() => setError('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#bf2600', fontWeight: 700 }}>×</button>
-          </div>
-        )}
+      {/* Mensagens de sucesso/erro */}
+      {(successMsg || error) && (
+        <div style={{ padding: '0 32px', marginTop: 12 }}>
+          {successMsg && (
+            <div style={{ padding: '10px 14px', background: '#e3fcef', borderRadius: 3, color: '#006644', fontSize: '0.82rem', display: 'flex', justifyContent: 'space-between', border: '1px solid #abf5d1', marginBottom: 8 }}>
+              <span>{successMsg}</span>
+              <button type="button" onClick={() => setSuccessMsg('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#006644', fontWeight: 700 }}>×</button>
+            </div>
+          )}
+          {error && (
+            <div style={{ padding: '10px 14px', background: '#ffebe6', borderRadius: 3, color: '#bf2600', fontSize: '0.82rem', display: 'flex', justifyContent: 'space-between', border: '1px solid #ffbdad' }}>
+              <span>{error}</span>
+              <button type="button" onClick={() => setError('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#bf2600', fontWeight: 700 }}>×</button>
+            </div>
+          )}
+        </div>
+      )}
 
+      <div style={{ flex: 1, overflowY: 'auto', borderTop: '1px solid var(--line-1)', marginTop: 24 }}>
         {loading ? (
-          <p style={{ color: 'var(--text-muted)' }}>Carregando usuários…</p>
+          <div className="loading-state">Carregando usuários…</div>
+        ) : filtered.length === 0 ? (
+          <div className="empty-state"><p>{search ? 'Nenhum usuário encontrado.' : 'Nenhum usuário cadastrado.'}</p></div>
         ) : (
-          <div style={{ background: '#fff', borderRadius: 3, border: '1px solid var(--border-light)', boxShadow: '0 2px 12px rgba(3,78,162,0.06)', overflow: 'hidden' }}>
-            <div style={{ height: 3, background: 'var(--primary)' }} />
-            {filtered.length === 0 ? (
-              <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-muted)' }}>
-                {search ? 'Nenhum usuário encontrado.' : 'Nenhum usuário cadastrado.'}
-              </div>
-            ) : (
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
-                <thead>
-                  <tr style={{ background: 'var(--bg-app)' }}>
-                    <th style={thSt}>Colaborador</th>
-                    <th style={thSt}>Usuário</th>
-                    <th style={thSt}>Perfil</th>
-                    <th style={thSt}>Cadastro</th>
-                    <th style={{ ...thSt, textAlign: 'right' }}>Ações</th>
-                  </tr>
-                </thead>
+          <div>
+            {/* Table header */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 160px 140px 100px', gap: 18, padding: '12px 32px', background: 'var(--surface-2)', borderBottom: '1px solid var(--line-1)' }}>
+              {['Colaborador','Perfil','Desde',''].map((h, i) => (
+                <span key={i} className="mono" style={{ fontSize: '0.64rem', fontWeight: 500, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--text-3)' }}>{h}</span>
+              ))}
+            </div>
+
+            {/* Rows — grid 1fr 160px 140px 100px */}
+            {filtered.map((user) => {
+              const isSelf = user.id === myId;
+              const targetIsAdmin = user.role === 'Admin';
+              const canAct = iAmAdmin || !targetIsAdmin;
+              const roles = allowedRoles(user);
+              const color = avatarColor(user.name);
+              const inits = user.name.split(' ').map((w: string) => w[0]).slice(0, 2).join('').toUpperCase();
+              const roleColor = roleBadgeStyle(user.role).color as string;
+              return (
+                <div key={user.id}
+                  style={{ display: 'grid', gridTemplateColumns: '1fr 160px 140px 100px', gap: 18, padding: '14px 32px', alignItems: 'center', borderBottom: '1px solid var(--line-2)' }}
+                  onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-2)')}
+                  onMouseLeave={e => (e.currentTarget.style.background = '')}>
+                  {/* Col 1: avatar + name + @username */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
+                    <div className="mono" style={{ width: 34, height: 34, borderRadius: '50%', flexShrink: 0, background: color, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.62rem', fontWeight: 600 }}>{inits}</div>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: '0.86rem', fontWeight: 500, color: 'var(--text)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                        {user.name}
+                        {isSelf && <span className="mono" style={{ fontSize: '0.6rem', color: '#034EA2', fontWeight: 600, background: '#034EA20d', borderRadius: 3, padding: '1px 6px' }}>Você</span>}
+                      </div>
+                      <div className="mono" style={{ fontSize: '0.64rem', color: 'var(--text-3)', letterSpacing: '0.3px', marginTop: 1 }}>@{user.username}</div>
+                    </div>
+                  </div>
+                  {/* Col 2: role chip */}
+                  <span className="mono" style={{ fontSize: '0.66rem', fontWeight: 600, letterSpacing: '0.5px', textTransform: 'uppercase', color: roleColor, background: (roleColor || '#034EA2') + '14', padding: '3px 9px', borderRadius: 3, whiteSpace: 'nowrap', justifySelf: 'start' }}>
+                    {ALL_ROLES.find(r => r.value === user.role)?.label ?? user.role}
+                  </span>
+                  {/* Col 3: since date */}
+                  <span className="mono" style={{ fontSize: '0.7rem', color: 'var(--text-3)', letterSpacing: '0.3px' }}>
+                    {user.created_at ? new Date(user.created_at).toLocaleDateString('pt-BR') : '—'}
+                  </span>
+                  {/* Col 4: actions */}
+                  <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end', alignItems: 'center' }}>
+                    {canAct && !isSelf && (
+                      <button type="button" onClick={() => handleDelete(user)} disabled={deleting === user.id}
+                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 30, height: 30, border: '1px solid var(--border)', borderRadius: 3, background: 'var(--surface)', color: 'var(--text-2)', cursor: deleting === user.id ? 'not-allowed' : 'pointer', opacity: deleting === user.id ? 0.5 : 1 }}
+                        onMouseEnter={e => { e.currentTarget.style.borderColor = '#b42318'; e.currentTarget.style.color = '#b42318'; e.currentTarget.style.background = '#fdf2f2'; }}
+                        onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-2)'; e.currentTarget.style.background = 'var(--surface)'; }}>
+                        <Trash2 size={13} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+            {false && ( // keep old table structure for TS compliance
+              <table style={{ display: 'none' }}>
+                <thead><tr><th></th></tr></thead>
                 <tbody>
                   {filtered.map((user, idx) => {
                     const isSelf = user.id === myId;
