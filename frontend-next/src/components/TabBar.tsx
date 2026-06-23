@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import Link from 'next/link';
 import { LayoutGrid, List, Calendar } from 'lucide-react';
-import { useTabs, useActiveTab, type Tab } from '@/context/TabsContext';
+import { useTabs, useActiveTab, PAGE_INFO, type Tab } from '@/context/TabsContext';
 
 function ViewIcon({ view }: { view: string }) {
   const size = 11;
@@ -62,6 +63,7 @@ export default function TabBar({ rightSlot }: TabBarProps = {}) {
   }, [tabs, activeTabId]);
 
   function startRename(tab: Tab, e: React.MouseEvent) {
+    e.preventDefault();
     e.stopPropagation();
     setRenamingId(tab.id);
     setRenameVal(tab.name);
@@ -81,7 +83,6 @@ export default function TabBar({ rightSlot }: TabBarProps = {}) {
   function onDragStart(e: React.DragEvent, index: number) {
     dragIndexRef.current = index;
     e.dataTransfer.effectAllowed = 'move';
-    // Mínimo ghost image para que não apareça o fantasma padrão
     const ghost = document.createElement('div');
     ghost.style.cssText = 'position:absolute;top:-9999px;opacity:0;';
     document.body.appendChild(ghost);
@@ -112,16 +113,14 @@ export default function TabBar({ rightSlot }: TabBarProps = {}) {
   }
 
   return (
-    <div
-      ref={barRef}
-      className="tab-bar ssel"
-    >
+    <div ref={barRef} className="tab-bar ssel">
       {tabs.map((tab, index) => {
-        const active   = tab.id === activeTabId;
-        const filtered = tabHasFilters(tab);
-        const canClose = tabs.length > 1;
-        const isBoard  = BOARD_LIKE.has(tab.type);
+        const active      = tab.id === activeTabId;
+        const filtered    = tabHasFilters(tab);
+        const canClose    = tabs.length > 1;
+        const isBoard     = BOARD_LIKE.has(tab.type);
         const isDragTarget = dragOverIndex === index && dragIndexRef.current !== index;
+        const href        = PAGE_INFO[tab.type].path;
 
         return (
           <div
@@ -129,47 +128,52 @@ export default function TabBar({ rightSlot }: TabBarProps = {}) {
             data-active={active}
             draggable
             className={`tab-item${active ? ' active' : ''}${isDragTarget ? ' drag-over' : ''}`}
-            onClick={() => renamingId !== tab.id && activateTab(tab.id)}
             onDoubleClick={(e) => startRename(tab, e)}
             onDragStart={(e) => onDragStart(e, index)}
             onDragOver={(e) => onDragOver(e, index)}
             onDrop={(e) => onDrop(e, index)}
             onDragEnd={onDragEnd}
             title={renamingId !== tab.id ? tab.name : undefined}
-            style={isDragTarget ? { borderLeft: '2px solid #034EA2' } : undefined}
           >
-            {/* View icon prefix */}
-            {isBoard && renamingId !== tab.id && (
-              <span className="tab-view-icon">
-                <ViewIcon view={tab.filters.view} />
-              </span>
-            )}
-
-            {/* Nome ou input de rename */}
             {renamingId === tab.id ? (
-              <input
-                ref={renameRef}
-                value={renameVal}
-                onChange={e => setRenameVal(e.target.value)}
-                onBlur={commitRename}
-                onKeyDown={handleKeyDown}
-                onClick={e => e.stopPropagation()}
-                className="tab-rename-input"
-              />
+              /* Rename mode — plain div, no Link navigation */
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0 12px', height: '100%' }}>
+                {isBoard && <span className="tab-view-icon"><ViewIcon view={tab.filters.view} /></span>}
+                <input
+                  ref={renameRef}
+                  value={renameVal}
+                  onChange={e => setRenameVal(e.target.value)}
+                  onBlur={commitRename}
+                  onKeyDown={handleKeyDown}
+                  onClick={e => e.stopPropagation()}
+                  className="tab-rename-input"
+                />
+              </div>
             ) : (
-              <span className="tab-name">{tab.name}</span>
-            )}
-
-            {/* Dot — filtros ativos */}
-            {filtered && renamingId !== tab.id && (
-              <span className="tab-filter-dot" />
+              /* Normal mode — Link for navigation + click to activate */
+              <Link
+                href={href}
+                onClick={() => activateTab(tab.id)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  padding: '0 12px', height: '100%',
+                  textDecoration: 'none', color: 'inherit',
+                  flex: 1, minWidth: 0,
+                }}
+              >
+                {isBoard && (
+                  <span className="tab-view-icon"><ViewIcon view={tab.filters.view} /></span>
+                )}
+                <span className="tab-name">{tab.name}</span>
+                {filtered && <span className="tab-filter-dot" />}
+              </Link>
             )}
 
             {/* Fechar */}
             {canClose && renamingId !== tab.id && (
               <span
                 className="tab-close"
-                onClick={e => { e.stopPropagation(); closeTab(tab.id); }}
+                onClick={e => { e.preventDefault(); e.stopPropagation(); closeTab(tab.id); }}
                 title="Fechar aba"
               >
                 ×

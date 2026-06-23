@@ -11,7 +11,7 @@ import { getUser, clearAuth, canManageUsers } from '@/lib/auth';
 import { fetchTasks, fetchFeedbacks } from '@/lib/api';
 import { onTasksChanged } from '@/lib/taskEvents';
 import { useRefetchOnFocus } from '@/lib/useRefetchOnFocus';
-import { useTabs, useActiveTab, type PageType } from '@/context/TabsContext';
+import { useTabs, useActiveTab, PAGE_INFO, type PageType } from '@/context/TabsContext';
 import Link from 'next/link';
 
 const ROLE_LABELS: Record<string, string> = {
@@ -84,13 +84,19 @@ export default function Sidebar({ onToggleTheme, isDark }: Props) {
 
   function handleLogout() { clearAuth(); router.replace('/login'); }
 
-  // Navigate via tab system
-  function nav(type: PageType) {
-    openTab(type);
-  }
+  // nav: atualiza estado da aba; a navegação real é feita pelo <Link>
+  function nav(type: PageType) { openTab(type); }
 
   function isActiveType(type: PageType) {
     return activeTab?.type === type ? 'sidebar-nav-link active' : 'sidebar-nav-link';
+  }
+
+  function NavLink({ type, children, style }: { type: PageType; children: React.ReactNode; style?: React.CSSProperties }) {
+    return (
+      <Link href={PAGE_INFO[type].path} onClick={() => nav(type)} className={isActiveType(type)} style={style}>
+        {children}
+      </Link>
+    );
   }
 
   const isAdmin = canManageUsers(user?.role);
@@ -115,13 +121,13 @@ export default function Sidebar({ onToggleTheme, isDark }: Props) {
           <span className="sidebar-group-label">Planejamento</span>
           <ul className="sidebar-nav">
             <li>
-              <button onClick={() => nav('board')} className={isActiveType('board')}>
+              <NavLink type="board">
                 <span className="nav-icon"><LayoutGrid size={17} /></span>
                 <span className="rail-label">Atividades</span>
-              </button>
+              </NavLink>
             </li>
             <li>
-              <button onClick={() => nav('minhas-atividades')} className={isActiveType('minhas-atividades')} style={{ justifyContent: 'space-between' }}>
+              <NavLink type="minhas-atividades" style={{ justifyContent: 'space-between' }}>
                 <span style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
                   <span className="nav-icon"><User size={17} /></span>
                   <span className="rail-label">Minhas atividades</span>
@@ -129,25 +135,25 @@ export default function Sidebar({ onToggleTheme, isDark }: Props) {
                 {pendingCount > 0 && (
                   <span className="sidebar-nav-badge rail-label">{pendingCount > 99 ? '99+' : pendingCount}</span>
                 )}
-              </button>
+              </NavLink>
             </li>
             <li>
-              <button onClick={() => nav('eventos')} className={isActiveType('eventos')}>
+              <NavLink type="eventos">
                 <span className="nav-icon"><CalendarDays size={17} /></span>
                 <span className="rail-label">Eventos</span>
-              </button>
+              </NavLink>
             </li>
             <li>
-              <button onClick={() => nav('faltas')} className={isActiveType('faltas')}>
+              <NavLink type="faltas">
                 <span className="nav-icon"><CalendarMinus size={17} /></span>
                 <span className="rail-label">Faltas</span>
-              </button>
+              </NavLink>
             </li>
             <li>
-              <button onClick={() => nav('arquivadas')} className={isActiveType('arquivadas')}>
+              <NavLink type="arquivadas">
                 <span className="nav-icon"><Archive size={17} /></span>
                 <span className="rail-label">Arquivadas</span>
-              </button>
+              </NavLink>
             </li>
           </ul>
         </div>
@@ -159,22 +165,22 @@ export default function Sidebar({ onToggleTheme, isDark }: Props) {
           <span className="sidebar-group-label">Análise</span>
           <ul className="sidebar-nav">
             <li>
-              <button onClick={() => nav('dashboards')} className={isActiveType('dashboards')}>
+              <NavLink type="dashboards">
                 <span className="nav-icon"><ChartPie size={17} /></span>
                 <span className="rail-label">Dashboards</span>
-              </button>
+              </NavLink>
             </li>
             <li>
-              <button onClick={() => nav('projetos')} className={isActiveType('projetos')}>
+              <NavLink type="projetos">
                 <span className="nav-icon"><Folder size={17} /></span>
                 <span className="rail-label">Projetos</span>
-              </button>
+              </NavLink>
             </li>
             <li>
-              <button onClick={() => nav('logs')} className={isActiveType('logs')}>
+              <NavLink type="logs">
                 <span className="nav-icon"><Logs size={17} /></span>
                 <span className="rail-label">Logs</span>
-              </button>
+              </NavLink>
             </li>
           </ul>
         </div>
@@ -186,13 +192,13 @@ export default function Sidebar({ onToggleTheme, isDark }: Props) {
           <span className="sidebar-group-label">Sistema</span>
           <ul className="sidebar-nav">
             <li>
-              <button onClick={() => nav('configuracoes')} className={isActiveType('configuracoes')}>
+              <NavLink type="configuracoes">
                 <span className="nav-icon"><Settings size={17} /></span>
                 <span className="rail-label">Configurações</span>
-              </button>
+              </NavLink>
             </li>
             <li>
-              <button onClick={() => nav('feedback')} className={isActiveType('feedback')} style={{ justifyContent: 'space-between' }}>
+              <NavLink type="feedback" style={{ justifyContent: 'space-between' }}>
                 <span style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
                   <span className="nav-icon"><MessageSquareWarning size={17} /></span>
                   <span className="rail-label">Feedback</span>
@@ -200,7 +206,7 @@ export default function Sidebar({ onToggleTheme, isDark }: Props) {
                 {pendingCountFeedback > 0 && (
                   <span className="sidebar-nav-badge rail-label">{pendingCountFeedback > 99 ? '99+' : pendingCountFeedback}</span>
                 )}
-              </button>
+              </NavLink>
             </li>
           </ul>
         </div>
@@ -213,16 +219,16 @@ export default function Sidebar({ onToggleTheme, isDark }: Props) {
               <span className="sidebar-group-label">Admin</span>
               <ul className="sidebar-nav">
                 <li>
-                  <button onClick={() => nav('admin-registro')} className={isActiveType('admin-registro')}>
+                  <NavLink type="admin-registro">
                     <span className="nav-icon"><UserRoundPlus size={17} /></span>
                     <span className="rail-label">Cadastrar usuário</span>
-                  </button>
+                  </NavLink>
                 </li>
                 <li>
-                  <button onClick={() => nav('admin-usuarios')} className={isActiveType('admin-usuarios')}>
+                  <NavLink type="admin-usuarios">
                     <span className="nav-icon"><UsersRound size={17} /></span>
                     <span className="rail-label">Gerenciar usuários</span>
-                  </button>
+                  </NavLink>
                 </li>
               </ul>
             </div>
@@ -252,10 +258,10 @@ export default function Sidebar({ onToggleTheme, isDark }: Props) {
 
           {menuOpen && (
             <div className="sidebar-user-menu">
-              <button className="sidebar-user-menu-item" onClick={() => { nav('configuracoes'); setMenuOpen(false); }}>
+              <Link href={PAGE_INFO['configuracoes'].path} onClick={() => { nav('configuracoes'); setMenuOpen(false); }} className="sidebar-user-menu-item">
                 <Settings size={14} />
                 Configurações
-              </button>
+              </Link>
               <button className="sidebar-user-menu-item danger" onClick={handleLogout}>
                 <LogOut size={14} />
                 Sair
