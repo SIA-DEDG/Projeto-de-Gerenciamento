@@ -145,7 +145,7 @@ function KanbanColumn({
             onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = '#034EA2'; (e.currentTarget as HTMLElement).style.background = 'var(--surface-2)'; }}
             onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--text-3)'; (e.currentTarget as HTMLElement).style.background = 'none'; }}
           >
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M5 12h14" /><path d="M12 5v14" /></svg>
+            <Plus size={13} strokeWidth={2} />
             Adicionar
           </button>
         )}

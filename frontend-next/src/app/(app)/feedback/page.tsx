@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { getUser } from '@/lib/auth';
 import { fetchFeedbacks, toggleFeedbackUpvote, setFeedbackStatus, deleteFeedback, type FeedbackItem } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
-import { Plus, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, ChevronLeft, ChevronRight, X, Send } from 'lucide-react';
 import ToastContainer from '@/components/ToastContainer';
 import ConfirmModal from '@/components/ConfirmModal';
 import FormModal from './_components/FormModal';
@@ -251,7 +251,7 @@ export default function FeedbackPage() {
                 <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text)' }}>Enviar feedback</div>
                 <button onClick={() => setShowForm(false)}
                   style={{ width: 26, height: 26, flexShrink: 0, borderRadius: 3, border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text-2)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                  <X size={14} strokeWidth={2} />
                 </button>
               </div>
               <p style={{ fontSize: '0.76rem', color: 'var(--text-3)', lineHeight: 1.5, margin: '0 0 18px' }}>
@@ -293,7 +293,7 @@ export default function FeedbackPage() {
                 style={{ width: '100%', padding: 10, border: 'none', borderRadius: 3, background: '#034EA2', color: '#fff', fontSize: '0.84rem', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, fontFamily: 'inherit' }}
                 onMouseEnter={e => (e.currentTarget.style.background = '#023e82')}
                 onMouseLeave={e => (e.currentTarget.style.background = '#034EA2')}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+                <Send size={14} strokeWidth={2} />
                 Publicar
               </button>
             </div>

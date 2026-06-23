@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import AppShell from '@/components/AppShell';
 import { isAuthenticated, getUser } from '@/lib/auth';
 
-export default function AppLayout({ children: _children }: { children: React.ReactNode }) {
+export default function AppLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [ready, setReady] = useState(false);
 
@@ -23,5 +23,5 @@ export default function AppLayout({ children: _children }: { children: React.Rea
   }, [router]);
 
   if (!ready) return null;
-  return <AppShell />;
+  return <AppShell>{children}</AppShell>;
 }

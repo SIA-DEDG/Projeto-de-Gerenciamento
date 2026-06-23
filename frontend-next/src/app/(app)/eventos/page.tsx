@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
-import { Trash2, Pencil, ChevronLeft, ChevronRight, Clock, ChevronDown, Check, Plus, FileText, Paperclip, X as XIcon, Calendar, Users, User } from 'lucide-react';
+import { Trash2, Pencil, ChevronLeft, ChevronRight, Clock, ChevronDown, Check, Plus, FileText, Paperclip, X as XIcon, Calendar, Users, User, MapPin } from 'lucide-react';
 import Calendario, { type CalendarioItem } from '@/components/Calendario';
 import {
   fetchEvents, createEvent, updateEvent, deleteEvent, fetchUsers,
@@ -780,7 +780,7 @@ export default function EventosPage() {
                         )}
                         {ev.attendees && (
                           <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: '0.74rem', color: 'var(--text-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 200 }}>
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg>
+                            <MapPin size={12} strokeWidth={1.8} />
                             {`${ev.event_type} · ${ev.attendees}`}
                           </span>
                         )}
@@ -1025,7 +1025,7 @@ export default function EventosPage() {
                       <select value={evEventType} onChange={e => setEvEventType(e.target.value)} style={{ ...inp, padding: '11px 32px 11px 13px', appearance: 'none', cursor: 'pointer' }}>
                         {EV_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                       </select>
-                      <svg style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-3)' }} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                      <ChevronDown size={12} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-3)' }} />
                     </div>
                   </div>
                   <div>
@@ -1048,7 +1048,7 @@ export default function EventosPage() {
                         </span>
                       ))
                     }
-                    <svg style={{ marginLeft: 'auto', color: 'var(--text-3)', flexShrink: 0 }} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                    <ChevronDown size={12} style={{ marginLeft: 'auto', color: 'var(--text-3)', flexShrink: 0 }} />
                   </div>
                   {respOpen && (
                     <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 3, boxShadow: '0 8px 24px rgba(0,0,0,0.12)', zIndex: 50, marginTop: 4 }}>

@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
+import { Check, ChevronUp, MessageSquare } from 'lucide-react';
 import { type FeedbackItem } from '@/lib/api';
 import { parseUpvotedBy } from './types';
 import CommentSection from './CommentSection';
@@ -84,7 +85,7 @@ export default function FeedbackCard({
           background: isSelected ? '#034EA2' : '#fff',
           display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none',
         }}>
-          {isSelected && <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>}
+          {isSelected && <Check size={9} color="#fff" strokeWidth={3} />}
         </div>
       )}
 
@@ -103,13 +104,11 @@ export default function FeedbackCard({
           onMouseEnter={e => { if (!voted) (e.currentTarget as HTMLElement).style.background = '#034EA20a'; }}
           onMouseLeave={e => { if (!voted) (e.currentTarget as HTMLElement).style.background = 'var(--surface-2)'; }}
         >
-          {/* Chevron up */}
-          <svg width="16" height="16" viewBox="0 0 24 24"
+          <ChevronUp
+            size={16} strokeWidth={2}
             fill={voted ? '#034EA2' : 'none'}
-            stroke={voted ? '#034EA2' : 'var(--text-3)'}
-            strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="m5 15 7-7 7 7" />
-          </svg>
+            color={voted ? '#034EA2' : 'var(--text-3)'}
+          />
           <span className="mono" style={{ fontSize: '0.8rem', fontWeight: 600, color: voted ? '#034EA2' : 'var(--text-2)' }}>
             {item.upvotes}
           </span>
@@ -176,7 +175,7 @@ export default function FeedbackCard({
             {/* Comment count */}
             <button onClick={() => setExpanded(v => !v)}
               style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, color: 'var(--text-3)', fontFamily: 'inherit', fontSize: '0.75rem' }}>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              <MessageSquare size={13} strokeWidth={2} />
               <span className="mono" style={{ fontSize: '0.7rem', fontWeight: 600 }}>{commentCount}</span>
             </button>
 

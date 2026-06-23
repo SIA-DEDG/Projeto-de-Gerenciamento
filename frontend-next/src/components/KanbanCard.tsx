@@ -1,7 +1,7 @@
 'use client';
 
 import { useDraggable } from '@dnd-kit/core';
-import { Check } from 'lucide-react';
+import { Check, Folder, Clock } from 'lucide-react';
 import { initials } from '@/lib/utils';
 import type { Task } from '@/types';
 
@@ -158,7 +158,7 @@ export default function KanbanCard({
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 13 }}>
         {(projectName || task.category) && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: 'var(--text-3)', fontSize: '0.72rem', minWidth: 0, flex: 1 }}>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z" /></svg>
+            <Folder size={12} strokeWidth={1.8} />
             <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 120 }}>
               {projectName || task.category}
             </span>
@@ -195,7 +195,7 @@ export default function KanbanCard({
       {/* Prazo (human-readable) */}
       {due && (
         <div className="mono" style={{ display: 'inline-flex', alignItems: 'center', gap: 5, marginTop: 11, fontSize: '0.66rem', fontWeight: 500, letterSpacing: '0.4px', color: due.color }}>
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
+          <Clock size={11} strokeWidth={2} />
           {due.text}
         </div>
       )}

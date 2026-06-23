@@ -1,7 +1,7 @@
 ﻿﻿'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Plus, AlertTriangle } from 'lucide-react';
+import { Plus, AlertTriangle, X, ChevronDown } from 'lucide-react';
 import Calendario, { type CalendarioItem } from '@/components/Calendario';
 import ConfirmModal from '@/components/ConfirmModal';
 import { useToast } from '@/hooks/useToast';
@@ -107,7 +107,7 @@ function FaltaModal({ users, currentUserId, onClose, onSaved }: {
           <button onClick={onClose} style={{ width: 30, height: 30, borderRadius: 3, border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text-2)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-2)')}
             onMouseLeave={e => (e.currentTarget.style.background = 'var(--surface)')}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+            <X size={14} strokeWidth={2} />
           </button>
         </div>
 
@@ -143,7 +143,7 @@ function FaltaModal({ users, currentUserId, onClose, onSaved }: {
                   <option value="">Selecionar...</option>
                   {users.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
                 </select>
-                <svg style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-3)' }} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                <ChevronDown size={12} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-3)' }} />
               </div>
             </div>
 
@@ -154,7 +154,7 @@ function FaltaModal({ users, currentUserId, onClose, onSaved }: {
                 <select value={reason} onChange={e => setReason(e.target.value)} style={{ ...inp, padding: '11px 32px 11px 13px', appearance: 'none', cursor: 'pointer' }}>
                   {REASONS.map(r => <option key={r} value={r}>{r}</option>)}
                 </select>
-                <svg style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-3)' }} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                <ChevronDown size={12} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-3)' }} />
               </div>
             </div>
 

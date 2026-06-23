@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { X, Paperclip, Trash2 } from 'lucide-react';
+import { X, Paperclip, Trash2, Clock, ChevronDown } from 'lucide-react';
 import type { Task, Project } from '@/types';
 import type { UserPublic } from '@/lib/api';
 import RichTextEditor from './RichTextEditor';
@@ -260,7 +260,7 @@ function PreviewCard({ activity, category, priority, status, responsible, deadli
         </div>
         {due && (
           <span className="mono" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: '0.64rem', fontWeight: 500, color: due.color }}>
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
+            <Clock size={10} strokeWidth={2} />
             {due.text}
           </span>
         )}
@@ -380,7 +380,7 @@ export default function ActivityModal({
                       <option value="">— Sem projeto —</option>
                       {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                     </select>
-                    <svg style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-3)' }} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
+                    <ChevronDown size={12} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-3)' }} />
                   </div>
                 </div>
               )}
@@ -397,7 +397,7 @@ export default function ActivityModal({
                     <option value="">— Sem responsável —</option>
                     {users.map(u => <option key={u.id} value={u.name}>{u.name}</option>)}
                   </select>
-                  <svg style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-3)' }} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
+                  <ChevronDown size={12} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-3)' }} />
                 </div>
               </div>
             </div>

@@ -1,7 +1,7 @@
 ﻿'use client';
 
 import { useState, useEffect } from 'react';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, ArrowRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { login } from '@/lib/api';
 import { setAuth, isAuthenticated } from '@/lib/auth';
@@ -148,7 +148,7 @@ export default function LoginPage() {
             {loading ? 'Entrando…' : (
               <>
                 Entrar
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                <ArrowRight size={16} strokeWidth={2} />
               </>
             )}
           </button>
