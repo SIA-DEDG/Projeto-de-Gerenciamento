@@ -549,8 +549,8 @@ export default function EventosPage() {
     setEditing(ev);
     setEvName(ev.name); setRespList(parseResps(ev.responsibles));
     setEvEventType(ev.event_type || 'Reunião');
-    setEvType((ev.event_type as 'Presencial'|'Online'|'Híbrido') || 'Presencial');
-    setEvLocal(ev.attendees ?? '');
+    setEvType('Presencial'); // modalidade não está na API, default
+    setEvLocal('');
     setAttendees(ev.attendees ?? '');
     setSelectedDates([ev.start_date]);
     setUseRange(ev.start_date !== ev.end_date);
@@ -563,16 +563,18 @@ export default function EventosPage() {
     const computedStart = useRange ? startDate : selectedDates[0] ?? '';
     const computedEnd   = useRange ? endDate   : selectedDates[selectedDates.length - 1] ?? '';
     if (!evName.trim() || !computedStart) { setFormErr('Preencha nome e data.'); return; }
-    if (useRange && computedStart > computedEnd) { setFormErr('Data de início n?o pode ser posterior à data de fim.'); return; }
+    if (useRange && computedStart > computedEnd) { setFormErr('Data de início não pode ser posterior à data de fim.'); return; }
     if (!useRange && selectedDates.length === 0) { setFormErr('Selecione ao menos um dia.'); return; }
     setFormErr(''); setSaving(true);
     const responsible_ids = respList
       .map((userName) => users.find((user) => user.name === userName)?.id)
       .filter((id): id is string => !!id);
+    // Combina local + participantes externos no campo attendees da API
+    const attendeesField = [evLocal.trim(), attendees.trim()].filter(Boolean).join(' · ') || null;
     const basePayload = {
       name: evName.trim(), responsible_ids,
       event_type: evEventType,
-      attendees: evLocal.trim() || null,
+      attendees: attendeesField,
       start_time: startTime || null,
       is_private: isPrivate,
       is_company_wide: false,
@@ -941,29 +943,30 @@ export default function EventosPage() {
         </div>
       )}
 
-      {/* ── DRAWER criar/editar evento (novo design) ── */}
+      {/* ── DRAWER criar/editar evento — novo design + estrutura completa ── */}
       {showModal && (() => {
         // Preview card data
-        const prevDate = startDate || todayStr;
+        const prevDate = (useRange ? startDate : selectedDates[0]) || todayStr;
         const prevDt = new Date(prevDate + 'T12:00:00');
         const WD_ABBR = ['DOM','SEG','TER','QUA','QUI','SEX','SÁB'];
         const MO_ABBR = ['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'];
         const prevWd  = WD_ABBR[prevDt.getDay()];
         const prevDay = String(prevDt.getDate()).padStart(2, '0');
         const prevMon = MO_ABBR[prevDt.getMonth()];
-        const prevMeta = [evEventType, startTime || '—', evType].filter(Boolean).join(' · ');
+        const prevMeta = [evEventType, startTime ? startTime : null, evType, evLocal ? evLocal : null].filter(Boolean).join(' · ');
 
         const inp: React.CSSProperties = { width: '100%', padding: '11px 13px', border: '1px solid var(--border)', borderRadius: 3, fontSize: '0.9rem', background: 'var(--surface)', color: 'var(--text)', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' };
-        const lbl: React.CSSProperties = { display: 'block', fontFamily: 'var(--mono)', fontSize: '0.68rem', fontWeight: 500, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--text-3)', marginBottom: 7 };
+        const lbl: React.CSSProperties = { display: 'block', fontFamily: 'var(--mono)', fontSize: '0.68rem', fontWeight: 500, letterSpacing: '1px', textTransform: 'uppercase' as const, color: 'var(--text-3)', marginBottom: 7 };
 
         return (
           <>
             {/* Backdrop */}
             <div onClick={() => setShowModal(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(7,22,45,0.32)', zIndex: 200 }} />
-            {/* Drawer */}
-            <div style={{ position: 'fixed', top: 0, right: 0, bottom: 0, width: 472, maxWidth: '94%', background: 'var(--surface)', overflowY: 'auto', zIndex: 201, borderLeft: '1px solid var(--line-1)', animation: 'drawin .24s cubic-bezier(.4,0,.2,1) both', display: 'flex', flexDirection: 'column' }}>
 
-              {/* Header */}
+            {/* Drawer 472px — right slide */}
+            <div className="ssel" style={{ position: 'fixed', top: 0, right: 0, bottom: 0, width: 472, maxWidth: '94%', background: 'var(--surface)', overflowY: 'auto', zIndex: 201, borderLeft: '1px solid var(--line-1)', animation: 'drawin .24s cubic-bezier(.4,0,.2,1) both', display: 'flex', flexDirection: 'column' }}>
+
+              {/* ── Header ── */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '22px 28px', borderBottom: '1px solid var(--line-1)', flexShrink: 0, position: 'sticky', top: 0, background: 'var(--surface)', zIndex: 2 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
                   <span style={{ width: 7, height: 7, borderRadius: 2, background: '#034EA2', flexShrink: 0 }} />
@@ -980,29 +983,24 @@ export default function EventosPage() {
 
               <div style={{ padding: '24px 28px 40px', display: 'flex', flexDirection: 'column', gap: 18 }}>
 
-                {/* Preview card */}
+                {/* ── Preview card ── */}
                 <div>
                   <div className="mono" style={{ fontSize: '0.62rem', fontWeight: 500, letterSpacing: '1.2px', textTransform: 'uppercase', color: 'var(--text-3)', marginBottom: 10 }}>Pré-visualização</div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 16, border: '1px solid var(--line-1)', borderRadius: 3, padding: '14px 16px', background: 'var(--surface-2)' }}>
-                    {/* Date block */}
                     <div className="mono" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: 46, flexShrink: 0, lineHeight: 1.15 }}>
                       <span style={{ fontSize: '0.56rem', fontWeight: 500, letterSpacing: '1px', color: 'var(--text-3)' }}>{prevWd}</span>
                       <span style={{ fontSize: '1.45rem', fontWeight: 600, color: 'var(--text)' }}>{prevDay}</span>
                       <span style={{ fontSize: '0.56rem', fontWeight: 500, letterSpacing: '1px', color: 'var(--text-3)' }}>{prevMon}</span>
                     </div>
-                    {/* Content */}
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: '0.9rem', fontWeight: 600, color: evName ? 'var(--text)' : 'var(--text-3)', lineHeight: 1.3 }}>
-                        {evName || 'Título do evento…'}
-                      </div>
-                      <div className="mono" style={{ fontSize: '0.62rem', color: 'var(--text-3)', letterSpacing: '0.4px', marginTop: 4 }}>{prevMeta}</div>
+                      <div style={{ fontSize: '0.9rem', fontWeight: 600, color: evName ? 'var(--text)' : 'var(--text-3)', lineHeight: 1.3 }}>{evName || 'Título do evento…'}</div>
+                      <div className="mono" style={{ fontSize: '0.62rem', color: 'var(--text-3)', letterSpacing: '0.4px', marginTop: 4 }}>{prevMeta || '—'}</div>
                     </div>
-                    {/* Avatars */}
                     <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
                       {respList.slice(0, 3).map((name, i) => {
                         const inits = name.split(' ').filter(Boolean).map((w: string) => w[0]).slice(0, 2).join('').toUpperCase();
                         return (
-                          <div key={name} className="mono" title={name} style={{ width: 24, height: 24, borderRadius: '50%', background: '#072f63', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.6rem', fontWeight: 500, marginLeft: i > 0 ? -6 : 0, border: '1.5px solid var(--surface-2)', flexShrink: 0, letterSpacing: '0.5px' }}>
+                          <div key={name} className="mono" title={name} style={{ width: 24, height: 24, borderRadius: '50%', background: '#072f63', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.6rem', fontWeight: 500, marginLeft: i > 0 ? -6 : 0, border: '1.5px solid var(--surface-2)', flexShrink: 0 }}>
                             {inits}
                           </div>
                         );
@@ -1011,15 +1009,15 @@ export default function EventosPage() {
                   </div>
                 </div>
 
-                {/* Título */}
+                {/* ── Título ── */}
                 <div>
-                  <label style={lbl}>Título</label>
+                  <label style={lbl}>Título *</label>
                   <input value={evName} onChange={e => setEvName(e.target.value)} placeholder="Ex: Reunião de planejamento" style={inp}
                     onFocus={e => { e.target.style.borderColor = '#034EA2'; e.target.style.boxShadow = 'inset 0 0 0 1px #034EA2'; }}
                     onBlur={e => { e.target.style.borderColor = 'var(--border)'; e.target.style.boxShadow = 'none'; }} />
                 </div>
 
-                {/* Tipo + Horário (grid 1fr 110px) */}
+                {/* ── Tipo + Horário (grid 1fr 110px) ── */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 110px', gap: 14 }}>
                   <div>
                     <label style={lbl}>Tipo</label>
@@ -1037,14 +1035,47 @@ export default function EventosPage() {
                   </div>
                 </div>
 
-                {/* Data */}
-                <div>
-                  <label style={lbl}>Data</label>
-                  <input type="date" value={startDate} onChange={e => { setStartDate(e.target.value); if (!useRange) setEndDate(e.target.value); }} style={inp}
-                    onFocus={e => { e.target.style.borderColor = '#034EA2'; }} onBlur={e => { e.target.style.borderColor = 'var(--border)'; }} />
+                {/* ── Responsável(eis) — dropdown com busca ── */}
+                <div style={{ position: 'relative' }}>
+                  <label style={lbl}>Responsável(eis)</label>
+                  <div onClick={() => setRespOpen(o => !o)} style={{ ...inp, cursor: 'pointer', display: 'flex', flexWrap: 'wrap', gap: 5, minHeight: 44, alignItems: 'center' }}>
+                    {respList.length === 0
+                      ? <span style={{ color: 'var(--text-3)', fontSize: '0.85rem' }}>Selecione responsáveis…</span>
+                      : respList.map(name => (
+                        <span key={name} style={{ background: 'rgba(3,78,162,0.08)', color: '#034EA2', borderRadius: 3, padding: '2px 7px', fontSize: '0.78rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
+                          {name}
+                          <button onClick={e => { e.stopPropagation(); toggleResp(name); }} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: '#034EA2', lineHeight: 1, fontSize: '1rem' }}>×</button>
+                        </span>
+                      ))
+                    }
+                    <svg style={{ marginLeft: 'auto', color: 'var(--text-3)', flexShrink: 0 }} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                  </div>
+                  {respOpen && (
+                    <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 3, boxShadow: '0 8px 24px rgba(0,0,0,0.12)', zIndex: 50, marginTop: 4 }}>
+                      <div style={{ padding: '8px 10px', borderBottom: '1px solid var(--line-2)' }}>
+                        <input autoFocus type="text" value={respSearch} onChange={e => setRespSearch(e.target.value)} placeholder="Buscar…" style={{ ...inp, padding: '7px 10px', fontSize: '0.82rem' }} onClick={e => e.stopPropagation()} />
+                      </div>
+                      <div style={{ maxHeight: 180, overflowY: 'auto' }}>
+                        {filteredUsers.map(u => (
+                          <div key={u.id} onClick={() => toggleResp(u.name)} style={{ padding: '9px 12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, background: respList.includes(u.name) ? 'rgba(3,78,162,0.04)' : 'transparent', fontSize: '0.85rem', color: 'var(--text)', transition: 'background 0.1s' }}
+                            onMouseEnter={e => { if (!respList.includes(u.name)) (e.currentTarget as HTMLElement).style.background = 'var(--surface-2)'; }}
+                            onMouseLeave={e => { if (!respList.includes(u.name)) (e.currentTarget as HTMLElement).style.background = 'transparent'; }}>
+                            <span style={{ width: 16, height: 16, borderRadius: 3, border: `2px solid ${respList.includes(u.name) ? '#034EA2' : 'var(--border)'}`, background: respList.includes(u.name) ? '#034EA2' : 'var(--surface)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                              {respList.includes(u.name) && <Check size={9} color="#fff" strokeWidth={2.5} />}
+                            </span>
+                            {u.name}
+                            <span className="mono" style={{ marginLeft: 'auto', fontSize: '0.68rem', color: 'var(--text-3)' }}>{u.role}</span>
+                          </div>
+                        ))}
+                      </div>
+                      <div style={{ padding: '6px 10px', borderTop: '1px solid var(--line-1)', textAlign: 'right' }}>
+                        <button onClick={() => setRespOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.8rem', color: '#034EA2', fontWeight: 600, fontFamily: 'inherit' }}>Fechar</button>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
-                {/* Modalidade (segmented) + Local/link */}
+                {/* ── Modalidade (segmented) + Local/link ── */}
                 <div>
                   <label style={lbl}>Modalidade</label>
                   <div style={{ display: 'flex', border: '1px solid var(--border)', borderRadius: 3, overflow: 'hidden', marginBottom: 10 }}>
@@ -1063,32 +1094,87 @@ export default function EventosPage() {
                     onBlur={e => { e.target.style.borderColor = 'var(--border)'; e.target.style.boxShadow = 'none'; }} />
                 </div>
 
-                {/* Participantes (chips) */}
+                {/* ── Data(s): Dia único vs Intervalo ── */}
                 <div>
-                  <label style={lbl}>Participantes</label>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
-                    {users.map(u => {
-                      const active = respList.includes(u.name);
-                      return (
-                        <button key={u.id} type="button" onClick={() => setRespList(prev => active ? prev.filter(n => n !== u.name) : [...prev, u.name])}
-                          style={{ padding: '7px 11px', borderRadius: 3, cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.78rem', border: `1px solid ${active ? '#034EA2' : 'var(--border)'}`, background: active ? 'rgba(3,78,162,0.06)' : 'var(--surface)', color: active ? '#034EA2' : 'var(--text-2)', fontWeight: active ? 600 : 500, transition: 'all 0.12s' }}>
-                          {u.name}
-                        </button>
-                      );
-                    })}
+                  <label style={lbl}>Data(s) *</label>
+                  {/* Toggle Dia único / Intervalo */}
+                  <div style={{ display: 'flex', background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 3, padding: 3, gap: 2, marginBottom: 12 }}>
+                    {([false, true] as const).map(isRange => (
+                      <button key={String(isRange)} type="button" onClick={() => setUseRange(isRange)}
+                        style={{ flex: 1, padding: '6px 0', borderRadius: 2, border: 'none', cursor: 'pointer', fontSize: '0.82rem', fontWeight: 600, fontFamily: 'inherit', background: useRange === isRange ? 'var(--surface)' : 'transparent', color: useRange === isRange ? '#034EA2' : 'var(--text-2)', boxShadow: useRange === isRange ? '0 1px 3px rgba(0,0,0,0.08)' : 'none', transition: 'all 0.15s' }}>
+                        {isRange ? 'Intervalo' : 'Dia único'}
+                      </button>
+                    ))}
+                  </div>
+
+                  {useRange ? (
+                    <EventDateRangePicker from={startDate} to={endDate} onChange={(f, t) => { setStartDate(f); setEndDate(t); }} />
+                  ) : (
+                    <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                      <EventDayPicker selected={selectedDates} onChange={setSelectedDates} initialDate={selectedDates[0]} />
+                      <div style={{ paddingTop: 4, flex: 1 }}>
+                        <div className="mono" style={{ fontSize: '0.68rem', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--text-3)', marginBottom: 6 }}>
+                          {selectedDates.length > 1 ? `${selectedDates.length} dias` : 'Selecionado'}
+                        </div>
+                        {selectedDates.length === 0 ? (
+                          <span style={{ fontSize: '0.78rem', color: 'var(--text-3)', fontStyle: 'italic' }}>Nenhum dia selecionado</span>
+                        ) : (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, maxHeight: selectedDates.length >= 6 ? 130 : 'none', overflowY: selectedDates.length >= 6 ? 'auto' : 'visible' }}>
+                            {selectedDates.map(d => (
+                              <div key={d} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                                <span style={{ background: 'rgba(3,78,162,0.08)', color: '#034EA2', borderRadius: 3, padding: '3px 7px', fontSize: '0.75rem', fontWeight: 600, flex: 1, whiteSpace: 'nowrap' }}>{formatDateFull(d)}</span>
+                                <button type="button" onClick={() => setSelectedDates(selectedDates.filter(x => x !== d))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)', fontSize: '1rem', lineHeight: 1, padding: '0 2px', flexShrink: 0 }}>×</button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        {selectedDates.length > 1 && (
+                          <div className="mono" style={{ marginTop: 8, fontSize: '0.68rem', color: 'var(--text-3)', fontStyle: 'italic' }}>
+                            Serão criados {selectedDates.length} eventos
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* ── Quem vai comparecer (participantes externos) ── */}
+                <div>
+                  <label style={lbl}>Quem vai comparecer</label>
+                  <textarea value={attendees} onChange={e => setAttendees(e.target.value)} rows={2}
+                    placeholder="Ex: Equipe de vendas, Diretoria, parceiros externos…"
+                    style={{ ...inp, resize: 'vertical', minHeight: 68, lineHeight: 1.5 }}
+                    onFocus={e => { e.target.style.borderColor = '#034EA2'; e.target.style.boxShadow = 'inset 0 0 0 1px #034EA2'; }}
+                    onBlur={e => { e.target.style.borderColor = 'var(--border)'; e.target.style.boxShadow = 'none'; }} />
+                </div>
+
+                {/* ── Visibilidade ── */}
+                <div>
+                  <label style={lbl}>Visibilidade</label>
+                  <div onClick={() => setIsPrivate(v => !v)}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 14px', borderRadius: 3, border: `1px solid ${isPrivate ? '#034EA2' : 'var(--border)'}`, background: isPrivate ? 'rgba(3,78,162,0.04)' : 'var(--surface)', cursor: 'pointer', userSelect: 'none', transition: 'all 0.12s' }}>
+                    <div>
+                      <div style={{ fontSize: '0.85rem', fontWeight: 600, color: isPrivate ? '#034EA2' : 'var(--text)' }}>Privado</div>
+                      <div style={{ fontSize: '0.73rem', color: 'var(--text-3)', marginTop: 1 }}>Visível só para você e superiores</div>
+                    </div>
+                    <div style={{ width: 38, height: 22, borderRadius: 3, background: isPrivate ? '#034EA2' : 'var(--border)', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
+                      <div style={{ position: 'absolute', top: 3, left: isPrivate ? 19 : 3, width: 16, height: 16, borderRadius: '50%', background: '#fff', transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
+                    </div>
                   </div>
                 </div>
 
                 {formErr && <p style={{ color: '#b42318', fontSize: '0.82rem', margin: 0 }}>{formErr}</p>}
 
-                {/* Buttons */}
+                {/* ── Botões ── */}
                 <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
-                  <button onClick={handleSave} disabled={saving} style={{ flex: 1, padding: 12, border: 'none', borderRadius: 3, background: saving ? 'var(--text-3)' : '#034EA2', color: '#fff', fontSize: '0.84rem', fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}
+                  <button onClick={handleSave} disabled={saving}
+                    style={{ flex: 1, padding: 12, border: 'none', borderRadius: 3, background: saving ? 'var(--text-3)' : '#034EA2', color: '#fff', fontSize: '0.84rem', fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}
                     onMouseEnter={e => { if (!saving) (e.currentTarget.style.background = '#023e82'); }}
-                    onMouseLeave={e => { if (!saving) (e.currentTarget.style.background = '#034EA2'); }}>
+                    onMouseLeave={e => { if (!saving) (e.currentTarget.style.background = saving ? 'var(--text-3)' : '#034EA2'); }}>
                     {saving ? 'Salvando…' : editing ? 'Salvar alterações' : 'Criar evento'}
                   </button>
-                  <button onClick={() => setShowModal(false)} style={{ padding: '12px 18px', border: '1px solid var(--border)', borderRadius: 3, background: 'var(--surface)', color: 'var(--text)', fontSize: '0.84rem', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}
+                  <button onClick={() => setShowModal(false)}
+                    style={{ padding: '12px 18px', border: '1px solid var(--border)', borderRadius: 3, background: 'var(--surface)', color: 'var(--text)', fontSize: '0.84rem', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}
                     onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-2)')}
                     onMouseLeave={e => (e.currentTarget.style.background = 'var(--surface)')}>
                     Cancelar
