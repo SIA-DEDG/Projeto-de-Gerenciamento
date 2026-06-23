@@ -286,19 +286,27 @@ export default function FaltasPage() {
               <div key={row.id} style={{ display: 'grid', gridTemplateColumns: '1.3fr 150px 120px 1.4fr 160px', gap: 18, padding: '15px 32px', alignItems: 'center', borderBottom: '1px solid var(--line-2)' }}>
                 {/* Servidor */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 11, minWidth: 0 }}>
-                  <div className="mono" style={{ width: 32, height: 32, borderRadius: '50%', background: avatarBg(row.employee_name), color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.68rem', fontWeight: 500, flexShrink: 0 }}>
+                  <div className="mono" style={{ width: 28, height: 28, borderRadius: '50%', background: '#072f63', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: `${28 * 0.36}px`, fontWeight: 500, flexShrink: 0, border: '1.5px solid var(--surface)', letterSpacing: '0.5px' }}>
                     {initials(row.employee_name)}
                   </div>
                   <span style={{ fontSize: '0.86rem', fontWeight: 500, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{row.employee_name}</span>
                 </div>
 
                 {/* Tipo */}
-                <span className="mono" style={{ fontSize: '0.68rem', fontWeight: 500, letterSpacing: '0.4px', textTransform: 'uppercase', color: reasonColor }}>{row.reason}</span>
+                <span className="mono" style={{ fontSize: '0.68rem', fontWeight: 500, letterSpacing: '0.4px', textTransform: 'uppercase', color: 'var(--text-2)' }}>{row.reason}</span>
 
                 {/* Período */}
-                <div>
-                  <div className="mono" style={{ fontSize: '0.76rem', fontWeight: 500, color: 'var(--text)' }}>{startFmt}{endFmt ? ` → ${endFmt}` : ''}</div>
-                </div>
+                {(() => {
+                  const start = new Date(row.start_date + 'T12:00:00');
+                  const end = new Date(row.end_date + 'T12:00:00');
+                  const daysDiff = Math.round((end.getTime() - start.getTime()) / 86400000) + 1;
+                  return (
+                    <div>
+                      <div className="mono" style={{ fontSize: '0.76rem', fontWeight: 500, color: 'var(--text)' }}>{startFmt}{endFmt ? ` – ${endFmt}` : ''}</div>
+                      <div className="mono" style={{ fontSize: '0.62rem', color: 'var(--text-3)', marginTop: 1 }}>{daysDiff === 1 ? '1 dia' : `${daysDiff} dias`}</div>
+                    </div>
+                  );
+                })()}
 
                 {/* Justificativa */}
                 <span style={{ fontSize: '0.8rem', color: 'var(--text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{row.justification || <span style={{ color: 'var(--text-3)', fontStyle: 'italic' }}>Sem justificativa</span>}</span>

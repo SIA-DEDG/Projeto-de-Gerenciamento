@@ -737,7 +737,7 @@ export default function EventosPage() {
                 const dt = parseDateUTC(ev.start_date);
                 const isPast = ev.end_date < todayStr;
                 const resps = parseResps(ev.responsibles);
-                const dateColor = isPast ? 'var(--text-3)' : 'var(--text)';
+                const dateColor = isPast ? 'var(--text-2)' : '#034EA2';
                 return (
                   <div key={ev.id} onClick={() => { setPreview({ event: ev, cursorX: 0, cursorY: 0 }); }}
                     style={{ display: 'flex', alignItems: 'center', gap: 18, padding: '16px 32px', borderTop: '1px solid var(--line-2)', cursor: 'pointer', transition: 'background 0.12s' }}
@@ -756,7 +756,7 @@ export default function EventosPage() {
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <span className="mono" style={{ fontSize: '0.6rem', fontWeight: 500, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--text-3)' }}>{ev.event_type}</span>
                         <span style={{ color: 'var(--border)' }}>·</span>
-                        <span className="mono" style={{ fontSize: '0.6rem', fontWeight: 500, letterSpacing: '0.5px', textTransform: 'uppercase', color: isPast ? 'var(--text-3)' : '#034EA2' }}>
+                        <span className="mono" style={{ fontSize: '0.6rem', fontWeight: 500, letterSpacing: '0.5px', textTransform: 'uppercase', color: isPast ? 'var(--text-2)' : '#034EA2' }}>
                           {isPast ? 'Realizado' : 'Agendado'}
                         </span>
                       </div>
@@ -769,7 +769,10 @@ export default function EventosPage() {
                           </span>
                         )}
                         {ev.attendees && (
-                          <span style={{ fontSize: '0.74rem', color: 'var(--text-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 200 }}>{ev.attendees}</span>
+                          <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: '0.74rem', color: 'var(--text-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 200 }}>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg>
+                            {ev.attendees}
+                          </span>
                         )}
                       </div>
                     </div>
@@ -778,12 +781,9 @@ export default function EventosPage() {
                       {resps.length > 0 && (
                         <div style={{ display: 'flex', alignItems: 'center' }}>
                           {resps.slice(0, 3).map((name, i) => {
-                            const colors = ['#034EA2','#1B8A4B','#b42318','#A87A00'];
-                            let h = 0; for (const c of name) h = (h * 31 + c.charCodeAt(0)) | 0;
-                            const bg = colors[Math.abs(h) % colors.length];
                             const inits = name.split(' ').filter(Boolean).map((w: string) => w[0]).slice(0, 2).join('').toUpperCase();
                             return (
-                              <div key={name} className="mono" title={name} style={{ width: 28, height: 28, borderRadius: '50%', background: bg, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.6rem', fontWeight: 600, marginLeft: i > 0 ? -6 : 0, border: '2px solid var(--surface)', flexShrink: 0, zIndex: 3 - i }}>
+                              <div key={name} className="mono" title={name} style={{ width: 28, height: 28, borderRadius: '50%', background: '#072f63', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.6rem', fontWeight: 500, marginLeft: i > 0 ? -6 : 0, border: '1.5px solid var(--surface)', flexShrink: 0, zIndex: 3 - i }}>
                                 {inits}
                               </div>
                             );
@@ -791,17 +791,12 @@ export default function EventosPage() {
                         </div>
                       )}
                       {/* Badge de ata */}
-                      {ev.minutes_file_name ? (
-                        <span className="mono" style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: '0.62rem', fontWeight: 500, letterSpacing: '0.5px', textTransform: 'uppercase', color: '#157F3C' }}>
+                      {(ev.minutes_file_name || isPast) && (
+                        <span className="mono" style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: '0.62rem', fontWeight: 500, letterSpacing: '0.5px', textTransform: 'uppercase', color: ev.minutes_file_name ? '#157F3C' : '#A87A00' }}>
                           <Paperclip size={11} />
-                          Anexada
+                          {ev.minutes_file_name ? 'Ata anexada' : 'Ata pendente'}
                         </span>
-                      ) : isPast ? (
-                        <span className="mono" style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: '0.62rem', fontWeight: 500, letterSpacing: '0.5px', textTransform: 'uppercase', color: '#A87A00' }}>
-                          <Paperclip size={11} />
-                          Pendente
-                        </span>
-                      ) : null}
+                      )}
                     </div>
                   </div>
                 );

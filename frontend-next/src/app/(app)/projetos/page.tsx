@@ -168,70 +168,49 @@ export default function ProjetosPage() {
                   <div
                     key={project.id}
                     onClick={() => setSelectedProject(isSelected ? null : project)}
-                    style={{
-                      display: 'grid',
-                      gridTemplateColumns: '1fr 200px 130px 100px',
-                      gap: 24,
-                      padding: '18px 32px',
-                      alignItems: 'center',
-                      borderBottom: '1px solid var(--line-2)',
-                      cursor: 'pointer',
-                      background: isSelected ? 'var(--surface-2)' : undefined,
-                      transition: 'background 0.1s',
-                    }}
-                    onMouseEnter={(e) => { if (!isSelected) (e.currentTarget as HTMLElement).style.background = 'var(--surface-2)'; }}
-                    onMouseLeave={(e) => { if (!isSelected) (e.currentTarget as HTMLElement).style.background = ''; }}
+                    style={{ display: 'grid', gridTemplateColumns: '1fr 200px 130px 100px', gap: 24, padding: '18px 32px', alignItems: 'center', borderBottom: '1px solid var(--line-2)', cursor: 'pointer', transition: 'background 0.1s' }}
+                    onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--surface-2)'; }}
+                    onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = ''; }}
                   >
-                    {/* Col 1: dot + name + status chip + description */}
+                    {/* Col 1: dot + name + status chip + desc */}
                     <div style={{ minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <div style={{ width: 7, height: 7, borderRadius: '50%', background: statusDot(project.executive_status ?? ''), flexShrink: 0 }} />
-                        <span style={{ fontSize: '0.96rem', fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{project.name}</span>
+                        <span style={{ width: 7, height: 7, borderRadius: 2, background: color, flexShrink: 0 }} />
+                        <span style={{ fontWeight: 600, fontSize: '0.96rem', color: 'var(--text)', letterSpacing: '-0.3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{project.name}</span>
                         {project.executive_status && (
-                          <span style={{ fontSize: '0.68rem', fontWeight: 600, color: 'var(--text-3)', background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 3, padding: '2px 7px', flexShrink: 0, fontFamily: 'var(--mono)', letterSpacing: '0.3px', textTransform: 'uppercase' }}>{project.executive_status}</span>
+                          <span className="mono" style={{ fontSize: '0.62rem', fontWeight: 500, letterSpacing: '0.5px', textTransform: 'uppercase', color: color, background: color + '14', padding: '2px 8px', borderRadius: 3, flexShrink: 0 }}>{project.executive_status}</span>
                         )}
-                        <div style={{ display: 'flex', gap: 4, marginLeft: 'auto', opacity: 0, transition: 'opacity 0.1s' }} className="project-row-actions"
-                          onClick={(e) => e.stopPropagation()}
-                          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.opacity = '1'; }}
-                          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = '0'; }}
-                        >
-                          <button className="btn btn-ghost btn-xs" onClick={() => setProjectModal({ open: true, project })}><Pencil size={12} /></button>
-                          <button className="btn btn-danger btn-xs" onClick={(e) => handleDeleteProject(project.id, e)}><Trash2 size={12} /></button>
-                        </div>
                       </div>
                       {project.objective && (
-                        <div style={{ fontSize: '0.79rem', color: 'var(--text-2)', marginTop: 5, paddingLeft: 17, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{project.objective}</div>
+                        <p style={{ fontSize: '0.79rem', color: 'var(--text-2)', lineHeight: 1.5, marginTop: 5, paddingLeft: 17, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '52ch' }}>{project.objective}</p>
                       )}
                     </div>
 
-                    {/* Col 2: overlapping member avatars */}
+                    {/* Col 2: member avatars (26px, #072f63, overlap -6px) */}
                     <div style={{ display: 'flex', alignItems: 'center' }}>
                       {(memberNames.length > 0 ? memberNames : project.owner ? [project.owner] : []).slice(0, 5).map((name, i) => {
-                        const bg = avatarColor(name);
                         const inits = name.split(' ').filter(Boolean).map((w: string) => w[0]).slice(0, 2).join('').toUpperCase();
                         return (
-                          <div key={name} title={name} style={{ width: 24, height: 24, borderRadius: '50%', background: bg, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.58rem', fontWeight: 600, marginLeft: i > 0 ? -5 : 0, border: '1.5px solid var(--surface)', flexShrink: 0, zIndex: 5 - i, fontFamily: 'var(--mono)' }}>
+                          <div key={name} className="mono" title={name} style={{ width: 26, height: 26, borderRadius: '50%', background: '#072f63', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 500, fontSize: `${26 * 0.36}px`, marginLeft: i > 0 ? -6 : 0, border: '1.5px solid var(--surface)', flexShrink: 0, zIndex: 5 - i, letterSpacing: '0.5px' }}>
                             {inits}
                           </div>
                         );
                       })}
                     </div>
 
-                    {/* Col 3: progress label + bar */}
+                    {/* Col 3: Progresso + barra */}
                     <div>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 5 }}>
-                        <span className="mono" style={{ fontSize: '0.6rem', color: 'var(--text-3)' }}>Progresso</span>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
+                        <span className="mono" style={{ fontSize: '0.6rem', letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--text-3)' }}>Progresso</span>
                         <span className="mono" style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text)' }}>{pPct}%</span>
                       </div>
-                      <div style={{ height: 5, background: 'var(--line-1)', borderRadius: 3, overflow: 'hidden' }}>
-                        <div style={{ height: '100%', width: `${pPct}%`, background: color, borderRadius: 3, transition: 'width 0.3s' }} />
+                      <div style={{ height: 5, background: 'var(--line-2)', borderRadius: 2 }}>
+                        <div style={{ height: '100%', width: `${pPct}%`, background: '#034EA2', borderRadius: 2, transition: 'width 0.3s' }} />
                       </div>
                     </div>
 
                     {/* Col 4: task count */}
-                    <div style={{ textAlign: 'right' }}>
-                      <span className="mono" style={{ fontSize: '0.7rem', color: 'var(--text-3)' }}>{pTasks.length} atividades</span>
-                    </div>
+                    <div className="mono" style={{ fontSize: '0.7rem', color: 'var(--text-3)', textAlign: 'right', letterSpacing: '0.3px' }}>{pTasks.length} atividades</div>
                   </div>
                 );
               })}
@@ -253,91 +232,154 @@ export default function ProjetosPage() {
             )}
           </div>
 
-          {/* Painel lateral do projeto selecionado */}
-          {selectedProject && (
-            <div style={{ width: 420, borderLeft: '1px solid var(--line-1)', overflow: 'auto', display: 'flex', flexDirection: 'column' }}>
-              <div style={{ padding: '18px 20px 14px', borderBottom: '1px solid var(--line-1)', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexShrink: 0 }}>
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: statusDot(selectedProject.executive_status ?? ''), flexShrink: 0 }} />
-                    <h2 style={{ fontSize: '0.98rem', fontWeight: 700, color: 'var(--text)', lineHeight: 1.3 }}>{selectedProject.name}</h2>
-                  </div>
-                  <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}>
-                    {selectedProject.owner && (
-                      <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.72rem', color: 'var(--text-3)' }}><User size={11} />{selectedProject.owner}</span>
-                    )}
-                    {selectedProject.deadline && (
-                      <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.72rem', color: 'var(--text-3)' }} className="mono"><Calendar size={11} />{selectedProject.deadline}</span>
-                    )}
-                  </div>
-                </div>
-                <button className="btn btn-ghost btn-xs" onClick={() => setSelectedProject(null)}><X size={14} /></button>
-              </div>
-
-              {/* Progresso */}
-              <div style={{ padding: '12px 20px', borderBottom: '1px solid var(--line-1)', flexShrink: 0 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
-                  <span style={{ fontSize: '0.68rem', fontWeight: 600, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.07em', fontFamily: 'var(--mono)' }}>Progresso</span>
-                  <span className="mono" style={{ fontSize: '0.68rem', fontWeight: 600, color: 'var(--blue)' }}>{progressPct}%</span>
-                </div>
-                <div style={{ height: 3, background: 'var(--line-1)', borderRadius: 2 }}>
-                  <div style={{ height: '100%', width: `${progressPct}%`, background: 'var(--blue)', borderRadius: 2, transition: 'width 0.3s ease' }} />
-                </div>
-                <div style={{ display: 'flex', gap: 12, marginTop: 6 }}>
-                  <span className="mono" style={{ fontSize: '0.62rem', color: 'var(--text-3)' }}>{doneCount}/{linkedTasks.length} concluídas</span>
-                </div>
-              </div>
-
-              {/* Objetivo / Escopo / Resumo */}
-              <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--line-1)', display: 'flex', flexDirection: 'column', gap: 12, flexShrink: 0 }}>
-                {selectedProject.objective && (
-                  <div>
-                    <div style={{ fontFamily: 'var(--mono)', fontSize: '0.58rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-3)', marginBottom: 4 }}>Objetivo</div>
-                    <p style={{ fontSize: '0.78rem', color: 'var(--text-2)', lineHeight: 1.6 }}>{selectedProject.objective}</p>
-                  </div>
-                )}
-                {selectedProject.scope && (
-                  <div>
-                    <div style={{ fontFamily: 'var(--mono)', fontSize: '0.58rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-3)', marginBottom: 4 }}>Escopo</div>
-                    <p style={{ fontSize: '0.78rem', color: 'var(--text-2)', lineHeight: 1.6 }}>{selectedProject.scope}</p>
-                  </div>
-                )}
-              </div>
-
-              {/* Atividades vinculadas */}
-              <div style={{ padding: '12px 20px 0', flex: 1, overflow: 'auto' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-                  <span style={{ fontFamily: 'var(--mono)', fontSize: '0.6rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-3)' }}>Atividades ({linkedTasks.length})</span>
-                  <button className="btn btn-primary btn-xs" onClick={() => setActivityModal({ open: true, task: null, projectId: selectedProject.id })}><Plus size={11} />Adicionar</button>
-                </div>
-                {linkedTasks.length === 0
-                  ? <div className="empty-state" style={{ padding: '20px 0' }}><p>Nenhuma atividade vinculada.</p></div>
-                  : linkedTasks.map((t) => (
-                    <div key={t.id} onClick={() => setTaskDrawer(t)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 0', borderBottom: '1px solid var(--line-2)', cursor: 'pointer', transition: 'background 0.1s' }}
-                      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--surface-2)'; (e.currentTarget as HTMLElement).style.margin = '0 -20px'; (e.currentTarget as HTMLElement).style.padding = '9px 20px'; }}
-                      onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = ''; (e.currentTarget as HTMLElement).style.margin = ''; (e.currentTarget as HTMLElement).style.padding = '9px 0'; }}>
-                      <div style={{ width: 2, height: 28, background: t.status_group === 'done' ? 'var(--s-done)' : t.status_group === 'review' ? 'var(--s-review)' : t.status_group === 'in_progress' ? 'var(--s-progress)' : 'var(--s-pending)', borderRadius: 1, flexShrink: 0 }} />
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.activity}</div>
-                        <div style={{ fontSize: '0.65rem', color: 'var(--text-3)', display: 'flex', gap: 6, marginTop: 2 }}>
-                          <span className="mono">{statusGroupLabel(t.status_group)}</span>
-                          {t.responsible && <span>· {t.responsible}</span>}
-                        </div>
-                      </div>
-                      {t.status_group === 'done' && <Check size={12} style={{ color: 'var(--s-done)', flexShrink: 0 }} />}
-                    </div>
-                  ))
-                }
-              </div>
-
-              <div style={{ padding: '12px 20px', borderTop: '1px solid var(--line-1)', display: 'flex', gap: 6, flexShrink: 0 }}>
-                <button className="btn btn-secondary btn-sm" style={{ flex: 1 }} onClick={() => setProjectModal({ open: true, project: selectedProject })}><Pencil size={12} />Editar</button>
-                <button className="btn btn-danger btn-sm" onClick={(e) => handleDeleteProject(selectedProject.id, e)}><Trash2 size={12} /></button>
-              </div>
-            </div>
-          )}
         </div>
       )}
+
+      {/* Drawer do projeto — overlay fixo conforme design */}
+      {selectedProject && (() => {
+        const pTasks2 = tasks.filter(t => t.project_id === selectedProject.id);
+        const pDone2  = pTasks2.filter(t => t.status_group === 'done').length;
+        const pPct2   = pTasks2.length > 0 ? Math.round((pDone2 / pTasks2.length) * 100) : 0;
+        const dotColor = projectColor(selectedProject.id);
+        const memberNames2 = Array.from(new Set(
+          pTasks2.flatMap(t => [t.responsible, ...(t.co_responsibles ? (() => { try { return JSON.parse(t.co_responsibles!) as string[]; } catch { return []; } })() : [])]).filter(Boolean)
+        )) as string[];
+        const nameInitials = selectedProject.name.split(' ').filter(Boolean).slice(0, 2).map((w: string) => w[0]).join('').toUpperCase();
+        const statusColors2: Record<string, string> = { pending: '#9aa1ac', in_progress: '#034EA2', review: '#E0A92E', done: '#1B8A4B' };
+        return (
+          <>
+            {/* Backdrop */}
+            <div onClick={() => setSelectedProject(null)}
+              style={{ position: 'fixed', inset: 0, background: 'rgba(7,22,45,0.28)', zIndex: 50 }} />
+            {/* Drawer */}
+            <div className="ssel" onClick={e => e.stopPropagation()}
+              style={{ position: 'fixed', top: 0, right: 0, bottom: 0, width: 560, maxWidth: '96%', background: 'var(--surface)', overflowY: 'auto', zIndex: 51, borderLeft: '1px solid var(--line-1)', animation: 'drawin .26s cubic-bezier(.4,0,.2,1) both' }}>
+
+              {/* 4px stripe — 4 cores Gov-PI */}
+              <div style={{ height: 4, background: 'linear-gradient(90deg,#034EA2 0 40%,#E0A92E 40% 55%,#b42318 55% 75%,#1B8A4B 75%)', flexShrink: 0 }} />
+
+              {/* Header: icon box + name + status + close */}
+              <div style={{ padding: '22px 28px', borderBottom: '1px solid var(--line-1)', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 14 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 14, minWidth: 0 }}>
+                  <div className="mono" style={{ width: 44, height: 44, borderRadius: 4, background: dotColor + '14', color: dotColor, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '0.88rem', flexShrink: 0 }}>
+                    {nameInitials}
+                  </div>
+                  <div style={{ minWidth: 0 }}>
+                    <div className="mono" style={{ fontSize: '0.62rem', fontWeight: 500, color: 'var(--text-3)', letterSpacing: '1px', textTransform: 'uppercase' }}>Projeto</div>
+                    <div style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--text)', letterSpacing: '-0.4px', marginTop: 3 }}>{selectedProject.name}</div>
+                    {selectedProject.executive_status && (
+                      <div className="mono" style={{ fontSize: '0.66rem', fontWeight: 500, letterSpacing: '0.5px', textTransform: 'uppercase', color: dotColor, marginTop: 3 }}>{selectedProject.executive_status}</div>
+                    )}
+                  </div>
+                </div>
+                <button onClick={() => setSelectedProject(null)}
+                  style={{ width: 30, height: 30, borderRadius: 3, border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text-2)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+                  onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-2)')}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'var(--surface)')}>
+                  <X size={15} />
+                </button>
+              </div>
+
+              {/* 3-column stat strip */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', borderBottom: '1px solid var(--line-1)' }}>
+                {/* Progresso */}
+                <div style={{ padding: '14px 20px', borderRight: '1px solid var(--line-1)' }}>
+                  <div className="mono" style={{ fontSize: '0.62rem', color: 'var(--text-3)', letterSpacing: '1px', textTransform: 'uppercase' }}>Progresso</div>
+                  <div className="mono" style={{ fontSize: '1.35rem', fontWeight: 600, color: 'var(--text)', marginTop: 5 }}>{pPct2}%</div>
+                  <div style={{ height: 4, background: 'var(--line-2)', borderRadius: 2, marginTop: 8 }}>
+                    <div style={{ height: '100%', width: `${pPct2}%`, background: '#034EA2', borderRadius: 2 }} />
+                  </div>
+                </div>
+                {/* Atividades */}
+                <div style={{ padding: '14px 20px', borderRight: '1px solid var(--line-1)' }}>
+                  <div className="mono" style={{ fontSize: '0.62rem', color: 'var(--text-3)', letterSpacing: '1px', textTransform: 'uppercase' }}>Atividades</div>
+                  <div className="mono" style={{ fontSize: '1.35rem', fontWeight: 600, color: 'var(--text)', marginTop: 5 }}>{pTasks2.length}</div>
+                </div>
+                {/* Equipe */}
+                <div style={{ padding: '14px 20px' }}>
+                  <div className="mono" style={{ fontSize: '0.62rem', color: 'var(--text-3)', letterSpacing: '1px', textTransform: 'uppercase' }}>Equipe</div>
+                  <div style={{ display: 'flex', alignItems: 'center', marginTop: 8 }}>
+                    {memberNames2.slice(0, 5).map((name, i) => {
+                      const inits = name.split(' ').filter(Boolean).map((w: string) => w[0]).slice(0, 2).join('').toUpperCase();
+                      return (
+                        <div key={name} className="mono" title={name} style={{ width: 26, height: 26, borderRadius: '50%', background: '#072f63', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 500, fontSize: `${26 * 0.36}px`, marginLeft: i > 0 ? -6 : 0, border: '1.5px solid var(--surface)', flexShrink: 0, letterSpacing: '0.5px' }}>
+                          {inits}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              {/* Content sections */}
+              <div style={{ padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+                {selectedProject.objective && (
+                  <div>
+                    <div className="mono" style={{ fontSize: '0.62rem', fontWeight: 500, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--text-3)', marginBottom: 8 }}>Objetivo</div>
+                    <p style={{ fontSize: '0.86rem', color: 'var(--text-2)', lineHeight: 1.65 }}>{selectedProject.objective}</p>
+                  </div>
+                )}
+
+                {selectedProject.objective && selectedProject.scope && <div style={{ height: 1, background: 'var(--line-2)' }} />}
+
+                {selectedProject.scope && (
+                  <div>
+                    <div className="mono" style={{ fontSize: '0.62rem', fontWeight: 500, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--text-3)', marginBottom: 8 }}>Escopo</div>
+                    <p style={{ fontSize: '0.86rem', color: 'var(--text-2)', lineHeight: 1.65 }}>{selectedProject.scope}</p>
+                  </div>
+                )}
+
+                {selectedProject.scope && selectedProject.summary && <div style={{ height: 1, background: 'var(--line-2)' }} />}
+
+                {selectedProject.summary && (
+                  <div>
+                    <div className="mono" style={{ fontSize: '0.62rem', fontWeight: 500, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--text-3)', marginBottom: 8 }}>Resumo atual</div>
+                    <p style={{ fontSize: '0.86rem', color: 'var(--text-2)', lineHeight: 1.65 }}>{selectedProject.summary}</p>
+                  </div>
+                )}
+
+                <div style={{ height: 1, background: 'var(--line-2)' }} />
+
+                {/* Atividades vinculadas */}
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                    <div className="mono" style={{ fontSize: '0.62rem', fontWeight: 500, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--text-3)' }}>Atividades vinculadas</div>
+                    <button onClick={() => setActivityModal({ open: true, task: null, projectId: selectedProject.id })}
+                      style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 11px', border: 'none', borderRadius: 3, background: '#034EA2', color: '#fff', fontSize: '0.74rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
+                      onMouseEnter={e => (e.currentTarget.style.background = '#023e82')}
+                      onMouseLeave={e => (e.currentTarget.style.background = '#034EA2')}>
+                      <Plus size={12} />Nova atividade
+                    </button>
+                  </div>
+                  {pTasks2.length === 0
+                    ? <div className="empty-state" style={{ padding: '20px 0' }}><p>Nenhuma atividade vinculada.</p></div>
+                    : pTasks2.map(t => (
+                      <div key={t.id} onClick={() => setTaskDrawer(t)}
+                        style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '12px 0', borderBottom: '1px solid var(--line-2)', cursor: 'pointer' }}
+                        onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'var(--surface-2)'}
+                        onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = ''}>
+                        <span style={{ width: 3, height: 26, borderRadius: 2, background: statusColors2[t.status_group] ?? '#9aa1ac', flexShrink: 0 }} />
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: '0.85rem', fontWeight: 500, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.activity}</div>
+                          <div className="mono" style={{ fontSize: '0.62rem', color: 'var(--text-3)', letterSpacing: '0.5px', textTransform: 'uppercase', marginTop: 2 }}>{t.category}</div>
+                        </div>
+                        <span className="mono" style={{ fontSize: '0.66rem', fontWeight: 500, letterSpacing: '0.5px', textTransform: 'uppercase', color: statusColors2[t.status_group] ?? '#9aa1ac', flexShrink: 0 }}>{statusGroupLabel(t.status_group)}</span>
+                      </div>
+                    ))
+                  }
+                </div>
+
+                {/* Edit/Delete actions */}
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button className="btn btn-secondary btn-sm" style={{ flex: 1 }} onClick={() => setProjectModal({ open: true, project: selectedProject })}><Pencil size={12} />Editar</button>
+                  <button className="btn btn-danger btn-sm" onClick={(e) => handleDeleteProject(selectedProject.id, e)}><Trash2 size={12} /></button>
+                </div>
+              </div>
+            </div>
+          </>
+        );
+      })()}
 
       {/* Drawer de atividade */}
       {taskDrawer && (

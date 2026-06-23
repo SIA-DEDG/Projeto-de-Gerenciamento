@@ -462,34 +462,53 @@ export default function BoardPage() {
           />
         </div>
       ) : view === 'list' ? (
-        <div className="list-view">
-          <table className="list-table">
-            <thead>
-              <tr>
-                <th>Atividade</th>
-                <th>Projeto</th>
-                <th>Prioridade</th>
-                <th>Status</th>
-                <th>Prazo</th>
-                <th>Responsável</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredTasks.map((t) => (
-                <tr key={t.id} onClick={() => setDrawer(t)}>
-                  <td style={{ fontWeight: 600 }}>{t.activity}</td>
-                  <td style={{ color: 'var(--text-3)', fontSize: '0.78rem' }}>{projects.find((p) => p.id === t.project_id)?.name ?? t.category}</td>
-                  <td>
-                    <span className="mono" style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', color: t.priority === 'Alta' ? 'var(--red)' : t.priority === 'Baixa' ? 'var(--green-t)' : 'var(--gold-t)' }}>{t.priority}</span>
-                  </td>
-                  <td><span className={`status-chip ${t.status_group}`}>{statusGroupLabel(t.status_group)}</span></td>
-                  <td className="mono" style={{ fontSize: '0.72rem', color: 'var(--text-3)' }}>{t.deadline ?? '—'}</td>
-                  <td style={{ fontSize: '0.78rem', color: 'var(--text-2)' }}>{t.responsible}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {filteredTasks.length === 0 && <div className="empty-state"><p>Nenhuma atividade encontrada.</p></div>}
+        <div className="ssel" style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
+          {/* Header row — grid 18px 1fr 150px 96px 130px 96px */}
+          <div style={{ display: 'grid', gridTemplateColumns: '18px 1fr 150px 96px 130px 96px', gap: 18, padding: '13px 32px', borderBottom: '1px solid var(--line-1)', position: 'sticky', top: 0, background: 'var(--surface)' }}>
+            <span />
+            {['Atividade','Projeto','Prioridade','Status','Prazo'].map((h, i) => (
+              <span key={h} className="mono" style={{ fontSize: '0.64rem', fontWeight: 500, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--text-3)', ...(i === 4 ? { textAlign: 'right' } : {}) }}>{h}</span>
+            ))}
+          </div>
+          {/* Data rows */}
+          {filteredTasks.length === 0
+            ? <div className="empty-state"><p>Nenhuma atividade encontrada.</p></div>
+            : filteredTasks.map((t) => {
+              const prioColor = t.priority === 'Alta' ? '#034EA2' : t.priority === 'Baixa' ? 'var(--text-3)' : 'var(--text-2)';
+              const statusColors: Record<string, string> = { pending: '#9aa1ac', in_progress: '#034EA2', review: '#E0A92E', done: '#1B8A4B' };
+              const statusColor = statusColors[t.status_group] ?? 'var(--text-3)';
+              const projName = projects.find(p => p.id === t.project_id)?.name ?? '—';
+              const due = (() => {
+                if (!t.deadline) return { text: '—', color: 'var(--text-3)' };
+                const today = new Date().toISOString().split('T')[0];
+                if (t.deadline < today) return { text: 'Atrasada', color: '#b42318' };
+                const [, mm, dd] = t.deadline.split('-');
+                return { text: `${dd}/${mm}`, color: t.status_group === 'done' ? 'var(--text-3)' : 'var(--text-3)' };
+              })();
+              return (
+                <div key={t.id} onClick={() => setDrawer(t)}
+                  style={{ display: 'grid', gridTemplateColumns: '18px 1fr 150px 96px 130px 96px', gap: 18, padding: '15px 32px', alignItems: 'center', borderBottom: '1px solid var(--line-2)', cursor: 'pointer' }}
+                  onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'var(--surface-2)'}
+                  onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = ''}>
+                  {/* Spine bar */}
+                  <span style={{ width: 2, height: 30, background: statusColors[t.status_group] ?? '#9aa1ac', display: 'block' }} />
+                  {/* Atividade: title + category */}
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: '0.88rem', fontWeight: 500, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.activity}</div>
+                    <div className="mono" style={{ fontSize: '0.62rem', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.8px', color: 'var(--text-3)', marginTop: 2 }}>{t.category}</div>
+                  </div>
+                  {/* Projeto */}
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-2)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{projName}</span>
+                  {/* Prioridade */}
+                  <span className="mono" style={{ fontSize: '0.68rem', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.5px', color: prioColor }}>{t.priority}</span>
+                  {/* Status */}
+                  <span className="mono" style={{ fontSize: '0.68rem', fontWeight: 500, letterSpacing: '0.5px', color: statusColor }}>{statusGroupLabel(t.status_group)}</span>
+                  {/* Prazo */}
+                  <span className="mono" style={{ fontSize: '0.72rem', fontWeight: 400, color: due.color, textAlign: 'right' }}>{due.text}</span>
+                </div>
+              );
+            })
+          }
         </div>
       ) : (
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
