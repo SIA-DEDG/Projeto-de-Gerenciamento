@@ -370,7 +370,13 @@ export default function ActivityModal({
               <RichTextEditor value={form.description} onChange={html => setForm(f => ({ ...f, description: html }))} />
             </div>
 
-            {/* Categoria / Projeto */}
+            {/* Prioridade */}
+            <div>
+              <Label>Prioridade</Label>
+              <Segmented options={PRIORITY_OPTIONS} value={form.priority} onChange={v => setForm({ ...form, priority: v })} getColor={v => PRIO_COLOR[v]} />
+            </div>
+
+            {/* Grid: Projeto | Status */}
             <div style={{ display: 'grid', gridTemplateColumns: showProjectSelect ? '1fr 1fr' : '1fr', gap: 14 }}>
               {showProjectSelect && (
                 <div>
@@ -391,6 +397,14 @@ export default function ActivityModal({
                 </div>
               )}
               <div>
+                <Label>Status</Label>
+                <Segmented options={STATUS_OPTIONS} value={form.status} onChange={v => setForm({ ...form, status: v })} />
+              </div>
+            </div>
+
+            {/* Grid: Responsável | Data */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+              <div>
                 <Label>Responsável</Label>
                 <div style={{ position: 'relative' }}>
                   <select value={form.responsible} onChange={e => setForm({ ...form, responsible: e.target.value, co_responsibles: form.co_responsibles.filter(n => n !== e.target.value) })} style={{ ...inp, padding: '11px 32px 11px 13px', appearance: 'none', cursor: 'pointer' }}>
@@ -399,6 +413,12 @@ export default function ActivityModal({
                   </select>
                   <ChevronDown size={12} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-3)' }} />
                 </div>
+              </div>
+              <div>
+                <Label>Data</Label>
+                <input type="date" value={form.date} onChange={e => setForm({ ...form, date: e.target.value })} style={inp}
+                  onFocus={e => { e.target.style.borderColor = '#034EA2'; }}
+                  onBlur={e => { e.target.style.borderColor = 'var(--border)'; }} />
               </div>
             </div>
 
@@ -420,18 +440,6 @@ export default function ActivityModal({
             <div>
               <Label>Co-responsáveis</Label>
               <CoRespChips users={users} selected={form.co_responsibles} exclude={form.responsible} onChange={v => setForm({ ...form, co_responsibles: v })} />
-            </div>
-
-            {/* Prioridade */}
-            <div>
-              <Label>Prioridade</Label>
-              <Segmented options={PRIORITY_OPTIONS} value={form.priority} onChange={v => setForm({ ...form, priority: v })} getColor={v => PRIO_COLOR[v]} />
-            </div>
-
-            {/* Status */}
-            <div>
-              <Label>Status</Label>
-              <Segmented options={STATUS_OPTIONS} value={form.status} onChange={v => setForm({ ...form, status: v })} />
             </div>
 
             {/* Colaboração externa */}
