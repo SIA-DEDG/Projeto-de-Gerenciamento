@@ -1565,6 +1565,7 @@ input::placeholder, textarea::placeholder { color: var(--text-3); opacity: 1; }
   height: 40px;
   /* Oculta scrollbar em navegadores que suportam scrollbar-width */
   scrollbar-width: none;
+  margin-left: 32px;
 }
 .tab-bar::-webkit-scrollbar { display: none; }
 

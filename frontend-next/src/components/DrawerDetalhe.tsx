@@ -1,6 +1,6 @@
 'use client';
 
-import { X, Archive } from 'lucide-react';
+import { X, Archive, Trash2, Pen } from 'lucide-react';
 import type { Task } from '@/types';
 import { avatarColor, initials, statusGroupLabel } from '@/lib/utils';
 
@@ -14,22 +14,22 @@ interface Props {
 }
 
 const PRIORITY_COLORS: Record<string, string> = {
-  Alta:  '#b42318',
+  Alta: '#b42318',
   Média: '#A87A00',
   Baixa: '#157F3C',
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  pending:     '#9aa1ac',
+  pending: '#9aa1ac',
   in_progress: '#034EA2',
-  review:      '#E0A92E',
-  done:        '#1B8A4B',
+  review: '#E0A92E',
+  done: '#1B8A4B',
 };
 
 const NEXT_STATUS: Record<string, string> = {
-  pending:     'in_progress',
+  pending: 'in_progress',
   in_progress: 'review',
-  review:      'done',
+  review: 'done',
 };
 
 function formatDate(s: string | null | undefined) {
@@ -116,7 +116,7 @@ export default function DrawerDetalhe({ task, onClose, onEdit, onDelete, onAdvan
         top: 0,
         right: 0,
         bottom: 0,
-        width: 440,
+        width: 700,
         maxWidth: '100vw',
         background: 'var(--surface)',
         borderLeft: '1px solid var(--line-1)',
@@ -196,12 +196,14 @@ export default function DrawerDetalhe({ task, onClose, onEdit, onDelete, onAdvan
 
           {/* Título */}
           <h2 style={{
-            fontSize: '1.4rem',
+            fontSize: '1.3rem',
             fontWeight: 600,
             letterSpacing: '-0.5px',
             color: 'var(--text)',
             marginTop: 12,
             lineHeight: 1.3,
+            overflowWrap: 'break-word',
+            wordBreak: 'break-word',
           }}>
             {task.activity}
           </h2>
@@ -214,13 +216,11 @@ export default function DrawerDetalhe({ task, onClose, onEdit, onDelete, onAdvan
               </span>
             </InfoRow>
 
-            {task.project_id && (
-              <InfoRow label="Projeto">
-                <span className="mono" style={{ fontSize: '0.82rem', fontWeight: 500, color: 'var(--text)' }}>
-                  {task.project_id}
-                </span>
-              </InfoRow>
-            )}
+            <InfoRow label="Projeto">
+              <span className="mono" style={{ fontSize: '0.82rem', fontWeight: 500, color: 'var(--text)' }}>
+                {task.project_id ?? '—'}
+              </span>
+            </InfoRow>
 
             <InfoRow label="Prazo">
               <span className="mono" style={{
@@ -229,12 +229,6 @@ export default function DrawerDetalhe({ task, onClose, onEdit, onDelete, onAdvan
                 color: overdue ? '#b42318' : 'var(--text)',
               }}>
                 {formatDate(task.deadline)}
-              </span>
-            </InfoRow>
-
-            <InfoRow label="Criado em">
-              <span className="mono" style={{ fontSize: '0.82rem', fontWeight: 500, color: 'var(--text)' }}>
-                {formatDate(task.created_at.slice(0, 10))}
               </span>
             </InfoRow>
           </div>
@@ -392,11 +386,15 @@ export default function DrawerDetalhe({ task, onClose, onEdit, onDelete, onAdvan
               </button>
             )}
 
-            {/* Editar */}
+            {/* Excluir */}
             <button
               onClick={() => onEdit(task)}
               title="Editar"
               style={{
+                gap: 6,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
                 padding: '12px 16px',
                 borderRadius: 3,
                 border: '1px solid var(--border)',
@@ -411,6 +409,34 @@ export default function DrawerDetalhe({ task, onClose, onEdit, onDelete, onAdvan
               onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-2)')}
               onMouseLeave={e => (e.currentTarget.style.background = 'var(--surface)')}
             >
+              <Trash2 size={14} />
+              Excluir
+            </button>
+
+            {/* Editar */}
+            <button
+              onClick={() => onEdit(task)}
+              title="Editar"
+              style={{
+                gap: 6,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '12px 16px',
+                borderRadius: 3,
+                border: '1px solid var(--border)',
+                background: 'var(--surface)',
+                color: 'var(--text-2)',
+                fontSize: '0.82rem',
+                fontWeight: 500,
+                fontFamily: 'inherit',
+                cursor: 'pointer',
+                transition: 'background 0.12s',
+              }}
+              onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-2)')}
+              onMouseLeave={e => (e.currentTarget.style.background = 'var(--surface)')}
+            >
+              <Pen size={14} />
               Editar
             </button>
 

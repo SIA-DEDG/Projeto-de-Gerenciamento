@@ -142,7 +142,7 @@ export default function LogsPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Auditoria do sistema · DEDG"
+        eyebrow="Auditoria do sistema"
         title="Logs"
         right={isAdmin ? (
           <button

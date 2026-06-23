@@ -7,15 +7,15 @@ import type { Task } from '@/types';
 
 /* Spine colorido por status */
 const SPINE_COLOR: Record<string, string> = {
-  pending:     '#9aa1ac',
+  pending: '#9aa1ac',
   in_progress: '#034EA2',
-  review:      '#E0A92E',
-  done:        '#1B8A4B',
+  review: '#E0A92E',
+  done: '#1B8A4B',
 };
 
 /* Cor de prioridade conforme design: Alta=azul, Média=cinza, Baixa=cinza-claro */
 const PRIO_COLOR: Record<string, string> = {
-  Alta:  '#034EA2',
+  Alta: '#034EA2',
   Média: 'var(--text-2)',
   Baixa: 'var(--text-3)',
 };
@@ -28,8 +28,8 @@ function dueText(deadline: string | null | undefined, isDone: boolean): { text: 
   const d = new Date(deadline + 'T00:00:00');
   const diffDays = Math.round((d.getTime() - today.getTime()) / 86400000);
 
-  if (diffDays < 0)  return { text: `Atrasada ${Math.abs(diffDays)}d`, color: '#b42318' };
-  if (diffDays === 0) return { text: 'Vence hoje',   color: '#A87A00' };
+  if (diffDays < 0) return { text: `Atrasada ${Math.abs(diffDays)}d`, color: '#b42318' };
+  if (diffDays === 0) return { text: 'Vence hoje', color: '#A87A00' };
   if (diffDays === 1) return { text: 'Vence amanhã', color: '#A87A00' };
   if (diffDays <= 7) return { text: `Em ${diffDays} dias`, color: 'var(--text-3)' };
   const [, mm, dd] = deadline.split('-');
@@ -140,7 +140,17 @@ export default function KanbanCard({
       </div>
 
       {/* Título */}
-      <p style={{ fontSize: '0.92rem', fontWeight: 500, color: 'var(--text)', lineHeight: 1.4, letterSpacing: '-0.1px', margin: 0 }}>
+      <p style={{
+        fontSize: '0.92rem', 
+        fontWeight: 500, 
+        color: 'var(--text)', 
+        lineHeight: 1.4, 
+        letterSpacing: '-0.1px',
+        margin: 0, 
+        overflow: 'hidden',
+        whiteSpace: 'nowrap',
+        textOverflow: 'ellipsis',
+      }}>
         {task.activity}
       </p>
 
@@ -148,7 +158,7 @@ export default function KanbanCard({
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 13 }}>
         {(projectName || task.category) && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: 'var(--text-3)', fontSize: '0.72rem', minWidth: 0, flex: 1 }}>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z" /></svg>
             <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 120 }}>
               {projectName || task.category}
             </span>
@@ -185,7 +195,7 @@ export default function KanbanCard({
       {/* Prazo (human-readable) */}
       {due && (
         <div className="mono" style={{ display: 'inline-flex', alignItems: 'center', gap: 5, marginTop: 11, fontSize: '0.66rem', fontWeight: 500, letterSpacing: '0.4px', color: due.color }}>
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
           {due.text}
         </div>
       )}

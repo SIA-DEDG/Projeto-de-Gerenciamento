@@ -1,6 +1,7 @@
 use dotenvy::dotenv;
-use sqlx::postgres::PgPoolOptions;
+use sqlx::postgres::{PgConnectOptions, PgPoolOptions};
 use std::env;
+use std::str::FromStr;
 #[allow(unused_imports)]
 use std::net::SocketAddr;
 use std::sync::Arc;

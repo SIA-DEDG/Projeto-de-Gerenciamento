@@ -130,7 +130,7 @@ export default function ProjetosPage() {
     <>
       {/* ── Header ── */}
       <PageHeader
-        eyebrow="Portfólio da DEDG"
+        eyebrow="Portfólio da Diretoria"
         title="Projetos"
         right={
           <button className="btn btn-primary btn-sm" onClick={() => setProjectModal({ open: true, project: null })}>

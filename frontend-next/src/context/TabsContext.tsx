@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 
 // ── Page types & paths ────────────────────────────────────────────────────────
 
@@ -76,13 +76,11 @@ export interface Tab {
 interface TabsContextValue {
   tabs: Tab[];
   activeTabId: string;
-  /** Open (or activate) a tab for the given page type */
   openTab: (type: PageType, opts?: { name?: string; filters?: Partial<TabFilters>; forceNew?: boolean }) => void;
   closeTab: (id: string) => void;
   activateTab: (id: string) => void;
   patchActiveTab: (patch: Partial<TabFilters>) => void;
   renameTab: (id: string, name: string) => void;
-  /** Move tab from index to another index (drag-and-drop reorder) */
   reorderTabs: (fromIndex: number, toIndex: number) => void;
 }
 
@@ -119,13 +117,11 @@ function loadActiveId(tabs: Tab[]): string {
 // ── Provider ──────────────────────────────────────────────────────────────────
 
 export function TabsProvider({ children }: { children: React.ReactNode }) {
-  const router = useRouter();
   const pathname = usePathname();
 
   const [tabs, setTabs] = useState<Tab[]>(loadTabs);
   const [activeTabId, setActiveTabId] = useState<string>(() => loadActiveId(loadTabs()));
 
-  // Save to localStorage on change
   useEffect(() => {
     try { localStorage.setItem(LS_TABS, JSON.stringify(tabs)); } catch {}
   }, [tabs]);
@@ -135,43 +131,37 @@ export function TabsProvider({ children }: { children: React.ReactNode }) {
   }, [activeTabId]);
 
   // On initial load: sync active tab to the current URL path
-  // Prefetch todas as rotas para navegação mais rápida
-  useEffect(() => {
-    Object.values(PAGE_INFO).forEach(info => {
-      try { router.prefetch(info.path); } catch {}
-    });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   const didInit = useRef(false);
   useEffect(() => {
     if (didInit.current) return;
     didInit.current = true;
     const type = pathToPageType(pathname);
     if (!type) return;
-    // Find a tab matching this path
     const match = tabs.find(t => t.type === type);
-    if (match && match.id !== activeTabId) {
-      setActiveTabId(match.id);
+    if (match) {
+      if (match.id !== activeTabId) setActiveTabId(match.id);
+    } else if (type !== 'board') {
+      // Create a tab for the current URL on direct navigation
+      const id = 'tb' + Date.now();
+      const info = PAGE_INFO[type];
+      setTabs(prev => [...prev, { id, type, name: info.defaultName, filters: { ...DEFAULT_FILTERS } }]);
+      setActiveTabId(id);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ── openTab: create or reuse a tab for a given page type ──────────────────
+  // ── openTab ───────────────────────────────────────────────────────────────
 
   const openTab = useCallback((
     type: PageType,
     opts: { name?: string; filters?: Partial<TabFilters>; forceNew?: boolean } = {},
   ) => {
     const { name, filters, forceNew = false } = opts;
-    const info = PAGE_INFO[type];
 
-    // For "singleton" page types, reuse the existing tab
     if (!forceNew && type !== 'board') {
       const existing = tabs.find(t => t.type === type);
       if (existing) {
         setActiveTabId(existing.id);
-        router.push(info.path);
         return;
       }
     }
@@ -180,13 +170,12 @@ export function TabsProvider({ children }: { children: React.ReactNode }) {
     const newTab: Tab = {
       id,
       type,
-      name: name ?? info.defaultName,
+      name: name ?? PAGE_INFO[type].defaultName,
       filters: { ...DEFAULT_FILTERS, ...filters },
     };
     setTabs(prev => [...prev, newTab]);
     setActiveTabId(id);
-    router.push(info.path);
-  }, [tabs, router]);
+  }, [tabs]);
 
   // ── closeTab ──────────────────────────────────────────────────────────────
 
@@ -197,14 +186,11 @@ export function TabsProvider({ children }: { children: React.ReactNode }) {
       const next = prev.filter(t => t.id !== id);
       if (id === activeTabId) {
         const newActive = next[Math.max(0, idx - 1)];
-        if (newActive) {
-          setActiveTabId(newActive.id);
-          router.push(PAGE_INFO[newActive.type].path);
-        }
+        if (newActive) setActiveTabId(newActive.id);
       }
       return next;
     });
-  }, [activeTabId, router]);
+  }, [activeTabId]);
 
   // ── activateTab ───────────────────────────────────────────────────────────
 
@@ -212,14 +198,9 @@ export function TabsProvider({ children }: { children: React.ReactNode }) {
     const tab = tabs.find(t => t.id === id);
     if (!tab || id === activeTabId) return;
     setActiveTabId(id);
-    const targetPath = PAGE_INFO[tab.type].path;
-    // Só navega se a página destino for diferente da atual — evita reload desnecessário
-    if (pathname !== targetPath) {
-      router.push(targetPath);
-    }
-  }, [tabs, activeTabId, router, pathname]);
+  }, [tabs, activeTabId]);
 
-  // ── patchActiveTab: update filter state of the active tab ─────────────────
+  // ── patchActiveTab ────────────────────────────────────────────────────────
 
   const patchActiveTab = useCallback((patch: Partial<TabFilters>) => {
     setTabs(prev =>

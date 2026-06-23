@@ -28,17 +28,17 @@ import { useTabs, useActiveTab } from '@/context/TabsContext';
 import PageHeader from '@/components/PageHeader';
 
 const COLUMNS: { id: StatusGroup; title: string; color: string }[] = [
-  { id: 'pending',    title: 'Pendente',    color: 'var(--s-pending)' },
-  { id: 'in_progress',title: 'Em Andamento',color: 'var(--s-progress)' },
-  { id: 'review',     title: 'Em Revisão',  color: 'var(--s-review)' },
-  { id: 'done',       title: 'Concluído',   color: 'var(--s-done)' },
+  { id: 'pending', title: 'Pendente', color: 'var(--s-pending)' },
+  { id: 'in_progress', title: 'Em Andamento', color: 'var(--s-progress)' },
+  { id: 'review', title: 'Em Revisão', color: 'var(--s-review)' },
+  { id: 'done', title: 'Concluído', color: 'var(--s-done)' },
 ];
 
 const STATUS_MAP: Record<StatusGroup, string> = {
-  pending:     'Pendente',
+  pending: 'Pendente',
   in_progress: 'Em Andamento',
-  review:      'Em Revisão',
-  done:        'Concluído',
+  review: 'Em Revisão',
+  done: 'Concluído',
 };
 
 function KanbanColumn({
@@ -73,12 +73,12 @@ function KanbanColumn({
   const dotColor = col.color;
   const tintColor = col.id === 'pending' ? 'rgba(154,161,172,0.12)'
     : col.id === 'in_progress' ? 'rgba(3,78,162,0.1)'
-    : col.id === 'review'     ? 'rgba(224,169,46,0.1)'
-    : 'rgba(27,138,75,0.1)';
+      : col.id === 'review' ? 'rgba(224,169,46,0.1)'
+        : 'rgba(27,138,75,0.1)';
   const titleColor = col.id === 'pending' ? 'var(--text-3)'
     : col.id === 'in_progress' ? '#034EA2'
-    : col.id === 'review'     ? '#A87A00'
-    : '#157F3C';
+      : col.id === 'review' ? '#A87A00'
+        : '#157F3C';
 
   return (
     <div
@@ -145,7 +145,7 @@ function KanbanColumn({
             onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = '#034EA2'; (e.currentTarget as HTMLElement).style.background = 'var(--surface-2)'; }}
             onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--text-3)'; (e.currentTarget as HTMLElement).style.background = 'none'; }}
           >
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M5 12h14" /><path d="M12 5v14" /></svg>
             Adicionar
           </button>
         )}
@@ -164,19 +164,19 @@ export default function BoardPage() {
   const filters = activeTab?.filters;
 
   // Derived filter state from the active tab
-  const search        = filters?.search    ?? '';
-  const filterUser    = filters?.fUser     ?? '';
-  const filterPriority= filters?.fPrio     ?? '';
-  const filterProject = filters?.fProj     ?? '';
-  const filterDateFrom= filters?.fDateFrom ?? '';
-  const filterDateTo  = filters?.fDateTo   ?? '';
-  const view          = filters?.view      ?? 'kanban';
+  const search = filters?.search ?? '';
+  const filterUser = filters?.fUser ?? '';
+  const filterPriority = filters?.fPrio ?? '';
+  const filterProject = filters?.fProj ?? '';
+  const filterDateFrom = filters?.fDateFrom ?? '';
+  const filterDateTo = filters?.fDateTo ?? '';
+  const view = filters?.view ?? 'kanban';
 
   // Reset selection when switching tabs
   useEffect(() => {
     setSelectionMode(null);
     setSelectedTaskIds(new Set());
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab?.id]);
 
   // ── API data ─────────────────────────────────────────────────────────────
@@ -300,11 +300,13 @@ export default function BoardPage() {
   function handleDeleteSelected() {
     if (!selectionMode || selectedTaskIds.size === 0) return;
     const ids = [...selectedTaskIds];
-    setConfirm({ title: `Excluir ${ids.length} atividade(s)`, message: 'Esta ação não pode ser desfeita.', onConfirm: async () => {
-      setTasks((curr) => curr.filter((t) => !ids.includes(t.id)));
-      setSelectionMode(null); setSelectedTaskIds(new Set());
-      try { await Promise.all(ids.map((id) => deleteTask(id))); } catch { load(); }
-    }});
+    setConfirm({
+      title: `Excluir ${ids.length} atividade(s)`, message: 'Esta ação não pode ser desfeita.', onConfirm: async () => {
+        setTasks((curr) => curr.filter((t) => !ids.includes(t.id)));
+        setSelectionMode(null); setSelectedTaskIds(new Set());
+        try { await Promise.all(ids.map((id) => deleteTask(id))); } catch { load(); }
+      }
+    });
   }
 
   const filteredTasks = useMemo(
@@ -321,7 +323,7 @@ export default function BoardPage() {
   );
 
   function exportCSV() {
-    const header = ['Atividade','Categoria','Responsável','Status','Prioridade','Prazo','Criado em','Projeto','Co-responsáveis','Colaboradores externos'];
+    const header = ['Atividade', 'Categoria', 'Responsável', 'Status', 'Prioridade', 'Prazo', 'Criado em', 'Projeto', 'Co-responsáveis', 'Colaboradores externos'];
     const rows = filteredTasks.map((t) => {
       const proj = projects.find((p) => p.id === t.project_id)?.name ?? '';
       const co = t.co_responsibles ? (() => { try { return (JSON.parse(t.co_responsibles!) as string[]).join('; '); } catch { return ''; } })() : '';
@@ -356,7 +358,7 @@ export default function BoardPage() {
     const atrasadas = filteredTasks.filter(t => t.status_group !== 'done' && t.deadline && t.deadline < todayStr).length;
     const pct = filteredTasks.length > 0 ? Math.round((done / filteredTasks.length) * 100) : 0;
     return [
-      { label: 'ABERTAS',   value: String(abertas), color: '#034EA2' },
+      { label: 'ABERTAS', value: String(abertas), color: '#034EA2' },
       { label: 'ATRASADAS', value: String(atrasadas), color: '#b42318' },
       { label: 'CONCLUÍDO', value: `${pct}%`, color: '#1B8A4B' },
     ];
@@ -466,7 +468,7 @@ export default function BoardPage() {
           {/* Header row — grid 18px 1fr 150px 96px 130px 96px */}
           <div style={{ display: 'grid', gridTemplateColumns: '18px 1fr 150px 96px 130px 96px', gap: 18, padding: '13px 32px', borderBottom: '1px solid var(--line-1)', position: 'sticky', top: 0, background: 'var(--surface)' }}>
             <span />
-            {['Atividade','Projeto','Prioridade','Status','Prazo'].map((h, i) => (
+            {['Atividade', 'Projeto', 'Prioridade', 'Status', 'Prazo'].map((h, i) => (
               <span key={h} className="mono" style={{ fontSize: '0.64rem', fontWeight: 500, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--text-3)', ...(i === 4 ? { textAlign: 'right' } : {}) }}>{h}</span>
             ))}
           </div>

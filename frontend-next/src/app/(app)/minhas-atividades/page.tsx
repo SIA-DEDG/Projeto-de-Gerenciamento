@@ -26,10 +26,10 @@ import { useTabs, useActiveTab } from '@/context/TabsContext';
 import PageHeader from '@/components/PageHeader';
 
 const COLUMNS: { id: StatusGroup; title: string; color: string }[] = [
-  { id: 'pending',    title: 'Pendente',    color: 'var(--s-pending)' },
-  { id: 'in_progress',title: 'Em Andamento',color: 'var(--s-progress)' },
-  { id: 'review',     title: 'Em Revisão',  color: 'var(--s-review)' },
-  { id: 'done',       title: 'Concluído',   color: 'var(--s-done)' },
+  { id: 'pending', title: 'Pendente', color: 'var(--s-pending)' },
+  { id: 'in_progress', title: 'Em Andamento', color: 'var(--s-progress)' },
+  { id: 'review', title: 'Em Revisão', color: 'var(--s-review)' },
+  { id: 'done', title: 'Concluído', color: 'var(--s-done)' },
 ];
 
 const STATUS_MAP: Record<StatusGroup, string> = {
@@ -101,15 +101,16 @@ export default function MinhasAtividadesPage() {
   const { patchActiveTab } = useTabs();
   const activeTab = useActiveTab();
   const tabFilters = activeTab?.filters;
-  const search         = tabFilters?.search    ?? '';
-  const filterPriority = tabFilters?.fPrio     ?? '';
-  const view           = tabFilters?.view      ?? 'kanban';
+  const search = tabFilters?.search ?? '';
+  const filterPriority = tabFilters?.fPrio ?? '';
+  const filterProject = tabFilters?.fProj ?? '';
+  const view = tabFilters?.view ?? 'kanban';
 
   // Reset selection on tab switch
   useEffect(() => {
     setSelectionMode(null);
     setSelectedTaskIds(new Set());
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab?.id]);
 
   // ── API data ─────────────────────────────────────────────────────────────
@@ -139,6 +140,7 @@ export default function MinhasAtividadesPage() {
         try { const co = JSON.parse(t.co_responsibles ?? '[]') as string[]; if (!co.includes(name)) return false; } catch { return false; }
       }
       if (filterPriority && t.priority?.toLowerCase() !== filterPriority.toLowerCase()) return false;
+      if (filterProject && t.project_id !== filterProject) return false;
       if (search) { const q = search.toLowerCase(); if (!t.activity.toLowerCase().includes(q) && !t.category?.toLowerCase().includes(q)) return false; }
       return true;
     });
@@ -184,10 +186,12 @@ export default function MinhasAtividadesPage() {
   }
 
   function handleDeleteCard(id: string) {
-    setConfirm({ title: 'Excluir atividade', message: 'Esta ação não pode ser desfeita.', onConfirm: async () => {
-      setDrawer(null); setTasks((curr) => curr.filter((x) => x.id !== id));
-      try { await deleteTask(id); } catch { load(); }
-    }});
+    setConfirm({
+      title: 'Excluir atividade', message: 'Esta ação não pode ser desfeita.', onConfirm: async () => {
+        setDrawer(null); setTasks((curr) => curr.filter((x) => x.id !== id));
+        try { await deleteTask(id); } catch { load(); }
+      }
+    });
   }
 
   function handleAdvanceStatus() {
@@ -222,39 +226,43 @@ export default function MinhasAtividadesPage() {
       <PageHeader eyebrow="Atribuídas a você" title="Minhas atividades" />
 
       {/* ── Toolbar: view toggle + filtros (uma linha) ── */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 32px', borderBottom: '1px solid var(--line-1)', flexShrink: 0, background: 'var(--surface)', flexWrap: 'wrap' }}>
-        <div style={{ display: 'flex', alignItems: 'center', border: '1px solid var(--border)', borderRadius: 'var(--radius)', overflow: 'hidden', flexShrink: 0 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 18, padding: '18px 32px', borderBottom: '1px solid var(--line-1)', flexShrink: 0, background: 'var(--surface)', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: 18 }}>
           {(['kanban', 'list', 'calendar'] as const).map((v) => {
             const labels = { kanban: 'Quadro', list: 'Lista', calendar: 'Calendário' };
             const isAct = view === v;
             return (
               <button key={v} onClick={() => patchActiveTab({ view: v })}
-                style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px', border: 'none', borderRight: v !== 'calendar' ? '1px solid var(--border)' : 'none', background: isAct ? '#034EA2' : 'var(--surface)', color: isAct ? '#fff' : 'var(--text-2)', fontSize: '0.78rem', fontWeight: isAct ? 600 : 500, cursor: 'pointer', fontFamily: 'inherit', transition: 'background 0.12s, color 0.12s', whiteSpace: 'nowrap' }}>
-                {v === 'kanban' ? <LayoutGrid size={12} /> : v === 'list' ? <List size={12} /> : <Calendar size={12} />}
+                style={{ background: 'none', border: 'none', padding: '0 0 4px', fontSize: '0.86rem', fontWeight: isAct ? 600 : 400, color: isAct ? 'var(--text)' : 'var(--text-3)', cursor: 'pointer', borderBottom: isAct ? '2px solid #034EA2' : '2px solid transparent', letterSpacing: '-0.1px', fontFamily: 'inherit' }}>
                 {labels[v]}
               </button>
             );
           })}
         </div>
+        
         <div style={{ width: 1, height: 20, background: 'var(--border)', flexShrink: 0 }} />
-        <div style={{ display: 'flex', alignItems: 'center', gap: 7, border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '6px 10px', width: 200 }}>
+        
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, border: '1px solid var(--border)', borderRadius: 3, padding: '7px 11px', width: 230 }}>
           <Search size={13} style={{ color: 'var(--text-3)', flexShrink: 0 }} />
-          <input value={search} onChange={(e) => patchActiveTab({ search: e.target.value })} placeholder="Pesquisar..." style={{ border: 'none', outline: 'none', background: 'none', fontSize: '0.8rem', color: 'var(--text)', width: '100%', fontFamily: 'inherit' }} />
+          <input value={search} onChange={(e) => patchActiveTab({ search: e.target.value })} placeholder="Pesquisar..." style={{ border: 'none', outline: 'none', background: 'none', fontSize: '0.82rem', color: 'var(--text)', width: '100%', fontFamily: 'inherit' }} />
         </div>
-        <select value={filterPriority} onChange={(e) => patchActiveTab({ fPrio: e.target.value })} className={`filter-chip${filterPriority ? ' active' : ''}`}>
+        <select value={filterPriority} onChange={(e) => patchActiveTab({ fPrio: e.target.value })}
+          style={{ padding: '7px 11px', borderRadius: 3, border: filterPriority ? '1px solid #034EA2' : '1px solid var(--border)', background: 'var(--surface)', color: filterPriority ? '#034EA2' : 'var(--text-2)', fontSize: '0.8rem', fontWeight: filterPriority ? 600 : 400, cursor: 'pointer', outline: 'none' }}>
           <option value="">Prioridade</option>
           <option value="Alta">Alta</option>
           <option value="Média">Média</option>
           <option value="Baixa">Baixa</option>
+        </select>
+        <select value={filterProject} onChange={(e) => patchActiveTab({ fProj: e.target.value })}
+          style={{ padding: '7px 11px', borderRadius: 3, border: filterProject ? '1px solid #034EA2' : '1px solid var(--border)', background: 'var(--surface)', color: filterProject ? '#034EA2' : 'var(--text-2)', fontSize: '0.8rem', fontWeight: filterProject ? 600 : 400, cursor: 'pointer', outline: 'none' }}>
+          <option value="">Projeto</option>
+          {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
         </select>
         {filterPriority && (
           <button onClick={() => patchActiveTab({ fPrio: '' })} className="mono" style={{ fontSize: '0.7rem', fontWeight: 500, color: '#034EA2', background: 'none', border: 'none', cursor: 'pointer', letterSpacing: '0.5px' }}>LIMPAR</button>
         )}
         <div style={{ flex: 1 }} />
         <span className="mono" style={{ fontSize: '0.7rem', color: 'var(--text-3)', letterSpacing: '0.5px' }}>{myTasks.length} ATIVIDADES</span>
-        <button onClick={() => setActivityModal({ open: true, task: null, defaultStatus: 'Pendente' })} className="btn btn-primary btn-sm">
-          <Plus size={13} />Nova atividade
-        </button>
       </div>
 
       {loading ? (
@@ -270,7 +278,7 @@ export default function MinhasAtividadesPage() {
         <div className="ssel" style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
           <div style={{ display: 'grid', gridTemplateColumns: '18px 1fr 150px 96px 130px 96px', gap: 18, padding: '13px 32px', borderBottom: '1px solid var(--line-1)', position: 'sticky', top: 0, background: 'var(--surface)' }}>
             <span />
-            {['Atividade','Projeto','Prioridade','Status','Prazo'].map((h, i) => (
+            {['Atividade', 'Projeto', 'Prioridade', 'Status', 'Prazo'].map((h, i) => (
               <span key={h} className="mono" style={{ fontSize: '0.64rem', fontWeight: 500, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--text-3)', ...(i === 4 ? { textAlign: 'right' } : {}) }}>{h}</span>
             ))}
           </div>

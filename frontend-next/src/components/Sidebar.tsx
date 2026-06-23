@@ -97,14 +97,16 @@ export default function Sidebar({ onToggleTheme, isDark }: Props) {
 
   return (
     <aside className="sidebar">
-      {/* Logo */}
+      {/* Logo
       <div className="sidebar-logo">
-        <div className="sidebar-logo-mark">★</div>
+        <div className="sidebar-logo-mark">
+          <img src="/tasks.svg" alt="" />
+        </div>
         <div className="rail-hide" style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.2 }}>
           <span className="sidebar-logo-name">Tasks SIA</span>
           <span className="sidebar-logo-sub">DEDG · GOV-PI</span>
         </div>
-      </div>
+      </div> */}
 
       {/* Navegação */}
       <div className="sidebar-nav-area">
