@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { Trash2, Pencil, ChevronLeft, ChevronRight, Clock, ChevronDown, Check, Plus, FileText, Paperclip, X as XIcon, Calendar, Users, User } from 'lucide-react';
@@ -14,10 +14,10 @@ import ToastContainer from '@/components/ToastContainer';
 import { getUser } from '@/lib/auth';
 import PageHeader from '@/components/PageHeader';
 
-// �"?�"? helpers �"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?
+// ?"??"? helpers ?"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"?
 
-const WEEKDAYS_SHORT = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'S�b'];
-const MONTHS = ['Janeiro','Fevereiro','Mar�o','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+const WEEKDAYS_SHORT = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+const MONTHS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 
 const PALETTE = [
   { color: '#1d4ed8', bg: '#dbeafe', light: '#eff6ff' },
@@ -82,10 +82,10 @@ function EventDayPicker({ selected, onChange, initialDate }: {
     <div style={{ border:'1px solid var(--border-light)', borderRadius:7, overflow:'hidden', userSelect:'none', width:'100%', maxWidth:240 }}>
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'5px 8px', background:'var(--bg-subtle)', borderBottom:'1px solid var(--border-light)' }}>
         <button type="button" onClick={() => { if(pickMonth===0){setPickYear(y=>y-1);setPickMonth(11);}else setPickMonth(m=>m-1); }}
-          style={{ background:'none', border:'none', cursor:'pointer', color:'var(--text-secondary)', fontSize:'0.9rem', lineHeight:1, padding:'2px 5px' }}>�?�</button>
+          style={{ background:'none', border:'none', cursor:'pointer', color:'var(--text-secondary)', fontSize:'0.9rem', lineHeight:1, padding:'2px 5px' }}>‹</button>
         <span style={{ fontSize:'0.75rem', fontWeight:700, color:'var(--text-primary)' }}>{MONTHS[pickMonth]} {pickYear}</span>
         <button type="button" onClick={() => { if(pickMonth===11){setPickYear(y=>y+1);setPickMonth(0);}else setPickMonth(m=>m+1); }}
-          style={{ background:'none', border:'none', cursor:'pointer', color:'var(--text-secondary)', fontSize:'0.9rem', lineHeight:1, padding:'2px 5px' }}>�?�</button>
+          style={{ background:'none', border:'none', cursor:'pointer', color:'var(--text-secondary)', fontSize:'0.9rem', lineHeight:1, padding:'2px 5px' }}>›</button>
       </div>
       <div style={{ display:'grid', gridTemplateColumns:'repeat(7,minmax(0,1fr))', padding:'3px 6px 0' }}>
         {WEEKDAYS_MINI.map((w,i) => (
@@ -125,7 +125,7 @@ function EventDateRangePicker({ from, to, onChange }: {
         <input type="date" value={from} onChange={e => onChange(e.target.value, to < e.target.value ? e.target.value : to)}
           style={{ width:'100%', border:'1px solid var(--border)', borderRadius:3, padding:'7px 10px', fontSize:'0.85rem', outline:'none', boxSizing:'border-box' as const, background:'var(--surface)', color:'var(--text)', fontFamily:'inherit' }} />
       </div>
-      <div style={{ fontSize:'0.8rem', color:'var(--text-muted)', marginTop:18 }}>�?'</div>
+      <div style={{ fontSize:'0.8rem', color:'var(--text-muted)', marginTop:18 }}>–</div>
       <div style={{ flex:1 }}>
         <div style={{ fontSize:'0.72rem', fontWeight:600, color:'var(--text-muted)', marginBottom:4 }}>Fim</div>
         <input type="date" value={to} min={from} onChange={e => onChange(from, e.target.value)}
@@ -135,7 +135,7 @@ function EventDateRangePicker({ from, to, onChange }: {
   );
 }
 
-// �"?�"? Preview popup �"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?
+// ?"??"? Preview popup ?"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"?
 
 interface PreviewState {
   event: CalendarEvent;
@@ -211,7 +211,7 @@ function EventPreview({
             {isPast && <span style={{ background: '#f1f5f9', color: '#64748b', borderRadius: 3, padding: '2px 8px', fontSize: '0.72rem', fontWeight: 700 }}>Passado</span>}
           </div>
         </div>
-        <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: '1.1rem', lineHeight: 1, padding: '0 0 0 8px', flexShrink: 0 }}>�-</button>
+        <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: '1.1rem', lineHeight: 1, padding: '0 0 0 8px', flexShrink: 0 }}>?-</button>
       </div>
 
       <div style={{ padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -219,7 +219,7 @@ function EventPreview({
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
           <Calendar size={13} />
           <span>
-            {sameDay ? formatDateFull(calEvent.start_date) : `${formatDate(calEvent.start_date)} �?' ${formatDateFull(calEvent.end_date)}`}
+            {sameDay ? formatDateFull(calEvent.start_date) : `${formatDate(calEvent.start_date)} – ${formatDateFull(calEvent.end_date)}`}
             {calEvent.start_time && <span style={{ marginLeft: 6, fontWeight: 600, color: colorPalette.color }}>{calEvent.start_time}</span>}
           </span>
         </div>
@@ -240,7 +240,7 @@ function EventPreview({
           </div>
         )}
 
-        {/* Ata de reuni�o */}
+        {/* Ata de reunião */}
         <div style={{ borderTop: '1px solid var(--line-2)', paddingTop: 8, marginTop: 2 }}>
           {calEvent.minutes_file_name ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'space-between' }}>
@@ -284,7 +284,7 @@ function EventPreview({
           }}
         >
           <Trash2 size={13} />
-          {deleting === calEvent.id ? 'Excluindo�?�' : 'Excluir'}
+          {deleting === calEvent.id ? 'Excluindo…' : 'Excluir'}
         </button>
         <button
           onClick={() => { onClose(); onEdit(calEvent); }}
@@ -302,7 +302,7 @@ function EventPreview({
   );
 }
 
-// �"?�"? EventChip (month view) �"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?
+// ?"??"? EventChip (month view) ?"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"?
 
 function EventChip({ event: calEvent, onClick, isPast }: { event: CalendarEvent; onClick: (e: React.MouseEvent) => void; isPast?: boolean }) {
   const colorPalette = palette(calEvent.id);
@@ -322,7 +322,7 @@ function EventChip({ event: calEvent, onClick, isPast }: { event: CalendarEvent;
   );
 }
 
-// �"?�"? Month view �"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?
+// ?"??"? Month view ?"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"?
 
 function MonthView({ events, year, month, todayStr, onChipClick, onClickDay }: {
   events: CalendarEvent[]; year: number; month: number; todayStr: string;
@@ -389,7 +389,7 @@ function MonthView({ events, year, month, todayStr, onChipClick, onClickDay }: {
   );
 }
 
-// �"?�"? Week view �"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?
+// ?"??"? Week view ?"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"?
 
 function WeekView({ events, weekStart, todayStr, onChipClick, onClickDay }: {
   events: CalendarEvent[]; weekStart: Date; todayStr: string;
@@ -456,7 +456,7 @@ function WeekView({ events, weekStart, todayStr, onChipClick, onClickDay }: {
   );
 }
 
-// �"?�"? Main page �"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?
+// ?"??"? Main page ?"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"?
 
 export default function EventosPage() {
   const now = new Date();
@@ -556,7 +556,7 @@ export default function EventosPage() {
     const computedStart = useRange ? startDate : selectedDates[0] ?? '';
     const computedEnd   = useRange ? endDate   : selectedDates[selectedDates.length - 1] ?? '';
     if (!evName.trim() || !computedStart) { setFormErr('Preencha nome e data.'); return; }
-    if (useRange && computedStart > computedEnd) { setFormErr('Data de início n�o pode ser posterior à data de fim.'); return; }
+    if (useRange && computedStart > computedEnd) { setFormErr('Data de início n?o pode ser posterior à data de fim.'); return; }
     if (!useRange && selectedDates.length === 0) { setFormErr('Selecione ao menos um dia.'); return; }
     setFormErr(''); setSaving(true);
     const responsible_ids = respList
@@ -584,7 +584,7 @@ export default function EventosPage() {
         const payload = { ...basePayload, start_date: computedStart, end_date: computedEnd };
         const created = await createEvent(payload);
         setEvents((currentEvents) => [created, ...currentEvents]);
-        addToast('success', 'Evento criado', `"${created.name}" foi adicionado ao Calend�rio.`);
+        addToast('success', 'Evento criado', `"${created.name}" foi adicionado ao Calend?rio.`);
       }
       setShowModal(false);
     } catch (err: unknown) {
@@ -595,7 +595,7 @@ export default function EventosPage() {
   function handleDelete(id: string) {
     setConfirmDialog({
       title: 'Excluir evento',
-      message: 'Esta aç�o n�o pode ser desfeita.',
+      message: 'Esta aç?o n?o pode ser desfeita.',
       onConfirm: async () => {
         setDeleting(id);
         try { await deleteEvent(id); setEvents((currentEvents) => currentEvents.filter((calEvent) => calEvent.id !== id)); }
@@ -630,7 +630,7 @@ export default function EventosPage() {
   const weekEnd = useMemo(() => { const endDate=new Date(weekStart); endDate.setDate(endDate.getDate()+6); return endDate; }, [weekStart]);
   const headerLabel = viewMode==='month'
     ? `${MONTHS[month]} ${year}`
-    : `${weekStart.getDate()} ${MONTHS[weekStart.getMonth()].slice(0,3)} �?" ${weekEnd.getDate()} ${MONTHS[weekEnd.getMonth()].slice(0,3)} ${weekEnd.getFullYear()}`;
+    : `${weekStart.getDate()} ${MONTHS[weekStart.getMonth()].slice(0,3)} ??" ${weekEnd.getDate()} ${MONTHS[weekEnd.getMonth()].slice(0,3)} ${weekEnd.getFullYear()}`;
 
   const upcoming = useMemo(() => {
     const limit = new Date(); limit.setDate(limit.getDate()+30);
@@ -646,7 +646,7 @@ export default function EventosPage() {
     [visibleEvents, todayStr],
   );
 
-  /* �"?�"? Grupos de agenda �"?�"? */
+  /* ?"??"? Grupos de agenda ?"??"? */
   const agendados = useMemo(() =>
     visibleEvents.filter(ev => ev.end_date >= todayStr).sort((a, b) => a.start_date.localeCompare(b.start_date)),
     [visibleEvents, todayStr]
@@ -666,7 +666,7 @@ export default function EventosPage() {
     [visibleEvents]
   );
 
-  const WEEKDAYS_S = ['Dom','Seg','Ter','Qua','Qui','Sex','S�b'];
+  const WEEKDAYS_S = ['Dom','Seg','Ter','Qua','Qui','Sex','S?b'];
   const MONTHS_S   = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 
   function parseDateUTC(s: string) {
@@ -691,7 +691,7 @@ export default function EventosPage() {
 
   const [pastOpen, setPastOpen] = useState(false);
 
-  /* �"?�"? Calendario items �"?�"? */
+  /* ?"??"? Calendario items ?"??"? */
   const calItems: CalendarioItem[] = useMemo(() => visibleEvents.map(ev => ({
     id: ev.id,
     title: ev.name,
@@ -705,11 +705,11 @@ export default function EventosPage() {
     <>
       <PageHeader title="Eventos" />
 
-      {/* �"?�"? Tab bar �"?�"? */}
+      {/* ?"??"? Tab bar ?"??"? */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 18, padding: '18px 32px', borderBottom: '1px solid var(--line-1)', flexShrink: 0 }}>
         <button style={{ background: 'none', border: 'none', padding: '0 0 4px', fontSize: '.86rem', fontWeight: tab === 'agenda' ? 600 : 400, color: tab === 'agenda' ? 'var(--text)' : 'var(--text-3)', cursor: 'pointer', borderBottom: tab === 'agenda' ? '2px solid #034EA2' : '2px solid transparent', letterSpacing: '-.1px', fontFamily: 'inherit' }} onClick={() => setTab('agenda')}>Agenda</button>
-        <button style={{ background: 'none', border: 'none', padding: '0 0 4px', fontSize: '.86rem', fontWeight: tab === 'atas' ? 600 : 400, color: tab === 'atas' ? 'var(--text)' : 'var(--text-3)', cursor: 'pointer', borderBottom: tab === 'atas' ? '2px solid #034EA2' : '2px solid transparent', letterSpacing: '-.1px', fontFamily: 'inherit' }} onClick={() => setTab('atas')}>Atas de reuni�o</button>
-        <button style={{ background: 'none', border: 'none', padding: '0 0 4px', fontSize: '.86rem', fontWeight: tab === 'calendar' ? 600 : 400, color: tab === 'calendar' ? 'var(--text)' : 'var(--text-3)', cursor: 'pointer', borderBottom: tab === 'calendar' ? '2px solid #034EA2' : '2px solid transparent', letterSpacing: '-.1px', fontFamily: 'inherit' }} onClick={() => setTab('calendar')}>Calend�rio</button>
+        <button style={{ background: 'none', border: 'none', padding: '0 0 4px', fontSize: '.86rem', fontWeight: tab === 'atas' ? 600 : 400, color: tab === 'atas' ? 'var(--text)' : 'var(--text-3)', cursor: 'pointer', borderBottom: tab === 'atas' ? '2px solid #034EA2' : '2px solid transparent', letterSpacing: '-.1px', fontFamily: 'inherit' }} onClick={() => setTab('atas')}>Atas de reunião</button>
+        <button style={{ background: 'none', border: 'none', padding: '0 0 4px', fontSize: '.86rem', fontWeight: tab === 'calendar' ? 600 : 400, color: tab === 'calendar' ? 'var(--text)' : 'var(--text-3)', cursor: 'pointer', borderBottom: tab === 'calendar' ? '2px solid #034EA2' : '2px solid transparent', letterSpacing: '-.1px', fontFamily: 'inherit' }} onClick={() => setTab('calendar')}>Calendário</button>
         <div style={{ flex: 1 }} />
         <span className="mono" style={{ fontSize: '0.72rem', color: 'var(--text-3)', letterSpacing: '0.5px' }}>
           {visibleEvents.length} EVENTOS
@@ -721,11 +721,11 @@ export default function EventosPage() {
           Novo evento
         </button>
       </div>
-      {/* �.��.� AGENDA �.��.� */}
+      {/* ?.??.? AGENDA ?.??.? */}
       {tab === 'agenda' && (
         <div style={{ flex: 1, overflowY: 'auto' }}>
           {loading ? (
-            <div className="loading-state">Carregando eventos�?�</div>
+            <div className="loading-state">Carregando eventos…</div>
           ) : evGroups.length === 0 ? (
             <div className="empty-state"><p>Nenhum evento encontrado.</p></div>
           ) : evGroups.map(group => (
@@ -806,7 +806,7 @@ export default function EventosPage() {
         </div>
       )}
 
-      {/* �.��.� ATAS �.��.� */}
+      {/* ?.??.? ATAS ?.??.? */}
       {tab === 'atas' && (
         <div style={{ flex: 1, overflowY: 'auto', borderTop: '1px solid var(--line-1)' }}>
           {atasEvents.length === 0 ? (
@@ -839,7 +839,7 @@ export default function EventosPage() {
         </div>
       )}
 
-      {/* �.��.� CALENDÁRIO �.��.� */}
+      {/* ?.??.? CALENDÁRIO ?.??.? */}
       {tab === 'calendar' && (
         <div style={{ flex: 1, overflow: 'auto', padding: '16px 32px' }}>
           <Calendario
@@ -853,7 +853,7 @@ export default function EventosPage() {
         </div>
       )}
 
-      {/* �.��.� PREVIEW popup (clique no evento) �.��.� */}
+      {/* ?.??.? PREVIEW popup (clique no evento) ?.??.? */}
       {preview && (
         <div onClick={closePreview} style={{ position: 'fixed', inset: 0, zIndex: 50 }}>
           <div onClick={e => e.stopPropagation()}
@@ -867,11 +867,11 @@ export default function EventosPage() {
                   {preview.event.is_private && <span className="mono" style={{ background: 'rgba(147,51,234,0.08)', color: '#9333ea', borderRadius: 3, padding: '2px 8px', fontSize: '0.68rem', fontWeight: 700 }}>Privado</span>}
                 </div>
               </div>
-              <button onClick={closePreview} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)', fontSize: '1.1rem', lineHeight: 1, padding: '0 0 0 8px', flexShrink: 0 }}>�-</button>
+              <button onClick={closePreview} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)', fontSize: '1.1rem', lineHeight: 1, padding: '0 0 0 8px', flexShrink: 0 }}>?-</button>
             </div>
             <div style={{ padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
               <div className="mono" style={{ fontSize: '0.82rem', color: 'var(--text-2)' }}>
-                {preview.event.start_date === preview.event.end_date ? formatDateFull(preview.event.start_date) : `${formatDate(preview.event.start_date)} �?' ${formatDateFull(preview.event.end_date)}`}
+                {preview.event.start_date === preview.event.end_date ? formatDateFull(preview.event.start_date) : `${formatDate(preview.event.start_date)} – ${formatDateFull(preview.event.end_date)}`}
                 {preview.event.start_time && <span style={{ marginLeft: 6, fontWeight: 600, color: '#034EA2' }}>{preview.event.start_time}</span>}
               </div>
               {parseResps(preview.event.responsibles).length > 0 && (
@@ -933,7 +933,7 @@ export default function EventosPage() {
         </div>
       )}
 
-      {/* �.��.� MODAL criar/editar evento �.��.� */}
+      {/* ?.??.? MODAL criar/editar evento ?.??.? */}
       {showModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(7,22,45,0.5)', backdropFilter: 'blur(1px)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
           onClick={e => { if (e.target === e.currentTarget) setShowModal(false); }}>
@@ -949,7 +949,7 @@ export default function EventosPage() {
             <div style={{ padding: '22px', display: 'flex', flexDirection: 'column', gap: 14, flex: 1, overflowY: 'auto' }}>
               <div>
                 <label className="mono" style={modalLabel}>Nome do Evento *</label>
-                <input type="text" value={evName} onChange={e => setEvName(e.target.value)} placeholder="Ex: reuni�o de planejamento" style={modalInp} />
+                <input type="text" value={evName} onChange={e => setEvName(e.target.value)} placeholder="Ex: reuni?o de planejamento" style={modalInp} />
               </div>
               <div style={{ position: 'relative' }}>
                 <label className="mono" style={modalLabel}>Responsável(eis)</label>
@@ -959,7 +959,7 @@ export default function EventosPage() {
                     : respList.map(name => (
                       <span key={name} style={{ background: 'rgba(3,78,162,0.08)', color: '#034EA2', borderRadius: 3, padding: '2px 7px', fontSize: '0.78rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
                         {name}
-                        <button onClick={e => { e.stopPropagation(); toggleResp(name); }} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: '#034EA2', lineHeight: 1 }}>�-</button>
+                        <button onClick={e => { e.stopPropagation(); toggleResp(name); }} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: '#034EA2', lineHeight: 1 }}>?-</button>
                       </span>
                     ))
                   }
@@ -1029,7 +1029,7 @@ export default function EventosPage() {
                           {selectedDates.map(d => (
                             <div key={d} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                               <span style={{ background: 'rgba(3,78,162,0.08)', color: '#034EA2', borderRadius: 3, padding: '3px 7px', fontSize: '0.75rem', fontWeight: 600, flex: 1 }}>{formatDateFull(d)}</span>
-                              <button type="button" onClick={() => setSelectedDates(selectedDates.filter(x => x !== d))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)', fontSize: '0.9rem', lineHeight: 1, padding: '0 2px', flexShrink: 0 }}>�-</button>
+                              <button type="button" onClick={() => setSelectedDates(selectedDates.filter(x => x !== d))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)', fontSize: '0.9rem', lineHeight: 1, padding: '0 2px', flexShrink: 0 }}>?-</button>
                             </div>
                           ))}
                         </div>
@@ -1055,7 +1055,7 @@ export default function EventosPage() {
             </div>
             <div style={{ padding: '12px 20px', borderTop: '1px solid var(--line-1)', background: 'var(--surface-2)', display: 'flex', justifyContent: 'flex-end', gap: 8, flexShrink: 0 }}>
               <button onClick={() => setShowModal(false)} style={{ padding: '9px 16px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 3, fontSize: '0.82rem', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', color: 'var(--text-2)' }}>Cancelar</button>
-              <button onClick={handleSave} disabled={saving} style={{ padding: '9px 18px', background: saving ? 'var(--text-3)' : '#034EA2', color: '#fff', border: 'none', borderRadius: 3, fontSize: '0.82rem', fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}>{saving ? 'Salvando�?�' : editing ? 'Salvar alterações' : 'Salvar'}</button>
+              <button onClick={handleSave} disabled={saving} style={{ padding: '9px 18px', background: saving ? 'var(--text-3)' : '#034EA2', color: '#fff', border: 'none', borderRadius: 3, fontSize: '0.82rem', fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}>{saving ? 'Salvando…' : editing ? 'Salvar alterações' : 'Salvar'}</button>
             </div>
           </div>
         </div>

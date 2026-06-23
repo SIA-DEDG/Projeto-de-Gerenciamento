@@ -1,23 +1,19 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { ChevronDown, X } from 'lucide-react';
+import { X, Paperclip, Trash2 } from 'lucide-react';
 import type { Task, Project } from '@/types';
 import type { UserPublic } from '@/lib/api';
 import RichTextEditor from './RichTextEditor';
 
-const PIPELINE_OPTIONS = [
-  { value: 'Pendente',    label: 'Pendente' },
-  { value: 'Em Andamento',label: 'Em Andamento' },
-  { value: 'Em Revisão',  label: 'Em Revisão' },
-  { value: 'Concluído',   label: 'Concluído' },
-];
+// ── Types ─────────────────────────────────────────────────────────────────────
 
-const PRIORITY_OPTIONS = [
-  { value: 'Baixa', color: 'var(--green-t)', bg: 'rgba(27,138,75,0.08)' },
-  { value: 'Média', color: 'var(--gold-t)',  bg: 'rgba(224,169,46,0.1)' },
-  { value: 'Alta',  color: 'var(--red)',     bg: 'rgba(180,35,24,0.08)' },
-];
+export interface ActivityAttachment {
+  name: string;
+  type: string;
+  size: number;
+  data: string; // base64
+}
 
 interface Props {
   open: boolean;
@@ -40,91 +36,251 @@ interface Props {
     co_responsibles: string | null;
     external_collaborators: string | null;
     deadline: string | null;
+    attachments?: ActivityAttachment[];
   }) => void;
 }
 
-const EMPTY = {
-  activity: '',
-  description: '',
-  project_id: null as string | null,
-  status: 'Pendente',
-  responsible: '',
-  date: '',
-  priority: 'Média',
-  co_responsibles: [] as string[],
-  external_collaborators: '',
-  deadline: '',
+// ── Constants ─────────────────────────────────────────────────────────────────
+
+const STATUS_OPTIONS = ['Pendente', 'Em Andamento', 'Em Revisão', 'Concluído'];
+const PRIORITY_OPTIONS = ['Alta', 'Média', 'Baixa'];
+
+const SPINE_COLOR: Record<string, string> = {
+  Pendente: '#9aa1ac', 'Em Andamento': '#034EA2', 'Em Revisão': '#E0A92E', Concluído: '#1B8A4B',
+};
+const PRIO_COLOR: Record<string, string> = {
+  Alta: '#034EA2', Média: 'var(--text-2)', Baixa: 'var(--text-3)',
 };
 
-function CoResponsaveisSelect({
-  users, selected, exclude, onChange,
-}: {
+const EMPTY = {
+  activity: '', description: '', project_id: null as string | null,
+  status: 'Pendente', responsible: '', date: '',
+  priority: 'Média', co_responsibles: [] as string[],
+  external_collaborators: '', deadline: '',
+};
+
+// ── Label helper ──────────────────────────────────────────────────────────────
+
+function Label({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="mono" style={{ fontSize: '0.68rem', fontWeight: 500, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--text-3)', marginBottom: 7 }}>
+      {children}
+    </div>
+  );
+}
+
+// ── Segmented control ─────────────────────────────────────────────────────────
+
+function Segmented({ options, value, onChange, getColor }: {
+  options: string[];
+  value: string;
+  onChange: (v: string) => void;
+  getColor?: (v: string) => string;
+}) {
+  return (
+    <div style={{ display: 'flex', border: '1px solid var(--border)', borderRadius: 3, overflow: 'hidden' }}>
+      {options.map((opt, i) => {
+        const active = value === opt;
+        const color = getColor?.(opt);
+        return (
+          <button key={opt} type="button" onClick={() => onChange(opt)}
+            style={{
+              flex: 1, padding: '9px 6px', fontSize: '0.78rem',
+              fontWeight: active ? 600 : 500, fontFamily: 'inherit', cursor: 'pointer',
+              border: 'none', borderRight: i < options.length - 1 ? '1px solid var(--border)' : 'none',
+              background: active ? '#034EA2' : 'var(--surface)',
+              color: active ? '#fff' : color ?? 'var(--text-2)',
+              transition: 'background 0.12s, color 0.12s',
+            }}>
+            {opt}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+// ── Co-responsáveis chips ────────────────────────────────────────────────────
+
+function CoRespChips({ users, selected, exclude, onChange }: {
   users: UserPublic[];
   selected: string[];
   exclude: string;
   onChange: (v: string[]) => void;
 }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-  const available = users.filter((u) => u.name !== exclude);
-
-  useEffect(() => {
-    function handler(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    }
-    if (open) document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [open]);
-
+  const available = users.filter(u => u.name !== exclude);
   function toggle(name: string) {
-    onChange(selected.includes(name) ? selected.filter((n) => n !== name) : [...selected, name]);
+    onChange(selected.includes(name) ? selected.filter(n => n !== name) : [...selected, name]);
+  }
+  if (available.length === 0) return <div style={{ fontSize: '0.8rem', color: 'var(--text-3)' }}>Nenhum usuário disponível</div>;
+  return (
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
+      {available.map(u => {
+        const active = selected.includes(u.name);
+        return (
+          <button key={u.id} type="button" onClick={() => toggle(u.name)}
+            style={{
+              padding: '7px 11px', borderRadius: 3, cursor: 'pointer', fontFamily: 'inherit',
+              fontSize: '0.78rem', border: `1px solid ${active ? '#034EA2' : 'var(--border)'}`,
+              background: active ? 'rgba(3,78,162,0.06)' : 'var(--surface)',
+              color: active ? '#034EA2' : 'var(--text-2)',
+              fontWeight: active ? 600 : 500, transition: 'all 0.12s',
+            }}>
+            {u.name}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+// ── File Attachment Field ─────────────────────────────────────────────────────
+
+const ACCEPT = '.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.png,.jpg,.jpeg,.gif,.webp,.mp4,.zip';
+
+function AttachmentField({ attachments, onChange }: {
+  attachments: ActivityAttachment[];
+  onChange: (v: ActivityAttachment[]) => void;
+}) {
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  function handleFiles(files: FileList | null) {
+    if (!files) return;
+    Array.from(files).forEach(file => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const data = (e.target?.result as string).split(',')[1] ?? '';
+        onChange([...attachments, { name: file.name, type: file.type, size: file.size, data }]);
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function remove(idx: number) {
+    onChange(attachments.filter((_, i) => i !== idx));
+  }
+
+  function formatSize(bytes: number): string {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+    return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
   }
 
   return (
-    <div ref={ref} style={{ position: 'relative' }}>
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        className="form-input"
-        style={{ display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap', minHeight: 36, cursor: 'pointer', textAlign: 'left' }}
-      >
-        {selected.length === 0 ? (
-          <span style={{ color: 'var(--text-3)', fontSize: '0.82rem' }}>— Nenhum —</span>
-        ) : selected.map((name) => (
-          <span key={name} style={{ background: 'rgba(3,78,162,0.08)', color: 'var(--blue)', borderRadius: 2, padding: '1px 6px', fontSize: '0.72rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 3 }}>
-            {name}
-            <span onClick={(e) => { e.stopPropagation(); toggle(name); }} style={{ cursor: 'pointer', lineHeight: 1 }}>×</span>
-          </span>
-        ))}
-        <ChevronDown size={12} style={{ marginLeft: 'auto', flexShrink: 0, color: 'var(--text-3)', transform: open ? 'rotate(180deg)' : undefined }} />
-      </button>
+    <div>
+      <input ref={fileRef} type="file" multiple accept={ACCEPT} style={{ display: 'none' }}
+        onChange={e => handleFiles(e.target.files)} />
 
-      {open && (
-        <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 200, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', maxHeight: 180, overflowY: 'auto', marginTop: 2 }}>
-          {available.length === 0
-            ? <div style={{ padding: '10px 12px', color: 'var(--text-3)', fontSize: '0.82rem' }}>Nenhum usuário disponível</div>
-            : available.map((u) => (
-              <label key={u.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', cursor: 'pointer', fontSize: '0.82rem', background: selected.includes(u.name) ? 'rgba(3,78,162,0.04)' : 'transparent' }}>
-                <input type="checkbox" checked={selected.includes(u.name)} onChange={() => toggle(u.name)} style={{ accentColor: 'var(--blue)', cursor: 'pointer' }} />
-                {u.name}
-                <span style={{ marginLeft: 'auto', fontSize: '0.68rem', color: 'var(--text-3)' }}>{u.role}</span>
-              </label>
-            ))
-          }
+      {/* Drop zone */}
+      <div
+        onClick={() => fileRef.current?.click()}
+        onDragOver={e => { e.preventDefault(); (e.currentTarget as HTMLElement).style.borderColor = '#034EA2'; }}
+        onDragLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'; }}
+        onDrop={e => { e.preventDefault(); (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'; handleFiles(e.dataTransfer.files); }}
+        style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, padding: '14px', border: '2px dashed var(--border)', borderRadius: 3, cursor: 'pointer', transition: 'border-color 0.12s', textAlign: 'center' }}>
+        <Paperclip size={18} color="var(--text-3)" />
+        <span style={{ fontSize: '0.78rem', color: 'var(--text-3)' }}>
+          Clique ou arraste arquivos (PDF, Word, Excel, imagens…)
+        </span>
+      </div>
+
+      {/* File list */}
+      {attachments.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 8 }}>
+          {attachments.map((f, i) => (
+            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '7px 10px', border: '1px solid var(--line-1)', borderRadius: 3, background: 'var(--surface-2)' }}>
+              <Paperclip size={13} color="var(--text-3)" style={{ flexShrink: 0 }} />
+              <span style={{ fontSize: '0.78rem', color: 'var(--text)', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.name}</span>
+              <span className="mono" style={{ fontSize: '0.64rem', color: 'var(--text-3)', flexShrink: 0 }}>{formatSize(f.size)}</span>
+              <button type="button" onClick={() => remove(i)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)', display: 'flex', alignItems: 'center', flexShrink: 0, padding: 2, borderRadius: 2 }}
+                onMouseEnter={e => (e.currentTarget.style.color = '#b42318')}
+                onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-3)')}>
+                <Trash2 size={13} />
+              </button>
+            </div>
+          ))}
         </div>
       )}
     </div>
   );
 }
 
+// ── Preview card ──────────────────────────────────────────────────────────────
+
+function PreviewCard({ activity, category, priority, status, responsible, deadline, coResps, noDeadline }: {
+  activity: string; category: string; priority: string; status: string;
+  responsible: string; deadline: string; coResps: string[]; noDeadline: boolean;
+}) {
+  const spine = SPINE_COLOR[status] ?? '#9aa1ac';
+  const prioColor = PRIO_COLOR[priority] ?? 'var(--text-3)';
+  const allAvatars = responsible ? [responsible, ...coResps] : coResps;
+
+  function dueText(): { text: string; color: string } | null {
+    if (noDeadline || !deadline) return null;
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const d = new Date(deadline + 'T00:00:00');
+    const diff = Math.round((d.getTime() - today.getTime()) / 86400000);
+    if (diff < 0) return { text: 'Atrasada', color: '#b42318' };
+    if (diff === 0) return { text: 'Vence hoje', color: '#A87A00' };
+    if (diff === 1) return { text: 'Vence amanhã', color: '#A87A00' };
+    const [, mm, dd] = deadline.split('-');
+    return { text: `${dd}/${mm}`, color: 'var(--text-3)' };
+  }
+  const due = dueText();
+
+  return (
+    <div style={{ position: 'relative', border: '1px solid var(--line-1)', borderRadius: 3, padding: '15px 18px 15px 20px', background: 'var(--surface-2)', overflow: 'hidden' }}>
+      <span style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, background: spine }} />
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+        <span className="mono" style={{ fontSize: '0.6rem', fontWeight: 500, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--text-3)' }}>
+          {category || 'Categoria'}
+        </span>
+        <span style={{ color: 'var(--border)' }}>·</span>
+        <span className="mono" style={{ fontSize: '0.6rem', fontWeight: 500, letterSpacing: '0.5px', textTransform: 'uppercase', color: prioColor }}>
+          {priority}
+        </span>
+      </div>
+
+      <p style={{ fontSize: '0.92rem', fontWeight: 500, color: activity ? 'var(--text)' : 'var(--text-3)', lineHeight: 1.4, margin: 0 }}>
+        {activity || 'Título da atividade…'}
+      </p>
+
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 13 }}>
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          {allAvatars.slice(0, 3).map((name, i) => {
+            const inits = name.split(' ').filter(Boolean).map(w => w[0]).slice(0, 2).join('').toUpperCase();
+            return (
+              <div key={name + i} className="mono" title={name} style={{ width: 22, height: 22, borderRadius: '50%', background: '#072f63', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.58rem', fontWeight: 500, marginLeft: i > 0 ? -6 : 0, border: '1.5px solid var(--surface-2)', flexShrink: 0, letterSpacing: '0.5px' }}>
+                {inits}
+              </div>
+            );
+          })}
+        </div>
+        {due && (
+          <span className="mono" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: '0.64rem', fontWeight: 500, color: due.color }}>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            {due.text}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Main component ────────────────────────────────────────────────────────────
+
 export default function ActivityModal({
   open, task, defaultStatus, defaultResponsible, projects, users, fixedProjectId, onClose, onSave,
 }: Props) {
   const [form, setForm] = useState(EMPTY);
   const [noDeadline, setNoDeadline] = useState(false);
+  const [attachments, setAttachments] = useState<ActivityAttachment[]>([]);
 
   useEffect(() => {
     if (!open) return;
+    setAttachments([]);
     if (task) {
       const sg = task.status_group;
       const mapped = sg === 'done' ? 'Concluído' : sg === 'review' ? 'Em Revisão' : sg === 'in_progress' ? 'Em Andamento' : 'Pendente';
@@ -141,124 +297,173 @@ export default function ActivityModal({
 
   if (!open) return null;
 
+  const project = projects.find(p => p.id === form.project_id);
+  const categoryLabel = project?.name ?? form.project_id ?? '';
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!form.activity.trim()) return;
-    if (!form.description.replace(/<[^>]*>/g, '').trim()) return;
-    const project = projects.find((p) => p.id === form.project_id);
-    onSave({ ...form, category: project?.name ?? '', co_responsibles: form.co_responsibles.length > 0 ? JSON.stringify(form.co_responsibles) : null, external_collaborators: form.external_collaborators.trim() || null, deadline: noDeadline ? null : (form.deadline.trim() || null) });
+    onSave({
+      ...form,
+      category: categoryLabel,
+      co_responsibles: form.co_responsibles.length > 0 ? JSON.stringify(form.co_responsibles) : null,
+      external_collaborators: form.external_collaborators.trim() || null,
+      deadline: noDeadline ? null : (form.deadline.trim() || null),
+      attachments: attachments.length > 0 ? attachments : undefined,
+    });
   }
 
   const showProjectSelect = fixedProjectId == null;
-  const fixedProject = fixedProjectId != null ? projects.find((p) => p.id === fixedProjectId) : null;
+  const fixedProject = fixedProjectId != null ? projects.find(p => p.id === fixedProjectId) : null;
+  const isEdit = !!task;
+
+  const inp: React.CSSProperties = { width: '100%', padding: '11px 13px', border: '1px solid var(--border)', borderRadius: 3, fontSize: '0.9rem', background: 'var(--surface)', color: 'var(--text)', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' };
 
   return (
-    <div className="modal-backdrop" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="modal-card modal-card-lg" style={{ display: 'flex', flexDirection: 'column' }}>
-        <div className="modal-header">
-          <div>
-            <div style={{ fontFamily: 'var(--mono)', fontSize: '0.6rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-3)', marginBottom: 3 }}>
-              {task ? 'Editar atividade' : 'Nova atividade'}
-            </div>
-            <h2 className="modal-title">{task ? (task.activity || 'Editar Atividade') : 'Preencha os dados abaixo'}</h2>
+    <>
+      {/* Backdrop */}
+      <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(7,22,45,0.32)', zIndex: 60 }} />
+
+      {/* Drawer */}
+      <div style={{ position: 'fixed', top: 0, right: 0, bottom: 0, width: 472, maxWidth: '94%', background: 'var(--surface)', overflowY: 'auto', zIndex: 61, borderLeft: '1px solid var(--line-1)', animation: 'drawin .24s cubic-bezier(.4,0,.2,1) both', display: 'flex', flexDirection: 'column' }}>
+
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '22px 28px', borderBottom: '1px solid var(--line-1)', flexShrink: 0, position: 'sticky', top: 0, background: 'var(--surface)', zIndex: 2 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ width: 7, height: 7, borderRadius: 2, background: '#034EA2', flexShrink: 0 }} />
+            <span className="mono" style={{ fontSize: '0.7rem', fontWeight: 600, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--text-2)' }}>
+              {isEdit ? 'Editar atividade' : 'Nova atividade'}
+            </span>
           </div>
-          <button type="button" className="modal-close" onClick={onClose}><X size={18} /></button>
+          <button type="button" onClick={onClose}
+            style={{ width: 30, height: 30, borderRadius: 3, border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text-2)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-2)')}
+            onMouseLeave={e => (e.currentTarget.style.background = 'var(--surface)')}>
+            <X size={15} />
+          </button>
         </div>
 
-        <form id="activity-form" onSubmit={handleSubmit} noValidate className="modal-body">
-          {fixedProject && (
-            <div style={{ padding: '5px 10px', background: 'rgba(3,78,162,0.06)', borderRadius: 'var(--radius)', fontSize: '0.78rem', color: 'var(--blue)', fontWeight: 600 }}>
-              Projeto: {fixedProject.name}
+        <form onSubmit={handleSubmit} noValidate style={{ flex: 1, overflowY: 'auto' }}>
+          <div style={{ padding: '24px 28px 40px', display: 'flex', flexDirection: 'column', gap: 18 }}>
+
+            {/* Preview card */}
+            <div>
+              <Label>Pré-visualização</Label>
+              <PreviewCard
+                activity={form.activity} category={categoryLabel} priority={form.priority}
+                status={form.status} responsible={form.responsible} deadline={form.deadline}
+                coResps={form.co_responsibles} noDeadline={noDeadline}
+              />
             </div>
-          )}
 
-          <div className="form-field">
-            <label className="form-label">Título da Atividade *</label>
-            <input className="form-input" type="text" value={form.activity} onChange={(e) => setForm({ ...form, activity: e.target.value })} placeholder="O que precisa ser feito?" required />
-          </div>
-
-          <div className="form-field">
-            <label className="form-label">Descrição *</label>
-            <RichTextEditor value={form.description} onChange={(html) => setForm((f) => ({ ...f, description: html }))} />
-          </div>
-
-          {/* Prioridade */}
-          <div className="form-field">
-            <label className="form-label">Prioridade</label>
-            <div style={{ display: 'flex', gap: 6 }}>
-              {PRIORITY_OPTIONS.map((opt) => {
-                const active = form.priority === opt.value;
-                return (
-                  <button key={opt.value} type="button" onClick={() => setForm({ ...form, priority: opt.value })}
-                    style={{ flex: 1, padding: '6px 4px', border: `1px solid ${active ? opt.color : 'var(--border)'}`, borderRadius: 'var(--radius)', background: active ? opt.bg : 'var(--surface)', color: active ? opt.color : 'var(--text-2)', fontWeight: active ? 700 : 500, fontSize: '0.78rem', cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}
-                  >
-                    <span style={{ width: 7, height: 7, borderRadius: '50%', background: opt.color, flexShrink: 0 }} />
-                    {opt.value}
-                  </button>
-                );
-              })}
+            {/* Atividade */}
+            <div>
+              <Label>Atividade *</Label>
+              <input value={form.activity} onChange={e => setForm({ ...form, activity: e.target.value })} placeholder="Ex: Revisar roteiro do evento" required style={inp}
+                onFocus={e => { e.target.style.borderColor = '#034EA2'; e.target.style.boxShadow = 'inset 0 0 0 1px #034EA2'; }}
+                onBlur={e => { e.target.style.borderColor = 'var(--border)'; e.target.style.boxShadow = 'none'; }} />
             </div>
-          </div>
 
-          <div className={showProjectSelect ? 'form-row' : undefined}>
-            {showProjectSelect && (
-              <div className="form-field">
-                <label className="form-label">Projeto</label>
-                <select className="form-select" value={form.project_id ?? ''} onChange={(e) => setForm({ ...form, project_id: e.target.value || null })}>
-                  <option value="">— Sem projeto —</option>
-                  {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-                </select>
+            {/* Descrição */}
+            <div>
+              <Label>Descrição</Label>
+              <RichTextEditor value={form.description} onChange={html => setForm(f => ({ ...f, description: html }))} />
+            </div>
+
+            {/* Categoria / Projeto */}
+            <div style={{ display: 'grid', gridTemplateColumns: showProjectSelect ? '1fr 1fr' : '1fr', gap: 14 }}>
+              {showProjectSelect && (
+                <div>
+                  <Label>Projeto</Label>
+                  <div style={{ position: 'relative' }}>
+                    <select value={form.project_id ?? ''} onChange={e => setForm({ ...form, project_id: e.target.value || null })} style={{ ...inp, padding: '11px 32px 11px 13px', appearance: 'none', cursor: 'pointer' }}>
+                      <option value="">— Sem projeto —</option>
+                      {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                    </select>
+                    <svg style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-3)' }} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                  </div>
+                </div>
+              )}
+              {fixedProject && (
+                <div>
+                  <Label>Projeto</Label>
+                  <div style={{ padding: '11px 13px', border: '1px solid var(--border)', borderRadius: 3, background: 'var(--surface-2)', fontSize: '0.9rem', color: 'var(--text-2)' }}>{fixedProject.name}</div>
+                </div>
+              )}
+              <div>
+                <Label>Responsável</Label>
+                <div style={{ position: 'relative' }}>
+                  <select value={form.responsible} onChange={e => setForm({ ...form, responsible: e.target.value, co_responsibles: form.co_responsibles.filter(n => n !== e.target.value) })} style={{ ...inp, padding: '11px 32px 11px 13px', appearance: 'none', cursor: 'pointer' }}>
+                    <option value="">— Sem responsável —</option>
+                    {users.map(u => <option key={u.id} value={u.name}>{u.name}</option>)}
+                  </select>
+                  <svg style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-3)' }} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
               </div>
-            )}
-            <div className="form-field">
-              <label className="form-label">Status</label>
-              <select className="form-select" value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
-                {PIPELINE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-              </select>
             </div>
-          </div>
 
-          <div className="form-row">
-            <div className="form-field">
-              <label className="form-label">Responsável principal</label>
-              <select className="form-select" value={form.responsible} onChange={(e) => setForm({ ...form, responsible: e.target.value, co_responsibles: form.co_responsibles.filter((n) => n !== e.target.value) })}>
-                <option value="">— Sem responsável —</option>
-                {users.map((u) => <option key={u.id} value={u.name}>{u.name}</option>)}
-              </select>
+            {/* Prazo */}
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 7 }}>
+                <Label>Prazo (opcional)</Label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.72rem', color: 'var(--text-2)', cursor: 'pointer', marginTop: -3 }}>
+                  <input type="checkbox" checked={noDeadline} onChange={e => { setNoDeadline(e.target.checked); if (e.target.checked) setForm({ ...form, deadline: '' }); }} style={{ accentColor: '#034EA2', cursor: 'pointer', width: 14, height: 14 }} />
+                  Indeterminado
+                </label>
+              </div>
+              <input type="date" value={form.deadline} onChange={e => setForm({ ...form, deadline: e.target.value })} disabled={noDeadline} style={{ ...inp, opacity: noDeadline ? 0.4 : 1, cursor: noDeadline ? 'not-allowed' : 'text' }}
+                onFocus={e => { if (!noDeadline) { e.target.style.borderColor = '#034EA2'; e.target.style.boxShadow = 'inset 0 0 0 1px #034EA2'; } }}
+                onBlur={e => { e.target.style.borderColor = 'var(--border)'; e.target.style.boxShadow = 'none'; }} />
             </div>
-            <div className="form-field">
-              <label className="form-label">Data</label>
-              <input className="form-input" type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
+
+            {/* Co-responsáveis */}
+            <div>
+              <Label>Co-responsáveis</Label>
+              <CoRespChips users={users} selected={form.co_responsibles} exclude={form.responsible} onChange={v => setForm({ ...form, co_responsibles: v })} />
             </div>
-          </div>
 
-          <div className="form-field">
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 5 }}>
-              <label className="form-label" style={{ marginBottom: 0 }}>Prazo de Finalização</label>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: '0.72rem', color: 'var(--text-2)', cursor: 'pointer' }}>
-                <input type="checkbox" checked={noDeadline} onChange={(e) => { setNoDeadline(e.target.checked); if (e.target.checked) setForm({ ...form, deadline: '' }); }} style={{ accentColor: 'var(--blue)', cursor: 'pointer' }} />
-                Indeterminado
-              </label>
+            {/* Prioridade */}
+            <div>
+              <Label>Prioridade</Label>
+              <Segmented options={PRIORITY_OPTIONS} value={form.priority} onChange={v => setForm({ ...form, priority: v })} getColor={v => PRIO_COLOR[v]} />
             </div>
-            <input className="form-input" type="date" value={form.deadline} onChange={(e) => setForm({ ...form, deadline: e.target.value })} disabled={noDeadline} style={{ opacity: noDeadline ? 0.4 : 1 }} />
-          </div>
 
-          <div className="form-field">
-            <label className="form-label">Co-responsáveis</label>
-            <CoResponsaveisSelect users={users} selected={form.co_responsibles} exclude={form.responsible} onChange={(v) => setForm({ ...form, co_responsibles: v })} />
-          </div>
+            {/* Status */}
+            <div>
+              <Label>Status</Label>
+              <Segmented options={STATUS_OPTIONS} value={form.status} onChange={v => setForm({ ...form, status: v })} />
+            </div>
 
-          <div className="form-field">
-            <label className="form-label">Colaboração externa</label>
-            <input className="form-input" type="text" value={form.external_collaborators} onChange={(e) => setForm({ ...form, external_collaborators: e.target.value })} placeholder="Nomes externos, separados por vírgula" />
+            {/* Colaboração externa */}
+            <div>
+              <Label>Colaboradores externos</Label>
+              <input value={form.external_collaborators} onChange={e => setForm({ ...form, external_collaborators: e.target.value })} placeholder="Nomes separados por vírgula (parceiros, terceiros)" style={inp}
+                onFocus={e => { e.target.style.borderColor = '#034EA2'; e.target.style.boxShadow = 'inset 0 0 0 1px #034EA2'; }}
+                onBlur={e => { e.target.style.borderColor = 'var(--border)'; e.target.style.boxShadow = 'none'; }} />
+            </div>
+
+            {/* Anexos */}
+            <div>
+              <Label>Anexos</Label>
+              <AttachmentField attachments={attachments} onChange={setAttachments} />
+            </div>
+
+            {/* Actions */}
+            <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
+              <button type="submit" style={{ flex: 1, padding: 12, border: 'none', borderRadius: 3, background: '#034EA2', color: '#fff', fontSize: '0.84rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
+                onMouseEnter={e => (e.currentTarget.style.background = '#023e82')}
+                onMouseLeave={e => (e.currentTarget.style.background = '#034EA2')}>
+                {isEdit ? 'Salvar alterações' : 'Criar atividade'}
+              </button>
+              <button type="button" onClick={onClose} style={{ padding: '12px 18px', border: '1px solid var(--border)', borderRadius: 3, background: 'var(--surface)', color: 'var(--text)', fontSize: '0.84rem', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}
+                onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-2)')}
+                onMouseLeave={e => (e.currentTarget.style.background = 'var(--surface)')}>
+                Cancelar
+              </button>
+            </div>
           </div>
         </form>
-
-        <div className="modal-footer" style={{ background: 'var(--surface-2)' }}>
-          <button type="button" className="btn btn-secondary btn-sm" onClick={onClose}>Cancelar</button>
-          <button type="submit" form="activity-form" className="btn btn-primary btn-sm">{task ? 'Salvar' : 'Criar'}</button>
-        </div>
       </div>
-    </div>
+    </>
   );
 }

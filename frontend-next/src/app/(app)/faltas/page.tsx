@@ -81,63 +81,132 @@ function FaltaModal({ users, currentUserId, onClose, onSaved }: {
   const inp: React.CSSProperties = { width: '100%', padding: '10px 13px', border: '1px solid var(--border)', borderRadius: 3, fontSize: '0.85rem', fontFamily: 'inherit', color: 'var(--text)', background: 'var(--surface)', outline: 'none', boxSizing: 'border-box' };
   const lbl: React.CSSProperties = { fontFamily: 'var(--mono)', fontSize: '0.63rem', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--text-3)', display: 'block', marginBottom: 6 };
 
+  // Preview state
+  const previewUser = users.find(u => u.id === userId);
+  const daysDiff = (() => {
+    try {
+      const s = new Date(startDate + 'T12:00:00');
+      const e2 = new Date(endDate + 'T12:00:00');
+      return Math.round((e2.getTime() - s.getTime()) / 86400000) + 1;
+    } catch { return 1; }
+  })();
+
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(7,22,45,.5)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div style={{ background: 'var(--surface)', borderRadius: 3, width: '100%', maxWidth: 480, maxHeight: '90vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-        {/* Stripe colorida */}
-        <div style={{ height: 4, background: 'linear-gradient(90deg,#034EA2 0 40%,#E0A92E 40% 55%,#b42318 55% 75%,#1B8A4B 75%)', flexShrink: 0 }} />
-        <div style={{ padding: '16px 22px', borderBottom: '1px solid var(--line-1)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
-          <div>
-            <div className="mono" style={{ fontSize: '0.62rem', color: 'var(--text-3)', letterSpacing: '1px', textTransform: 'uppercase' }}>Frequência</div>
-            <h2 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text)', marginTop: 2 }}>Registrar falta</h2>
+    <>
+      {/* Backdrop */}
+      <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(7,22,45,0.32)', zIndex: 300 }} />
+      {/* Drawer */}
+      <div style={{ position: 'fixed', top: 0, right: 0, bottom: 0, width: 472, maxWidth: '94%', background: 'var(--surface)', overflowY: 'auto', zIndex: 301, borderLeft: '1px solid var(--line-1)', animation: 'drawin .24s cubic-bezier(.4,0,.2,1) both', display: 'flex', flexDirection: 'column' }}>
+
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '22px 28px', borderBottom: '1px solid var(--line-1)', flexShrink: 0, position: 'sticky', top: 0, background: 'var(--surface)', zIndex: 2 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ width: 7, height: 7, borderRadius: 2, background: '#A87A00', flexShrink: 0 }} />
+            <span className="mono" style={{ fontSize: '0.7rem', fontWeight: 600, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--text-2)' }}>Registrar falta</span>
           </div>
-          <button onClick={onClose} style={{ width: 30, height: 30, borderRadius: 3, border: '1px solid var(--border)', background: 'none', color: 'var(--text-3)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'inherit', fontSize: '1.1rem' }}>✕</button>
+          <button onClick={onClose} style={{ width: 30, height: 30, borderRadius: 3, border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text-2)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-2)')}
+            onMouseLeave={e => (e.currentTarget.style.background = 'var(--surface)')}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+          </button>
         </div>
 
-        <form onSubmit={handleSave} style={{ padding: 22, display: 'flex', flexDirection: 'column', gap: 14, overflowY: 'auto', flex: 1 }}>
-          <div>
-            <label style={lbl}>Funcionário</label>
-            <select value={userId} onChange={(e) => setUserId(e.target.value)} style={inp}>
-              <option value="">Selecionar...</option>
-              {users.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
-            </select>
-          </div>
-          <div>
-            <label style={lbl}>Motivo</label>
-            <select value={reason} onChange={(e) => setReason(e.target.value)} style={inp}>
-              {REASONS.map(r => <option key={r} value={r}>{r}</option>)}
-            </select>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-            <div>
-              <label style={lbl}>Início</label>
-              <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} style={inp} />
+        <form onSubmit={handleSave} style={{ flex: 1, overflowY: 'auto' }}>
+          <div style={{ padding: '24px 28px 40px', display: 'flex', flexDirection: 'column', gap: 18 }}>
+
+            {/* Preview card */}
+            <div style={{ border: '1px solid var(--line-1)', borderRadius: 3, padding: '14px 16px', background: 'var(--surface-2)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
+                  <div className="mono" style={{ width: 32, height: 32, borderRadius: '50%', background: '#072f63', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.62rem', fontWeight: 600, flexShrink: 0 }}>
+                    {(previewUser?.name ?? '?').split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()}
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '0.88rem', fontWeight: 500, color: 'var(--text)' }}>{previewUser?.name ?? 'Servidor'}</div>
+                    <div className="mono" style={{ fontSize: '0.62rem', color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: 2 }}>
+                      {reason} · {formatDate(startDate)}{startDate !== endDate ? ` – ${formatDate(endDate)}` : ''} · {daysDiff === 1 ? '1 dia' : `${daysDiff} dias`}
+                    </div>
+                  </div>
+                </div>
+                <span className="mono" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: '0.72rem', fontWeight: 500, letterSpacing: '0.5px', textTransform: 'uppercase', color: '#A87A00' }}>
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#A87A00' }} />
+                  Pendente
+                </span>
+              </div>
             </div>
+
+            {/* Servidor */}
             <div>
-              <label style={lbl}>Fim</label>
-              <input type="date" value={endDate} min={startDate} onChange={(e) => setEndDate(e.target.value)} style={inp} />
+              <label className="mono" style={{ display: 'block', fontSize: '0.68rem', fontWeight: 500, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--text-3)', marginBottom: 7 }}>Servidor</label>
+              <div style={{ position: 'relative' }}>
+                <select value={userId} onChange={e => setUserId(e.target.value)} style={{ ...inp, padding: '11px 32px 11px 13px', appearance: 'none', cursor: 'pointer' }}>
+                  <option value="">Selecionar...</option>
+                  {users.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
+                </select>
+                <svg style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-3)' }} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+              </div>
+            </div>
+
+            {/* Tipo */}
+            <div>
+              <label className="mono" style={{ display: 'block', fontSize: '0.68rem', fontWeight: 500, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--text-3)', marginBottom: 7 }}>Tipo</label>
+              <div style={{ position: 'relative' }}>
+                <select value={reason} onChange={e => setReason(e.target.value)} style={{ ...inp, padding: '11px 32px 11px 13px', appearance: 'none', cursor: 'pointer' }}>
+                  {REASONS.map(r => <option key={r} value={r}>{r}</option>)}
+                </select>
+                <svg style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-3)' }} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+              </div>
+            </div>
+
+            {/* Período */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+              <div>
+                <label className="mono" style={{ display: 'block', fontSize: '0.68rem', fontWeight: 500, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--text-3)', marginBottom: 7 }}>Início</label>
+                <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} style={inp}
+                  onFocus={e => { e.target.style.borderColor = '#034EA2'; }} onBlur={e => { e.target.style.borderColor = 'var(--border)'; }} />
+              </div>
+              <div>
+                <label className="mono" style={{ display: 'block', fontSize: '0.68rem', fontWeight: 500, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--text-3)', marginBottom: 7 }}>Fim (opcional)</label>
+                <input type="date" value={endDate} min={startDate} onChange={e => setEndDate(e.target.value)} style={inp}
+                  onFocus={e => { e.target.style.borderColor = '#034EA2'; }} onBlur={e => { e.target.style.borderColor = 'var(--border)'; }} />
+              </div>
+            </div>
+
+            {/* Justificativa */}
+            <div>
+              <label className="mono" style={{ display: 'block', fontSize: '0.68rem', fontWeight: 500, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--text-3)', marginBottom: 7 }}>Justificativa</label>
+              <textarea value={justification} onChange={e => setJustification(e.target.value)} rows={3}
+                placeholder="Descreva o motivo da ausência"
+                style={{ ...inp, resize: 'vertical', minHeight: 80, lineHeight: 1.5 }}
+                onFocus={e => { e.target.style.borderColor = '#034EA2'; e.target.style.boxShadow = 'inset 0 0 0 1px #034EA2'; }}
+                onBlur={e => { e.target.style.borderColor = 'var(--border)'; e.target.style.boxShadow = 'none'; }} />
+            </div>
+
+            {/* Info banner */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '11px 14px', border: '1px solid var(--border)', borderRadius: 3, background: 'var(--surface-2)' }}>
+              <AlertTriangle size={14} style={{ color: '#A87A00', flexShrink: 0 }} />
+              <span className="mono" style={{ fontSize: '0.68rem', color: 'var(--text-2)', lineHeight: 1.5 }}>
+                O registro entra como <strong style={{ color: '#A87A00' }}>Pendente</strong> até aprovação da coordenação.
+              </span>
+            </div>
+
+            {error && <p style={{ color: '#b42318', fontSize: '0.82rem', margin: 0 }}>{error}</p>}
+
+            {/* Actions */}
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button type="submit" disabled={saving} style={{ flex: 1, padding: 12, border: 'none', borderRadius: 3, background: saving ? 'var(--text-3)' : '#034EA2', color: '#fff', fontSize: '0.84rem', fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}>
+                {saving ? 'Salvando…' : 'Registrar falta'}
+              </button>
+              <button type="button" onClick={onClose} style={{ padding: '12px 18px', border: '1px solid var(--border)', borderRadius: 3, background: 'var(--surface)', color: 'var(--text)', fontSize: '0.84rem', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}
+                onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-2)')}
+                onMouseLeave={e => (e.currentTarget.style.background = 'var(--surface)')}>
+                Cancelar
+              </button>
             </div>
           </div>
-          <div>
-            <label style={lbl}>Justificativa (opcional)</label>
-            <textarea value={justification} onChange={(e) => setJustification(e.target.value)} rows={3}
-              placeholder="Descreva a justificativa..."
-              style={{ ...inp, resize: 'vertical', minHeight: 72 }} />
-          </div>
-          <div style={{ background: 'rgba(224,169,46,0.08)', border: '1px solid rgba(224,169,46,0.3)', borderRadius: 3, padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <AlertTriangle size={14} style={{ color: '#A87A00', flexShrink: 0 }} />
-            <span style={{ fontSize: '0.78rem', color: '#A87A00', fontWeight: 500 }}>Envio de arquivos ainda não disponível.</span>
-          </div>
-          {error && <p style={{ color: '#b42318', fontSize: '0.82rem', margin: 0 }}>{error}</p>}
         </form>
-
-        <div style={{ padding: '12px 22px', borderTop: '1px solid var(--line-1)', display: 'flex', justifyContent: 'flex-end', gap: 8, flexShrink: 0 }}>
-          <button type="button" onClick={onClose} style={{ padding: '9px 16px', border: '1px solid var(--border)', borderRadius: 3, background: 'var(--surface)', color: 'var(--text-2)', fontSize: '0.82rem', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>Cancelar</button>
-          <button onClick={handleSave} disabled={saving} style={{ padding: '9px 18px', border: 'none', borderRadius: 3, background: saving ? 'var(--text-3)' : '#034EA2', color: '#fff', fontSize: '0.82rem', fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}>{saving ? 'Salvando…' : 'Registrar'}</button>
-        </div>
       </div>
-    </div>
+    </>
   );
 }
 
@@ -145,7 +214,8 @@ function FaltaModal({ users, currentUserId, onClose, onSaved }: {
 export default function FaltasPage() {
   const currentUser = getUser();
   const seeAll   = canSeeAllAbsences(currentUser?.role);
-  const canApprove = seeAll;
+  // Diretor, Gerente e Admin podem aprovar/recusar faltas
+  const canApprove = currentUser?.role === 'Admin' || currentUser?.role === 'Diretor' || currentUser?.role === 'Gerente' || currentUser?.role === 'Coordenador';
   const { toasts, addToast, dismissToast } = useToast();
   const now = new Date();
 
