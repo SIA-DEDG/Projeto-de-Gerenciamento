@@ -1,4 +1,0 @@
-ALTER TABLE tasks  ADD COLUMN IF NOT EXISTS archived BOOLEAN NOT NULL DEFAULT FALSE;
-ALTER TABLE events ADD COLUMN IF NOT EXISTS archived BOOLEAN NOT NULL DEFAULT FALSE;
-CREATE INDEX IF NOT EXISTS idx_tasks_archived  ON tasks  (archived);
-CREATE INDEX IF NOT EXISTS idx_events_archived ON events (archived);

@@ -1,2 +1,0 @@
-ALTER TABLE feedbacks
-  ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'pendente';
