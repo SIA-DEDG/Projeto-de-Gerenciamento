@@ -288,14 +288,23 @@ export default function RegistroPage() {
               Nenhuma senha temporária pendente.
             </div>
           ) : (
+            <>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 140px 200px 90px', gap: 16, padding: '10px 20px', background: 'var(--surface-2)', borderBottom: '1px solid var(--line-1)' }}>
+              {['Colaborador', 'Perfil', 'Senha temporária', ''].map((h, i) => (
+                <span key={i} className="mono" style={{ fontSize: '0.62rem', fontWeight: 500, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--text-3)' }}>{h}</span>
+              ))}
+            </div>
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               {history.map((entry, idx) => {
                 const roleInfo = ROLES.find(r => r.value === entry.role);
                 const eInitials = entry.name.split(' ').map((w: string) => w[0]).slice(0, 2).join('').toUpperCase();
-                let h = 0; for (const c of entry.name) h = (h * 31 + c.charCodeAt(0)) | 0;
                 const aColor = roleInfo?.color ?? '#034EA2';
+                const copyId = `pw-${entry.user_id}`;
                 return (
-                  <div key={entry.user_id} style={{ display: 'grid', gridTemplateColumns: '1fr 170px 150px 150px', gap: 18, alignItems: 'center', padding: '14px 20px', borderBottom: idx < history.length - 1 ? '1px solid var(--line-2)' : 'none' }}>
+                  <div key={entry.user_id} style={{ display: 'grid', gridTemplateColumns: '1fr 140px 200px 90px', gap: 16, alignItems: 'center', padding: '14px 20px', borderBottom: idx < history.length - 1 ? '1px solid var(--line-2)' : 'none' }}
+                    onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-2)')}
+                    onMouseLeave={e => (e.currentTarget.style.background = '')}>
+                    {/* Col 1: avatar + name */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
                       <div className="mono" style={{ width: 32, height: 32, borderRadius: '50%', background: aColor, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.62rem', fontWeight: 600, flexShrink: 0 }}>{eInitials}</div>
                       <div style={{ minWidth: 0 }}>
@@ -303,16 +312,28 @@ export default function RegistroPage() {
                         <div className="mono" style={{ fontSize: '0.64rem', color: 'var(--text-3)', letterSpacing: '0.3px' }}>@{entry.username}</div>
                       </div>
                     </div>
-                    <span className="mono" style={{ fontSize: '0.66rem', fontWeight: 600, letterSpacing: '0.5px', textTransform: 'uppercase', color: aColor, background: aColor + '14', padding: '3px 8px', borderRadius: 3 }}>{roleInfo?.label ?? entry.role}</span>
-                    <span className="mono" style={{ fontSize: '0.66rem', color: 'var(--text-3)' }}>{new Date(entry.created_at).toLocaleDateString('pt-BR')}</span>
+                    {/* Col 2: perfil */}
+                    <span className="mono" style={{ fontSize: '0.66rem', fontWeight: 600, letterSpacing: '0.5px', textTransform: 'uppercase', color: aColor, background: aColor + '14', padding: '3px 8px', borderRadius: 3, justifySelf: 'start' }}>{roleInfo?.label ?? entry.role}</span>
+                    {/* Col 3: senha temporária */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <code className="mono" style={{ flex: 1, minWidth: 0, background: 'rgba(224,169,46,0.08)', border: '1px solid rgba(224,169,46,0.25)', borderRadius: 3, padding: '5px 10px', fontSize: '0.82rem', fontWeight: 700, color: '#7a5800', letterSpacing: '0.08em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {entry.temp_password}
+                      </code>
+                      <button type="button" onClick={() => handleCopy(entry.temp_password, copyId)} title="Copiar senha"
+                        style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, border: '1px solid var(--border)', borderRadius: 3, background: copied === copyId ? '#16a34a' : 'var(--surface)', color: copied === copyId ? '#fff' : 'var(--text-3)', cursor: 'pointer' }}>
+                        {copied === copyId ? <Check size={12} strokeWidth={2.5} /> : <Copy size={12} />}
+                      </button>
+                    </div>
+                    {/* Col 4: remover */}
                     <button onClick={() => setConfirmDelete(entry)} disabled={removing === entry.user_id}
-                      style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 11px', border: '1px solid var(--border)', borderRadius: 3, background: 'var(--surface)', color: 'var(--text-2)', fontSize: '0.7rem', fontWeight: 500, cursor: removing === entry.user_id ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}>
+                      style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 10px', border: '1px solid var(--border)', borderRadius: 3, background: 'var(--surface)', color: 'var(--text-2)', fontSize: '0.7rem', fontWeight: 500, cursor: removing === entry.user_id ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}>
                       <Trash2 size={11} />Remover
                     </button>
                   </div>
                 );
               })}
             </div>
+            </>
           )}
         </div>
       </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 
 // ── Page types & paths ────────────────────────────────────────────────────────
@@ -49,17 +49,22 @@ export type View = 'kanban' | 'list' | 'calendar';
 
 export interface TabFilters {
   search: string;
-  fUser: string;
-  fPrio: string;
-  fProj: string;
-  fDateFrom: string;
-  fDateTo: string;
+  filterUser: string;
+  filterPriority: string;
+  filterProject: string;
+  filterDateFrom: string;
+  filterDateTo: string;
   view: View;
 }
 
 const DEFAULT_FILTERS: TabFilters = {
-  search: '', fUser: '', fPrio: '', fProj: '',
-  fDateFrom: '', fDateTo: '', view: 'kanban',
+  search: '',
+  filterUser: '',
+  filterPriority: '',
+  filterProject: '',
+  filterDateFrom: '',
+  filterDateTo: '',
+  view: 'kanban',
 };
 
 // ── Tab model ─────────────────────────────────────────────────────────────────
@@ -122,6 +127,12 @@ export function TabsProvider({ children }: { children: React.ReactNode }) {
   const [tabs, setTabs] = useState<Tab[]>(loadTabs);
   const [activeTabId, setActiveTabId] = useState<string>(() => loadActiveId(loadTabs()));
 
+  // Refs kept in sync each render so callbacks don't capture stale closures
+  const tabsRef = useRef(tabs);
+  const activeTabIdRef = useRef(activeTabId);
+  tabsRef.current = tabs;
+  activeTabIdRef.current = activeTabId;
+
   useEffect(() => {
     try { localStorage.setItem(LS_TABS, JSON.stringify(tabs)); } catch {}
   }, [tabs]);
@@ -137,11 +148,12 @@ export function TabsProvider({ children }: { children: React.ReactNode }) {
     didInit.current = true;
     const type = pathToPageType(pathname);
     if (!type) return;
-    const match = tabs.find(t => t.type === type);
+    const currentTabs = tabsRef.current;
+    const currentActiveId = activeTabIdRef.current;
+    const match = currentTabs.find(t => t.type === type);
     if (match) {
-      if (match.id !== activeTabId) setActiveTabId(match.id);
+      if (match.id !== currentActiveId) setActiveTabId(match.id);
     } else if (type !== 'board') {
-      // Create a tab for the current URL on direct navigation
       const id = 'tb' + Date.now();
       const info = PAGE_INFO[type];
       setTabs(prev => [...prev, { id, type, name: info.defaultName, filters: { ...DEFAULT_FILTERS } }]);
@@ -151,6 +163,7 @@ export function TabsProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   // ── openTab ───────────────────────────────────────────────────────────────
+  // Uses tabsRef so it never closes over stale `tabs` and needs no deps.
 
   const openTab = useCallback((
     type: PageType,
@@ -159,7 +172,7 @@ export function TabsProvider({ children }: { children: React.ReactNode }) {
     const { name, filters, forceNew = false } = opts;
 
     if (!forceNew && type !== 'board') {
-      const existing = tabs.find(t => t.type === type);
+      const existing = tabsRef.current.find(t => t.type === type);
       if (existing) {
         setActiveTabId(existing.id);
         return;
@@ -175,7 +188,7 @@ export function TabsProvider({ children }: { children: React.ReactNode }) {
     };
     setTabs(prev => [...prev, newTab]);
     setActiveTabId(id);
-  }, [tabs]);
+  }, []);
 
   // ── closeTab ──────────────────────────────────────────────────────────────
 
@@ -184,32 +197,33 @@ export function TabsProvider({ children }: { children: React.ReactNode }) {
       if (prev.length <= 1) return prev;
       const idx = prev.findIndex(t => t.id === id);
       const next = prev.filter(t => t.id !== id);
-      if (id === activeTabId) {
+      if (id === activeTabIdRef.current) {
         const newActive = next[Math.max(0, idx - 1)];
         if (newActive) setActiveTabId(newActive.id);
       }
       return next;
     });
-  }, [activeTabId]);
+  }, []);
 
   // ── activateTab ───────────────────────────────────────────────────────────
 
   const activateTab = useCallback((id: string) => {
-    const tab = tabs.find(t => t.id === id);
-    if (!tab || id === activeTabId) return;
+    if (id === activeTabIdRef.current) return;
+    const tab = tabsRef.current.find(t => t.id === id);
+    if (!tab) return;
     setActiveTabId(id);
-  }, [tabs, activeTabId]);
+  }, []);
 
   // ── patchActiveTab ────────────────────────────────────────────────────────
 
   const patchActiveTab = useCallback((patch: Partial<TabFilters>) => {
     setTabs(prev =>
-      prev.map(t => t.id === activeTabId
+      prev.map(t => t.id === activeTabIdRef.current
         ? { ...t, filters: { ...t.filters, ...patch } }
         : t,
       ),
     );
-  }, [activeTabId]);
+  }, []);
 
   // ── renameTab ─────────────────────────────────────────────────────────────
 
@@ -229,8 +243,14 @@ export function TabsProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
+  const value = useMemo(
+    () => ({ tabs, activeTabId, openTab, closeTab, activateTab, patchActiveTab, renameTab, reorderTabs }),
+    // callbacks are now stable (empty deps), so this only updates when tabs/activeTabId change
+    [tabs, activeTabId, openTab, closeTab, activateTab, patchActiveTab, renameTab, reorderTabs],
+  );
+
   return (
-    <TabsContext.Provider value={{ tabs, activeTabId, openTab, closeTab, activateTab, patchActiveTab, renameTab, reorderTabs }}>
+    <TabsContext.Provider value={value}>
       {children}
     </TabsContext.Provider>
   );

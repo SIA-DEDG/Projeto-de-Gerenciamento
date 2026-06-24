@@ -37,45 +37,13 @@ export default function LoginPage() {
 
   return (
     <div style={{ height: '100vh', display: 'flex', fontFamily: "'IBM Plex Sans', sans-serif" }}>
-      {/* ── Esquerda: imagem com overlay escuro ── */}
-      <div style={{ flex: 1, minWidth: 0, height: '100%', position: 'relative', overflow: 'hidden', background: 'linear-gradient(135deg, #072f63 0%, #0a3d7a 50%, #05244a 100%)' }}>
-        {/* Listras sutis diagonais (sem imagem real, usamos padrão) */}
-        <div style={{
-          position: 'absolute', inset: 0,
-          background: 'repeating-linear-gradient(-45deg, transparent, transparent 40px, rgba(255,255,255,0.022) 40px, rgba(255,255,255,0.022) 41px)',
-          pointerEvents: 'none',
-        }} />
-        <div style={{ position: 'absolute', inset: 0, background: 'rgba(6,45,95,0.42)', backdropFilter: 'blur(1px)', pointerEvents: 'none' }} />
-
-        {/* Conteúdo sobre a imagem */}
-        <div style={{ position: 'relative', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '44px 48px' }}>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 40 }}>
-              <div style={{ width: 36, height: 36, borderRadius: 3, background: 'rgba(255,255,255,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#E0A92E', fontSize: 18, lineHeight: 1 }}>★</div>
-              <div>
-                <div style={{ fontWeight: 600, fontSize: '1rem', color: '#fff', letterSpacing: '-0.2px' }}>Tasks SIA</div>
-                <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '0.6rem', color: 'rgba(255,255,255,0.45)', letterSpacing: '1.2px', textTransform: 'uppercase' }}>Sistema de Gestão · DEDG</div>
-              </div>
-            </div>
-            <div style={{ maxWidth: 380 }}>
-              <h2 style={{ fontSize: '2rem', fontWeight: 700, color: '#fff', letterSpacing: '-0.5px', lineHeight: 1.25, marginBottom: 14 }}>
-                Gestão de atividades da DEDG
-              </h2>
-              <p style={{ fontSize: '0.92rem', color: 'rgba(255,255,255,0.6)', lineHeight: 1.7 }}>
-                Acompanhe projetos, atividades, eventos e faltas da equipe da Diretoria de Economia Digital e Governança.
-              </p>
-            </div>
-          </div>
-
-          <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '0.62rem', color: 'rgba(255,255,255,0.3)', letterSpacing: '0.5px', lineHeight: 1.7 }}>
-            © 2026 Secretaria de Inteligência Artificial<br />
-            Economia Digital, Ciência, Tecnologia e Inovação — SIA
-          </div>
-        </div>
+      {/* ── Esquerda: imagem ── */}
+      <div style={{ flex: 1, minWidth: 0, height: '100%', overflow: 'hidden' }}>
+        <img src="/background.jpg" alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
       </div>
 
       {/* ── Direita: formulário ── */}
-      <div style={{ width: 480, maxWidth: '100%', flexShrink: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '48px 56px', background: '#fff', position: 'relative', overflow: 'hidden' }}>
+      <div style={{ width: 600, maxWidth: '100%', flexShrink: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '48px 56px', background: '#fff', position: 'relative', overflow: 'hidden' }}>
         {/* Faixa de cores do Gov-PI no topo */}
         <div style={{ position: 'absolute', left: 0, right: 0, top: 0, height: 4, background: 'linear-gradient(90deg, #034EA2 0 40%, #E0A92E 40% 55%, #b42318 55% 75%, #1B8A4B 75%)' }} />
 
@@ -153,6 +121,11 @@ export default function LoginPage() {
             )}
           </button>
         </form>
+
+        <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '0.62rem', color: '#9aa1ac', letterSpacing: '0.5px', lineHeight: 1.7, textAlign: 'center', marginTop: 32 }}>
+          © 2026 Secretaria de Inteligência Artificial<br />
+          Economia Digital, Ciência, Tecnologia e Inovação — SIA
+        </div>
       </div>
     </div>
   );

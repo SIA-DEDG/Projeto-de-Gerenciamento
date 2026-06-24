@@ -100,6 +100,16 @@ export async function fetchTasks(): Promise<Task[]> {
   });
 }
 
+function readCache<T>(key: string): T | null {
+  const hit = apiCache.get(key);
+  if (!hit || Date.now() - hit.cachedAt > TTL) return null;
+  return hit.data as T;
+}
+
+export function getCachedTasks(): Task[] | null { return readCache<Task[]>('tasks'); }
+export function getCachedProjects(): Project[] | null { return readCache<Project[]>('projects'); }
+export function getCachedUsers(): UserPublic[] | null { return readCache<UserPublic[]>('users'); }
+
 export async function invalidateTasksCache(): Promise<void> {
   cacheInvalidate('tasks');
 }

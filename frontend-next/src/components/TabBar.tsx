@@ -13,8 +13,8 @@ function ViewIcon({ view }: { view: string }) {
 }
 
 function tabHasFilters(tab: Tab): boolean {
-  const { search, fUser, fPrio, fProj } = tab.filters;
-  return !!(search || fUser || fPrio || fProj);
+  const { search, filterUser, filterPriority, filterProject } = tab.filters;
+  return !!(search || filterUser || filterPriority || filterProject);
 }
 
 const BOARD_LIKE: Set<Tab['type']> = new Set(['board', 'minhas-atividades']);

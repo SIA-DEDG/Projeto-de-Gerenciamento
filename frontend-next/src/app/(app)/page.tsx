@@ -1,392 +1,175 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import {
-  DndContext, DragEndEvent, useDroppable,
-  closestCenter, PointerSensor, useSensors, useSensor,
-} from '@dnd-kit/core';
+import { useState, useEffect, useMemo } from 'react';
+import { DndContext, closestCenter, PointerSensor, useSensors, useSensor } from '@dnd-kit/core';
 import ActivityModal from '@/components/ActivityModal';
 import DrawerDetalhe from '@/components/DrawerDetalhe';
 import ImportModal from '@/components/ImportModal';
-import KanbanCard from '@/components/KanbanCard';
+import KanbanColumn from '@/components/KanbanColumn';
+import TaskListView from '@/components/TaskListView';
 import ConfirmModal from '@/components/ConfirmModal';
 import Calendario, { type CalendarioItem } from '@/components/Calendario';
-import { useToast } from '@/hooks/useToast';
-import ToastContainer from '@/components/ToastContainer';
-import {
-  fetchTasks, createTask, updateTask, deleteTask,
-  fetchProjects, fetchUsers,
-} from '@/lib/api';
-import { statusGroupLabel, statusLabelToDb } from '@/lib/utils';
-import {
-  LayoutGrid, List, Calendar, Search, Download, FileUp, Plus, Funnel, Ellipsis,
-} from 'lucide-react';
-import type { UserPublic } from '@/lib/api';
-import { useRefetchOnFocus } from '@/lib/useRefetchOnFocus';
-import type { Task, StatusGroup, Project } from '@/types';
-import { useTabs, useActiveTab } from '@/context/TabsContext';
 import PageHeader from '@/components/PageHeader';
+import ToastContainer from '@/components/ToastContainer';
+import { useToast } from '@/hooks/useToast';
+import { useTaskBoard, type ActivityFormData } from '@/hooks/useTaskBoard';
+import { KANBAN_COLUMNS } from '@/lib/utils';
+import { useTabs, useActiveTab } from '@/context/TabsContext';
+import { Search, Plus } from 'lucide-react';
+import type { StatusGroup } from '@/types';
 
-const COLUMNS: { id: StatusGroup; title: string; color: string }[] = [
-  { id: 'pending', title: 'Pendente', color: 'var(--s-pending)' },
-  { id: 'in_progress', title: 'Em Andamento', color: 'var(--s-progress)' },
-  { id: 'review', title: 'Em Revisão', color: 'var(--s-review)' },
-  { id: 'done', title: 'Concluído', color: 'var(--s-done)' },
-];
-
-const STATUS_MAP: Record<StatusGroup, string> = {
-  pending: 'Pendente',
-  in_progress: 'Em Andamento',
-  review: 'Em Revisão',
-  done: 'Concluído',
+const STATUS_LABELS: Record<StatusGroup, string> = {
+  pending: 'Pendente', in_progress: 'Em Andamento', review: 'Em Revisão', done: 'Concluído',
 };
-
-function KanbanColumn({
-  col, tasks, projects, onAddCard, onViewCard, onDeleteCard,
-  isSelecting, selectedTaskIds, onToggleSelect, onStartSelect,
-}: {
-  col: typeof COLUMNS[0];
-  tasks: Task[];
-  projects: Project[];
-  onAddCard: (sg: StatusGroup) => void;
-  onViewCard: (t: Task) => void;
-  onDeleteCard: (id: string) => void;
-  isSelecting: boolean;
-  selectedTaskIds: Set<string>;
-  onToggleSelect: (id: string) => void;
-  onStartSelect: () => void;
-}) {
-  const { setNodeRef, isOver } = useDroppable({ id: col.id });
-  const [menuOpen, setMenuOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!menuOpen) return;
-    function handler(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
-    }
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [menuOpen]);
-
-  /* Cor do dot/tint da coluna conforme design */
-  const dotColor = col.color;
-  const tintColor = col.id === 'pending' ? 'rgba(154,161,172,0.12)'
-    : col.id === 'in_progress' ? 'rgba(3,78,162,0.1)'
-      : col.id === 'review' ? 'rgba(224,169,46,0.1)'
-        : 'rgba(27,138,75,0.1)';
-  const titleColor = col.id === 'pending' ? 'var(--text-3)'
-    : col.id === 'in_progress' ? '#034EA2'
-      : col.id === 'review' ? '#A87A00'
-        : '#157F3C';
-
-  return (
-    <div
-      ref={setNodeRef}
-      onDrop={undefined}
-      style={{
-        borderRight: '1px solid var(--line-1)',
-        borderTop: `2px solid ${dotColor}`,
-        minHeight: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        background: isOver && !isSelecting ? 'var(--surface-2)' : 'var(--surface)',
-        transition: 'background 0.12s',
-      }}
-    >
-      {/* Header da coluna — sticky */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '14px 20px', position: 'sticky', top: 0, background: 'var(--surface)', zIndex: 1, borderBottom: '1px solid var(--line-2)' }}>
-        <span style={{ width: 9, height: 9, borderRadius: 2, background: dotColor, boxShadow: `0 0 0 3px ${tintColor}`, flexShrink: 0 }} />
-        <span className="mono" style={{ fontWeight: 600, fontSize: '0.72rem', color: titleColor, letterSpacing: '1.2px', textTransform: 'uppercase' }}>{col.title}</span>
-        <span className="mono" style={{ fontSize: '0.68rem', fontWeight: 600, color: titleColor, background: tintColor, padding: '1px 8px', borderRadius: 3, marginLeft: 2 }}>{tasks.length}</span>
-        <div style={{ position: 'relative', marginLeft: 'auto' }} ref={menuRef}>
-          <button
-            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)', display: 'flex', alignItems: 'center', padding: 4, borderRadius: 3 }}
-            onClick={() => setMenuOpen((o) => !o)}
-            title="Opções"
-            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--surface-2)'; (e.currentTarget as HTMLElement).style.color = 'var(--text)'; }}
-            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'none'; (e.currentTarget as HTMLElement).style.color = 'var(--text-3)'; }}
-          >
-            <Ellipsis size={14} />
-          </button>
-          {menuOpen && (
-            <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: 4, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', zIndex: 100, minWidth: 160, padding: '2px 0' }}>
-              <button
-                style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 12px', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.78rem', color: 'var(--text)', fontFamily: 'inherit' }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--surface-2)')}
-                onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
-                onClick={() => { setMenuOpen(false); onStartSelect(); }}
-              >
-                Selecionar itens
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Cards */}
-      <div style={{ flex: 1 }}>
-        {tasks.map((task) => (
-          <KanbanCard
-            key={task.id}
-            task={task}
-            projectName={projects.find(p => p.id === task.project_id)?.name}
-            onView={onViewCard}
-            onDelete={onDeleteCard}
-            selectionMode={isSelecting}
-            isSelected={selectedTaskIds.has(task.id)}
-            onToggleSelect={onToggleSelect}
-          />
-        ))}
-        {!isSelecting && (
-          <button
-            onClick={() => onAddCard(col.id)}
-            style={{ display: 'flex', alignItems: 'center', gap: 7, width: '100%', padding: '13px 24px', border: 'none', borderTop: '1px solid var(--line-2)', background: 'none', color: 'var(--text-3)', fontSize: '0.78rem', fontWeight: 500, cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}
-            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = '#034EA2'; (e.currentTarget as HTMLElement).style.background = 'var(--surface-2)'; }}
-            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--text-3)'; (e.currentTarget as HTMLElement).style.background = 'none'; }}
-          >
-            <Plus size={13} strokeWidth={2} />
-            Adicionar
-          </button>
-        )}
-      </div>
-    </div>
-  );
-}
 
 export default function BoardPage() {
   const { toasts, addToast, dismissToast } = useToast();
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
+  const [importModalOpen, setImportModalOpen] = useState(false);
 
-  // ── Tab context ──────────────────────────────────────────────────────────
+  // ── Filtros da aba ────────────────────────────────────────────────────────
+
   const { patchActiveTab } = useTabs();
   const activeTab = useActiveTab();
-  const filters = activeTab?.filters;
+  const tabFilters = activeTab?.filters;
+  const search         = tabFilters?.search         ?? '';
+  const filterUser     = tabFilters?.filterUser     ?? '';
+  const filterPriority = tabFilters?.filterPriority ?? '';
+  const filterProject  = tabFilters?.filterProject  ?? '';
+  const filterDateFrom = tabFilters?.filterDateFrom ?? '';
+  const filterDateTo   = tabFilters?.filterDateTo   ?? '';
+  const view           = tabFilters?.view           ?? 'kanban';
 
-  // Derived filter state from the active tab
-  const search = filters?.search ?? '';
-  const filterUser = filters?.fUser ?? '';
-  const filterPriority = filters?.fPrio ?? '';
-  const filterProject = filters?.fProj ?? '';
-  const filterDateFrom = filters?.fDateFrom ?? '';
-  const filterDateTo = filters?.fDateTo ?? '';
-  const view = filters?.view ?? 'kanban';
+  // ── Estado e operações do board ───────────────────────────────────────────
 
-  // Reset selection when switching tabs
+  const {
+    allTasks, setAllTasks, isLoading, loadError,
+    projects, setProjects, users,
+    activityModal, openCreateActivityModal, openEditActivityModal, closeActivityModal, saveActivity,
+    openedTask, setOpenedTask,
+    pendingConfirm, setPendingConfirm,
+    selectionColumn, selectedTaskIds,
+    toggleTaskSelection, selectAllTasksInColumn, beginColumnSelection, cancelSelection,
+    moveSelectedTasks, requestDeleteSelectedTasks,
+    handleDragEnd, requestDeleteTask, advanceOpenedTaskStatus,
+  } = useTaskBoard();
+
+  // Limpa seleção ao trocar de aba
   useEffect(() => {
-    setSelectionMode(null);
-    setSelectedTaskIds(new Set());
+    cancelSelection();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab?.id]);
 
-  // ── API data ─────────────────────────────────────────────────────────────
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [users, setUsers] = useState<UserPublic[]>([]);
-  const [activityModal, setActivityModal] = useState<{ open: boolean; task: Task | null; defaultStatus?: string }>({ open: false, task: null });
-  const [drawer, setDrawer] = useState<Task | null>(null);
-  const [importModal, setImportModal] = useState(false);
-  const [confirm, setConfirm] = useState<{ title: string; message?: string; onConfirm: () => void } | null>(null);
-  const [selectionMode, setSelectionMode] = useState<StatusGroup | null>(null);
-  const [selectedTaskIds, setSelectedTaskIds] = useState<Set<string>>(new Set());
+  // ── Filtragem de tarefas ──────────────────────────────────────────────────
 
-  const load = useCallback(() => {
-    Promise.all([fetchTasks(), fetchProjects(), fetchUsers()])
-      .then(([t, p, u]) => { setTasks(t); setProjects(p); setUsers(u.filter((user) => user.role !== 'Admin')); })
-      .catch((e) => setError(`Erro: ${e?.message ?? e}`))
-      .finally(() => setLoading(false));
-  }, []);
-
-  useEffect(() => { load(); }, [load]);
-  useRefetchOnFocus(load);
-
-  function handleDragEnd(event: DragEndEvent) {
-    if (selectionMode) return;
-    const { active, over } = event;
-    if (!over) return;
-    const taskId = active.id as string;
-    const newGroup = over.id as StatusGroup;
-    const t = tasks.find((x) => x.id === taskId);
-    if (!t || t.status_group === newGroup) return;
-    const prev = tasks;
-    setTasks((curr) => curr.map((x) => (x.id === taskId ? { ...x, status_group: newGroup } : x)));
-    let coIds: string[] | null = null;
-    if (t.co_responsibles) {
-      try { const names = JSON.parse(t.co_responsibles) as string[]; coIds = names.map((n) => users.find((u) => u.name === n)?.id).filter((id): id is string => !!id); } catch { coIds = null; }
+  const filteredTasks = useMemo(() => allTasks.filter((t) => {
+    if (filterUser     && t.responsible                             !== filterUser)                   return false;
+    if (filterPriority && t.priority?.toLowerCase()                !== filterPriority.toLowerCase()) return false;
+    if (filterProject  && t.project_id                             !== filterProject)                 return false;
+    if (filterDateFrom && t.date                                   <  filterDateFrom)                 return false;
+    if (filterDateTo   && t.date                                   >  filterDateTo)                   return false;
+    if (search) {
+      const q = search.toLowerCase();
+      if (!t.activity.toLowerCase().includes(q)
+        && !t.responsible.toLowerCase().includes(q)
+        && !t.category?.toLowerCase().includes(q)) return false;
     }
-    updateTask(t, { status_group: newGroup, co_responsible_ids: coIds })
-      .then((updated) => setTasks((curr) => curr.map((x) => (x.id === taskId ? updated : x))))
-      .catch(() => setTasks(prev));
+    return true;
+  }), [allTasks, filterUser, filterPriority, filterProject, filterDateFrom, filterDateTo, search]);
+
+  // ── Estatísticas do header ────────────────────────────────────────────────
+
+  const todayStr = new Date().toISOString().split('T')[0];
+  const boardStats = useMemo(() => {
+    const doneCount      = filteredTasks.filter(t => t.status_group === 'done').length;
+    const openCount      = filteredTasks.length - doneCount;
+    const overdueCount   = filteredTasks.filter(t => t.status_group !== 'done' && t.deadline && t.deadline < todayStr).length;
+    const completedPct   = filteredTasks.length > 0 ? Math.round((doneCount / filteredTasks.length) * 100) : 0;
+    return [
+      { label: 'ABERTAS',   value: String(openCount),      color: '#034EA2' },
+      { label: 'ATRASADAS', value: String(overdueCount),   color: '#b42318' },
+      { label: 'CONCLUÍDO', value: `${completedPct}%`,    color: '#1B8A4B' },
+    ];
+  }, [filteredTasks, todayStr]);
+
+  // ── Itens do calendário ───────────────────────────────────────────────────
+
+  const calendarItems: CalendarioItem[] = useMemo(() => filteredTasks.map((t) => ({
+    id: t.id,
+    title: t.activity,
+    start_date: t.deadline ?? t.date,
+    end_date:   t.deadline ?? t.date,
+    color: t.status_group === 'done'        ? 'var(--s-done)'
+         : t.status_group === 'review'      ? 'var(--s-review)'
+         : t.status_group === 'in_progress' ? 'var(--s-progress)'
+         : 'var(--s-pending)',
+    label: t.responsible,
+  })), [filteredTasks]);
+
+  // ── Handlers ──────────────────────────────────────────────────────────────
+
+  const hasActiveFilters = filterUser || filterPriority || filterProject || filterDateFrom || filterDateTo;
+
+  async function handleSaveActivity(formData: ActivityFormData) {
+    const created = await saveActivity(formData);
+    if (created) addToast('success', 'Atividade criada', `"${created.activity}" foi adicionada.`);
   }
 
-  async function handleSaveActivity(data: {
-    activity: string; description: string; category: string; project_id: string | null;
-    status: string; responsible: string; date: string; priority: string;
-    co_responsibles: string | null; external_collaborators: string | null; deadline: string | null;
-  }) {
-    const { task } = activityModal;
-    setActivityModal({ open: false, task: null });
-    const responsible_id = users.find((u) => u.name === data.responsible)?.id ?? null;
-    let coIds: string[] | null = null;
-    if (data.co_responsibles) {
-      try { const names = JSON.parse(data.co_responsibles) as string[]; coIds = names.map((n) => users.find((u) => u.name === n)?.id).filter((id): id is string => !!id); } catch { coIds = null; }
-    }
-    const payload = { ...data, project_id: data.project_id ?? undefined, responsible_id, co_responsible_ids: coIds };
-    if (task) {
-      const updated = await updateTask(task, payload);
-      setTasks((curr) => curr.map((x) => (x.id === task.id ? updated : x)));
-      if (drawer?.id === task.id) setDrawer(updated);
-    } else {
-      const created = await createTask(payload);
-      setTasks((curr) => [...curr, created]);
-      addToast('success', 'Atividade criada', `"${created.activity}" foi adicionada.`);
+  async function handleMoveSelected(targetGroup: StatusGroup) {
+    const count = await moveSelectedTasks(targetGroup);
+    if (count > 0) {
+      addToast('success', 'Atividades movidas', `${count} atividade(s) movida(s) para ${STATUS_LABELS[targetGroup]}.`);
     }
   }
-
-  function handleDeleteCard(id: string) {
-    setConfirm({
-      title: 'Excluir atividade',
-      message: 'Esta ação não pode ser desfeita.',
-      onConfirm: async () => {
-        setDrawer(null);
-        setTasks((curr) => curr.filter((x) => x.id !== id));
-        try { await deleteTask(id); } catch { load(); }
-      },
-    });
-  }
-
-  function handleAdvanceStatus() {
-    if (!drawer) return;
-    const NEXT: Record<string, StatusGroup> = { pending: 'in_progress', in_progress: 'review', review: 'done' };
-    const next = NEXT[drawer.status_group];
-    if (!next) return;
-    let coIds: string[] | null = null;
-    if (drawer.co_responsibles) {
-      try { const names = JSON.parse(drawer.co_responsibles) as string[]; coIds = names.map((n) => users.find((u) => u.name === n)?.id).filter((id): id is string => !!id); } catch { coIds = null; }
-    }
-    const updated = { ...drawer, status_group: next };
-    setDrawer(updated);
-    setTasks((curr) => curr.map((x) => (x.id === drawer.id ? updated : x)));
-    updateTask(drawer, { status_group: next, co_responsible_ids: coIds })
-      .then((res) => { setDrawer(res); setTasks((curr) => curr.map((x) => (x.id === res.id ? res : x))); })
-      .catch(() => { setDrawer(drawer); load(); });
-  }
-
-  function handleToggleSelect(id: string) {
-    setSelectedTaskIds((prev) => { const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next; });
-  }
-
-  function handleCancelSelect() { setSelectionMode(null); setSelectedTaskIds(new Set()); }
-
-  async function handleMoveSelected(to: StatusGroup) {
-    if (!selectionMode || selectedTaskIds.size === 0) return;
-    const ids = [...selectedTaskIds];
-    const prev = tasks;
-    setTasks((curr) => curr.map((t) => ids.includes(t.id) ? { ...t, status_group: to } : t));
-    setSelectionMode(null); setSelectedTaskIds(new Set());
-    try {
-      await Promise.all(ids.map((id) => {
-        const t = prev.find((x) => x.id === id)!;
-        let coIds: string[] | null = null;
-        if (t.co_responsibles) { try { const names = JSON.parse(t.co_responsibles) as string[]; coIds = names.map((n) => users.find((u) => u.name === n)?.id).filter((id): id is string => !!id); } catch { coIds = null; } }
-        return updateTask(t, { status_group: to, co_responsible_ids: coIds });
-      }));
-      addToast('success', 'Atividades movidas', `${ids.length} atividade(s) movida(s) para ${STATUS_MAP[to]}.`);
-    } catch { setTasks(prev); }
-  }
-
-  function handleDeleteSelected() {
-    if (!selectionMode || selectedTaskIds.size === 0) return;
-    const ids = [...selectedTaskIds];
-    setConfirm({
-      title: `Excluir ${ids.length} atividade(s)`, message: 'Esta ação não pode ser desfeita.', onConfirm: async () => {
-        setTasks((curr) => curr.filter((t) => !ids.includes(t.id)));
-        setSelectionMode(null); setSelectedTaskIds(new Set());
-        try { await Promise.all(ids.map((id) => deleteTask(id))); } catch { load(); }
-      }
-    });
-  }
-
-  const filteredTasks = useMemo(
-    () => tasks.filter((t) => {
-      if (filterUser && t.responsible !== filterUser) return false;
-      if (filterPriority && t.priority?.toLowerCase() !== filterPriority.toLowerCase()) return false;
-      if (filterProject && t.project_id !== filterProject) return false;
-      if (filterDateFrom && t.date < filterDateFrom) return false;
-      if (filterDateTo && t.date > filterDateTo) return false;
-      if (search) { const q = search.toLowerCase(); if (!t.activity.toLowerCase().includes(q) && !t.responsible.toLowerCase().includes(q) && !t.category?.toLowerCase().includes(q)) return false; }
-      return true;
-    }),
-    [tasks, filterUser, filterPriority, filterProject, filterDateFrom, filterDateTo, search],
-  );
 
   function exportCSV() {
     const header = ['Atividade', 'Categoria', 'Responsável', 'Status', 'Prioridade', 'Prazo', 'Criado em', 'Projeto', 'Co-responsáveis', 'Colaboradores externos'];
     const rows = filteredTasks.map((t) => {
-      const proj = projects.find((p) => p.id === t.project_id)?.name ?? '';
-      const co = t.co_responsibles ? (() => { try { return (JSON.parse(t.co_responsibles!) as string[]).join('; '); } catch { return ''; } })() : '';
-      return [t.activity, t.category, t.responsible, t.status, t.priority, t.deadline ?? '', t.date, proj, co, t.external_collaborators ?? ''];
+      const projectName    = projects.find((p) => p.id === t.project_id)?.name ?? '';
+      const coResponsibles = t.co_responsibles
+        ? (() => { try { return (JSON.parse(t.co_responsibles!) as string[]).join('; '); } catch { return ''; } })()
+        : '';
+      return [t.activity, t.category, t.responsible, t.status, t.priority, t.deadline ?? '', t.date, projectName, coResponsibles, t.external_collaborators ?? ''];
     });
-    const csv = [header, ...rows].map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
+    const csv = [header, ...rows]
+      .map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(','))
+      .join('\n');
     const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = `atividades_${new Date().toISOString().split('T')[0]}.csv`;
-    document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+    const url  = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href     = url;
+    link.download = `atividades_${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   }
 
-  const tasksByGroup = useCallback((sg: StatusGroup) => filteredTasks.filter((t) => t.status_group === sg), [filteredTasks]);
-
-  const calItems: CalendarioItem[] = useMemo(() => filteredTasks.map((t) => ({
-    id: t.id,
-    title: t.activity,
-    start_date: t.deadline ?? t.date,
-    end_date: t.deadline ?? t.date,
-    color: t.status_group === 'done' ? 'var(--s-done)' : t.status_group === 'review' ? 'var(--s-review)' : t.status_group === 'in_progress' ? 'var(--s-progress)' : 'var(--s-pending)',
-    label: t.responsible,
-  })), [filteredTasks]);
-
-  const hasFilters = filterUser || filterPriority || filterProject || filterDateFrom || filterDateTo;
-
-  /* Stats do header: abertas / atrasadas / % concluído — conforme Tasks SIA.html */
-  const todayStr = new Date().toISOString().split('T')[0];
-  const boardStats = useMemo(() => {
-    const done = filteredTasks.filter(t => t.status_group === 'done').length;
-    const abertas = filteredTasks.length - done;
-    const atrasadas = filteredTasks.filter(t => t.status_group !== 'done' && t.deadline && t.deadline < todayStr).length;
-    const pct = filteredTasks.length > 0 ? Math.round((done / filteredTasks.length) * 100) : 0;
-    return [
-      { label: 'ABERTAS', value: String(abertas), color: '#034EA2' },
-      { label: 'ATRASADAS', value: String(atrasadas), color: '#b42318' },
-      { label: 'CONCLUÍDO', value: `${pct}%`, color: '#1B8A4B' },
-    ];
-  }, [filteredTasks, todayStr]);
+  // ── Render ────────────────────────────────────────────────────────────────
 
   return (
     <>
-      {/* ── Header de tela ── */}
+      {/* Header */}
       <PageHeader
         eyebrow="Planejamento"
         title="Atividades"
         right={
           <div style={{ display: 'flex', alignItems: 'center', gap: 22 }}>
-            {boardStats.map((s) => (
-              <div key={s.label} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ width: 8, height: 8, borderRadius: 2, background: s.color, boxShadow: `0 0 0 3px ${s.color}1f`, flexShrink: 0 }} />
-                <span className="mono" style={{ fontSize: '1.05rem', fontWeight: 600, color: 'var(--text)' }}>{s.value}</span>
-                <span className="mono" style={{ fontSize: '0.66rem', letterSpacing: '0.5px', textTransform: 'uppercase', color: 'var(--text-3)' }}>{s.label}</span>
+            {boardStats.map((stat) => (
+              <div key={stat.label} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ width: 8, height: 8, borderRadius: 2, background: stat.color, boxShadow: `0 0 0 3px ${stat.color}1f`, flexShrink: 0 }} />
+                <span className="mono" style={{ fontSize: '1.05rem', fontWeight: 600, color: 'var(--text)' }}>{stat.value}</span>
+                <span className="mono" style={{ fontSize: '0.66rem', letterSpacing: '0.5px', textTransform: 'uppercase', color: 'var(--text-3)' }}>{stat.label}</span>
               </div>
             ))}
           </div>
         }
         tabBarRight={
           <button
-            onClick={() => setActivityModal({ open: true, task: null })}
+            onClick={() => openCreateActivityModal()}
             style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '0 16px', height: 40, border: 'none', borderBottom: '2px solid transparent', background: 'transparent', color: '#034EA2', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', flexShrink: 0, fontFamily: 'inherit' }}
-            onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-2)')}
-            onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+            onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--surface-2)')}
+            onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
           >
             <Plus size={14} />
             Nova atividade
@@ -394,17 +177,17 @@ export default function BoardPage() {
         }
       />
 
-      {/* ── Toolbar: view toggle + busca + filtros ── */}
+      {/* Toolbar: view + busca + filtros */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 18, padding: '18px 32px', borderBottom: '1px solid var(--line-1)', flexShrink: 0, background: 'var(--surface)', flexWrap: 'wrap' }}>
-        {/* View toggle — texto com sublinhado (conforme design) */}
+        {/* Seletor de view */}
         <div style={{ display: 'flex', gap: 18 }}>
           {(['kanban', 'list', 'calendar'] as const).map((v) => {
-            const labels = { kanban: 'Quadro', list: 'Lista', calendar: 'Calendário' };
-            const isAct = view === v;
+            const viewLabels = { kanban: 'Quadro', list: 'Lista', calendar: 'Calendário' };
+            const isActive = view === v;
             return (
               <button key={v} onClick={() => patchActiveTab({ view: v })}
-                style={{ background: 'none', border: 'none', padding: '0 0 4px', fontSize: '0.86rem', fontWeight: isAct ? 600 : 400, color: isAct ? 'var(--text)' : 'var(--text-3)', cursor: 'pointer', borderBottom: isAct ? '2px solid #034EA2' : '2px solid transparent', letterSpacing: '-0.1px', fontFamily: 'inherit' }}>
-                {labels[v]}
+                style={{ background: 'none', border: 'none', padding: '0 0 4px', fontSize: '0.86rem', fontWeight: isActive ? 600 : 400, color: isActive ? 'var(--text)' : 'var(--text-3)', cursor: 'pointer', borderBottom: isActive ? '2px solid #034EA2' : '2px solid transparent', letterSpacing: '-0.1px', fontFamily: 'inherit' }}>
+                {viewLabels[v]}
               </button>
             );
           })}
@@ -415,120 +198,91 @@ export default function BoardPage() {
         {/* Busca */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, border: '1px solid var(--border)', borderRadius: 3, padding: '7px 11px', width: 230 }}>
           <Search size={14} style={{ color: '#a7adb6', flexShrink: 0 }} />
-          <input value={search} onChange={(e) => patchActiveTab({ search: e.target.value })} placeholder="Pesquisar..." style={{ border: 'none', outline: 'none', background: 'none', fontSize: '0.82rem', color: 'var(--text)', width: '100%', fontFamily: 'inherit' }} />
+          <input
+            value={search}
+            onChange={(e) => patchActiveTab({ search: e.target.value })}
+            placeholder="Pesquisar..."
+            style={{ border: 'none', outline: 'none', background: 'none', fontSize: '0.82rem', color: 'var(--text)', width: '100%', fontFamily: 'inherit' }}
+          />
         </div>
 
-        <select value={filterUser} onChange={(e) => patchActiveTab({ fUser: e.target.value })}
+        {/* Filtros */}
+        <select value={filterUser} onChange={(e) => patchActiveTab({ filterUser: e.target.value })}
           style={{ padding: '7px 11px', borderRadius: 3, border: filterUser ? '1px solid #034EA2' : '1px solid var(--border)', background: 'var(--surface)', color: filterUser ? '#034EA2' : 'var(--text-2)', fontSize: '0.8rem', fontWeight: filterUser ? 600 : 400, cursor: 'pointer', outline: 'none' }}>
           <option value="">Responsável</option>
           {users.map((u) => <option key={u.id} value={u.name}>{u.name}</option>)}
         </select>
-        <select value={filterPriority} onChange={(e) => patchActiveTab({ fPrio: e.target.value })}
+
+        <select value={filterPriority} onChange={(e) => patchActiveTab({ filterPriority: e.target.value })}
           style={{ padding: '7px 11px', borderRadius: 3, border: filterPriority ? '1px solid #034EA2' : '1px solid var(--border)', background: 'var(--surface)', color: filterPriority ? '#034EA2' : 'var(--text-2)', fontSize: '0.8rem', fontWeight: filterPriority ? 600 : 400, cursor: 'pointer', outline: 'none' }}>
           <option value="">Prioridade</option>
           <option value="Alta">Alta</option>
           <option value="Média">Média</option>
           <option value="Baixa">Baixa</option>
         </select>
-        <select value={filterProject} onChange={(e) => patchActiveTab({ fProj: e.target.value })}
+
+        <select value={filterProject} onChange={(e) => patchActiveTab({ filterProject: e.target.value })}
           style={{ padding: '7px 11px', borderRadius: 3, border: filterProject ? '1px solid #034EA2' : '1px solid var(--border)', background: 'var(--surface)', color: filterProject ? '#034EA2' : 'var(--text-2)', fontSize: '0.8rem', fontWeight: filterProject ? 600 : 400, cursor: 'pointer', outline: 'none' }}>
           <option value="">Projeto</option>
           {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
         </select>
-        {hasFilters && (
-          <button onClick={() => patchActiveTab({ fUser: '', fPrio: '', fProj: '', fDateFrom: '', fDateTo: '' })}
-            className="mono" style={{ fontSize: '0.72rem', fontWeight: 500, color: '#034EA2', background: 'none', border: 'none', cursor: 'pointer', letterSpacing: '0.5px' }}>
+
+        {hasActiveFilters && (
+          <button
+            onClick={() => patchActiveTab({ filterUser: '', filterPriority: '', filterProject: '', filterDateFrom: '', filterDateTo: '' })}
+            className="mono"
+            style={{ fontSize: '0.72rem', fontWeight: 500, color: '#034EA2', background: 'none', border: 'none', cursor: 'pointer', letterSpacing: '0.5px' }}
+          >
             LIMPAR
           </button>
         )}
+
         <div style={{ flex: 1 }} />
-        <span className="mono" style={{ fontSize: '0.72rem', color: 'var(--text-3)', letterSpacing: '0.5px' }}>{filteredTasks.length} ATIVIDADES</span>
+        <span className="mono" style={{ fontSize: '0.72rem', color: 'var(--text-3)', letterSpacing: '0.5px' }}>
+          {filteredTasks.length} ATIVIDADES
+        </span>
       </div>
 
-      {/* Conteúdo */}
-      {loading ? (
+      {/* Conteúdo principal */}
+      {isLoading ? (
         <div className="loading-state">Carregando atividades…</div>
-      ) : error ? (
-        <div className="loading-state" style={{ color: 'var(--red)' }}>{error}</div>
+      ) : loadError ? (
+        <div className="loading-state" style={{ color: 'var(--red)' }}>{loadError}</div>
       ) : view === 'calendar' ? (
         <div style={{ padding: '16px 32px', flex: 1, overflow: 'auto' }}>
           <Calendario
-            items={calItems}
-            onItemClick={(item) => { const t = tasks.find((x) => x.id === item.id); if (t) setDrawer(t); }}
+            items={calendarItems}
+            onItemClick={(item) => { const t = allTasks.find((x) => x.id === item.id); if (t) setOpenedTask(t); }}
             legend={[
-              { color: 'var(--s-pending)', label: 'Pendente' },
+              { color: 'var(--s-pending)',  label: 'Pendente' },
               { color: 'var(--s-progress)', label: 'Em Andamento' },
-              { color: 'var(--s-review)', label: 'Em Revisão' },
-              { color: 'var(--s-done)', label: 'Concluído' },
+              { color: 'var(--s-review)',   label: 'Em Revisão' },
+              { color: 'var(--s-done)',     label: 'Concluído' },
             ]}
           />
         </div>
       ) : view === 'list' ? (
-        <div className="ssel" style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
-          {/* Header row — grid 18px 1fr 150px 96px 130px 96px */}
-          <div style={{ display: 'grid', gridTemplateColumns: '18px 1fr 150px 96px 130px 96px', gap: 18, padding: '13px 32px', borderBottom: '1px solid var(--line-1)', position: 'sticky', top: 0, background: 'var(--surface)' }}>
-            <span />
-            {['Atividade', 'Projeto', 'Prioridade', 'Status', 'Prazo'].map((h, i) => (
-              <span key={h} className="mono" style={{ fontSize: '0.64rem', fontWeight: 500, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--text-3)', ...(i === 4 ? { textAlign: 'right' } : {}) }}>{h}</span>
-            ))}
-          </div>
-          {/* Data rows */}
-          {filteredTasks.length === 0
-            ? <div className="empty-state"><p>Nenhuma atividade encontrada.</p></div>
-            : filteredTasks.map((t) => {
-              const prioColor = t.priority === 'Alta' ? '#034EA2' : t.priority === 'Baixa' ? 'var(--text-3)' : 'var(--text-2)';
-              const statusColors: Record<string, string> = { pending: '#9aa1ac', in_progress: '#034EA2', review: '#E0A92E', done: '#1B8A4B' };
-              const statusColor = statusColors[t.status_group] ?? 'var(--text-3)';
-              const projName = projects.find(p => p.id === t.project_id)?.name ?? '—';
-              const due = (() => {
-                if (!t.deadline) return { text: '—', color: 'var(--text-3)' };
-                const today = new Date().toISOString().split('T')[0];
-                if (t.deadline < today) return { text: 'Atrasada', color: '#b42318' };
-                const [, mm, dd] = t.deadline.split('-');
-                return { text: `${dd}/${mm}`, color: t.status_group === 'done' ? 'var(--text-3)' : 'var(--text-3)' };
-              })();
-              return (
-                <div key={t.id} onClick={() => setDrawer(t)}
-                  style={{ display: 'grid', gridTemplateColumns: '18px 1fr 150px 96px 130px 96px', gap: 18, padding: '15px 32px', alignItems: 'center', borderBottom: '1px solid var(--line-2)', cursor: 'pointer' }}
-                  onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'var(--surface-2)'}
-                  onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = ''}>
-                  {/* Spine bar */}
-                  <span style={{ width: 2, height: 30, background: statusColors[t.status_group] ?? '#9aa1ac', display: 'block' }} />
-                  {/* Atividade: title + category */}
-                  <div style={{ minWidth: 0 }}>
-                    <div style={{ fontSize: '0.88rem', fontWeight: 500, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.activity}</div>
-                    <div className="mono" style={{ fontSize: '0.62rem', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.8px', color: 'var(--text-3)', marginTop: 2 }}>{t.category}</div>
-                  </div>
-                  {/* Projeto */}
-                  <span style={{ fontSize: '0.8rem', color: 'var(--text-2)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{projName}</span>
-                  {/* Prioridade */}
-                  <span className="mono" style={{ fontSize: '0.68rem', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.5px', color: prioColor }}>{t.priority}</span>
-                  {/* Status */}
-                  <span className="mono" style={{ fontSize: '0.68rem', fontWeight: 500, letterSpacing: '0.5px', color: statusColor }}>{statusGroupLabel(t.status_group)}</span>
-                  {/* Prazo */}
-                  <span className="mono" style={{ fontSize: '0.72rem', fontWeight: 400, color: due.color, textAlign: 'right' }}>{due.text}</span>
-                </div>
-              );
-            })
-          }
-        </div>
+        <TaskListView
+          tasks={filteredTasks}
+          projects={projects}
+          onTaskClick={setOpenedTask}
+        />
       ) : (
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-          {/* Kanban: grid 4 colunas — separadas por hairline, sem padding lateral */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', alignItems: 'start', flex: 1, overflowY: 'auto', minHeight: 0 }}>
-            {COLUMNS.map((col) => (
+            {KANBAN_COLUMNS.map((col) => (
               <KanbanColumn
                 key={col.id}
-                col={col}
-                tasks={tasksByGroup(col.id)}
+                column={col}
+                tasks={filteredTasks.filter((t) => t.status_group === col.id)}
                 projects={projects}
-                onAddCard={(sg) => setActivityModal({ open: true, task: null, defaultStatus: STATUS_MAP[sg] })}
-                onViewCard={(t) => setDrawer(t)}
-                onDeleteCard={handleDeleteCard}
-                isSelecting={selectionMode === col.id}
+                onAddCard={(sg) => openCreateActivityModal(STATUS_LABELS[sg])}
+                onViewCard={setOpenedTask}
+                onDeleteCard={requestDeleteTask}
+                isSelecting={selectionColumn === col.id}
                 selectedTaskIds={selectedTaskIds}
-                onToggleSelect={handleToggleSelect}
-                onStartSelect={() => { setSelectionMode(col.id); setSelectedTaskIds(new Set()); }}
+                onToggleSelect={toggleTaskSelection}
+                onStartSelect={() => beginColumnSelection(col.id)}
               />
             ))}
           </div>
@@ -536,36 +290,73 @@ export default function BoardPage() {
       )}
 
       {/* Drawer de detalhe */}
-      {drawer && (
+      {openedTask && (
         <DrawerDetalhe
-          task={drawer}
-          onClose={() => setDrawer(null)}
-          onEdit={(t) => { setDrawer(null); setActivityModal({ open: true, task: t }); }}
-          onDelete={(id) => { setDrawer(null); handleDeleteCard(id); }}
-          onAdvanceStatus={handleAdvanceStatus}
+          task={openedTask}
+          onClose={() => setOpenedTask(null)}
+          onEdit={(t) => { setOpenedTask(null); openEditActivityModal(t); }}
+          onDelete={(id) => { setOpenedTask(null); requestDeleteTask(id); }}
+          onAdvanceStatus={advanceOpenedTaskStatus}
         />
       )}
 
       {/* Barra de seleção múltipla */}
-      {selectionMode && (
+      {selectionColumn && (
         <div style={{ position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', display: 'flex', alignItems: 'center', gap: 6, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '8px 12px', boxShadow: '0 4px 20px rgba(0,0,0,0.12)', zIndex: 200, whiteSpace: 'nowrap' }}>
-          <span className="mono" style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-2)', marginRight: 4 }}>{selectedTaskIds.size} selecionado(s)</span>
+          <span className="mono" style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-2)', marginRight: 4 }}>
+            {selectedTaskIds.size} selecionado(s)
+          </span>
           <div style={{ width: 1, height: 16, background: 'var(--border)', margin: '0 4px' }} />
-          <button className="btn btn-ghost btn-xs" onClick={() => setSelectedTaskIds(new Set(tasksByGroup(selectionMode).map((t) => t.id)))}>Todos</button>
+          <button
+            className="btn btn-ghost btn-xs"
+            onClick={() => selectAllTasksInColumn(filteredTasks.filter((t) => t.status_group === selectionColumn))}
+          >
+            Todos
+          </button>
           <div style={{ width: 1, height: 16, background: 'var(--border)', margin: '0 4px' }} />
           <span style={{ fontSize: '0.72rem', color: 'var(--text-3)' }}>Mover para</span>
-          {COLUMNS.filter((c) => c.id !== selectionMode).map((target) => (
-            <button key={target.id} className="btn btn-secondary btn-xs" disabled={selectedTaskIds.size === 0} onClick={() => handleMoveSelected(target.id)}>{target.title}</button>
+          {KANBAN_COLUMNS.filter((c) => c.id !== selectionColumn).map((target) => (
+            <button
+              key={target.id}
+              className="btn btn-secondary btn-xs"
+              disabled={selectedTaskIds.size === 0}
+              onClick={() => handleMoveSelected(target.id)}
+            >
+              {target.title}
+            </button>
           ))}
           <div style={{ width: 1, height: 16, background: 'var(--border)', margin: '0 4px' }} />
-          <button className="btn btn-danger btn-xs" disabled={selectedTaskIds.size === 0} onClick={handleDeleteSelected}>Excluir</button>
-          <button className="btn btn-ghost btn-xs" onClick={handleCancelSelect}>Cancelar</button>
+          <button className="btn btn-danger btn-xs" disabled={selectedTaskIds.size === 0} onClick={requestDeleteSelectedTasks}>Excluir</button>
+          <button className="btn btn-ghost btn-xs" onClick={cancelSelection}>Cancelar</button>
         </div>
       )}
 
-      <ActivityModal open={activityModal.open} task={activityModal.task} defaultStatus={activityModal.defaultStatus} projects={projects} users={users} onClose={() => setActivityModal({ open: false, task: null })} onSave={handleSaveActivity} />
-      <ImportModal open={importModal} projects={projects} users={users} onClose={() => setImportModal(false)} onImported={(nt) => setTasks((curr) => [...curr, ...nt])} onProjectsCreated={(np) => setProjects((curr) => [...curr, ...np])} />
-      <ConfirmModal open={!!confirm} title={confirm?.title ?? ''} message={confirm?.message} confirmLabel="Excluir" danger onConfirm={() => confirm?.onConfirm()} onClose={() => setConfirm(null)} />
+      <ActivityModal
+        open={activityModal.open}
+        task={activityModal.task}
+        defaultStatus={activityModal.defaultStatus}
+        projects={projects}
+        users={users}
+        onClose={closeActivityModal}
+        onSave={handleSaveActivity}
+      />
+      <ImportModal
+        open={importModalOpen}
+        projects={projects}
+        users={users}
+        onClose={() => setImportModalOpen(false)}
+        onImported={(newTasks) => setAllTasks((curr) => [...curr, ...newTasks])}
+        onProjectsCreated={(newProjects) => setProjects((curr) => [...curr, ...newProjects])}
+      />
+      <ConfirmModal
+        open={!!pendingConfirm}
+        title={pendingConfirm?.title ?? ''}
+        message={pendingConfirm?.message}
+        confirmLabel="Excluir"
+        danger
+        onConfirm={() => pendingConfirm?.onConfirm()}
+        onClose={() => setPendingConfirm(null)}
+      />
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />
     </>
   );
