@@ -1,0 +1,195 @@
+// This is your Prisma schema file
+// npx prisma migrate dev --name init   (banco novo)
+// npx prisma db pull                   (banco existente → introspect)
+// npx prisma generate                  (gerar client)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id                 String    @id @default(uuid()) @db.Uuid
+  name               String
+  username           String    @unique
+  passwordHash       String    @map("password_hash")
+  role               String    @default("Funcionario")
+  mustChangePassword Boolean   @default(true) @map("must_change_password")
+  createdAt          DateTime  @default(now()) @map("created_at")
+
+  ownedProjects      Project[]
+  tasks              Task[]              @relation("responsible")
+  coResponsibilities TaskCoResponsible[]
+  absences           Absence[]
+  eventResponsibles  EventResponsible[]
+  feedbacks          Feedback[]
+  feedbackUpvotes    FeedbackUpvote[]
+  feedbackComments   FeedbackComment[]
+  activityLogs       ActivityLog[]
+
+  @@map("users")
+}
+
+model Project {
+  id              String    @id @default(uuid()) @db.Uuid
+  name            String
+  category        String?
+  ownerId         String?   @map("owner_id") @db.Uuid
+  deadline        DateTime? @db.Date
+  executiveStatus String?   @map("executive_status")
+  objective       String?
+  scope           String?
+  summary         String?
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  owner User?  @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+  tasks Task[]
+
+  @@map("projects")
+}
+
+model Task {
+  id                    String    @id @default(uuid()) @db.Uuid
+  category              String
+  activity              String
+  responsibleId         String?   @map("responsible_id") @db.Uuid
+  status                String
+  priority              String    @default("Média")
+  createdAt             DateTime  @default(now()) @db.Date @map("created_at")
+  description           String?
+  projectId             String?   @map("project_id") @db.Uuid
+  externalCollaborators String?   @map("external_collaborators")
+  deadline              DateTime? @db.Date
+  archived              Boolean   @default(false)
+
+  responsible    User?              @relation("responsible", fields: [responsibleId], references: [id], onDelete: SetNull)
+  project        Project?           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  coResponsibles TaskCoResponsible[]
+
+  @@map("tasks")
+}
+
+model TaskCoResponsible {
+  taskId String @map("task_id") @db.Uuid
+  userId String @map("user_id") @db.Uuid
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([taskId, userId])
+  @@map("task_co_responsibles")
+}
+
+model Absence {
+  id             String   @id @default(uuid()) @db.Uuid
+  userId         String?  @map("user_id") @db.Uuid
+  reason         String
+  justification  String?
+  fileName       String?  @map("file_name")
+  fileData       String?  @map("file_data")
+  startDate      DateTime @db.Date @map("start_date")
+  endDate        DateTime @db.Date @map("end_date")
+  approvalStatus String   @default("pendente") @map("approval_status")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("absences")
+}
+
+model Event {
+  id              String   @id @default(uuid()) @db.Uuid
+  name            String
+  eventType       String   @map("event_type")
+  attendees       String?
+  startDate       DateTime @db.Date @map("start_date")
+  endDate         DateTime @db.Date @map("end_date")
+  startTime       String?  @map("start_time")
+  minutesFileName String?  @map("minutes_file_name")
+  minutesFileData String?  @map("minutes_file_data")
+  archived        Boolean  @default(false)
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  responsibles EventResponsible[]
+
+  @@map("events")
+}
+
+model EventResponsible {
+  eventId String @map("event_id") @db.Uuid
+  userId  String @map("user_id") @db.Uuid
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([eventId, userId])
+  @@map("event_responsibles")
+}
+
+model Feedback {
+  id          String   @id @default(uuid()) @db.Uuid
+  tipo        String
+  titulo      String
+  descricao   String
+  severidade  String?
+  usuarioId   String?  @map("usuario_id") @db.Uuid
+  usuarioNome String?  @map("usuario_nome")
+  imagens     String? // JSON array serializado como texto
+  resposta    String?
+  status      String   @default("pendente")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  usuario  User?            @relation(fields: [usuarioId], references: [id], onDelete: SetNull)
+  upvotes  FeedbackUpvote[]
+  comments FeedbackComment[]
+
+  @@map("feedbacks")
+}
+
+model FeedbackUpvote {
+  feedbackId String   @map("feedback_id") @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  feedback Feedback @relation(fields: [feedbackId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([feedbackId, userId])
+  @@map("feedback_upvotes")
+}
+
+model FeedbackComment {
+  id          String   @id @default(uuid()) @db.Uuid
+  feedbackId  String   @map("feedback_id") @db.Uuid
+  parentId    String?  @map("parent_id") @db.Uuid
+  usuarioId   String?  @map("usuario_id") @db.Uuid
+  usuarioNome String   @default("Anônimo") @map("usuario_nome")
+  conteudo    String
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  feedback Feedback         @relation(fields: [feedbackId], references: [id], onDelete: Cascade)
+  parent   FeedbackComment? @relation("replies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies  FeedbackComment[] @relation("replies")
+  usuario  User?            @relation(fields: [usuarioId], references: [id], onDelete: SetNull)
+
+  @@map("feedback_comments")
+}
+
+model ActivityLog {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  userName   String   @map("user_name")
+  action     String
+  entityType String   @map("entity_type")
+  entityId   String   @map("entity_id")
+  details    String   @default("")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("activity_logs")
+}
