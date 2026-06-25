@@ -65,6 +65,20 @@ export interface UserPublic {
   role: string;
   must_change_password: boolean;
   created_at: string;
+  directoria_id: string | null;
+  directoria_name: string | null;
+  directoria_color: string | null;
+}
+
+export interface Directoria {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  color: string | null;
+  active: boolean;
+  created_at: string;
+  member_count?: number;
 }
 
 export interface ActivityLog {
@@ -326,8 +340,9 @@ export async function deleteTeamMember(name: string): Promise<void> {
 
 
 export async function login(username: string, password: string): Promise<{
-  token: string; user_id: string; name: string; role: string;
-  username: string; must_change_password: boolean;
+  token: string; user_id: string; name: string; role: string; username: string;
+  must_change_password: boolean; directoria_id: string | null;
+  directoria_name: string | null; directoria_color: string | null;
 }> {
   const response = await fetch(`${BASE_URL}/api/auth/login`, {
     method: 'POST',
@@ -548,6 +563,7 @@ export interface FeedbackItem {
   severidade: string | null;
   usuario_id: string | null;
   usuario_nome: string | null;
+  usuario_diretoria: string | null;
   imagens: string[];
   resposta: string | null;
   status: 'pendente' | 'respondida';
@@ -643,4 +659,45 @@ export async function addComment(feedbackId: string, conteudo: string, parentId?
 
 export async function deleteComment(feedbackId: string, commentId: string): Promise<void> {
   return apiFetch<void>(`/api/feedback/${feedbackId}/comments/${commentId}`, { method: 'DELETE' });
+}
+
+// ── Diretorias ────────────────────────────────────────────────────────────────
+
+export async function fetchDiretorias(): Promise<Directoria[]> {
+  return fetchCached('diretorias', () => apiFetch<Directoria[]>('/api/diretorias'));
+}
+
+export async function createDirectoria(payload: {
+  name: string; slug: string; description?: string | null; color?: string | null;
+}): Promise<Directoria> {
+  const result = await apiFetch<Directoria>('/api/diretorias', { method: 'POST', body: JSON.stringify(payload) });
+  cacheInvalidate('diretorias');
+  return result;
+}
+
+export async function updateDirectoria(id: string, payload: {
+  name?: string; description?: string | null; color?: string | null; active?: boolean;
+}): Promise<Directoria> {
+  const result = await apiFetch<Directoria>(`/api/diretorias/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
+  cacheInvalidate('diretorias');
+  return result;
+}
+
+export async function toggleDirectoriaActive(id: string, active: boolean): Promise<Directoria> {
+  const result = await apiFetch<Directoria>(`/api/diretorias/${id}/active`, { method: 'PATCH', body: JSON.stringify({ active }) });
+  cacheInvalidate('diretorias');
+  return result;
+}
+
+export async function moveUserToDirectoria(directoriaId: string, userId: string): Promise<void> {
+  await apiFetch<void>(`/api/diretorias/${directoriaId}/member`, { method: 'PUT', body: JSON.stringify({ user_id: userId }) });
+  cacheInvalidate('users', 'diretorias');
+}
+
+export async function fetchAllUsers(): Promise<UserPublic[]> {
+  return fetchCached('users_all', () => apiFetch<UserPublic[]>('/api/users/all'));
+}
+
+export async function fetchDirectoriaMembers(directoriaId: string): Promise<UserPublic[]> {
+  return apiFetch<UserPublic[]>(`/api/diretorias/${directoriaId}/members`);
 }

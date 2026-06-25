@@ -17,7 +17,8 @@ export type PageType =
   | 'logs'
   | 'configuracoes'
   | 'admin-registro'
-  | 'admin-usuarios';
+  | 'admin-usuarios'
+  | 'admin-diretorias';
 
 export const PAGE_INFO: Record<PageType, { path: string; defaultName: string }> = {
   'board':              { path: '/',                 defaultName: 'Atividades' },
@@ -32,6 +33,7 @@ export const PAGE_INFO: Record<PageType, { path: string; defaultName: string }> 
   'configuracoes':      { path: '/configuracoes',     defaultName: 'Configurações' },
   'admin-registro':     { path: '/admin/registro',    defaultName: 'Cadastrar usuário' },
   'admin-usuarios':     { path: '/admin/usuarios',    defaultName: 'Gerenciar usuários' },
+  'admin-diretorias':   { path: '/admin/diretorias',  defaultName: 'Diretorias' },
 };
 
 export function pathToPageType(pathname: string): PageType | null {

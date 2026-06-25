@@ -40,6 +40,14 @@ export interface StoredUser {
   role:                 string;
   username:             string;
   must_change_password: boolean;
+  directoria_id:        string | null;
+  directoria_name:      string | null;
+  directoria_color:     string | null;
+}
+
+// Super-Admin é role='Admin' sem diretoria vinculada
+export function isSuperAdmin(user: StoredUser | null): boolean {
+  return user?.role === 'Admin' && !user?.directoria_id;
 }
 
 export function isAdmin(role: string | undefined): boolean {

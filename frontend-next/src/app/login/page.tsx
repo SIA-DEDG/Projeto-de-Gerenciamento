@@ -26,7 +26,13 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const data = await login(username, password);
-      setAuth(data.token, { user_id: data.user_id, name: data.name, role: data.role, username: data.username, must_change_password: data.must_change_password }, remember);
+      setAuth(data.token, {
+        user_id: data.user_id, name: data.name, role: data.role,
+        username: data.username, must_change_password: data.must_change_password,
+        directoria_id: data.directoria_id ?? null,
+        directoria_name: data.directoria_name ?? null,
+        directoria_color: data.directoria_color ?? null,
+      }, remember);
       router.replace(data.must_change_password ? '/redefinir-senha' : '/');
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Credenciais inválidas.');

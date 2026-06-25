@@ -7,7 +7,7 @@ import {
   UserRoundPlus, UsersRound, Archive, LogOut, Moon, Sun,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { getUser, clearAuth, canManageUsers } from '@/lib/auth';
+import { getUser, clearAuth, canManageUsers, isSuperAdmin } from '@/lib/auth';
 import { fetchTasks, fetchFeedbacks } from '@/lib/api';
 import { onTasksChanged } from '@/lib/taskEvents';
 import { useTabs, useActiveTab, PAGE_INFO, type PageType } from '@/context/TabsContext';
@@ -98,6 +98,7 @@ export default function Sidebar({ onToggleTheme, isDark }: Props) {
   }
 
   const isAdmin = canManageUsers(user?.role);
+  const isSuperAdminUser = isSuperAdmin(user);
 
   return (
     <aside className="sidebar">
@@ -111,6 +112,24 @@ export default function Sidebar({ onToggleTheme, isDark }: Props) {
           <span className="sidebar-logo-sub">DEDG · GOV-PI</span>
         </div>
       </div> */}
+
+      {/* Badge da diretoria */}
+      {user && (
+        <div className="rail-hide" style={{ padding: '10px 16px 0' }}>
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 7, padding: '6px 10px',
+            borderRadius: 3, background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)',
+          }}>
+            <div style={{
+              width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
+              background: isSuperAdminUser ? '#f59e0b' : (user.directoria_color ?? '#6b7280'),
+            }} />
+            <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.75)', fontWeight: 500, letterSpacing: '0.3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {isSuperAdminUser ? 'Sistema Global' : (user.directoria_name ?? 'Sem diretoria')}
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* Navegação */}
       <div className="sidebar-nav-area">
@@ -228,6 +247,14 @@ export default function Sidebar({ onToggleTheme, isDark }: Props) {
                     <span className="rail-label">Gerenciar usuários</span>
                   </NavLink>
                 </li>
+                {isSuperAdminUser && (
+                  <li>
+                    <NavLink type="admin-diretorias">
+                      <span className="nav-icon"><Folder size={17} /></span>
+                      <span className="rail-label">Diretorias</span>
+                    </NavLink>
+                  </li>
+                )}
               </ul>
             </div>
           </>

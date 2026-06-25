@@ -56,6 +56,7 @@ const PAGE_VIEWS: Record<PageType, React.LazyExoticComponent<() => React.JSX.Ele
   'configuracoes':     lazy(() => import('@/app/(app)/configuracoes/_view')),
   'admin-registro':    lazy(() => import('@/app/(app)/admin/registro/_view')),
   'admin-usuarios':    lazy(() => import('@/app/(app)/admin/usuarios/_view')),
+  'admin-diretorias':  lazy(() => import('@/app/(app)/admin/diretorias/_view')),
 };
 
 // ── Renderizador de abas — todas montadas, só a ativa é visível ───────────────
