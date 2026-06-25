@@ -18,7 +18,7 @@ export const listAbsences = (userId: string, role: string) => {
 
 export const createAbsence = (userId: string, data: {
   reason: string; justification?: string | null; fileName?: string | null;
-  fileData?: string | null; startDate: string; endDate: string;
+  filePath?: string | null; startDate: string; endDate: string;
 }) =>
   prisma.absence.create({
     data: { ...data, userId, startDate: new Date(data.startDate), endDate: new Date(data.endDate) },
@@ -27,7 +27,7 @@ export const createAbsence = (userId: string, data: {
 
 export const updateAbsence = (id: string, data: {
   reason: string; justification?: string | null; fileName?: string | null;
-  fileData?: string | null; startDate: string; endDate: string;
+  filePath?: string | null; startDate: string; endDate: string;
 }) =>
   prisma.absence.update({
     where: { id },

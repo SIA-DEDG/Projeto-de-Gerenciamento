@@ -70,6 +70,10 @@ model Task {
   project        Project?           @relation(fields: [projectId], references: [id], onDelete: Cascade)
   coResponsibles TaskCoResponsible[]
 
+  @@index([archived])
+  @@index([createdAt])
+  @@index([projectId])
+  @@index([responsibleId])
   @@map("tasks")
 }
 
@@ -90,7 +94,7 @@ model Absence {
   reason         String
   justification  String?
   fileName       String?  @map("file_name")
-  fileData       String?  @map("file_data")
+  filePath       String?  @map("file_path")  // path no Supabase Storage
   startDate      DateTime @db.Date @map("start_date")
   endDate        DateTime @db.Date @map("end_date")
   approvalStatus String   @default("pendente") @map("approval_status")
@@ -110,12 +114,14 @@ model Event {
   endDate         DateTime @db.Date @map("end_date")
   startTime       String?  @map("start_time")
   minutesFileName String?  @map("minutes_file_name")
-  minutesFileData String?  @map("minutes_file_data")
+  minutesFilePath String?  @map("minutes_file_path")  // path no Supabase Storage
   archived        Boolean  @default(false)
   createdAt       DateTime @default(now()) @map("created_at")
 
   responsibles EventResponsible[]
 
+  @@index([archived])
+  @@index([createdAt])
   @@map("events")
 }
 
@@ -147,6 +153,8 @@ model Feedback {
   upvotes  FeedbackUpvote[]
   comments FeedbackComment[]
 
+  @@index([createdAt])
+  @@index([usuarioId])
   @@map("feedbacks")
 }
 
@@ -176,6 +184,7 @@ model FeedbackComment {
   replies  FeedbackComment[] @relation("replies")
   usuario  User?            @relation(fields: [usuarioId], references: [id], onDelete: SetNull)
 
+  @@index([feedbackId])
   @@map("feedback_comments")
 }
 
@@ -191,5 +200,7 @@ model ActivityLog {
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([createdAt])
+  @@index([userId])
   @@map("activity_logs")
 }

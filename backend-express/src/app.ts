@@ -3,7 +3,7 @@ import cors from 'cors';
 import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec } from './config/swagger';
 import { errorHandler } from './middleware/error.middleware';
-import { snakeCaseResponse } from './middleware/snake-case.middleware';
+import { snakeCaseResponse, camelCaseRequest } from './middleware/snake-case.middleware';
 
 import authRoutes from './modules/auth/auth.routes';
 import usersRoutes from './modules/users/users.routes';
@@ -18,6 +18,7 @@ const app = express();
 
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
+app.use(camelCaseRequest);
 app.use(snakeCaseResponse);
 
 // Swagger UI em /api/docs

@@ -112,5 +112,6 @@ router.delete('/:id', authenticate, ctrl.deleteEvent);
  */
 router.put('/:id/minutes', authenticate, ctrl.setMinutes);
 router.delete('/:id/minutes', authenticate, ctrl.removeMinutes);
+router.get('/:id/minutes/url', authenticate, ctrl.getMinutesUrl);
 
 export default router;

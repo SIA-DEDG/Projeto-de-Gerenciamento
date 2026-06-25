@@ -1,24 +1,24 @@
 ﻿import { prisma } from '../../lib/prisma';
-import type { Feedback, FeedbackUpvote, FeedbackComment } from '@prisma/client';
+import type { Feedback, FeedbackUpvote } from '@prisma/client';
 
 type FeedbackWithRelations = Feedback & {
   upvotes: Pick<FeedbackUpvote, 'userId'>[];
-  comments: FeedbackComment[];
+  _count: { comments: number };
 };
 
 const include = {
   upvotes: { select: { userId: true } },
-  comments: true,
+  _count: { select: { comments: true } },
 } as const;
 
 function fmt(f: FeedbackWithRelations) {
-  const { upvotes, comments, imagens, ...rest } = f;
+  const { upvotes, _count, imagens, ...rest } = f;
   return {
     ...rest,
     imagens: imagens ? (JSON.parse(imagens) as string[]) : [],
     upvotes: upvotes.length,
     upvoted_by: upvotes.map((u) => u.userId),
-    comment_count: comments.length,
+    comment_count: _count.comments,
   };
 }
 

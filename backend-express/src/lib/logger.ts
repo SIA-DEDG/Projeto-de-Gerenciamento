@@ -2,7 +2,7 @@ import { prisma } from './prisma';
 
 export async function logAction(
   userId: string,
-  userName: string,
+  username: string,
   action: string,
   entityType: string,
   entityId: string,
@@ -10,7 +10,7 @@ export async function logAction(
 ): Promise<void> {
   try {
     await prisma.activityLog.create({
-      data: { userId, userName, action, entityType, entityId, details },
+      data: { userId, userName: username, action, entityType, entityId, details },
     });
   } catch {
     // Logging nunca deve derrubar a requisição

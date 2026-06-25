@@ -10,7 +10,7 @@ export async function clearLogs(req: Request, res: Response, next: NextFunction)
   try {
     if (req.user.role !== 'Admin') { res.status(403).json({ error: 'Apenas Admin pode limpar os logs' }); return; }
     await svc.clearLogs();
-    await logAction(req.user.sub, req.user.username, 'DELETE', 'log', 'all', 'Logs apagados');
+    void logAction(req.user.sub, req.user.username, 'DELETE', 'log', 'all', 'Logs apagados');
     res.sendStatus(204);
   } catch (err) { next(err); }
 }

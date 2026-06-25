@@ -8,6 +8,8 @@ const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   ADMIN_USERNAME: z.string().default('admin'),
   ADMIN_PASSWORD: z.string().optional(),
+  SUPABASE_URL: z.string().url().optional(),
+  SUPABASE_SERVICE_KEY: z.string().optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);

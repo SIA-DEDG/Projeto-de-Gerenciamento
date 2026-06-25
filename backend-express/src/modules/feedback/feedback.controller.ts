@@ -1,17 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
-import { z } from 'zod';
 import * as svc from './feedback.service';
+import { feedbackSchema, setStatusSchema, setRespostaSchema, commentSchema } from './feedback.schema';
 import { logAction } from '../../lib/logger';
 
 const pid = (req: Request) => req.params['id'] as string;
-
-const schema = z.object({
-  tipo: z.string(),
-  titulo: z.string(),
-  descricao: z.string(),
-  severidade: z.string().optional().nullable(),
-  imagens: z.array(z.string()).optional(),
-});
 
 export async function listFeedback(_req: Request, res: Response, next: NextFunction): Promise<void> {
   try { res.json(await svc.listFeedback()); } catch (err) { next(err); }
@@ -19,9 +11,9 @@ export async function listFeedback(_req: Request, res: Response, next: NextFunct
 
 export async function createFeedback(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const data = schema.parse(req.body);
+    const data = feedbackSchema.parse(req.body);
     const fb = await svc.createFeedback(req.user.sub, req.user.username, data);
-    await logAction(req.user.sub, req.user.username, 'CREATE', 'feedback', fb.id, `Feedback "${fb.titulo}" criado`);
+    void logAction(req.user.sub, req.user.username, 'CREATE', 'feedback', fb.id, `Feedback "${fb.titulo}" criado`);
     res.status(201).json(fb);
   } catch (err) { next(err); }
 }
@@ -29,9 +21,9 @@ export async function createFeedback(req: Request, res: Response, next: NextFunc
 export async function updateFeedback(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const id = pid(req);
-    const data = schema.partial().parse(req.body);
+    const data = feedbackSchema.partial().parse(req.body);
     const fb = await svc.updateFeedback(id, data);
-    await logAction(req.user.sub, req.user.username, 'UPDATE', 'feedback', id, 'Feedback atualizado');
+    void logAction(req.user.sub, req.user.username, 'UPDATE', 'feedback', id, 'Feedback atualizado');
     res.json(fb);
   } catch (err) { next(err); }
 }
@@ -45,7 +37,7 @@ export async function deleteFeedback(req: Request, res: Response, next: NextFunc
       res.status(403).json({ error: 'Sem permissão' }); return;
     }
     await svc.deleteFeedback(id);
-    await logAction(req.user.sub, req.user.username, 'DELETE', 'feedback', id, 'Feedback deletado');
+    void logAction(req.user.sub, req.user.username, 'DELETE', 'feedback', id, 'Feedback deletado');
     res.sendStatus(204);
   } catch (err) { next(err); }
 }
@@ -57,7 +49,7 @@ export async function toggleUpvote(req: Request, res: Response, next: NextFuncti
 export async function setStatus(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     if (req.user.role !== 'Admin') { res.status(403).json({ error: 'Sem permissão' }); return; }
-    const { status } = z.object({ status: z.string() }).parse(req.body);
+    const { status } = setStatusSchema.parse(req.body);
     res.json(await svc.setStatus(pid(req), status));
   } catch (err) { next(err); }
 }
@@ -65,7 +57,7 @@ export async function setStatus(req: Request, res: Response, next: NextFunction)
 export async function setResposta(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     if (req.user.role !== 'Admin') { res.status(403).json({ error: 'Sem permissão' }); return; }
-    const { resposta } = z.object({ resposta: z.string() }).parse(req.body);
+    const { resposta } = setRespostaSchema.parse(req.body);
     res.json(await svc.setResposta(pid(req), resposta));
   } catch (err) { next(err); }
 }
@@ -76,12 +68,9 @@ export async function listComments(req: Request, res: Response, next: NextFuncti
 
 export async function createComment(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const { conteudo, parent_id } = z.object({
-      conteudo: z.string(),
-      parent_id: z.string().uuid().optional(),
-    }).parse(req.body);
+    const { conteudo, parent_id } = commentSchema.parse(req.body);
     const comment = await svc.createComment(pid(req), req.user.sub, req.user.username, conteudo, parent_id);
-    await logAction(req.user.sub, req.user.username, 'CREATE', 'feedback_comment', comment.id, 'Comentário adicionado');
+    void logAction(req.user.sub, req.user.username, 'CREATE', 'feedback_comment', comment.id, 'Comentário adicionado');
     res.status(201).json(comment);
   } catch (err) { next(err); }
 }
@@ -95,7 +84,7 @@ export async function deleteComment(req: Request, res: Response, next: NextFunct
       res.status(403).json({ error: 'Sem permissão' }); return;
     }
     await svc.deleteComment(comment.id);
-    await logAction(req.user.sub, req.user.username, 'DELETE', 'feedback_comment', comment.id, 'Comentário deletado');
+    void logAction(req.user.sub, req.user.username, 'DELETE', 'feedback_comment', comment.id, 'Comentário deletado');
     res.sendStatus(204);
   } catch (err) { next(err); }
 }

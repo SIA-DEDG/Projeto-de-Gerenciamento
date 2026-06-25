@@ -15,11 +15,15 @@ const include = {
 
 function fmt(t: TaskWithRelations) {
   const { coResponsibles, project, responsible, ...rest } = t;
+  const coNames = coResponsibles.map((c) => c.user.name);
+  const coIds   = coResponsibles.map((c) => c.userId);
   return {
     ...rest,
     responsible: responsible?.name ?? null,
     project_name: project?.name ?? null,
-    co_responsibles: coResponsibles.map((c) => c.user.name),
+    // JSON strings para compatibilidade com o frontend (Task.co_responsibles e co_responsible_ids)
+    co_responsibles:    coNames.length > 0 ? JSON.stringify(coNames) : null,
+    co_responsible_ids: coIds.length  > 0 ? JSON.stringify(coIds)  : null,
   };
 }
 
@@ -38,14 +42,15 @@ export const getTask = (id: string) =>
 export async function createTask(data: {
   category: string; activity: string; status: string; priority?: string;
   responsibleId?: string | null; projectId?: string | null; description?: string | null;
-  externalCollaborators?: string | null; deadline?: string | null; coResponsibleIds?: string[];
+  externalCollaborators?: string | null; deadline?: string | null; coResponsibleIds?: string[] | null;
 }) {
-  const { coResponsibleIds = [], ...rest } = data;
+  const { coResponsibleIds, ...rest } = data;
+  const ids = coResponsibleIds ?? [];
   const task = await prisma.task.create({
     data: {
       ...rest,
       deadline: rest.deadline ? new Date(rest.deadline) : undefined,
-      coResponsibles: { create: coResponsibleIds.map((uid) => ({ userId: uid })) },
+      coResponsibles: { create: ids.map((uid) => ({ userId: uid })) },
     },
     include,
   });
@@ -55,7 +60,7 @@ export async function createTask(data: {
 export async function updateTask(id: string, data: {
   category?: string; activity?: string; status?: string; priority?: string;
   responsibleId?: string | null; projectId?: string | null; description?: string | null;
-  externalCollaborators?: string | null; deadline?: string | null; coResponsibleIds?: string[];
+  externalCollaborators?: string | null; deadline?: string | null; coResponsibleIds?: string[] | null;
 }) {
   const { coResponsibleIds, ...rest } = data;
   await prisma.$transaction(async (tx) => {
@@ -70,9 +75,11 @@ export async function updateTask(id: string, data: {
     });
     if (coResponsibleIds !== undefined) {
       await tx.taskCoResponsible.deleteMany({ where: { taskId: id } });
-      await tx.taskCoResponsible.createMany({
-        data: coResponsibleIds.map((uid) => ({ taskId: id, userId: uid })),
-      });
+      if (coResponsibleIds && coResponsibleIds.length > 0) {
+        await tx.taskCoResponsible.createMany({
+          data: coResponsibleIds.map((uid) => ({ taskId: id, userId: uid })),
+        });
+      }
     }
   });
   return prisma.task.findUniqueOrThrow({ where: { id }, include })

@@ -60,10 +60,20 @@ export const updateEvent = async (id: string, data: {
 
 export const deleteEvent = (id: string) => prisma.event.delete({ where: { id } });
 
-export const setMinutes = (id: string, minutesFileName: string, minutesFileData: string) =>
-  prisma.event.update({ where: { id }, data: { minutesFileName, minutesFileData }, include })
+export const getEventById = (id: string) =>
+  prisma.event.findUnique({ where: { id }, select: { minutesFilePath: true } });
+
+export const setMinutes = (id: string, minutesFileName: string, minutesFilePath: string) =>
+  prisma.event.update({ where: { id }, data: { minutesFileName, minutesFilePath }, include })
     .then((e) => fmt(e as EventWithResponsibles));
 
-export const removeMinutes = (id: string) =>
-  prisma.event.update({ where: { id }, data: { minutesFileName: null, minutesFileData: null }, include })
+export const removeMinutes = async (id: string) => {
+  const event = await prisma.event.findUnique({ where: { id }, select: { minutesFilePath: true } });
+  // Deleta do Storage se houver path salvo
+  if (event?.minutesFilePath) {
+    const { deleteFile } = await import('../../lib/storage');
+    await deleteFile(event.minutesFilePath);
+  }
+  return prisma.event.update({ where: { id }, data: { minutesFileName: null, minutesFilePath: null }, include })
     .then((e) => fmt(e as EventWithResponsibles));
+};
