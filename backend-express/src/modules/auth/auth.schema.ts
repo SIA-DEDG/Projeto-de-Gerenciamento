@@ -9,6 +9,7 @@ export const registerSchema = z.object({
   username: z.string(),
   name: z.string(),
   role: z.string().optional(),
+  directoria_id: z.string().uuid().optional().nullable(),
 });
 
 export const changePasswordSchema = z.object({

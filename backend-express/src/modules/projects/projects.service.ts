@@ -10,21 +10,21 @@ function fmt(p: ProjectWithOwner) {
   return { ...rest, owner: owner?.name ?? null };
 }
 
-export const listProjects = () =>
-  prisma.project.findMany({ include, orderBy: { createdAt: 'desc' } })
+export const listProjects = (directoriaId: string) =>
+  prisma.project.findMany({ where: { directoriaId }, include, orderBy: { createdAt: 'desc' } })
     .then((ps) => ps.map((p) => fmt(p as ProjectWithOwner)));
 
 export const getProject = (id: string) =>
   prisma.project.findUniqueOrThrow({ where: { id }, include })
     .then((p) => fmt(p as ProjectWithOwner));
 
-export const createProject = (data: {
+export const createProject = (directoriaId: string, data: {
   name: string; category?: string | null; ownerId?: string | null;
   deadline?: string | null; executiveStatus?: string | null;
   objective?: string | null; scope?: string | null; summary?: string | null;
 }) =>
   prisma.project.create({
-    data: { ...data, deadline: data.deadline ? new Date(data.deadline) : undefined },
+    data: { ...data, directoriaId, deadline: data.deadline ? new Date(data.deadline) : undefined },
     include,
   }).then((p) => fmt(p as ProjectWithOwner));
 

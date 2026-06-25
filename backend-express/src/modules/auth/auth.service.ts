@@ -6,9 +6,9 @@ import { env } from '../../config/env';
 
 const JWT_EXPIRES = '7d';
 
-function makeToken(user: { id: string; username: string; role: string }): string {
+function makeToken(user: { id: string; username: string; role: string; directoriaId?: string | null }): string {
   return jwt.sign(
-    { sub: user.id, username: user.username, role: user.role },
+    { sub: user.id, username: user.username, role: user.role, directoriaId: user.directoriaId ?? null },
     env.JWT_SECRET,
     { expiresIn: JWT_EXPIRES },
   );
@@ -19,7 +19,10 @@ function tempPassword(): string {
 }
 
 export async function login(username: string, password: string) {
-  const user = await prisma.user.findUnique({ where: { username } });
+  const user = await prisma.user.findUnique({
+    where: { username },
+    include: { directoria: { select: { id: true, name: true, color: true } } },
+  });
   if (!user) return null;
 
   const valid = await argon2.verify(user.passwordHash, password);
@@ -32,12 +35,15 @@ export async function login(username: string, password: string) {
     role: user.role,
     username: user.username,
     must_change_password: user.mustChangePassword,
+    directoria_id: user.directoriaId ?? null,
+    directoria_name: user.directoria?.name ?? null,
+    directoria_color: user.directoria?.color ?? null,
   };
 }
 
-export async function register(data: { username: string; name: string; role?: string }) {
+export async function register(data: { username: string; name: string; role?: string; directoriaId?: string | null }) {
   const exists = await prisma.user.findUnique({ where: { username: data.username } });
-  if (exists) throw Object.assign(new Error('Username jÃ¡ existe'), { status: 409 });
+  if (exists) throw Object.assign(new Error('Username já existe'), { status: 409 });
 
   const temp = tempPassword();
   const hash = await argon2.hash(temp);
@@ -49,7 +55,9 @@ export async function register(data: { username: string; name: string; role?: st
       passwordHash: hash,
       role: data.role ?? 'Funcionario',
       mustChangePassword: true,
+      directoriaId: data.directoriaId ?? null,
     },
+    include: { directoria: { select: { id: true, name: true, color: true } } },
   });
 
   return { ...safeUser(user), temp_password: temp };
@@ -93,6 +101,8 @@ export async function ensureAdminExists() {
 export function safeUser(u: {
   id: string; name: string; username: string; role: string;
   mustChangePassword: boolean; createdAt: Date;
+  directoriaId?: string | null;
+  directoria?: { id: string; name: string; color: string | null } | null;
 }) {
   return {
     id: u.id,
@@ -101,5 +111,8 @@ export function safeUser(u: {
     role: u.role,
     must_change_password: u.mustChangePassword,
     created_at: u.createdAt,
+    directoria_id: u.directoriaId ?? null,
+    directoria_name: u.directoria?.name ?? null,
+    directoria_color: u.directoria?.color ?? null,
   };
 }

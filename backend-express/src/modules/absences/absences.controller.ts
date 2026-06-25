@@ -6,14 +6,14 @@ import { logAction } from '../../lib/logger';
 const pid = (req: Request) => req.params['id'] as string;
 
 export async function listAbsences(req: Request, res: Response, next: NextFunction): Promise<void> {
-  try { res.json(await svc.listAbsences(req.user.sub, req.user.role)); } catch (err) { next(err); }
+  try { res.json(await svc.listAbsences(req.user.sub, req.user.role, req.user.directoriaId!)); } catch (err) { next(err); }
 }
 
 export async function createAbsence(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const data = schema.parse(req.body);
-    const absence = await svc.createAbsence(req.user.sub, data);
-    void logAction(req.user.sub, req.user.username, 'CREATE', 'absence', absence.id, 'Ausência registrada');
+    const absence = await svc.createAbsence(req.user.sub, req.user.directoriaId!, data);
+    void logAction(req.user.sub, req.user.username, 'CREATE', 'absence', absence.id, 'Ausência registrada', req.user.directoriaId ?? undefined);
     res.status(201).json(absence);
   } catch (err) { next(err); }
 }

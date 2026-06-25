@@ -4,7 +4,14 @@ import { updateNameSchema, updateRoleSchema, resetPasswordSchema } from './users
 import { logAction } from '../../lib/logger';
 
 export async function listUsers(req: Request, res: Response, next: NextFunction): Promise<void> {
-  try { res.json(await svc.listUsers()); } catch (err) { next(err); }
+  try {
+    // Super-Admin (sem diretoria) vê todos; outros veem só sua diretoria
+    res.json(await svc.listUsers(req.user.directoriaId));
+  } catch (err) { next(err); }
+}
+
+export async function listAllUsers(_req: Request, res: Response, next: NextFunction): Promise<void> {
+  try { res.json(await svc.listAllUsers()); } catch (err) { next(err); }
 }
 
 export async function updateMe(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -19,8 +26,8 @@ export async function updateMe(req: Request, res: Response, next: NextFunction):
 export async function deleteUser(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const { id } = req.params as { id: string };
-    await svc.deleteUser(id, req.user.sub);
-    void logAction(req.user.sub, req.user.username, 'DELETE', 'user', id, `Usuário ${id} deletado`);
+    await svc.deleteUser(id, req.user.sub, req.user.directoriaId);
+    void logAction(req.user.sub, req.user.username, 'DELETE', 'user', id, `Usuário ${id} deletado`, req.user.directoriaId ?? undefined);
     res.sendStatus(204);
   } catch (err: any) {
     if (err.status) { res.status(err.status).json({ error: err.message }); return; }
@@ -42,8 +49,11 @@ export async function adminResetPassword(req: Request, res: Response, next: Next
   try {
     const { id } = req.params as { id: string };
     const { new_password } = resetPasswordSchema.parse(req.body);
-    await svc.adminResetPassword(id, new_password);
-    void logAction(req.user.sub, req.user.username, 'UPDATE', 'user', id, 'Senha redefinida pelo admin');
+    await svc.adminResetPassword(id, new_password, req.user.directoriaId);
+    void logAction(req.user.sub, req.user.username, 'UPDATE', 'user', id, 'Senha redefinida', req.user.directoriaId ?? undefined);
     res.json({ message: 'Senha redefinida com sucesso' });
-  } catch (err) { next(err); }
+  } catch (err: any) {
+    if (err.status) { res.status(err.status).json({ error: err.message }); return; }
+    next(err);
+  }
 }

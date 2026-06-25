@@ -5,15 +5,15 @@ import { logAction } from '../../lib/logger';
 
 const pid = (req: Request) => req.params['id'] as string;
 
-export async function listEvents(_req: Request, res: Response, next: NextFunction): Promise<void> {
-  try { res.json(await svc.listEvents()); } catch (err) { next(err); }
+export async function listEvents(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try { res.json(await svc.listEvents(req.user.directoriaId!)); } catch (err) { next(err); }
 }
 
 export async function createEvent(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const data = schema.parse(req.body);
-    const event = await svc.createEvent(data);
-    void logAction(req.user.sub, req.user.username, 'CREATE', 'event', event.id, `Evento "${event.name}" criado`);
+    const event = await svc.createEvent(req.user.directoriaId!, data);
+    void logAction(req.user.sub, req.user.username, 'CREATE', 'event', event.id, `Evento "${event.name}" criado`, req.user.directoriaId ?? undefined);
     res.status(201).json(event);
   } catch (err) { next(err); }
 }
@@ -47,7 +47,8 @@ export async function setMinutes(req: Request, res: Response, next: NextFunction
     let filePath: string;
     if (storageEnabled()) {
       const ext = fileName.split('.').pop() ?? 'pdf';
-      filePath = await uploadFile(`atas/${id}.${ext}`, fileData, 'application/pdf');
+      const dirId = req.user.directoriaId ?? 'global';
+      filePath = await uploadFile(`diretorias/${dirId}/atas/${id}.${ext}`, fileData, 'application/pdf');
     } else {
       // Fallback: salva o base64 no path field como indicador (não recomendado para produção)
       filePath = `__base64__:${fileData.slice(0, 50)}`;

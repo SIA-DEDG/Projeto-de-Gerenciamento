@@ -14,7 +14,11 @@ export async function login(req: Request, res: Response, next: NextFunction): Pr
 export async function register(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const data = registerSchema.parse(req.body);
-    const user = await authService.register(data);
+    // Super-Admin pode criar em qualquer diretoria; Gerente/Diretor só na sua
+    const directoriaId = req.user.role === 'Admin'
+      ? (data.directoria_id ?? null)
+      : (req.user.directoriaId ?? null);
+    const user = await authService.register({ ...data, directoriaId });
     res.status(201).json(user);
   } catch (err: any) {
     if (err.status) { res.status(err.status).json({ error: err.message }); return; }

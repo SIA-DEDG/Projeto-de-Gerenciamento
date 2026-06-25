@@ -7,10 +7,11 @@ export async function logAction(
   entityType: string,
   entityId: string,
   details = '',
+  directoriaId?: string,
 ): Promise<void> {
   try {
     await prisma.activityLog.create({
-      data: { userId, userName: username, action, entityType, entityId, details },
+      data: { userId, userName: username, action, entityType, entityId, details, directoriaId: directoriaId ?? null },
     });
   } catch {
     // Logging nunca deve derrubar a requisição

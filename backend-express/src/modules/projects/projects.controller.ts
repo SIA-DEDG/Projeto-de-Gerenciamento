@@ -5,8 +5,8 @@ import { logAction } from '../../lib/logger';
 
 const pid = (req: Request) => req.params['id'] as string;
 
-export async function listProjects(_req: Request, res: Response, next: NextFunction): Promise<void> {
-  try { res.json(await svc.listProjects()); } catch (err) { next(err); }
+export async function listProjects(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try { res.json(await svc.listProjects(req.user.directoriaId!)); } catch (err) { next(err); }
 }
 
 export async function getProject(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -16,8 +16,8 @@ export async function getProject(req: Request, res: Response, next: NextFunction
 export async function createProject(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const data = schema.parse(req.body);
-    const project = await svc.createProject(data);
-    void logAction(req.user.sub, req.user.username, 'CREATE', 'project', project.id, `Projeto "${project.name}" criado`);
+    const project = await svc.createProject(req.user.directoriaId!, data);
+    void logAction(req.user.sub, req.user.username, 'CREATE', 'project', project.id, `Projeto "${project.name}" criado`, req.user.directoriaId ?? undefined);
     res.status(201).json(project);
   } catch (err) { next(err); }
 }

@@ -11,6 +11,26 @@ datasource db {
   provider = "postgresql"
 }
 
+model Directoria {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String
+  slug        String   @unique
+  description String?
+  color       String?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  members      User[]
+  tasks        Task[]
+  projects     Project[]
+  events       Event[]
+  absences     Absence[]
+  activityLogs ActivityLog[]
+
+  @@index([active])
+  @@map("diretorias")
+}
+
 model User {
   id                 String    @id @default(uuid()) @db.Uuid
   name               String
@@ -19,7 +39,9 @@ model User {
   role               String    @default("Funcionario")
   mustChangePassword Boolean   @default(true) @map("must_change_password")
   createdAt          DateTime  @default(now()) @map("created_at")
+  directoriaId       String?   @map("directoria_id") @db.Uuid
 
+  directoria         Directoria?         @relation(fields: [directoriaId], references: [id], onDelete: SetNull)
   ownedProjects      Project[]
   tasks              Task[]              @relation("responsible")
   coResponsibilities TaskCoResponsible[]
@@ -30,6 +52,7 @@ model User {
   feedbackComments   FeedbackComment[]
   activityLogs       ActivityLog[]
 
+  @@index([directoriaId])
   @@map("users")
 }
 
@@ -38,6 +61,7 @@ model Project {
   name            String
   category        String?
   ownerId         String?   @map("owner_id") @db.Uuid
+  directoriaId    String    @map("directoria_id") @db.Uuid
   deadline        DateTime? @db.Date
   executiveStatus String?   @map("executive_status")
   objective       String?
@@ -46,9 +70,11 @@ model Project {
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime  @updatedAt @map("updated_at")
 
-  owner User?  @relation(fields: [ownerId], references: [id], onDelete: SetNull)
-  tasks Task[]
+  owner      User?      @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+  directoria Directoria @relation(fields: [directoriaId], references: [id], onDelete: Cascade)
+  tasks      Task[]
 
+  @@index([directoriaId])
   @@map("projects")
 }
 
@@ -62,18 +88,21 @@ model Task {
   createdAt             DateTime  @default(now()) @db.Date @map("created_at")
   description           String?
   projectId             String?   @map("project_id") @db.Uuid
+  directoriaId          String    @map("directoria_id") @db.Uuid
   externalCollaborators String?   @map("external_collaborators")
   deadline              DateTime? @db.Date
   archived              Boolean   @default(false)
 
   responsible    User?              @relation("responsible", fields: [responsibleId], references: [id], onDelete: SetNull)
   project        Project?           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  directoria     Directoria         @relation(fields: [directoriaId], references: [id], onDelete: Cascade)
   coResponsibles TaskCoResponsible[]
 
   @@index([archived])
   @@index([createdAt])
   @@index([projectId])
   @@index([responsibleId])
+  @@index([directoriaId])
   @@map("tasks")
 }
 
@@ -91,17 +120,20 @@ model TaskCoResponsible {
 model Absence {
   id             String   @id @default(uuid()) @db.Uuid
   userId         String?  @map("user_id") @db.Uuid
+  directoriaId   String   @map("directoria_id") @db.Uuid
   reason         String
   justification  String?
   fileName       String?  @map("file_name")
-  filePath       String?  @map("file_path")  // path no Supabase Storage
+  filePath       String?  @map("file_path")
   startDate      DateTime @db.Date @map("start_date")
   endDate        DateTime @db.Date @map("end_date")
   approvalStatus String   @default("pendente") @map("approval_status")
   createdAt      DateTime @default(now()) @map("created_at")
 
-  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  user       User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
+  directoria Directoria @relation(fields: [directoriaId], references: [id], onDelete: Cascade)
 
+  @@index([directoriaId])
   @@map("absences")
 }
 
@@ -114,14 +146,17 @@ model Event {
   endDate         DateTime @db.Date @map("end_date")
   startTime       String?  @map("start_time")
   minutesFileName String?  @map("minutes_file_name")
-  minutesFilePath String?  @map("minutes_file_path")  // path no Supabase Storage
+  minutesFilePath String?  @map("minutes_file_path")
   archived        Boolean  @default(false)
+  directoriaId    String   @map("directoria_id") @db.Uuid
   createdAt       DateTime @default(now()) @map("created_at")
 
+  directoria   Directoria         @relation(fields: [directoriaId], references: [id], onDelete: Cascade)
   responsibles EventResponsible[]
 
   @@index([archived])
   @@index([createdAt])
+  @@index([directoriaId])
   @@map("events")
 }
 
@@ -137,17 +172,18 @@ model EventResponsible {
 }
 
 model Feedback {
-  id          String   @id @default(uuid()) @db.Uuid
-  tipo        String
-  titulo      String
-  descricao   String
-  severidade  String?
-  usuarioId   String?  @map("usuario_id") @db.Uuid
-  usuarioNome String?  @map("usuario_nome")
-  imagens     String? // JSON array serializado como texto
-  resposta    String?
-  status      String   @default("pendente")
-  createdAt   DateTime @default(now()) @map("created_at")
+  id               String   @id @default(uuid()) @db.Uuid
+  tipo             String
+  titulo           String
+  descricao        String
+  severidade       String?
+  usuarioId        String?  @map("usuario_id") @db.Uuid
+  usuarioNome      String?  @map("usuario_nome")
+  usuarioDiretoria String?  @map("usuario_diretoria")
+  imagens          String?
+  resposta         String?
+  status           String   @default("pendente")
+  createdAt        DateTime @default(now()) @map("created_at")
 
   usuario  User?            @relation(fields: [usuarioId], references: [id], onDelete: SetNull)
   upvotes  FeedbackUpvote[]
@@ -189,18 +225,21 @@ model FeedbackComment {
 }
 
 model ActivityLog {
-  id         String   @id @default(uuid()) @db.Uuid
-  userId     String   @map("user_id") @db.Uuid
-  userName   String   @map("user_name")
-  action     String
-  entityType String   @map("entity_type")
-  entityId   String   @map("entity_id")
-  details    String   @default("")
-  createdAt  DateTime @default(now()) @map("created_at")
+  id           String   @id @default(uuid()) @db.Uuid
+  userId       String   @map("user_id") @db.Uuid
+  userName     String   @map("user_name")
+  action       String
+  entityType   String   @map("entity_type")
+  entityId     String   @map("entity_id")
+  details      String   @default("")
+  directoriaId String?  @map("directoria_id") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at")
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  directoria Directoria? @relation(fields: [directoriaId], references: [id], onDelete: SetNull)
 
   @@index([createdAt])
   @@index([userId])
+  @@index([directoriaId])
   @@map("activity_logs")
 }

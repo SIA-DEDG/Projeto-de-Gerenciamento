@@ -22,6 +22,8 @@ const router = Router();
  *         description: Lista de usuários
  */
 router.get('/', authenticate, ctrl.listUsers);
+// Todos os usuários de todas as diretorias (para seletores cross-diretoria)
+router.get('/all', authenticate, ctrl.listAllUsers);
 
 /**
  * @swagger
@@ -113,6 +115,6 @@ router.put('/:id/role', authenticate, requireManager, ctrl.updateRole);
  *       200:
  *         description: Senha redefinida
  */
-router.put('/:id/password', authenticate, requireAdmin, ctrl.adminResetPassword);
+router.put('/:id/password', authenticate, requireManager, ctrl.adminResetPassword);
 
 export default router;

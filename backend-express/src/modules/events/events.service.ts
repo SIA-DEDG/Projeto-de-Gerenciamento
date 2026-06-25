@@ -14,11 +14,11 @@ function fmt(e: EventWithResponsibles) {
   return { ...rest, responsibles: responsibles.map((r) => r.user.name) };
 }
 
-export const listEvents = () =>
-  prisma.event.findMany({ where: { archived: false }, include, orderBy: { startDate: 'desc' } })
+export const listEvents = (directoriaId: string) =>
+  prisma.event.findMany({ where: { archived: false, directoriaId }, include, orderBy: { startDate: 'desc' } })
     .then((es) => es.map((e) => fmt(e as EventWithResponsibles)));
 
-export const createEvent = async (data: {
+export const createEvent = async (directoriaId: string, data: {
   name: string; eventType: string; attendees?: string | null;
   startDate: string; endDate: string; startTime?: string | null;
   responsibleIds?: string[];
@@ -27,6 +27,7 @@ export const createEvent = async (data: {
   const event = await prisma.event.create({
     data: {
       ...rest,
+      directoriaId,
       startDate: new Date(rest.startDate),
       endDate: new Date(rest.endDate),
       responsibles: { create: responsibleIds.map((uid) => ({ userId: uid })) },

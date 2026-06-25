@@ -10,18 +10,20 @@ function fmt(a: AbsenceWithUser) {
   return { ...rest, employee_name: user?.name ?? null };
 }
 
-export const listAbsences = (userId: string, role: string) => {
-  const where = ['Admin', 'Diretor', 'Gerente'].includes(role) ? {} : { userId };
+export const listAbsences = (userId: string, role: string, directoriaId: string) => {
+  // Gerente/Diretor/Admin vê todas da diretoria; outros veem apenas as suas
+  const canSeeAll = ['Admin', 'Diretor', 'Gerente'].includes(role);
+  const where = canSeeAll ? { directoriaId } : { userId, directoriaId };
   return prisma.absence.findMany({ where, include, orderBy: { startDate: 'desc' } })
     .then((as) => as.map((a) => fmt(a as AbsenceWithUser)));
 };
 
-export const createAbsence = (userId: string, data: {
+export const createAbsence = (userId: string, directoriaId: string, data: {
   reason: string; justification?: string | null; fileName?: string | null;
   filePath?: string | null; startDate: string; endDate: string;
 }) =>
   prisma.absence.create({
-    data: { ...data, userId, startDate: new Date(data.startDate), endDate: new Date(data.endDate) },
+    data: { ...data, userId, directoriaId, startDate: new Date(data.startDate), endDate: new Date(data.endDate) },
     include,
   }).then((a) => fmt(a as AbsenceWithUser));
 

@@ -26,12 +26,12 @@ export const listFeedback = () =>
   prisma.feedback.findMany({ include, orderBy: { createdAt: 'desc' } })
     .then((fs) => fs.map((f) => fmt(f as FeedbackWithRelations)));
 
-export const createFeedback = (userId: string, userName: string, data: {
+export const createFeedback = (userId: string, userName: string, usuarioDiretoria: string | null, data: {
   tipo: string; titulo: string; descricao: string;
   severidade?: string | null; imagens?: string[];
 }) =>
   prisma.feedback.create({
-    data: { ...data, usuarioId: userId, usuarioNome: userName, imagens: JSON.stringify(data.imagens ?? []) },
+    data: { ...data, usuarioId: userId, usuarioNome: userName, usuarioDiretoria, imagens: JSON.stringify(data.imagens ?? []) },
     include,
   }).then((f) => fmt(f as FeedbackWithRelations));
 
