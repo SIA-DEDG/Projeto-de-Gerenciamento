@@ -31,8 +31,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </div>
 
-        {/* Logo no topbar — só em páginas que NÃO são o Board */}
-        {!isBoard && !isMyActivities && !isConfigurations &&(
+        {/* Logo no topbar — removida por período eleitoral */}
+        {/* {!isBoard && !isMyActivities && !isConfigurations &&(
           <div className="app-logo-corner">
             <Image
               src="/logo-sia.svg"
@@ -43,7 +43,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               priority
             />
           </div>
-        )}
+        )} */}
       </main>
 
       {showPanel && (

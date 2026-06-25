@@ -61,10 +61,11 @@ export default function RedefinirSenhaPage() {
       <div className={s.overlay} aria-hidden="true" />
 
       <div className={s.card}>
-        <div className={s.logo}>
+        {/* Logo — removida por período eleitoral */}
+        {/* <div className={s.logo}>
           <Image src="/logo-sia.svg" alt="SIA — Governo do Piauí" width={300} height={80}
             style={{ objectFit: 'contain', width: 'auto', height: '72px' }} priority />
-        </div>
+        </div> */}
 
         <h1 className={s.title}>Defina sua senha</h1>
         <p className={s.subtitle}>

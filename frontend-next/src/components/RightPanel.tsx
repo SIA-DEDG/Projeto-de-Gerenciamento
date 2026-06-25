@@ -175,9 +175,10 @@ export default function RightPanel({ open, onToggle, filterUser }: {
       <aside className={`right-panel${open ? '' : ' right-panel--collapsed'}`}>
         <div className="rp-header">
           <div className="rp-logo">
-            {open && (
+            {/* Logo — removida por período eleitoral */}
+            {/* {open && (
               <Image src="/logo-sia.svg" alt="SIA" width={110} height={32} style={{ objectFit: 'contain' }} />
-            )}
+            )} */}
           </div>
           <button
             className="rp-toggle-btn"

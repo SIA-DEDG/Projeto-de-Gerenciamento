@@ -49,8 +49,8 @@ export default function LoginPage() {
       <div className={s.overlay} aria-hidden="true" />
 
       <div className={s.card}>
-        {/* Logo */}
-        <div className={s.logo}>
+        {/* Logo — removida por período eleitoral */}
+        {/* <div className={s.logo}>
           <Image
             src="/logo-sia.svg"
             alt="Secretaria de Inteligência Artificial — Governo do Piauí"
@@ -59,7 +59,7 @@ export default function LoginPage() {
             style={{ objectFit: 'contain', width: 'auto', height: '72px' }}
             priority
           />
-        </div>
+        </div> */}
 
         {/* Título */}
         <h1 className={s.title}>Acesse sua conta</h1>
