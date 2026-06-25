@@ -23,7 +23,7 @@ export default function ConfirmModal({
         <div className="modal-body" style={{ alignItems: 'center', textAlign: 'center', paddingTop: 24 }}>
           <div style={{
             width: 44, height: 44, borderRadius: '50%',
-            background: danger ? 'rgba(180,35,24,0.08)' : 'rgba(3,78,162,0.08)',
+            background: danger ? 'rgba(180,35,24,0.08)' : 'var(--primary-light)',
             color: danger ? 'var(--red)' : 'var(--blue)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             flexShrink: 0,

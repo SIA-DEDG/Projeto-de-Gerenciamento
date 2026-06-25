@@ -10,9 +10,7 @@ import { useRouter } from 'next/navigation';
 import { getUser, clearAuth, canManageUsers } from '@/lib/auth';
 import { fetchTasks, fetchFeedbacks } from '@/lib/api';
 import { onTasksChanged } from '@/lib/taskEvents';
-import { useRefetchOnFocus } from '@/lib/useRefetchOnFocus';
 import { useTabs, useActiveTab, PAGE_INFO, type PageType } from '@/context/TabsContext';
-import Link from 'next/link';
 
 const ROLE_LABELS: Record<string, string> = {
   Estagiario: 'ESTAGIÁRIO(A)',
@@ -67,11 +65,9 @@ export default function Sidebar({ onToggleTheme, isDark }: Props) {
   }, []);
 
   useEffect(() => { loadPending(); }, [loadPending]);
-  useRefetchOnFocus(loadPending);
   useEffect(() => onTasksChanged(loadPending), [loadPending]);
 
   useEffect(() => { loadPendingFeedback(); }, [loadPendingFeedback]);
-  useRefetchOnFocus(loadPendingFeedback);
   useEffect(() => onTasksChanged(loadPendingFeedback), [loadPendingFeedback]);
 
   useEffect(() => {
@@ -84,8 +80,10 @@ export default function Sidebar({ onToggleTheme, isDark }: Props) {
 
   function handleLogout() { clearAuth(); router.replace('/login'); }
 
-  // nav: atualiza estado da aba; a navegação real é feita pelo <Link>
-  function nav(type: PageType) { openTab(type); }
+  function nav(type: PageType) {
+    openTab(type);
+    history.replaceState(null, '', PAGE_INFO[type].path);
+  }
 
   function isActiveType(type: PageType) {
     return activeTab?.type === type ? 'sidebar-nav-link active' : 'sidebar-nav-link';
@@ -93,9 +91,9 @@ export default function Sidebar({ onToggleTheme, isDark }: Props) {
 
   function NavLink({ type, children, style }: { type: PageType; children: React.ReactNode; style?: React.CSSProperties }) {
     return (
-      <Link href={PAGE_INFO[type].path} onClick={() => nav(type)} className={isActiveType(type)} style={style}>
+      <button onClick={() => nav(type)} className={isActiveType(type)} style={{ background: 'none', border: 'none', cursor: 'pointer', width: '100%', textAlign: 'left', ...style }}>
         {children}
-      </Link>
+      </button>
     );
   }
 
@@ -258,10 +256,10 @@ export default function Sidebar({ onToggleTheme, isDark }: Props) {
 
           {menuOpen && (
             <div className="sidebar-user-menu">
-              <Link href={PAGE_INFO['configuracoes'].path} onClick={() => { nav('configuracoes'); setMenuOpen(false); }} className="sidebar-user-menu-item">
+              <button onClick={() => { nav('configuracoes'); setMenuOpen(false); }} className="sidebar-user-menu-item" style={{ background: 'none', border: 'none', cursor: 'pointer', width: '100%', textAlign: 'left' }}>
                 <Settings size={14} />
                 Configurações
-              </Link>
+              </button>
               <button className="sidebar-user-menu-item danger" onClick={handleLogout}>
                 <LogOut size={14} />
                 Sair

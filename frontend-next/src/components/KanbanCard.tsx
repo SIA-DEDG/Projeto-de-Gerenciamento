@@ -1,23 +1,21 @@
 'use client';
 
+import { useState, useRef, useEffect, useMemo, memo } from 'react';
 import { useDraggable } from '@dnd-kit/core';
-import { Check, Folder, Clock } from 'lucide-react';
-import { initials } from '@/lib/utils';
+import { Check, Folder, Clock, Ellipsis, Archive, Trash2 } from 'lucide-react';
+import { initials, STATUS_COLORS } from '@/lib/utils';
 import type { Task } from '@/types';
 
-/* Spine colorido por status */
-const SPINE_COLOR: Record<string, string> = {
-  pending: '#9aa1ac',
-  in_progress: '#034EA2',
-  review: '#E0A92E',
-  done: '#1B8A4B',
+const PRIO_COLOR: Record<string, string> = {
+  Alta:  '#b42318',
+  Média: '#A87A00',
+  Baixa: '#157F3C',
 };
 
-/* Cor de prioridade conforme design: Alta=azul, Média=cinza, Baixa=cinza-claro */
-const PRIO_COLOR: Record<string, string> = {
-  Alta: '#034EA2',
-  Média: 'var(--text-2)',
-  Baixa: 'var(--text-3)',
+const PRIO_BG: Record<string, string> = {
+  Alta:  'rgba(180,35,24,0.08)',
+  Média: 'rgba(168,122,0,0.08)',
+  Baixa: 'rgba(21,127,60,0.08)',
 };
 
 /* Texto e cor do prazo (human-readable) */
@@ -39,11 +37,12 @@ function dueText(deadline: string | null | undefined, isDone: boolean): { text: 
 const MAX_AVATARS = 3;
 const AVATAR_BG = '#072f63'; /* Design: todos os avatares no kanban usam navy fixo */
 
-export default function KanbanCard({
+function KanbanCard({
   task,
   projectName,
   onView,
   onDelete,
+  onArchive,
   selectionMode = false,
   isSelected = false,
   onToggleSelect,
@@ -52,23 +51,39 @@ export default function KanbanCard({
   projectName?: string;
   onView: (t: Task) => void;
   onDelete: (id: string) => void;
+  onArchive?: (id: string) => void;
   selectionMode?: boolean;
   isSelected?: boolean;
   onToggleSelect?: (id: string) => void;
 }) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: task.id,
     data: { task },
     disabled: selectionMode,
   });
 
-  let coResponsibles: string[] = [];
-  try { coResponsibles = task.co_responsibles ? JSON.parse(task.co_responsibles) : []; } catch { coResponsibles = []; }
-  const allAvatars = task.responsible ? [task.responsible, ...coResponsibles] : coResponsibles;
+  useEffect(() => {
+    if (!menuOpen) return;
+    function handleOutside(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
+    }
+    document.addEventListener('mousedown', handleOutside);
+    return () => document.removeEventListener('mousedown', handleOutside);
+  }, [menuOpen]);
 
-  const spineColor = SPINE_COLOR[task.status_group] ?? '#9aa1ac';
+  const allAvatars = useMemo(() => {
+    let coResponsibles: string[] = [];
+    try { coResponsibles = task.co_responsibles ? JSON.parse(task.co_responsibles) : []; } catch { coResponsibles = []; }
+    return task.responsible ? [task.responsible, ...coResponsibles] : coResponsibles;
+  }, [task.co_responsibles, task.responsible]);
+
+  const spineColor = STATUS_COLORS[task.status_group] ?? '#9aa1ac';
   const isDone = task.status_group === 'done';
   const due = dueText(task.deadline, isDone);
+  const prio = task.priority || 'Média';
 
   function handleClick() {
     if (isDragging) return;
@@ -82,7 +97,7 @@ export default function KanbanCard({
       style={{
         position: 'relative',
         paddingLeft: 26,
-        paddingRight: 22,
+        paddingRight: 10,
         paddingTop: 15,
         paddingBottom: 15,
         cursor: selectionMode ? 'pointer' : 'grab',
@@ -128,44 +143,76 @@ export default function KanbanCard({
         </div>
       )}
 
-      {/* Linha 1: CATEGORIA · PRIORIDADE */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-        <span className="mono" style={{ fontSize: '0.6rem', fontWeight: 500, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--text-3)' }}>
+      {/* Botão "..." + menu */}
+      {!selectionMode && (
+        <div
+          ref={menuRef}
+          style={{ position: 'absolute', top: 10, right: 8, zIndex: 10 }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button
+            type="button"
+            onClick={() => setMenuOpen((v) => !v)}
+            style={{ width: 24, height: 24, borderRadius: 3, border: 'none', background: 'transparent', color: 'var(--text-3)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0 }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--line-1)')}
+            onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+          >
+            <Ellipsis size={14} />
+          </button>
+
+          {menuOpen && (
+            <div style={{ position: 'absolute', top: 28, right: 0, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 4, boxShadow: '0 4px 12px rgba(0,0,0,0.12)', minWidth: 140, zIndex: 300, overflow: 'hidden' }}>
+              {onArchive && (
+                <button
+                  type="button"
+                  onClick={() => { setMenuOpen(false); onArchive(task.id); }}
+                  style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '9px 13px', border: 'none', background: 'transparent', color: 'var(--text-2)', fontSize: '0.82rem', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--surface-2)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                >
+                  <Archive size={13} style={{ color: 'var(--text-3)' }} />
+                  Arquivar
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => { setMenuOpen(false); onDelete(task.id); }}
+                style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '9px 13px', border: 'none', background: 'transparent', color: '#b42318', fontSize: '0.82rem', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(180,35,24,0.06)')}
+                onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+              >
+                <Trash2 size={13} />
+                Excluir
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Linha 1: CATEGORIA */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 7, paddingRight: 20 }}>
+        <span className="mono" style={{ fontSize: '0.6rem', fontWeight: 500, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--text-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {task.category || 'Sem categoria'}
-        </span>
-        <span style={{ color: 'var(--border)' }}>·</span>
-        <span className="mono" style={{ fontSize: '0.6rem', fontWeight: 500, letterSpacing: '0.5px', textTransform: 'uppercase', color: PRIO_COLOR[task.priority] ?? 'var(--text-3)' }}>
-          {task.priority || 'Média'}
         </span>
       </div>
 
       {/* Título */}
-      <p style={{
-        fontSize: '0.92rem', 
-        fontWeight: 500, 
-        color: 'var(--text)', 
-        lineHeight: 1.4, 
-        letterSpacing: '-0.1px',
-        margin: 0, 
-        overflow: 'hidden',
-        whiteSpace: 'nowrap',
-        textOverflow: 'ellipsis',
-      }}>
+      <p style={{ fontSize: '0.92rem', fontWeight: 500, color: 'var(--text)', lineHeight: 1.4, letterSpacing: '-0.1px', margin: 0, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis', paddingRight: 20 }}>
         {task.activity}
       </p>
 
-      {/* Linha 3: ícone-pasta + nome-projeto | avatares */}
+      {/* Linha 3: projeto | avatares */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 13 }}>
-        {(projectName || task.category) && (
+        {projectName && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: 'var(--text-3)', fontSize: '0.72rem', minWidth: 0, flex: 1 }}>
             <Folder size={12} strokeWidth={1.8} />
-            <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 120 }}>
-              {projectName || task.category}
+            <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 100 }}>
+              {projectName}
             </span>
           </div>
         )}
         {allAvatars.length > 0 && (
-          <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0, marginLeft: 'auto' }}>
             {allAvatars.slice(0, MAX_AVATARS).map((name, i) => (
               <div
                 key={name + i}
@@ -192,13 +239,28 @@ export default function KanbanCard({
         )}
       </div>
 
-      {/* Prazo (human-readable) */}
-      {due && (
-        <div className="mono" style={{ display: 'inline-flex', alignItems: 'center', gap: 5, marginTop: 11, fontSize: '0.66rem', fontWeight: 500, letterSpacing: '0.4px', color: due.color }}>
-          <Clock size={11} strokeWidth={2} />
-          {due.text}
-        </div>
-      )}
+      {/* Rodapé: prazo + prioridade */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 11 }}>
+        {due ? (
+          <div className="mono" style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: '0.66rem', fontWeight: 500, letterSpacing: '0.4px', color: due.color }}>
+            <Clock size={11} strokeWidth={2} />
+            {due.text}
+          </div>
+        ) : <span />}
+
+        <span style={{
+          display: 'inline-flex', alignItems: 'center',
+          fontSize: '0.62rem', fontWeight: 600, fontFamily: 'var(--mono)',
+          letterSpacing: '0.5px', textTransform: 'uppercase',
+          color: PRIO_COLOR[prio] ?? 'var(--text-3)',
+          background: PRIO_BG[prio] ?? 'transparent',
+          padding: '2px 7px', borderRadius: 3,
+        }}>
+          {prio}
+        </span>
+      </div>
     </div>
   );
 }
+
+export default memo(KanbanCard);

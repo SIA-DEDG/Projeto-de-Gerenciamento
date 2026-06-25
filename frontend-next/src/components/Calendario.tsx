@@ -132,16 +132,16 @@ export default function Calendario({ items, legend, onItemClick, onDayClick }: P
 
       {/* Grade Mês */}
       {view === 'month' && (
-        <div style={{ padding: '0 0 24px' }}>
+        <div style={{ padding: '0 0 24px', overflowX: 'auto' }}>
           {/* Cabeçalho dias da semana */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', borderBottom: '1px solid var(--line-1)' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(120px, 1fr))', borderBottom: '1px solid var(--line-1)', minWidth: 840 }}>
             {WEEKDAYS.map((d) => (
-              <div key={d} className="mono" style={{ padding: '8px 6px', fontSize: '0.6rem', fontWeight: 600, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.08em', textAlign: 'center' }}>{d}</div>
+              <div key={d} className="mono" style={{ padding: '9px 8px', fontSize: '0.62rem', fontWeight: 600, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.08em', textAlign: 'center' }}>{d}</div>
             ))}
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(120px, 1fr))', minWidth: 840 }}>
             {monthDays.map((cell, idx) => {
-              if (!cell.date) return <div key={`empty-${idx}`} style={{ minHeight: 88, borderRight: '1px solid var(--line-2)', borderBottom: '1px solid var(--line-2)', background: 'var(--surface-2)' }} />;
+              if (!cell.date) return <div key={`empty-${idx}`} style={{ minHeight: 110, borderRight: '1px solid var(--line-2)', borderBottom: '1px solid var(--line-2)', background: 'var(--surface-2)' }} />;
               const dayItems = itemsForDay(items, cell.date);
               const isToday = cell.date === todayStr;
               const isSelected = cell.date === selectedDay;
@@ -150,7 +150,7 @@ export default function Calendario({ items, legend, onItemClick, onDayClick }: P
                   key={cell.date}
                   onClick={() => handleDayClick(cell.date!)}
                   style={{
-                    minHeight: 88,
+                    minHeight: 110,
                     borderRight: '1px solid var(--line-2)',
                     borderBottom: '1px solid var(--line-2)',
                     padding: '6px 6px 4px',
@@ -161,38 +161,41 @@ export default function Calendario({ items, legend, onItemClick, onDayClick }: P
                   onMouseEnter={(e) => { if (!isSelected) (e.currentTarget as HTMLElement).style.background = 'var(--surface-2)'; }}
                   onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = isSelected ? 'rgba(3,78,162,0.04)' : 'var(--surface)'; }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 4 }}>
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 5 }}>
                     <span className="mono" style={{
-                      fontSize: '0.72rem', fontWeight: isToday ? 700 : 500,
+                      fontSize: '0.74rem', fontWeight: isToday ? 700 : 500,
                       color: isToday ? '#fff' : 'var(--text-2)',
                       background: isToday ? 'var(--blue)' : 'transparent',
-                      borderRadius: '50%', width: 22, height: 22,
+                      borderRadius: '50%', width: 24, height: 24,
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                     }}>{cell.day}</span>
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                     {dayItems.slice(0, 3).map((item) => (
                       <div
                         key={item.id}
                         onClick={(e) => { e.stopPropagation(); onItemClick?.(item); }}
                         style={{
-                          borderLeft: `2px solid ${item.color}`,
-                          paddingLeft: 4,
-                          fontSize: '0.62rem',
+                          borderLeft: `3px solid ${item.color}`,
+                          paddingLeft: 5,
+                          paddingRight: 4,
+                          paddingTop: 3,
+                          paddingBottom: 3,
+                          fontSize: '0.72rem',
                           fontWeight: 600,
                           color: 'var(--text)',
-                          background: 'var(--surface-2)',
-                          borderRadius: '0 2px 2px 0',
+                          background: `${item.color}12`,
+                          borderRadius: '0 3px 3px 0',
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
                           whiteSpace: 'nowrap',
                           cursor: 'pointer',
-                          lineHeight: 1.6,
+                          lineHeight: 1.5,
                         }}
                       >{item.title}</div>
                     ))}
                     {dayItems.length > 3 && (
-                      <div className="mono" style={{ fontSize: '0.58rem', color: 'var(--text-3)', paddingLeft: 4 }}>+{dayItems.length - 3} ver mais</div>
+                      <div className="mono" style={{ fontSize: '0.62rem', color: 'var(--text-3)', paddingLeft: 5 }}>+{dayItems.length - 3} mais</div>
                     )}
                   </div>
                 </div>
@@ -204,52 +207,50 @@ export default function Calendario({ items, legend, onItemClick, onDayClick }: P
 
       {/* Grade Semana */}
       {view === 'week' && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', flex: 1, minHeight: 400, overflowY: 'auto' }}>
-          {weekDays.map(({ date, dt }) => {
-            const dayItems = itemsForDay(items, date);
-            const isToday = date === todayStr;
-            return (
-              <div key={date} style={{ borderRight: '1px solid var(--line-2)', minHeight: 400 }}>
-                <div style={{ padding: '10px 8px 6px', borderBottom: '1px solid var(--line-2)', textAlign: 'center' }}>
-                  <div className="mono" style={{ fontSize: '0.58rem', color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{WEEKDAYS[dt.getDay()]}</div>
-                  <div className="mono" style={{
-                    fontSize: '1.1rem', fontWeight: 600,
-                    color: isToday ? '#fff' : 'var(--text)',
-                    background: isToday ? 'var(--blue)' : 'transparent',
-                    borderRadius: '50%', width: 32, height: 32,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    margin: '4px auto 0',
-                  }}>{dt.getDate()}</div>
+        <div style={{ overflowX: 'auto' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(130px, 1fr))', minWidth: 910, minHeight: 400 }}>
+            {weekDays.map(({ date, dt }) => {
+              const dayItems = itemsForDay(items, date);
+              const isToday = date === todayStr;
+              return (
+                <div key={date} style={{ borderRight: '1px solid var(--line-2)', minHeight: 400 }}>
+                  <div style={{ padding: '10px 10px 8px', borderBottom: '1px solid var(--line-2)', textAlign: 'center' }}>
+                    <div className="mono" style={{ fontSize: '0.6rem', color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{WEEKDAYS[dt.getDay()]}</div>
+                    <div className="mono" style={{
+                      fontSize: '1.1rem', fontWeight: 600,
+                      color: isToday ? '#fff' : 'var(--text)',
+                      background: isToday ? 'var(--blue)' : 'transparent',
+                      borderRadius: '50%', width: 34, height: 34,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      margin: '4px auto 0',
+                    }}>{dt.getDate()}</div>
+                  </div>
+                  <div style={{ padding: '8px 6px', display: 'flex', flexDirection: 'column', gap: 5 }}>
+                    {dayItems.map((item) => (
+                      <div
+                        key={item.id}
+                        onClick={() => onItemClick?.(item)}
+                        style={{
+                          borderLeft: `3px solid ${item.color}`,
+                          padding: '6px 8px 6px 8px',
+                          fontSize: '0.74rem',
+                          fontWeight: 600,
+                          color: 'var(--text)',
+                          background: `${item.color}12`,
+                          borderRadius: '0 3px 3px 0',
+                          cursor: 'pointer',
+                          lineHeight: 1.4,
+                        }}
+                      >
+                        <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.title}</div>
+                        {item.label && <div className="mono" style={{ fontSize: '0.62rem', color: 'var(--text-3)', marginTop: 2 }}>{item.label}</div>}
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <div style={{ padding: '6px 4px', display: 'flex', flexDirection: 'column', gap: 4 }}>
-                  {dayItems.map((item) => (
-                    <div
-                      key={item.id}
-                      onClick={() => onItemClick?.(item)}
-                      style={{
-                        borderLeft: `2px solid ${item.color}`,
-                        paddingLeft: 5,
-                        fontSize: '0.68rem',
-                        fontWeight: 600,
-                        color: 'var(--text)',
-                        background: 'var(--surface-2)',
-                        borderRadius: '0 2px 2px 0',
-                        padding: '4px 6px 4px 7px',
-                        cursor: 'pointer',
-                        lineHeight: 1.4,
-                        borderLeftWidth: 2,
-                        borderLeftColor: item.color,
-                        borderLeftStyle: 'solid',
-                      }}
-                    >
-                      <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.title}</div>
-                      {item.label && <div className="mono" style={{ fontSize: '0.58rem', color: 'var(--text-3)', marginTop: 1 }}>{item.label}</div>}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       )}
 

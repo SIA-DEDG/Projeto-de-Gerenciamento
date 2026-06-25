@@ -88,7 +88,7 @@ export default function MonthCalendar({ items, title, onClickDay, onMonthChange 
       </div>
 
       {/* Weekday headers */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', background: 'var(--bg-app)', borderBottom: '1px solid var(--border-light)' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(110px, 1fr))', background: 'var(--bg-app)', borderBottom: '1px solid var(--border-light)', overflowX: 'auto' }}>
         {WEEKDAYS.map((w, i) => (
           <div key={w} style={{
             padding: '9px 4px',
@@ -105,7 +105,7 @@ export default function MonthCalendar({ items, title, onClickDay, onMonthChange 
       </div>
 
       {/* Days grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(110px, 1fr))', overflowX: 'auto' }}>
         {cells.map((day, idx) => {
           const col = idx % 7;
           const isWeekend = col === 0 || col === 6;
@@ -119,9 +119,9 @@ export default function MonthCalendar({ items, title, onClickDay, onMonthChange 
               key={idx}
               onClick={() => day !== null && onClickDay && onClickDay(dayStr)}
               style={{
-                minHeight: 76,
+                minHeight: 100,
                 overflow: 'hidden',
-                padding: '6px 6px 4px',
+                padding: '6px 6px 6px',
                 borderRight: col !== 6 ? '1px solid var(--border-light)' : 'none',
                 borderBottom: idx < cells.length - 7 ? '1px solid var(--border-light)' : 'none',
                 background: day === null ? 'var(--bg-app)' : isWeekend ? '#fafbfc' : '#fff',
@@ -145,7 +145,7 @@ export default function MonthCalendar({ items, title, onClickDay, onMonthChange 
                   }}>
                     {day}
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                     {dayItems.slice(0, 2).map((item) => (
                       <div
                         key={item.id}
@@ -155,15 +155,15 @@ export default function MonthCalendar({ items, title, onClickDay, onMonthChange 
                           background: item.bg,
                           borderLeft: `3px solid ${item.color}`,
                           borderRadius: '0 4px 4px 0',
-                          padding: '2px 5px',
+                          padding: '4px 6px',
                           overflow: 'hidden',
                           cursor: item.onClick ? 'pointer' : 'default',
                         }}
                       >
                         {item.subtitle && (
-                          <div style={{ fontSize: '0.62rem', fontWeight: 700, color: item.color, lineHeight: 1.2, marginBottom: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.subtitle}</div>
+                          <div style={{ fontSize: '0.7rem', fontWeight: 700, color: item.color, lineHeight: 1.3, marginBottom: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.subtitle}</div>
                         )}
-                        <div style={{ fontSize: '0.62rem', fontWeight: 500, color: item.color, opacity: 0.85, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.label}</div>
+                        <div style={{ fontSize: '0.7rem', fontWeight: 500, color: item.color, opacity: 0.85, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.label}</div>
                       </div>
                     ))}
                     {dayItems.length > 2 && (

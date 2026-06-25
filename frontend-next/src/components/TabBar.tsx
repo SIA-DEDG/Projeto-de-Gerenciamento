@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import Link from 'next/link';
 import { LayoutGrid, List, Calendar } from 'lucide-react';
 import { useTabs, useActiveTab, PAGE_INFO, type Tab } from '@/context/TabsContext';
 
@@ -24,7 +23,7 @@ interface TabBarProps {
 }
 
 export default function TabBar({ rightSlot }: TabBarProps = {}) {
-  const { tabs, activeTabId, openTab, closeTab, activateTab, renameTab, reorderTabs } = useTabs();
+  const { tabs, activeTabId, openTab, closeTab, activateTab, renameTab, reorderTabs, closeAllTabs } = useTabs();
 
   const [renamingId, setRenamingId]   = useState<string | null>(null);
   const [renameVal, setRenameVal]     = useState('');
@@ -113,87 +112,106 @@ export default function TabBar({ rightSlot }: TabBarProps = {}) {
   }
 
   return (
-    <div ref={barRef} className="tab-bar ssel">
-      {tabs.map((tab, index) => {
-        const active      = tab.id === activeTabId;
-        const filtered    = tabHasFilters(tab);
-        const canClose    = tabs.length > 1;
-        const isBoard     = BOARD_LIKE.has(tab.type);
-        const isDragTarget = dragOverIndex === index && dragIndexRef.current !== index;
-        const href        = PAGE_INFO[tab.type].path;
+    <div className="tab-bar-outer ssel">
+      {/* × Fechar todas — lado esquerdo, só aparece com 2+ abas */}
+      {tabs.length > 1 && (
+        <button
+          onClick={closeAllTabs}
+          title="Fechar todas as abas"
+          style={{ width: 36, height: '100%', flexShrink: 0, border: 'none', borderRight: '1px solid var(--line-1)', background: 'transparent', color: 'var(--text-3)', cursor: 'pointer', fontSize: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'color 0.12s, background 0.12s' }}
+          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = '#b42318'; (e.currentTarget as HTMLButtonElement).style.background = 'var(--surface-2)'; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-3)'; (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; }}
+        >
+          ×
+        </button>
+      )}
 
-        return (
-          <div
-            key={tab.id}
-            data-active={active}
-            draggable
-            className={`tab-item${active ? ' active' : ''}${isDragTarget ? ' drag-over' : ''}`}
-            onDoubleClick={(e) => startRename(tab, e)}
-            onDragStart={(e) => onDragStart(e, index)}
-            onDragOver={(e) => onDragOver(e, index)}
-            onDrop={(e) => onDrop(e, index)}
-            onDragEnd={onDragEnd}
-            title={renamingId !== tab.id ? tab.name : undefined}
-          >
-            {renamingId === tab.id ? (
-              /* Rename mode — plain div, no Link navigation */
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0 12px', height: '100%' }}>
-                {isBoard && <span className="tab-view-icon"><ViewIcon view={tab.filters.view} /></span>}
-                <input
-                  ref={renameRef}
-                  value={renameVal}
-                  onChange={e => setRenameVal(e.target.value)}
-                  onBlur={commitRename}
-                  onKeyDown={handleKeyDown}
-                  onClick={e => e.stopPropagation()}
-                  className="tab-rename-input"
-                />
-              </div>
-            ) : (
-              /* Normal mode — Link for navigation + click to activate */
-              <Link
-                href={href}
-                onClick={() => activateTab(tab.id)}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 6,
-                  padding: '0 12px', height: '100%',
-                  textDecoration: 'none', color: 'inherit',
-                  flex: 1, minWidth: 0,
-                }}
-              >
-                {isBoard && (
-                  <span className="tab-view-icon"><ViewIcon view={tab.filters.view} /></span>
-                )}
-                <span className="tab-name">{tab.name}</span>
-                {filtered && <span className="tab-filter-dot" />}
-              </Link>
-            )}
+      {/* Área scrollável das abas */}
+      <div ref={barRef} className="tab-bar-scroll">
+        {tabs.map((tab, index) => {
+          const active       = tab.id === activeTabId;
+          const filtered     = tabHasFilters(tab);
+          const canClose     = tabs.length > 1;
+          const isBoard      = BOARD_LIKE.has(tab.type);
+          const isDragTarget = dragOverIndex === index && dragIndexRef.current !== index;
+          const href         = PAGE_INFO[tab.type].path;
 
-            {/* Fechar */}
-            {canClose && renamingId !== tab.id && (
-              <span
-                className="tab-close"
-                onClick={e => { e.preventDefault(); e.stopPropagation(); closeTab(tab.id); }}
-                title="Fechar aba"
-              >
-                ×
-              </span>
-            )}
-          </div>
-        );
-      })}
+          return (
+            <div
+              key={tab.id}
+              data-active={active}
+              draggable
+              className={`tab-item${active ? ' active' : ''}${isDragTarget ? ' drag-over' : ''}`}
+              onDoubleClick={(e) => startRename(tab, e)}
+              onDragStart={(e) => onDragStart(e, index)}
+              onDragOver={(e) => onDragOver(e, index)}
+              onDrop={(e) => onDrop(e, index)}
+              onDragEnd={onDragEnd}
+              title={renamingId !== tab.id ? tab.name : undefined}
+            >
+              {renamingId === tab.id ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0 12px', height: '100%' }}>
+                  {isBoard && <span className="tab-view-icon"><ViewIcon view={tab.filters.view} /></span>}
+                  <input
+                    ref={renameRef}
+                    value={renameVal}
+                    onChange={e => setRenameVal(e.target.value)}
+                    onBlur={commitRename}
+                    onKeyDown={handleKeyDown}
+                    onClick={e => e.stopPropagation()}
+                    className="tab-rename-input"
+                  />
+                </div>
+              ) : (
+                <button
+                  onClick={() => {
+                    activateTab(tab.id);
+                    history.replaceState(null, '', href);
+                  }}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 6,
+                    padding: '0 12px', height: '100%',
+                    background: 'none', border: 'none', color: 'inherit',
+                    cursor: 'pointer', fontFamily: 'inherit', fontSize: 'inherit',
+                    flex: 1, minWidth: 0, textAlign: 'left',
+                  }}
+                >
+                  {isBoard && <span className="tab-view-icon"><ViewIcon view={tab.filters.view} /></span>}
+                  <span className="tab-name">{tab.name}</span>
+                  {filtered && <span className="tab-filter-dot" />}
+                </button>
+              )}
 
-      {/* Botão "+" */}
-      <button
-        className="tab-add-btn"
-        onClick={() => openTab('board', { forceNew: true, name: 'Nova aba' })}
-        title="Nova aba (Atividades)"
-      >
-        +
-      </button>
+              {canClose && renamingId !== tab.id && (
+                <span
+                  className="tab-close"
+                  onClick={e => { e.preventDefault(); e.stopPropagation(); closeTab(tab.id); }}
+                  title="Fechar aba"
+                >
+                  ×
+                </span>
+              )}
+            </div>
+          );
+        })}
 
-      <div style={{ flex: 1 }} />
-      {rightSlot}
+        {/* Botão "+" */}
+        <button
+          className="tab-add-btn"
+          onClick={() => openTab('board', { forceNew: true, name: 'Nova aba' })}
+          title="Nova aba (Atividades)"
+        >
+          +
+        </button>
+
+      </div>
+
+      {/* Slot direito — fixo, não scrollável */}
+      {rightSlot && (
+        <div className="tab-bar-right">
+          {rightSlot}
+        </div>
+      )}
     </div>
   );
 }

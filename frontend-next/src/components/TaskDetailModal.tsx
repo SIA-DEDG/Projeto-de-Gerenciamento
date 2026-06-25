@@ -86,7 +86,7 @@ export default function TaskDetailModal({ open, task, projectName, onClose, onEd
         {/* Piauí flag stripe */}
         <div style={{
           height: 5, flexShrink: 0,
-          background: 'linear-gradient(to right, #034ea2 40%, #fdb913 40% 55%, #ef4123 55% 75%, #007932 75%)',
+          background: 'linear-gradient(to right, var(--blue) 40%, #fdb913 40% 55%, #ef4123 55% 75%, #007932 75%)',
         }} />
 
         {/* ── Panel header ──────────────────────── */}

@@ -19,6 +19,7 @@ interface KanbanColumnProps {
   onAddCard: (statusGroup: StatusGroup) => void;
   onViewCard: (task: Task) => void;
   onDeleteCard: (taskId: string) => void;
+  onArchiveCard?: (taskId: string) => void;
   isSelecting: boolean;
   selectedTaskIds: Set<string>;
   onToggleSelect: (taskId: string) => void;
@@ -27,14 +28,14 @@ interface KanbanColumnProps {
 
 const COLUMN_TINT_COLOR: Record<StatusGroup, string> = {
   pending:     'rgba(154,161,172,0.12)',
-  in_progress: 'rgba(3,78,162,0.1)',
+  in_progress: 'var(--primary-light)',
   review:      'rgba(224,169,46,0.1)',
   done:        'rgba(27,138,75,0.1)',
 };
 
 const COLUMN_TITLE_COLOR: Record<StatusGroup, string> = {
   pending:     'var(--text-3)',
-  in_progress: '#034EA2',
+  in_progress: 'var(--blue)',
   review:      '#A87A00',
   done:        '#157F3C',
 };
@@ -46,6 +47,7 @@ export default function KanbanColumn({
   onAddCard,
   onViewCard,
   onDeleteCard,
+  onArchiveCard,
   isSelecting,
   selectedTaskIds,
   onToggleSelect,
@@ -162,6 +164,7 @@ export default function KanbanColumn({
             projectName={projects.find((p) => p.id === task.project_id)?.name}
             onView={onViewCard}
             onDelete={onDeleteCard}
+            onArchive={onArchiveCard}
             selectionMode={isSelecting}
             isSelected={selectedTaskIds.has(task.id)}
             onToggleSelect={onToggleSelect}
@@ -178,7 +181,7 @@ export default function KanbanColumn({
               cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit',
             }}
             onMouseEnter={(e) => {
-              (e.currentTarget as HTMLElement).style.color = '#034EA2';
+              (e.currentTarget as HTMLElement).style.color = 'var(--blue)';
               (e.currentTarget as HTMLElement).style.background = 'var(--surface-2)';
             }}
             onMouseLeave={(e) => {

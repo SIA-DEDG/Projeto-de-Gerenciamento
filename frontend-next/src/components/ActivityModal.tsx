@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { X, Paperclip, Trash2, Clock, ChevronDown } from 'lucide-react';
 import type { Task, Project } from '@/types';
 import type { UserPublic } from '@/lib/api';
+import { STATUS_COLORS, PRIORITY_COLORS, statusGroup } from '@/lib/utils';
 import RichTextEditor from './RichTextEditor';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -45,12 +46,6 @@ interface Props {
 const STATUS_OPTIONS = ['Pendente', 'Em Andamento', 'Em Revisão', 'Concluído'];
 const PRIORITY_OPTIONS = ['Alta', 'Média', 'Baixa'];
 
-const SPINE_COLOR: Record<string, string> = {
-  Pendente: '#9aa1ac', 'Em Andamento': '#034EA2', 'Em Revisão': '#E0A92E', Concluído: '#1B8A4B',
-};
-const PRIO_COLOR: Record<string, string> = {
-  Alta: '#034EA2', Média: 'var(--text-2)', Baixa: 'var(--text-3)',
-};
 
 const EMPTY = {
   activity: '', description: '', project_id: null as string | null,
@@ -63,7 +58,7 @@ const EMPTY = {
 
 function Label({ children }: { children: React.ReactNode }) {
   return (
-    <div className="mono" style={{ fontSize: '0.68rem', fontWeight: 500, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--text-3)', marginBottom: 7 }}>
+    <div className="mono" style={{ fontSize: '0.66rem', fontWeight: 500, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--text-3)', marginBottom: 6 }}>
       {children}
     </div>
   );
@@ -88,7 +83,7 @@ function Segmented({ options, value, onChange, getColor }: {
               flex: 1, padding: '9px 6px', fontSize: '0.78rem',
               fontWeight: active ? 600 : 500, fontFamily: 'inherit', cursor: 'pointer',
               border: 'none', borderRight: i < options.length - 1 ? '1px solid var(--border)' : 'none',
-              background: active ? '#034EA2' : 'var(--surface)',
+              background: active ? 'var(--blue)' : 'var(--surface)',
               color: active ? '#fff' : color ?? 'var(--text-2)',
               transition: 'background 0.12s, color 0.12s',
             }}>
@@ -108,28 +103,78 @@ function CoRespChips({ users, selected, exclude, onChange }: {
   exclude: string;
   onChange: (v: string[]) => void;
 }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
   const available = users.filter(u => u.name !== exclude);
+
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    if (open) document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open]);
+
   function toggle(name: string) {
     onChange(selected.includes(name) ? selected.filter(n => n !== name) : [...selected, name]);
   }
-  if (available.length === 0) return <div style={{ fontSize: '0.8rem', color: 'var(--text-3)' }}>Nenhum usuário disponível</div>;
+
   return (
-    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
-      {available.map(u => {
-        const active = selected.includes(u.name);
-        return (
-          <button key={u.id} type="button" onClick={() => toggle(u.name)}
-            style={{
-              padding: '7px 11px', borderRadius: 3, cursor: 'pointer', fontFamily: 'inherit',
-              fontSize: '0.78rem', border: `1px solid ${active ? '#034EA2' : 'var(--border)'}`,
-              background: active ? 'rgba(3,78,162,0.06)' : 'var(--surface)',
-              color: active ? '#034EA2' : 'var(--text-2)',
-              fontWeight: active ? 600 : 500, transition: 'all 0.12s',
+    <div ref={ref} style={{ position: 'relative' }}>
+      <button
+        type="button"
+        onClick={() => setOpen(v => !v)}
+        style={{
+          width: '100%', textAlign: 'left', padding: '8px 10px',
+          border: '1px solid #dfe1e6', borderRadius: 4,
+          background: '#fff', fontSize: '0.9rem', cursor: 'pointer',
+          display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', minHeight: 36,
+          fontFamily: 'inherit',
+        }}
+      >
+        {selected.length === 0 ? (
+          <span style={{ color: '#adb5bd' }}>— Nenhum —</span>
+        ) : (
+          selected.map(name => (
+            <span key={name} style={{
+              background: '#e8f0fe', color: '#0052cc', borderRadius: 4,
+              padding: '2px 6px', fontSize: '0.78rem', fontWeight: 600,
+              display: 'flex', alignItems: 'center', gap: 4,
             }}>
-            {u.name}
-          </button>
-        );
-      })}
+              {name}
+              <span onClick={e => { e.stopPropagation(); toggle(name); }} style={{ cursor: 'pointer', lineHeight: 1 }}>×</span>
+            </span>
+          ))
+        )}
+        <ChevronDown size={12} style={{ marginLeft: 'auto', flexShrink: 0, color: '#6b778c', transform: open ? 'rotate(180deg)' : undefined }} />
+      </button>
+
+      {open && (
+        <div style={{
+          position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 200,
+          background: '#fff', border: '1px solid #dfe1e6', borderRadius: 4,
+          boxShadow: '0 4px 12px rgba(0,0,0,0.12)', maxHeight: 180, overflowY: 'auto', marginTop: 2,
+        }}>
+          {available.length === 0 ? (
+            <div style={{ padding: '10px 12px', color: '#a5adba', fontSize: '0.85rem' }}>Nenhum usuário disponível</div>
+          ) : available.map(user => (
+            <label key={user.id} style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              padding: '8px 12px', cursor: 'pointer', fontSize: '0.88rem',
+              background: selected.includes(user.name) ? '#f0f4ff' : 'transparent',
+            }}>
+              <input
+                type="checkbox"
+                checked={selected.includes(user.name)}
+                onChange={() => toggle(user.name)}
+                style={{ accentColor: '#0052cc', width: 14, height: 14, cursor: 'pointer' }}
+              />
+              {user.name}
+              <span style={{ marginLeft: 'auto', fontSize: '0.72rem', color: '#6b778c' }}>{user.role}</span>
+            </label>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -174,7 +219,7 @@ function AttachmentField({ attachments, onChange }: {
       {/* Drop zone */}
       <div
         onClick={() => fileRef.current?.click()}
-        onDragOver={e => { e.preventDefault(); (e.currentTarget as HTMLElement).style.borderColor = '#034EA2'; }}
+        onDragOver={e => { e.preventDefault(); (e.currentTarget as HTMLElement).style.borderColor = 'var(--blue)'; }}
         onDragLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'; }}
         onDrop={e => { e.preventDefault(); (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'; handleFiles(e.dataTransfer.files); }}
         style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, padding: '14px', border: '2px dashed var(--border)', borderRadius: 3, cursor: 'pointer', transition: 'border-color 0.12s', textAlign: 'center' }}>
@@ -212,8 +257,8 @@ function PreviewCard({ activity, category, priority, status, responsible, deadli
   activity: string; category: string; priority: string; status: string;
   responsible: string; deadline: string; coResps: string[]; noDeadline: boolean;
 }) {
-  const spine = SPINE_COLOR[status] ?? '#9aa1ac';
-  const prioColor = PRIO_COLOR[priority] ?? 'var(--text-3)';
+  const spine = STATUS_COLORS[statusGroup(status)] ?? '#9aa1ac';
+  const prioColor = PRIORITY_COLORS[priority] ?? 'var(--text-3)';
   const allAvatars = responsible ? [responsible, ...coResps] : coResps;
 
   function dueText(): { text: string; color: string } | null {
@@ -317,7 +362,7 @@ export default function ActivityModal({
   const fixedProject = fixedProjectId != null ? projects.find(p => p.id === fixedProjectId) : null;
   const isEdit = !!task;
 
-  const inp: React.CSSProperties = { width: '100%', padding: '11px 13px', border: '1px solid var(--border)', borderRadius: 3, fontSize: '0.9rem', background: 'var(--surface)', color: 'var(--text)', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' };
+  const inp: React.CSSProperties = { width: '100%', padding: '10px 13px', border: '1px solid var(--border)', borderRadius: 3, fontSize: '0.88rem', background: 'var(--surface)', color: 'var(--text)', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' };
 
   return (
     <>
@@ -327,10 +372,13 @@ export default function ActivityModal({
       {/* Drawer */}
       <div style={{ position: 'fixed', top: 0, right: 0, bottom: 0, width: 700, maxWidth: '94%', background: 'var(--surface)', overflowY: 'auto', zIndex: 61, borderLeft: '1px solid var(--line-1)', animation: 'drawin .24s cubic-bezier(.4,0,.2,1) both', display: 'flex', flexDirection: 'column' }}>
 
+        {/* Stripe Gov-PI */}
+        <div style={{ height: 4, flexShrink: 0, background: 'linear-gradient(90deg,var(--blue) 0 40%,#E0A92E 40% 55%,#b42318 55% 75%,#1B8A4B 75%)' }} />
+
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '22px 28px', borderBottom: '1px solid var(--line-1)', flexShrink: 0, position: 'sticky', top: 0, background: 'var(--surface)', zIndex: 2 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 28px', borderBottom: '1px solid var(--line-1)', flexShrink: 0, position: 'sticky', top: 4, background: 'var(--surface)', zIndex: 2 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ width: 7, height: 7, borderRadius: 2, background: '#034EA2', flexShrink: 0 }} />
+            <span style={{ width: 7, height: 7, borderRadius: 2, background: 'var(--blue)', flexShrink: 0 }} />
             <span className="mono" style={{ fontSize: '0.7rem', fontWeight: 600, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--text-2)' }}>
               {isEdit ? 'Editar atividade' : 'Nova atividade'}
             </span>
@@ -347,20 +395,20 @@ export default function ActivityModal({
           <div style={{ padding: '24px 28px 40px', display: 'flex', flexDirection: 'column', gap: 18 }}>
 
             {/* Preview card */}
-            <div>
+            {/* <div>
               <Label>Pré-visualização</Label>
               <PreviewCard
                 activity={form.activity} category={categoryLabel} priority={form.priority}
                 status={form.status} responsible={form.responsible} deadline={form.deadline}
                 coResps={form.co_responsibles} noDeadline={noDeadline}
               />
-            </div>
+            </div> */}
 
             {/* Atividade */}
             <div>
               <Label>Atividade <span style={{color: 'rgb(255, 0, 0)'}}>*</span></Label>
               <input value={form.activity} onChange={e => setForm({ ...form, activity: e.target.value })} placeholder="Ex: Revisar roteiro do evento" required style={inp}
-                onFocus={e => { e.target.style.borderColor = '#034EA2'; e.target.style.boxShadow = 'inset 0 0 0 1px #034EA2'; }}
+                onFocus={e => { e.target.style.borderColor = 'var(--blue)'; e.target.style.boxShadow = 'inset 0 0 0 1px var(--blue)'; }}
                 onBlur={e => { e.target.style.borderColor = 'var(--border)'; e.target.style.boxShadow = 'none'; }} />
             </div>
 
@@ -373,7 +421,7 @@ export default function ActivityModal({
             {/* Prioridade */}
             <div>
               <Label>Prioridade</Label>
-              <Segmented options={PRIORITY_OPTIONS} value={form.priority} onChange={v => setForm({ ...form, priority: v })} getColor={v => PRIO_COLOR[v]} />
+              <Segmented options={PRIORITY_OPTIONS} value={form.priority} onChange={v => setForm({ ...form, priority: v })} getColor={v => PRIORITY_COLORS[v]} />
             </div>
 
             {/* Grid: Projeto | Status */}
@@ -417,7 +465,7 @@ export default function ActivityModal({
               <div>
                 <Label>Data</Label>
                 <input type="date" value={form.date} onChange={e => setForm({ ...form, date: e.target.value })} style={inp}
-                  onFocus={e => { e.target.style.borderColor = '#034EA2'; }}
+                  onFocus={e => { e.target.style.borderColor = 'var(--blue)'; }}
                   onBlur={e => { e.target.style.borderColor = 'var(--border)'; }} />
               </div>
             </div>
@@ -427,12 +475,12 @@ export default function ActivityModal({
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 7 }}>
                 <Label>Prazo (opcional)</Label>
                 <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.72rem', color: 'var(--text-2)', cursor: 'pointer', marginTop: -3 }}>
-                  <input type="checkbox" checked={noDeadline} onChange={e => { setNoDeadline(e.target.checked); if (e.target.checked) setForm({ ...form, deadline: '' }); }} style={{ accentColor: '#034EA2', cursor: 'pointer', width: 14, height: 14 }} />
+                  <input type="checkbox" checked={noDeadline} onChange={e => { setNoDeadline(e.target.checked); if (e.target.checked) setForm({ ...form, deadline: '' }); }} style={{ accentColor: 'var(--blue)', cursor: 'pointer', width: 14, height: 14 }} />
                   Indeterminado
                 </label>
               </div>
               <input type="date" value={form.deadline} onChange={e => setForm({ ...form, deadline: e.target.value })} disabled={noDeadline} style={{ ...inp, opacity: noDeadline ? 0.4 : 1, cursor: noDeadline ? 'not-allowed' : 'text' }}
-                onFocus={e => { if (!noDeadline) { e.target.style.borderColor = '#034EA2'; e.target.style.boxShadow = 'inset 0 0 0 1px #034EA2'; } }}
+                onFocus={e => { if (!noDeadline) { e.target.style.borderColor = 'var(--blue)'; e.target.style.boxShadow = 'inset 0 0 0 1px var(--blue)'; } }}
                 onBlur={e => { e.target.style.borderColor = 'var(--border)'; e.target.style.boxShadow = 'none'; }} />
             </div>
 
@@ -446,7 +494,7 @@ export default function ActivityModal({
             <div>
               <Label>Colaboradores externos</Label>
               <input value={form.external_collaborators} onChange={e => setForm({ ...form, external_collaborators: e.target.value })} placeholder="Nomes separados por vírgula (parceiros, terceiros)" style={inp}
-                onFocus={e => { e.target.style.borderColor = '#034EA2'; e.target.style.boxShadow = 'inset 0 0 0 1px #034EA2'; }}
+                onFocus={e => { e.target.style.borderColor = 'var(--blue)'; e.target.style.boxShadow = 'inset 0 0 0 1px var(--blue)'; }}
                 onBlur={e => { e.target.style.borderColor = 'var(--border)'; e.target.style.boxShadow = 'none'; }} />
             </div>
 
@@ -458,9 +506,9 @@ export default function ActivityModal({
 
             {/* Actions */}
             <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
-              <button type="submit" style={{ flex: 1, padding: 12, border: 'none', borderRadius: 3, background: '#034EA2', color: '#fff', fontSize: '0.84rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
-                onMouseEnter={e => (e.currentTarget.style.background = '#023e82')}
-                onMouseLeave={e => (e.currentTarget.style.background = '#034EA2')}>
+              <button type="submit" style={{ flex: 1, padding: 12, border: 'none', borderRadius: 3, background: 'var(--blue)', color: '#fff', fontSize: '0.84rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
+                onMouseEnter={e => (e.currentTarget.style.background = 'var(--blue-h)')}
+                onMouseLeave={e => (e.currentTarget.style.background = 'var(--blue)')}>
                 {isEdit ? 'Salvar alterações' : 'Criar atividade'}
               </button>
               <button type="button" onClick={onClose} style={{ padding: '12px 18px', border: '1px solid var(--border)', borderRadius: 3, background: 'var(--surface)', color: 'var(--text)', fontSize: '0.84rem', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}
