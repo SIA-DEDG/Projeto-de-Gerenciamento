@@ -1,0 +1,4 @@
+[build]
+# Workaround: curve25519-dalek 4.1.3 tem incompatibilidade com Rust 1.95+
+# que quebra o backend AVX2. Forçar serial até a dep ser atualizada.
+rustflags = ['--cfg', 'curve25519_dalek_backend="serial"']
