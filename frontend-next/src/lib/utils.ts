@@ -5,7 +5,7 @@ import type { StatusGroup } from '@/types';
 /** Cor hex de cada grupo de status (usada em cards, lista e spinebars). */
 export const STATUS_COLORS: Record<StatusGroup, string> = {
   pending:     '#9aa1ac',
-  in_progress: '#034EA2',
+  in_progress: 'var(--blue)',
   review:      '#E0A92E',
   done:        '#1B8A4B',
 };
@@ -28,7 +28,7 @@ export const KANBAN_COLUMNS: { id: StatusGroup; title: string; color: string }[]
 // ── Priority ──────────────────────────────────────────────────────────────────
 
 export const PRIORITY_COLORS: Record<string, string> = {
-  Alta:  '#034EA2',
+  Alta:  'var(--blue)',
   Média: 'var(--text-2)',
   Baixa: 'var(--text-3)',
 };

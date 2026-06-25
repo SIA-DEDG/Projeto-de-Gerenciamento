@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import type { DragEndEvent } from '@dnd-kit/core';
 import {
-  fetchTasks, createTask, updateTask, deleteTask,
+  fetchTasks, createTask, updateTask, deleteTask, archiveTask,
   fetchProjects, fetchUsers,
   getCachedTasks, getCachedProjects, getCachedUsers,
 } from '@/lib/api';
@@ -31,6 +31,8 @@ export interface ActivityFormData {
 export interface ConfirmDialogState {
   title: string;
   message?: string;
+  confirmLabel?: string;
+  danger?: boolean;
   onConfirm: () => void;
 }
 
@@ -146,10 +148,28 @@ export function useTaskBoard() {
     setPendingConfirm({
       title: 'Excluir atividade',
       message: 'Esta ação não pode ser desfeita.',
+      confirmLabel: 'Excluir',
+      danger: true,
       onConfirm: async () => {
         setOpenedTask(null);
         setAllTasks((curr) => curr.filter((x) => x.id !== taskId));
         try { await deleteTask(taskId); } catch { loadBoardData(); }
+      },
+    });
+  }
+
+  // ── Arquivar atividade ────────────────────────────────────────────────────
+
+  function requestArchiveTask(taskId: string) {
+    setPendingConfirm({
+      title: 'Arquivar atividade',
+      message: 'A atividade será movida para Arquivadas.',
+      confirmLabel: 'Arquivar',
+      danger: false,
+      onConfirm: async () => {
+        setOpenedTask(null);
+        setAllTasks((curr) => curr.filter((x) => x.id !== taskId));
+        try { await archiveTask(taskId); } catch { loadBoardData(); }
       },
     });
   }
@@ -232,6 +252,8 @@ export function useTaskBoard() {
     setPendingConfirm({
       title: `Excluir ${ids.length} atividade(s)`,
       message: 'Esta ação não pode ser desfeita.',
+      confirmLabel: 'Excluir',
+      danger: true,
       onConfirm: async () => {
         setAllTasks((curr) => curr.filter((t) => !ids.includes(t.id)));
         cancelSelection();
@@ -280,6 +302,7 @@ export function useTaskBoard() {
     // Operações
     handleDragEnd,
     requestDeleteTask,
+    requestArchiveTask,
     advanceOpenedTaskStatus,
     loadBoardData,
   };

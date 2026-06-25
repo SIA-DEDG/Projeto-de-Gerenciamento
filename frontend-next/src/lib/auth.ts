@@ -24,9 +24,14 @@ export function canManageUsers(role: string | undefined): boolean {
   return hasMinRole(role, 'Gerente');
 }
 
-// Pode redefinir senhas de outros (apenas Admin)
+// Pode redefinir senhas de outros (Gerente, Diretor e Admin)
 export function canResetPasswords(role: string | undefined): boolean {
-  return role === 'Admin';
+  return hasMinRole(role, 'Gerente');
+}
+
+// Pode aprovar/recusar faltas (Gerente, Diretor e Admin — Coordenador não)
+export function canApproveFaltas(role: string | undefined): boolean {
+  return hasMinRole(role, 'Gerente');
 }
 
 export interface StoredUser {

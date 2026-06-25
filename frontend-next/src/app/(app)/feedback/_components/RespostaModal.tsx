@@ -29,7 +29,7 @@ export default function RespostaModal({ item, onClose, onSaved }: Props) {
       style={{ position: 'fixed', inset: 0, background: 'rgba(3,78,162,0.22)', backdropFilter: 'blur(2px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
     >
       <div style={{ background: '#fff', borderRadius: 'var(--radius-lg)', width: '100%', maxWidth: 500, maxHeight: '90vh', boxShadow: '0 20px 60px rgba(3,78,162,0.18), 0 4px 16px rgba(0,0,0,0.10)', overflow: 'hidden', display: 'flex', flexDirection: 'column', animation: 'modal-pop-in-flex 0.2s cubic-bezier(0.34,1.56,0.64,1) forwards' }}>
-        <div style={{ height: 5, flexShrink: 0, background: 'linear-gradient(to right, #034ea2 40%, #fdb913 40% 55%, #ef4123 55% 75%, #007932 75%)' }} />
+        <div style={{ height: 5, flexShrink: 0, background: 'linear-gradient(to right, var(--blue) 40%, #fdb913 40% 55%, #ef4123 55% 75%, #007932 75%)' }} />
         <div style={{ padding: '16px 20px 14px', borderBottom: '1px solid var(--border-light)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10, flexShrink: 0 }}>
           <div>
             <div style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-muted)', marginBottom: 4 }}>Feedback</div>

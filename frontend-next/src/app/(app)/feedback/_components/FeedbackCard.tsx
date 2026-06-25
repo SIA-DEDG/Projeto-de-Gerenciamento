@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Check, ChevronUp, MessageSquare } from 'lucide-react';
+import { ChevronUp, MessageSquare } from 'lucide-react';
 import { type FeedbackItem } from '@/lib/api';
 import { parseUpvotedBy } from './types';
 import CommentSection from './CommentSection';
@@ -17,9 +17,7 @@ interface Props {
   onRespond: (item: FeedbackItem) => void;
   onStatusChange: (id: string, status: 'pendente' | 'respondida') => void;
   upvoting: string | null;
-  selectionMode?: boolean;
   isSelected?: boolean;
-  onToggleSelect?: (id: string) => void;
 }
 
 // ── Color maps ────────────────────────────────────────────────────────────────
@@ -28,7 +26,7 @@ function tipoStyle(tipo: string): { color: string; bg: string } {
   if (tipo === 'bug')      return { color: '#b42318', bg: '#b423180f' };
   if (tipo === 'melhoria') return { color: '#1B8A4B', bg: '#1B8A4B0f' };
   if (tipo === 'duvida')   return { color: '#A87A00', bg: '#A87A000f' };
-  return { color: '#034EA2', bg: '#034EA20f' }; // sugestao / default
+  return { color: 'var(--blue)', bg: 'var(--blue)0f' }; // sugestao / default
 }
 
 function tipoLabel(tipo: string): string {
@@ -48,7 +46,7 @@ function sevColor(sev: string): string {
 export default function FeedbackCard({
   item, currentUserId, currentUserName, isAdmin,
   onUpvote, onEdit, onDelete, onRespond, onStatusChange,
-  upvoting, selectionMode = false, isSelected = false, onToggleSelect,
+  upvoting, isSelected = false,
 }: Props) {
   const [expanded, setExpanded] = useState(false);
   const [commentCount, setCommentCount] = useState(item.comment_count ?? 0);
@@ -67,28 +65,11 @@ export default function FeedbackCard({
   return (
     <div style={{
       background: 'var(--surface)',
-      border: `1px solid ${isSelected ? '#034EA2' : 'var(--line-1)'}`,
+      border: `1px solid ${isSelected ? 'var(--blue)' : 'var(--line-1)'}`,
       borderRadius: 3,
       overflow: 'hidden',
       position: 'relative',
     }}>
-      {/* Selection overlay */}
-      {selectionMode && (
-        <div onClick={() => onToggleSelect?.(item.id)}
-          style={{ position: 'absolute', inset: 0, zIndex: 2, cursor: 'pointer', borderRadius: 3 }} />
-      )}
-      {selectionMode && (
-        <div style={{
-          position: 'absolute', top: 10, left: 10, zIndex: 3,
-          width: 18, height: 18, borderRadius: 3,
-          border: `2px solid ${isSelected ? '#034EA2' : '#c1c7d0'}`,
-          background: isSelected ? '#034EA2' : '#fff',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none',
-        }}>
-          {isSelected && <Check size={9} color="#fff" strokeWidth={3} />}
-        </div>
-      )}
-
       <div style={{ display: 'flex', gap: 0 }}>
 
         {/* ── LEFT: upvote column ── */}
@@ -98,18 +79,18 @@ export default function FeedbackCard({
             display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
             gap: 4, padding: '16px 14px', borderRight: '1px solid var(--line-2)',
             cursor: isLoading ? 'wait' : 'pointer', minWidth: 56,
-            background: voted ? '#034EA20a' : 'var(--surface-2)',
+            background: voted ? 'var(--blue)0a' : 'var(--surface-2)',
             transition: 'background 0.12s',
           }}
-          onMouseEnter={e => { if (!voted) (e.currentTarget as HTMLElement).style.background = '#034EA20a'; }}
+          onMouseEnter={e => { if (!voted) (e.currentTarget as HTMLElement).style.background = 'var(--blue)0a'; }}
           onMouseLeave={e => { if (!voted) (e.currentTarget as HTMLElement).style.background = 'var(--surface-2)'; }}
         >
           <ChevronUp
             size={16} strokeWidth={2}
-            fill={voted ? '#034EA2' : 'none'}
-            color={voted ? '#034EA2' : 'var(--text-3)'}
+            fill={voted ? 'var(--blue)' : 'none'}
+            color={voted ? 'var(--blue)' : 'var(--text-3)'}
           />
-          <span className="mono" style={{ fontSize: '0.8rem', fontWeight: 600, color: voted ? '#034EA2' : 'var(--text-2)' }}>
+          <span className="mono" style={{ fontSize: '0.8rem', fontWeight: 600, color: voted ? 'var(--blue)' : 'var(--text-2)' }}>
             {item.upvotes}
           </span>
         </div>
@@ -149,7 +130,7 @@ export default function FeedbackCard({
           <div
             onClick={() => setExpanded(v => !v)}
             style={{ fontSize: '0.92rem', fontWeight: 600, color: 'var(--text)', marginBottom: 6, letterSpacing: '-0.2px', cursor: 'pointer' }}
-            onMouseEnter={e => ((e.currentTarget as HTMLElement).style.color = '#034EA2')}
+            onMouseEnter={e => ((e.currentTarget as HTMLElement).style.color = 'var(--blue)')}
             onMouseLeave={e => ((e.currentTarget as HTMLElement).style.color = 'var(--text)')}
           >
             {item.titulo}
@@ -185,7 +166,7 @@ export default function FeedbackCard({
                 onClick={() => onRespond(item)}
                 className="mono"
                 style={{ marginTop: 0, padding: '5px 11px', border: '1px solid var(--border)', borderRadius: 3, background: 'var(--surface)', color: 'var(--text-2)', fontSize: '0.68rem', fontWeight: 500, cursor: 'pointer', letterSpacing: '0.5px' }}
-                onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = '#034EA2'; (e.currentTarget as HTMLButtonElement).style.color = '#034EA2'; }}
+                onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--blue)'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--blue)'; }}
                 onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--border)'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-2)'; }}
               >
                 RESPONDER

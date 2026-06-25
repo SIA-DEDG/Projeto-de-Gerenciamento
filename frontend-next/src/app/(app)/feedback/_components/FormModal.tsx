@@ -2,7 +2,6 @@
 
 import { useState, useRef } from 'react';
 import { Bug, Lightbulb } from 'lucide-react';
-import { getUser } from '@/lib/auth';
 import { submitFeedback, updateFeedback, type FeedbackItem } from '@/lib/api';
 import { emitTasksChanged } from '@/lib/taskEvents';
 import { SEVERITIES, type FeedbackType, type Severity, inp } from './types';
@@ -15,9 +14,8 @@ interface Props {
 }
 
 export default function FormModal({ onClose, onCreated, editItem, onUpdated }: Props) {
-  const user = getUser();
   const fileRef = useRef<HTMLInputElement>(null);
-  const [tipo, setTipo] = useState<FeedbackType>(editItem?.tipo ?? 'bug');
+  const [tipo, setTipo] = useState<FeedbackType>((editItem?.tipo as FeedbackType) ?? 'bug');
   const [titulo, setTitulo] = useState(editItem?.titulo ?? '');
   const [descricao, setDescricao] = useState(editItem?.descricao ?? '');
   const [severidade, setSeveridade] = useState<Severity>((editItem?.severidade as Severity) ?? 'Média');
@@ -46,16 +44,13 @@ export default function FormModal({ onClose, onCreated, editItem, onUpdated }: P
       const payload = {
         tipo, titulo: titulo.trim(), descricao: descricao.trim(),
         severidade: tipo === 'bug' ? severidade : null,
-        imagens: images.map(i => ({ nome: i.name, dados: i.dataUrl })),
+        imagens: images.map(i => i.dataUrl),
       };
       if (editItem) {
         const updated = await updateFeedback(editItem.id, payload);
         onUpdated?.(updated);
       } else {
-        const created = await submitFeedback({
-          ...payload,
-          usuario_nome: user?.name ?? null,
-        });
+        const created = await submitFeedback(payload);
         onCreated(created);
         emitTasksChanged();
       }
@@ -70,18 +65,18 @@ export default function FormModal({ onClose, onCreated, editItem, onUpdated }: P
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
       style={{ position: 'fixed', inset: 0, background: 'rgba(3,78,162,0.22)', backdropFilter: 'blur(2px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
     >
-      <div style={{ background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', width: '100%', maxWidth: 560, boxShadow: '0 20px 60px rgba(3,78,162,0.18), 0 4px 16px rgba(0,0,0,0.10)', maxHeight: '90vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', animation: 'modal-pop-in-flex 0.2s cubic-bezier(0.34,1.56,0.64,1) forwards' }}>
-        <div style={{ height: 5, flexShrink: 0, background: 'linear-gradient(to right, #034ea2 40%, #fdb913 40% 55%, #ef4123 55% 75%, #007932 75%)' }} />
-        <div style={{ padding: '16px 20px 14px', borderBottom: '1px solid var(--border-light)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10, flexShrink: 0 }}>
+      <div style={{ background: 'var(--surface)', borderRadius: 3, width: '100%', maxWidth: 560, boxShadow: '0 20px 60px rgba(3,78,162,0.18), 0 4px 16px rgba(0,0,0,0.10)', maxHeight: '90vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', animation: 'modal-pop-in-flex 0.2s cubic-bezier(0.34,1.56,0.64,1) forwards' }}>
+        <div style={{ height: 5, flexShrink: 0, background: 'linear-gradient(to right, var(--blue) 40%, #fdb913 40% 55%, #ef4123 55% 75%, #007932 75%)' }} />
+        <div style={{ padding: '16px 20px 14px', borderBottom: '1px solid var(--line-1)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10, flexShrink: 0 }}>
           <div>
-            <div style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-muted)', marginBottom: 4 }}>
+            <div style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-3)', marginBottom: 4 }}>
               {editItem ? 'Editar publicação' : 'Nova publicação'}
             </div>
-            <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'inherit' }}>
+            <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: 'var(--text)', fontFamily: 'inherit' }}>
               {editItem ? editItem.titulo : 'Preencha os dados abaixo'}
             </h2>
           </div>
-          <button onClick={onClose} style={{ flexShrink: 0, width: 28, height: 28, borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-light)', background: 'var(--bg-subtle)', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'inherit' }}>✕</button>
+          <button onClick={onClose} style={{ flexShrink: 0, width: 28, height: 28, borderRadius: 3, border: '1px solid var(--border)', background: 'var(--surface-2)', color: 'var(--text-3)', cursor: 'pointer', fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'inherit' }}>✕</button>
         </div>
 
         <form id="feedback-form" onSubmit={handleSubmit} noValidate style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: 16, overflowY: 'auto', flex: 1 }}>
@@ -123,8 +118,7 @@ export default function FormModal({ onClose, onCreated, editItem, onUpdated }: P
                   const active = severidade === s.value;
                   return (
                     <button key={s.value} type="button" onClick={() => setSeveridade(s.value)}
-                      style={{ flex: 1, padding: '6px 8px', borderRadius: 3, border: `1.5px solid ${active ? s.color : '#d8dee4'}`, background: active ? s.bg : '#f6f8fa', cursor: 'pointer', fontSize: '0.78rem', fontWeight: active ? 700 : 500, color: active ? s.color : '#57606a', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}>
-                      <s.Icon size={12} />
+                      style={{ flex: 1, padding: '6px 8px', borderRadius: 3, border: `1.5px solid ${active ? s.color : 'var(--border)'}`, background: active ? `${s.color}14` : 'var(--surface-2)', cursor: 'pointer', fontSize: '0.78rem', fontWeight: active ? 700 : 500, color: active ? s.color : 'var(--text-2)', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}>
                       {s.value}
                     </button>
                   );
@@ -180,13 +174,13 @@ export default function FormModal({ onClose, onCreated, editItem, onUpdated }: P
           )}
 
         </form>
-        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', padding: '12px 20px', borderTop: '1px solid var(--border-light)', background: 'var(--bg-subtle)', flexShrink: 0 }}>
+        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', padding: '12px 20px', borderTop: '1px solid var(--line-1)', background: 'var(--surface-2)', flexShrink: 0 }}>
           <button type="button" onClick={onClose}
-            style={{ padding: '6px 14px', background: '#fff', border: '1px solid var(--border-light)', borderRadius: 'var(--radius-sm)', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', color: 'var(--text-secondary)' }}>
+            style={{ padding: '6px 14px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 3, fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', color: 'var(--text-2)' }}>
             Cancelar
           </button>
           <button type="submit" form="feedback-form" disabled={saving}
-            style={{ padding: '6px 18px', background: saving ? 'var(--text-muted)' : 'var(--primary)', color: '#fff', border: 'none', borderRadius: 'var(--radius-sm)', fontSize: '0.8rem', fontWeight: 700, cursor: saving ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}>
+            style={{ padding: '6px 18px', background: saving ? 'var(--text-3)' : 'var(--blue)', color: '#fff', border: 'none', borderRadius: 3, fontSize: '0.8rem', fontWeight: 700, cursor: saving ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}>
             {saving ? (editItem ? 'Salvando…' : 'Publicando…') : (editItem ? 'Salvar' : 'Publicar')}
           </button>
         </div>

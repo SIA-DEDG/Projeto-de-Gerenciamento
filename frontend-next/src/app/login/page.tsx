@@ -27,7 +27,7 @@ export default function LoginPage() {
     try {
       const data = await login(username, password);
       setAuth(data.token, { user_id: data.user_id, name: data.name, role: data.role, username: data.username, must_change_password: data.must_change_password }, remember);
-      router.replace('/');
+      router.replace(data.must_change_password ? '/redefinir-senha' : '/');
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Credenciais inválidas.');
     } finally {
@@ -45,7 +45,7 @@ export default function LoginPage() {
       {/* ── Direita: formulário ── */}
       <div style={{ width: 600, maxWidth: '100%', flexShrink: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '48px 56px', background: '#fff', position: 'relative', overflow: 'hidden' }}>
         {/* Faixa de cores do Gov-PI no topo */}
-        <div style={{ position: 'absolute', left: 0, right: 0, top: 0, height: 4, background: 'linear-gradient(90deg, #034EA2 0 40%, #E0A92E 40% 55%, #b42318 55% 75%, #1B8A4B 75%)' }} />
+        <div style={{ position: 'absolute', left: 0, right: 0, top: 0, height: 4, background: 'linear-gradient(90deg, var(--blue) 0 40%, #E0A92E 40% 55%, #b42318 55% 75%, #1B8A4B 75%)' }} />
 
         {/* Logo centralizado */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 32 }}>
@@ -68,7 +68,7 @@ export default function LoginPage() {
               autoFocus
               autoComplete="username"
               style={{ width: '100%', padding: '11px 14px', border: '1.5px solid #dde2ea', borderRadius: 3, fontSize: '0.9rem', background: '#f8f9fb', color: '#11161D', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', transition: 'border-color 0.12s, box-shadow 0.12s' }}
-              onFocus={(e) => { e.target.style.borderColor = '#034EA2'; e.target.style.background = '#fff'; e.target.style.boxShadow = '0 0 0 3px rgba(3,78,162,0.08)'; }}
+              onFocus={(e) => { e.target.style.borderColor = 'var(--blue)'; e.target.style.background = '#fff'; e.target.style.boxShadow = '0 0 0 3px var(--primary-light)'; }}
               onBlur={(e)  => { e.target.style.borderColor = '#dde2ea'; e.target.style.background = '#f8f9fb'; e.target.style.boxShadow = 'none'; }}
             />
           </div>
@@ -83,7 +83,7 @@ export default function LoginPage() {
                 placeholder="••••••••"
                 autoComplete="current-password"
                 style={{ width: '100%', padding: '11px 44px 11px 14px', border: '1.5px solid #dde2ea', borderRadius: 3, fontSize: '0.9rem', background: '#f8f9fb', color: '#11161D', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', transition: 'border-color 0.12s, box-shadow 0.12s' }}
-                onFocus={(e) => { e.target.style.borderColor = '#034EA2'; e.target.style.background = '#fff'; e.target.style.boxShadow = '0 0 0 3px rgba(3,78,162,0.08)'; }}
+                onFocus={(e) => { e.target.style.borderColor = 'var(--blue)'; e.target.style.background = '#fff'; e.target.style.boxShadow = '0 0 0 3px var(--primary-light)'; }}
                 onBlur={(e)  => { e.target.style.borderColor = '#dde2ea'; e.target.style.background = '#f8f9fb'; e.target.style.boxShadow = 'none'; }}
               />
               <button type="button" tabIndex={-1} onClick={() => setShowPw((v) => !v)}
@@ -95,7 +95,7 @@ export default function LoginPage() {
 
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-              <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} style={{ width: 15, height: 15, accentColor: '#034EA2', cursor: 'pointer' }} />
+              <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} style={{ width: 15, height: 15, accentColor: 'var(--blue)', cursor: 'pointer' }} />
               <span style={{ fontSize: '0.82rem', color: '#344563' }}>Manter-me conectado</span>
             </label>
           </div>

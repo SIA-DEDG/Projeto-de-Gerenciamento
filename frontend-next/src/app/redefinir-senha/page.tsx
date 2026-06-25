@@ -69,7 +69,7 @@ export default function RedefinirSenhaPage() {
       {/* ── Direita: formulário ── */}
       <div style={{ width: 600, maxWidth: '100%', flexShrink: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '48px 56px', background: '#fff', position: 'relative', overflow: 'hidden' }}>
         {/* Faixa Gov-PI */}
-        <div style={{ position: 'absolute', left: 0, right: 0, top: 0, height: 4, background: 'linear-gradient(90deg, #034EA2 0 40%, #E0A92E 40% 55%, #b42318 55% 75%, #1B8A4B 75%)' }} />
+        <div style={{ position: 'absolute', left: 0, right: 0, top: 0, height: 4, background: 'linear-gradient(90deg, var(--blue) 0 40%, #E0A92E 40% 55%, #b42318 55% 75%, #1B8A4B 75%)' }} />
 
         {/* Ícone + título */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 32 }}>
@@ -99,7 +99,7 @@ export default function RedefinirSenhaPage() {
                 autoFocus
                 autoComplete="current-password"
                 style={inputStyle}
-                onFocus={(e) => { e.target.style.borderColor = '#034EA2'; e.target.style.background = '#fff'; e.target.style.boxShadow = '0 0 0 3px rgba(3,78,162,0.08)'; }}
+                onFocus={(e) => { e.target.style.borderColor = 'var(--blue)'; e.target.style.background = '#fff'; e.target.style.boxShadow = '0 0 0 3px var(--primary-light)'; }}
                 onBlur={(e)  => { e.target.style.borderColor = '#dde2ea'; e.target.style.background = '#f8f9fb'; e.target.style.boxShadow = 'none'; }}
               />
               <button type="button" tabIndex={-1} onClick={() => setShowCur(v => !v)}
@@ -120,7 +120,7 @@ export default function RedefinirSenhaPage() {
                 placeholder="Mínimo 6 caracteres"
                 autoComplete="new-password"
                 style={inputStyle}
-                onFocus={(e) => { e.target.style.borderColor = '#034EA2'; e.target.style.background = '#fff'; e.target.style.boxShadow = '0 0 0 3px rgba(3,78,162,0.08)'; }}
+                onFocus={(e) => { e.target.style.borderColor = 'var(--blue)'; e.target.style.background = '#fff'; e.target.style.boxShadow = '0 0 0 3px var(--primary-light)'; }}
                 onBlur={(e)  => { e.target.style.borderColor = '#dde2ea'; e.target.style.background = '#f8f9fb'; e.target.style.boxShadow = 'none'; }}
               />
               <button type="button" tabIndex={-1} onClick={() => setShowNew(v => !v)}
@@ -140,7 +140,7 @@ export default function RedefinirSenhaPage() {
               placeholder="Repita a nova senha"
               autoComplete="new-password"
               style={{ ...inputStyle, padding: '11px 14px' }}
-              onFocus={(e) => { e.target.style.borderColor = '#034EA2'; e.target.style.background = '#fff'; e.target.style.boxShadow = '0 0 0 3px rgba(3,78,162,0.08)'; }}
+              onFocus={(e) => { e.target.style.borderColor = 'var(--blue)'; e.target.style.background = '#fff'; e.target.style.boxShadow = '0 0 0 3px var(--primary-light)'; }}
               onBlur={(e)  => { e.target.style.borderColor = '#dde2ea'; e.target.style.background = '#f8f9fb'; e.target.style.boxShadow = 'none'; }}
             />
           </div>

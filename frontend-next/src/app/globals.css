@@ -41,7 +41,7 @@
 
   /* Status — cor dos fios/chips */
   --s-pending:  #9aa1ac;
-  --s-progress: #034ea2;
+  --s-progress: var(--blue);
   --s-review:   #e0a92e;
   --s-done:     #1b8a4b;
 
@@ -57,8 +57,8 @@
   /* ── Aliases de retrocompatibilidade (páginas ainda não migradas) ── */
   --primary:       var(--blue);
   --primary-hover: var(--blue-h);
-  --primary-light: rgba(3,78,162,0.08);
-  --primary-glow:  rgba(3,78,162,0.2);
+  --primary-light: var(--primary-light);
+  --primary-glow:  var(--primary-glow);
   --bg-app:        var(--bg);
   --bg-subtle:     var(--surface-2);
   --bg-card:       var(--surface);
@@ -844,7 +844,7 @@ input::placeholder, textarea::placeholder { color: var(--text-3); opacity: 1; }
   flex-shrink: 0;
 }
 .status-chip.pending  { color: var(--text-3); background: var(--surface-2); }
-.status-chip.progress { color: var(--blue);   background: rgba(3,78,162,0.08); }
+.status-chip.progress { color: var(--blue);   background: var(--primary-light); }
 .status-chip.review   { color: var(--gold-t); background: rgba(224,169,46,0.1); }
 .status-chip.done     { color: var(--green-t);background: rgba(27,138,75,0.08); }
 
@@ -1554,20 +1554,33 @@ input::placeholder, textarea::placeholder { color: var(--text-3); opacity: 1; }
 .ssel::-webkit-scrollbar-thumb:hover { background: var(--text-3); background-clip: padding-box; }
 .ssel::-webkit-scrollbar-track   { background: transparent; }
 
-.tab-bar {
+.tab-bar-outer {
   display: flex;
   align-items: stretch;
   border-bottom: 1px solid var(--line-1);
   flex-shrink: 0;
-  overflow-x: auto;
-  overflow-y: hidden;
   background: var(--surface);
   height: 40px;
-  /* Oculta scrollbar em navegadores que suportam scrollbar-width */
-  scrollbar-width: none;
   margin-left: 32px;
 }
-.tab-bar::-webkit-scrollbar { display: none; }
+
+.tab-bar-scroll {
+  display: flex;
+  align-items: stretch;
+  overflow-x: auto;
+  overflow-y: hidden;
+  flex: 1;
+  min-width: 0;
+  scrollbar-width: none;
+}
+.tab-bar-scroll::-webkit-scrollbar { display: none; }
+
+.tab-bar-right {
+  display: flex;
+  align-items: stretch;
+  flex-shrink: 0;
+  border-left: 1px solid var(--line-1);
+}
 
 .tab-item {
   display: flex;
@@ -1590,7 +1603,7 @@ input::placeholder, textarea::placeholder { color: var(--text-3); opacity: 1; }
   position: relative;
 }
 .tab-item:hover { color: var(--text-2); background: var(--surface-2); }
-.tab-item.drag-over { border-left: 2px solid #034EA2; }
+.tab-item.drag-over { border-left: 2px solid var(--blue); }
 .tab-item[draggable="true"] { cursor: grab; }
 .tab-item[draggable="true"]:active { cursor: grabbing; }
 .tab-item.active {

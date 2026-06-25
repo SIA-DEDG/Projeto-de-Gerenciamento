@@ -83,6 +83,7 @@ interface TabsContextValue {
   activeTabId: string;
   openTab: (type: PageType, opts?: { name?: string; filters?: Partial<TabFilters>; forceNew?: boolean }) => void;
   closeTab: (id: string) => void;
+  closeAllTabs: () => void;
   activateTab: (id: string) => void;
   patchActiveTab: (patch: Partial<TabFilters>) => void;
   renameTab: (id: string, name: string) => void;
@@ -205,6 +206,14 @@ export function TabsProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
+  // ── closeAllTabs ──────────────────────────────────────────────────────────
+
+  const closeAllTabs = useCallback(() => {
+    const fresh: Tab = { id: `tb${Date.now()}`, type: 'board', name: 'Atividades', filters: { ...DEFAULT_FILTERS } };
+    setTabs([fresh]);
+    setActiveTabId(fresh.id);
+  }, []);
+
   // ── activateTab ───────────────────────────────────────────────────────────
 
   const activateTab = useCallback((id: string) => {
@@ -244,9 +253,8 @@ export function TabsProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ tabs, activeTabId, openTab, closeTab, activateTab, patchActiveTab, renameTab, reorderTabs }),
-    // callbacks are now stable (empty deps), so this only updates when tabs/activeTabId change
-    [tabs, activeTabId, openTab, closeTab, activateTab, patchActiveTab, renameTab, reorderTabs],
+    () => ({ tabs, activeTabId, openTab, closeTab, closeAllTabs, activateTab, patchActiveTab, renameTab, reorderTabs }),
+    [tabs, activeTabId, openTab, closeTab, closeAllTabs, activateTab, patchActiveTab, renameTab, reorderTabs],
   );
 
   return (

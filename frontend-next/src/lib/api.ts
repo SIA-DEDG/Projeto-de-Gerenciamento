@@ -13,7 +13,7 @@ import { getToken, clearAuth } from './auth';
 const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
 
 const apiCache = new Map<string, { data: unknown; cachedAt: number }>();
-const TTL = 45_000; // 45 seconds
+const TTL = 60_000; // 60 seconds
 
 function cacheGet<T>(key: string): T | null {
   const hit = apiCache.get(key);
@@ -28,15 +28,33 @@ function cacheInvalidate(...keys: string[]): void {
   keys.forEach((k) => apiCache.delete(k));
 }
 
+// Requests em voo: evita requests paralelos duplicados para a mesma chave
+const inFlight = new Map<string, Promise<unknown>>();
+
 async function fetchCached<T>(key: string, fetcher: () => Promise<T>): Promise<T> {
   const hit = cacheGet<T>(key);
   if (hit !== null) {
-    fetcher().then((fresh) => cacheSet(key, fresh)).catch(() => null);
+    // Background refresh com deduplicação
+    if (!inFlight.has(key)) {
+      const p = fetcher()
+        .then((fresh) => cacheSet(key, fresh))
+        .catch(() => null)
+        .finally(() => inFlight.delete(key));
+      inFlight.set(key, p as Promise<unknown>);
+    }
     return hit;
   }
-  const data = await fetcher();
-  cacheSet(key, data);
-  return data;
+  // Se já há um fetch em voo para esta chave, aguarda e retorna do cache
+  if (inFlight.has(key)) {
+    await inFlight.get(key);
+    const cached = cacheGet<T>(key);
+    if (cached !== null) return cached;
+  }
+  const p = fetcher()
+    .then((data) => { cacheSet(key, data); return data; })
+    .finally(() => inFlight.delete(key));
+  inFlight.set(key, p as Promise<unknown>);
+  return p;
 }
 type RawTask = Omit<Task, 'status_group' | 'badge_color' | 'date'>;
 
@@ -383,7 +401,7 @@ export interface Absence {
 }
 
 export async function fetchAbsences(): Promise<Absence[]> {
-  return apiFetch<Absence[]>('/api/absences');
+  return fetchCached('absences', () => apiFetch<Absence[]>('/api/absences'));
 }
 
 export async function createAbsence(payload: {
@@ -395,14 +413,14 @@ export async function createAbsence(payload: {
   start_date: string;
   end_date: string;
 }): Promise<Absence> {
-  return apiFetch<Absence>('/api/absences', {
-    method: 'POST',
-    body: JSON.stringify(payload),
-  });
+  const result = await apiFetch<Absence>('/api/absences', { method: 'POST', body: JSON.stringify(payload) });
+  cacheInvalidate('absences');
+  return result;
 }
 
 export async function deleteAbsence(id: string): Promise<void> {
   await apiFetch<void>(`/api/absences/${id}`, { method: 'DELETE' });
+  cacheInvalidate('absences');
 }
 
 export async function updateAbsence(id: string, payload: {
@@ -411,17 +429,15 @@ export async function updateAbsence(id: string, payload: {
   start_date: string;
   end_date: string;
 }): Promise<Absence> {
-  return apiFetch<Absence>(`/api/absences/${id}`, {
-    method: 'PUT',
-    body: JSON.stringify(payload),
-  });
+  const result = await apiFetch<Absence>(`/api/absences/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
+  cacheInvalidate('absences');
+  return result;
 }
 
 export async function approveAbsence(id: string, approval_status: 'aprovada' | 'recusada' | 'pendente'): Promise<Absence> {
-  return apiFetch<Absence>(`/api/absences/${id}/approval`, {
-    method: 'PUT',
-    body: JSON.stringify({ approval_status }),
-  });
+  const result = await apiFetch<Absence>(`/api/absences/${id}/approval`, { method: 'PUT', body: JSON.stringify({ approval_status }) });
+  cacheInvalidate('absences');
+  return result;
 }
 
 export interface CalendarEvent {
@@ -434,7 +450,7 @@ export interface CalendarEvent {
   end_date: string;
   start_time: string | null;
   minutes_file_name: string | null;
-  minutes_file_data: string | null;
+  minutes_file_path: string | null; // path no Supabase Storage
   is_private: boolean;
   is_company_wide: boolean;
   created_at: string;
@@ -442,7 +458,7 @@ export interface CalendarEvent {
 }
 
 export async function fetchEvents(): Promise<CalendarEvent[]> {
-  return apiFetch<CalendarEvent[]>('/api/events');
+  return fetchCached('events', () => apiFetch<CalendarEvent[]>('/api/events'));
 }
 
 export async function createEvent(payload: {
@@ -456,10 +472,9 @@ export async function createEvent(payload: {
   is_private: boolean;
   is_company_wide?: boolean;
 }): Promise<CalendarEvent> {
-  return apiFetch<CalendarEvent>('/api/events', {
-    method: 'POST',
-    body: JSON.stringify(payload),
-  });
+  const result = await apiFetch<CalendarEvent>('/api/events', { method: 'POST', body: JSON.stringify(payload) });
+  cacheInvalidate('events');
+  return result;
 }
 
 export async function updateEvent(id: string, payload: {
@@ -473,25 +488,35 @@ export async function updateEvent(id: string, payload: {
   is_private: boolean;
   is_company_wide?: boolean;
 }): Promise<CalendarEvent> {
-  return apiFetch<CalendarEvent>(`/api/events/${id}`, {
-    method: 'PUT',
-    body: JSON.stringify(payload),
-  });
+  const result = await apiFetch<CalendarEvent>(`/api/events/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
+  cacheInvalidate('events');
+  return result;
 }
 
 export async function deleteEvent(id: string): Promise<void> {
   await apiFetch<void>(`/api/events/${id}`, { method: 'DELETE' });
+  cacheInvalidate('events');
 }
 
 export async function setEventMinutes(id: string, file_name: string, file_data: string): Promise<CalendarEvent> {
-  return apiFetch<CalendarEvent>(`/api/events/${id}/minutes`, {
+  const result = await apiFetch<CalendarEvent>(`/api/events/${id}/minutes`, {
     method: 'PUT',
-    body: JSON.stringify({ file_name, file_data }),
+    body: JSON.stringify({ fileName: file_name, fileData: file_data }),
   });
+  cacheInvalidate('events');
+  return result;
 }
 
 export async function removeEventMinutes(id: string): Promise<CalendarEvent> {
-  return apiFetch<CalendarEvent>(`/api/events/${id}/minutes`, { method: 'DELETE' });
+  const result = await apiFetch<CalendarEvent>(`/api/events/${id}/minutes`, { method: 'DELETE' });
+  cacheInvalidate('events');
+  return result;
+}
+
+/** Obtém URL assinada (1h) para download da ata de um evento */
+export async function getEventMinutesUrl(id: string): Promise<string> {
+  const { url } = await apiFetch<{ url: string }>(`/api/events/${id}/minutes/url`);
+  return url;
 }
 
 export async function deleteUser(id: string): Promise<void> {
@@ -517,17 +542,17 @@ export async function adminResetUserPassword(id: string, newPassword: string): P
 
 export interface FeedbackItem {
   id: string;
-  tipo: 'bug' | 'melhoria';
+  tipo: string;
   titulo: string;
   descricao: string;
   severidade: string | null;
   usuario_id: string | null;
   usuario_nome: string | null;
-  imagens: string | null;
+  imagens: string[];
   resposta: string | null;
   status: 'pendente' | 'respondida';
   upvotes: number;
-  upvoted_by: string;
+  upvoted_by: string[];
   comment_count: number;
   created_at: string;
 }
@@ -543,56 +568,66 @@ export interface FeedbackComment {
 }
 
 export async function fetchFeedbacks(): Promise<FeedbackItem[]> {
-  return apiFetch<FeedbackItem[]>('/api/feedback');
+  return fetchCached('feedback', () => apiFetch<FeedbackItem[]>('/api/feedback'));
 }
 
 export async function submitFeedback(payload: {
-  tipo: 'bug' | 'melhoria';
+  tipo: string;
   titulo: string;
   descricao: string;
   severidade: string | null;
-  usuario_nome: string | null;
-  imagens: { nome: string; dados: string }[];
+  imagens: string[];
 }): Promise<FeedbackItem> {
-  return apiFetch<FeedbackItem>('/api/feedback', {
+  const result = await apiFetch<FeedbackItem>('/api/feedback', {
     method: 'POST',
     body: JSON.stringify(payload),
   });
+  cacheInvalidate('feedback');
+  return result;
 }
 
 export async function updateFeedback(id: string, payload: {
-  tipo: 'bug' | 'melhoria';
+  tipo: string;
   titulo: string;
   descricao: string;
   severidade: string | null;
-  imagens: { nome: string; dados: string }[];
+  imagens: string[];
 }): Promise<FeedbackItem> {
-  return apiFetch<FeedbackItem>(`/api/feedback/${id}`, {
+  const result = await apiFetch<FeedbackItem>(`/api/feedback/${id}`, {
     method: 'PUT',
     body: JSON.stringify(payload),
   });
+  cacheInvalidate('feedback');
+  return result;
 }
 
 export async function toggleFeedbackUpvote(id: string): Promise<FeedbackItem> {
-  return apiFetch<FeedbackItem>(`/api/feedback/${id}/upvote`, { method: 'POST' });
+  const result = await apiFetch<FeedbackItem>(`/api/feedback/${id}/upvote`, { method: 'POST' });
+  cacheInvalidate('feedback');
+  return result;
 }
 
 export async function deleteFeedback(id: string): Promise<void> {
-  return apiFetch<void>(`/api/feedback/${id}`, { method: 'DELETE' });
+  await apiFetch<void>(`/api/feedback/${id}`, { method: 'DELETE' });
+  cacheInvalidate('feedback');
 }
 
 export async function setFeedbackStatus(id: string, status: 'pendente' | 'respondida'): Promise<FeedbackItem> {
-  return apiFetch<FeedbackItem>(`/api/feedback/${id}/status`, {
+  const result = await apiFetch<FeedbackItem>(`/api/feedback/${id}/status`, {
     method: 'PUT',
     body: JSON.stringify({ status }),
   });
+  cacheInvalidate('feedback');
+  return result;
 }
 
 export async function setFeedbackResposta(id: string, resposta: string | null): Promise<FeedbackItem> {
-  return apiFetch<FeedbackItem>(`/api/feedback/${id}/resposta`, {
+  const result = await apiFetch<FeedbackItem>(`/api/feedback/${id}/resposta`, {
     method: 'PUT',
     body: JSON.stringify({ resposta }),
   });
+  cacheInvalidate('feedback');
+  return result;
 }
 
 export async function fetchComments(feedbackId: string): Promise<FeedbackComment[]> {
