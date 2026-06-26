@@ -4,8 +4,6 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { getUser, setAuth, getToken, isRemembered, clearAuth } from '@/lib/auth';
 import { changePassword, updateUserProfile } from '@/lib/api';
-import { getSettings, saveSettings } from '@/lib/localStorage';
-import type { Settings } from '@/types';
 import {
   User, Lock, Shield, LogOut, Check, RefreshCw, Save,
   Mail, AlertTriangle, Bell,
@@ -230,9 +228,9 @@ function InputField({
 // ── Seção Perfil ──────────────────────────────────────────────────────────────
 
 function PerfilSection() {
-  const [user, setUser]         = useState<ReturnType<typeof getUser>>(null);
-  const [name, setName]         = useState('');
-  const [loading, setLoading]   = useState(false);
+  const [user, setUser] = useState<ReturnType<typeof getUser>>(null);
+  const [name, setName] = useState('');
+  const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
 
   useEffect(() => {
@@ -374,16 +372,16 @@ function PerfilSection() {
 
 function SegurancaSection() {
   const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword]         = useState('');
+  const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [loading, setLoading]   = useState(false);
+  const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     setFeedback(null);
-    if (newPassword.length < 6)           { setFeedback({ type: 'error', msg: 'A nova senha deve ter pelo menos 6 caracteres.' }); return; }
-    if (newPassword !== confirmPassword)  { setFeedback({ type: 'error', msg: 'As senhas não conferem.' }); return; }
+    if (newPassword.length < 6) { setFeedback({ type: 'error', msg: 'A nova senha deve ter pelo menos 6 caracteres.' }); return; }
+    if (newPassword !== confirmPassword) { setFeedback({ type: 'error', msg: 'As senhas não conferem.' }); return; }
     setLoading(true);
     try {
       await changePassword(currentPassword, newPassword);
@@ -482,12 +480,12 @@ const DEFAULT_ACCENT = '#034EA2';
 const ACCENT_KEY = 'sia-accent';
 
 const ACCENT_PRESETS = [
-  { label: 'Azul Gov-PI',  color: '#034EA2' },
-  { label: 'Verde',        color: '#157F3C' },
-  { label: 'Roxo',         color: '#7C3AED' },
-  { label: 'Vermelho',     color: '#B42318' },
-  { label: 'Âmbar',       color: '#A87A00' },
-  { label: 'Ciano',        color: '#0E7490' },
+  { label: 'Azul Gov-PI', color: '#034EA2' },
+  { label: 'Verde', color: '#157F3C' },
+  { label: 'Roxo', color: '#7C3AED' },
+  { label: 'Vermelho', color: '#B42318' },
+  { label: 'Âmbar', color: '#A87A00' },
+  { label: 'Ciano', color: '#0E7490' },
 ];
 
 function AparenciaSection() {
@@ -858,7 +856,7 @@ export default function ConfiguracoesPage() {
       <PageHeader eyebrow="Sistema · Conta" title="Configurações" />
 
       <div style={{ flex: 1, overflowY: 'auto', padding: '32px 32px 60px', minHeight: 0 }}>
-        <div style={{ maxWidth: 580 }}>
+        <div style={{ maxWidth: 800, margin: '0 auto' }}>
           <AvatarHeroCard />
           <PerfilSection />
           <SegurancaSection />
