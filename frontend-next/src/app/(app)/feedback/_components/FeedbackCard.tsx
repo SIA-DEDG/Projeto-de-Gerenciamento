@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
-import { Bug, Lightbulb, ThumbsUp, MessageSquare, Pencil, Trash2, Triangle, Check } from 'lucide-react';
+import { useState } from 'react';
+import { ChevronUp, MessageSquare } from 'lucide-react';
 import { type FeedbackItem } from '@/lib/api';
-import { avatarColor, severityMeta, parseUpvotedBy, truncate } from './types';
+import { parseUpvotedBy } from './types';
 import CommentSection from './CommentSection';
 
 interface Props {
@@ -17,295 +17,208 @@ interface Props {
   onRespond: (item: FeedbackItem) => void;
   onStatusChange: (id: string, status: 'pendente' | 'respondida') => void;
   upvoting: string | null;
-  selectionMode?: boolean;
   isSelected?: boolean;
-  onToggleSelect?: (id: string) => void;
 }
 
-export default function FeedbackCard({ item, currentUserId, currentUserName, isAdmin, onUpvote, onEdit, onDelete, onRespond, onStatusChange, upvoting, selectionMode = false, isSelected = false, onToggleSelect }: Props) {
+// ── Color maps ────────────────────────────────────────────────────────────────
+
+function tipoStyle(tipo: string): { color: string; bg: string } {
+  if (tipo === 'bug')      return { color: '#b42318', bg: '#b423180f' };
+  if (tipo === 'melhoria') return { color: '#1B8A4B', bg: '#1B8A4B0f' };
+  if (tipo === 'duvida')   return { color: '#A87A00', bg: '#A87A000f' };
+  return { color: 'var(--blue)', bg: 'var(--blue)0f' }; // sugestao / default
+}
+
+function tipoLabel(tipo: string): string {
+  if (tipo === 'bug')      return 'Bug';
+  if (tipo === 'melhoria') return 'Melhoria';
+  if (tipo === 'duvida')   return 'Dúvida';
+  return 'Sugestão';
+}
+
+function sevColor(sev: string): string {
+  if (sev === 'Alta')  return '#b42318';
+  if (sev === 'Média') return '#A87A00';
+  if (sev === 'Baixa') return '#1B8A4B';
+  return '#6b7280';
+}
+
+export default function FeedbackCard({
+  item, currentUserId, currentUserName, isAdmin,
+  onUpvote, onEdit, onDelete, onRespond, onStatusChange,
+  upvoting, isSelected = false,
+}: Props) {
   const [expanded, setExpanded] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
   const [commentCount, setCommentCount] = useState(item.comment_count ?? 0);
-  const menuRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (!menuOpen) return;
-    function handleClick(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
-    }
-    document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
-  }, [menuOpen]);
-  const answered = item.status === 'respondida';
-  const voters = parseUpvotedBy(item.upvoted_by);
-  const voted = voters.includes(currentUserId);
+  const voters    = parseUpvotedBy(item.upvoted_by);
+  const voted     = voters.includes(currentUserId);
   const isLoading = upvoting === item.id;
-  const sv = item.tipo === 'bug' && item.severidade ? severityMeta(item.severidade) : null;
-  const authorName = item.usuario_nome ?? 'Anônimo';
-  const bgColor = avatarColor(authorName);
-  const isAuthor = !!item.usuario_id && item.usuario_id === currentUserId;
+  const isAuthor  = !!item.usuario_id && item.usuario_id === currentUserId;
+  const answered  = item.status === 'respondida';
 
-  let imageList: { nome: string; dados: string }[] = [];
-  if (item.imagens && item.imagens !== 'null') {
-    try { imageList = JSON.parse(item.imagens); } catch { /* noop */ }
-  }
+  const statusColor = answered ? '#1B8A4B' : '#A87A00';
+  const statusLabel = answered ? 'Respondida' : 'Pendente';
+
+  const ts = tipoStyle(item.tipo ?? '');
 
   return (
     <div style={{
-      background: 'var(--bg-card)',
-      borderRadius: 8,
-      border: `1px solid ${isSelected ? 'var(--primary)' : 'var(--border-light)'}`,
-      boxShadow: 'var(--shadow-card)',
-      marginBottom: 12,
-      transition: 'box-shadow 0.15s, border-color 0.15s',
+      background: 'var(--surface)',
+      border: `1px solid ${isSelected ? 'var(--blue)' : 'var(--line-1)'}`,
+      borderRadius: 3,
+      overflow: 'hidden',
       position: 'relative',
     }}>
-      {selectionMode && (
+      <div style={{ display: 'flex', gap: 0 }}>
+
+        {/* ── LEFT: upvote column ── */}
         <div
-          onClick={() => onToggleSelect?.(item.id)}
-          style={{ position: 'absolute', inset: 0, zIndex: 2, cursor: 'pointer', borderRadius: 8 }}
-        />
-      )}
-      {selectionMode && (
-        <div style={{
-          position: 'absolute', top: 10, left: 10, zIndex: 3,
-          width: 18, height: 18, borderRadius: 4,
-          border: `2px solid ${isSelected ? 'var(--primary)' : '#c1c7d0'}`,
-          background: isSelected ? 'var(--primary)' : '#fff',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          pointerEvents: 'none',
-        }}>
-          {isSelected && <Check size={11} color="#fff" strokeWidth={3} />}
-        </div>
-      )}
-      <div style={{ position: 'absolute', top: 12, right: 12, display: 'flex', alignItems: 'center', gap: 6, zIndex: 1 }}>
-        <span style={{
-          padding: '3px 11px', borderRadius: 20, fontSize: '0.7rem', fontWeight: 700,
-          background: item.tipo === 'bug' ? '#fef2f2' : 'rgba(3,78,162,0.08)',
-          color: item.tipo === 'bug' ? '#b91c1c' : 'var(--primary)',
-          border: `1px solid ${item.tipo === 'bug' ? '#fca5a5' : 'rgba(3,78,162,0.22)'}`,
-          display: 'inline-flex', alignItems: 'center', gap: 4,
-        }}>
-          {item.tipo === 'bug' ? <Bug size={11} /> : <Lightbulb size={11} />}
-          {item.tipo === 'bug' ? 'Bug' : 'Sugestão'}
-        </span>
-        {(isAuthor || isAdmin) && (
-          <div ref={menuRef} style={{ position: 'relative' }}>
-            <button
-              onClick={() => setMenuOpen(v => !v)}
-              title="Opções"
-              style={{
-                width: 28, height: 28, borderRadius: 6,
-                background: menuOpen ? 'var(--bg-hover)' : 'none',
-                border: `1px solid ${menuOpen ? 'var(--border-light)' : 'transparent'}`,
-                cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: 'var(--text-muted)', transition: 'all 0.15s', flexDirection: 'column', gap: 3,
-              }}
-              onMouseEnter={e => { const b = e.currentTarget; b.style.background = 'var(--bg-hover)'; b.style.borderColor = 'var(--border-light)'; }}
-              onMouseLeave={e => { if (!menuOpen) { const b = e.currentTarget; b.style.background = 'none'; b.style.borderColor = 'transparent'; } }}
-            >
-              {[0,1,2].map(i => (
-                <span key={i} style={{ width: 3, height: 3, borderRadius: '50%', background: 'currentColor', display: 'block' }} />
-              ))}
-            </button>
-            {menuOpen && (
-              <div style={{
-                position: 'absolute', top: 32, right: 0, zIndex: 50,
-                background: '#fff', border: '1px solid var(--border-light)',
-                borderRadius: 8, boxShadow: '0 4px 16px rgba(3,78,162,0.12)',
-                minWidth: 130,
-              }}>
-                {isAdmin && (
-                  <>
-                    <button
-                      onClick={() => { setMenuOpen(false); onRespond(item); }}
-                      style={{ width: '100%', padding: '9px 14px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', fontSize: '0.83rem', fontFamily: 'inherit', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}
-                      onMouseEnter={e => ((e.currentTarget as HTMLButtonElement).style.background = 'var(--bg-hover)')}
-                      onMouseLeave={e => ((e.currentTarget as HTMLButtonElement).style.background = 'none')}
-                    >
-                      <MessageSquare size={13} />
-                      Resposta oficial
-                    </button>
-                    <div style={{ height: 1, background: 'var(--border-light)', margin: '0 8px' }} />
-                  </>
-                )}
-                <button
-                  onClick={() => { setMenuOpen(false); onEdit(item); }}
-                  style={{ width: '100%', padding: '9px 14px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', fontSize: '0.83rem', fontFamily: 'inherit', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}
-                  onMouseEnter={e => ((e.currentTarget as HTMLButtonElement).style.background = 'var(--bg-hover)')}
-                  onMouseLeave={e => ((e.currentTarget as HTMLButtonElement).style.background = 'none')}
-                >
-                  <Pencil size={13} />
-                  Editar
-                </button>
-                <div style={{ height: 1, background: 'var(--border-light)', margin: '0 8px' }} />
-                <button
-                  onClick={() => { setMenuOpen(false); onDelete(item); }}
-                  style={{ width: '100%', padding: '9px 14px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', fontSize: '0.83rem', fontFamily: 'inherit', color: '#b91c1c', display: 'flex', alignItems: 'center', gap: 8 }}
-                  onMouseEnter={e => ((e.currentTarget as HTMLButtonElement).style.background = '#fef2f2')}
-                  onMouseLeave={e => ((e.currentTarget as HTMLButtonElement).style.background = 'none')}
-                >
-                  <Trash2 size={13} />
-                  Excluir
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
-      <div style={{ padding: '18px 20px', paddingLeft: selectionMode ? 36 : 20, display: 'flex', gap: 16, alignItems: 'flex-start' }}>
-
-        {/* Upvote */}
-        <button
-          onClick={() => onUpvote(item.id)}
-          disabled={isLoading}
-          title={voted ? 'Remover voto' : 'Votar'}
+          onClick={() => { if (!isLoading) onUpvote(item.id); }}
           style={{
-            flexShrink: 0,
-            width: 38,
-            height: 42,
-            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
-            background: voted ? 'rgba(3,78,162,0.07)' : 'var(--bg-subtle)',
-            border: `1.5px solid ${voted ? 'var(--primary)' : 'var(--border-light)'}`,
-            borderRadius: 8, padding: '5px 4px',
-            cursor: isLoading ? 'wait' : 'pointer',
-            transition: 'all 0.15s',
-            fontFamily: 'inherit',
+            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+            gap: 4, padding: '16px 14px', borderRight: '1px solid var(--line-2)',
+            cursor: isLoading ? 'wait' : 'pointer', minWidth: 56,
+            background: voted ? 'var(--blue)0a' : 'var(--surface-2)',
+            transition: 'background 0.12s',
           }}
-          onMouseEnter={e => { if (!voted && !isLoading) (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--primary)'; }}
-          onMouseLeave={e => { if (!voted) (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--border-light)'; }}
+          onMouseEnter={e => { if (!voted) (e.currentTarget as HTMLElement).style.background = 'var(--blue)0a'; }}
+          onMouseLeave={e => { if (!voted) (e.currentTarget as HTMLElement).style.background = 'var(--surface-2)'; }}
         >
-          <Triangle size={11} style={{ display: 'block' }} color={voted ? 'var(--primary)' : 'var(--text-muted)'} fill={voted ? 'var(--primary)' : 'none'} />
-          <span style={{ fontSize: '0.82rem', fontWeight: 800, color: voted ? 'var(--primary)' : 'var(--text-primary)', lineHeight: 1 }}>
+          <ChevronUp
+            size={16} strokeWidth={2}
+            fill={voted ? 'var(--blue)' : 'none'}
+            color={voted ? 'var(--blue)' : 'var(--text-3)'}
+          />
+          <span className="mono" style={{ fontSize: '0.8rem', fontWeight: 600, color: voted ? 'var(--blue)' : 'var(--text-2)' }}>
             {item.upvotes}
           </span>
-        </button>
+        </div>
 
-        {/* Content */}
-        <div style={{ flex: 1, minWidth: 0 }}>
+        {/* ── RIGHT: content ── */}
+        <div style={{ flex: 1, padding: '16px 18px', minWidth: 0 }}>
 
-          {/* Title */}
-          <div style={{ marginBottom: 8, paddingRight: 90 }}>
-            <button
-              onClick={() => setExpanded(v => !v)}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, textAlign: 'left', fontFamily: 'inherit', width: '100%' }}
-            >
-              <span
-                style={{ fontSize: '0.96rem', fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.4, display: 'block', transition: 'color 0.15s' }}
-                onMouseEnter={e => ((e.currentTarget as HTMLElement).style.color = 'var(--primary)')}
-                onMouseLeave={e => ((e.currentTarget as HTMLElement).style.color = 'var(--text-primary)')}
-              >
-                {item.titulo}
-              </span>
-            </button>
-          </div>
+          {/* Chips row: tipo + severidade + status + date·autor */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
+            {/* Tipo chip (filled) */}
+            <span className="mono" style={{
+              fontSize: '0.62rem', fontWeight: 600, letterSpacing: '0.5px', textTransform: 'uppercase',
+              color: ts.color, background: ts.bg, padding: '3px 8px', borderRadius: 3,
+            }}>
+              {tipoLabel(item.tipo ?? '')}
+            </span>
 
-          {/* Description */}
-          <p style={{ margin: '0 0 14px', fontSize: '0.84rem', color: 'var(--text-secondary)', lineHeight: 1.65 }}>
-            {expanded ? item.descricao : truncate(item.descricao, 200)}
-          </p>
-
-          {/* Footer row */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-
-            {/* Author */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <div style={{ width: 26, height: 26, borderRadius: '50%', background: bgColor, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', fontWeight: 700, flexShrink: 0 }}>
-                {authorName.charAt(0).toUpperCase()}
-              </div>
-              <span style={{ fontSize: '0.79rem', fontWeight: 600, color: 'var(--text-primary)' }}>{authorName}</span>
-              <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>· {item.created_at}</span>
-            </div>
-
-            <div style={{ flex: 1 }} />
-
-            {/* Contagem de comentários */}
-            <button
-              onClick={() => setExpanded(v => !v)}
-              style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, color: 'var(--text-muted)', fontFamily: 'inherit' }}
-              title="Ver comentários"
-            >
-              <MessageSquare size={13} />
-              <span style={{ fontSize: '0.75rem', fontWeight: 600 }}>{commentCount}</span>
-            </button>
-
-            {/* Severity badge */}
-            {sv && (
-              <span style={{ background: sv.bg, color: sv.color, border: `1px solid ${sv.border}`, borderRadius: 4, padding: '2px 8px', fontSize: '0.7rem', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                <sv.Icon size={11} />
+            {/* Severidade (text only) */}
+            {item.severidade && (
+              <span className="mono" style={{ fontSize: '0.62rem', fontWeight: 500, letterSpacing: '0.5px', textTransform: 'uppercase', color: sevColor(item.severidade) }}>
                 {item.severidade}
               </span>
             )}
 
-            {/* Status badge — clicável só para admin */}
-            {isAdmin ? (
-              <button
-                onClick={() => onStatusChange(item.id, answered ? 'pendente' : 'respondida')}
-                title={answered ? 'Marcar como pendente' : 'Marcar como respondida'}
-                style={{
-                  padding: '2px 9px', borderRadius: 4, fontSize: '0.7rem', fontWeight: 700,
-                  background: answered ? 'rgba(0,121,50,0.09)' : 'var(--bg-subtle)',
-                  color: answered ? '#007932' : 'var(--text-muted)',
-                  border: `1px solid ${answered ? 'rgba(0,121,50,0.22)' : 'var(--border-light)'}`,
-                  cursor: 'pointer', fontFamily: 'inherit', transition: 'opacity 0.15s',
-                }}
-                onMouseEnter={e => ((e.currentTarget as HTMLButtonElement).style.opacity = '0.7')}
-                onMouseLeave={e => ((e.currentTarget as HTMLButtonElement).style.opacity = '1')}
-              >
-                {answered ? 'Respondida' : 'Pendente'}
-              </button>
-            ) : (
-            <span style={{
-              padding: '2px 9px', borderRadius: 4, fontSize: '0.7rem', fontWeight: 700,
-              background: answered ? 'rgba(0,121,50,0.09)' : 'var(--bg-subtle)',
-              color: answered ? '#007932' : 'var(--text-muted)',
-              border: `1px solid ${answered ? 'rgba(0,121,50,0.22)' : 'var(--border-light)'}`,
-            }}>
-              {answered ? 'Respondida' : 'Pendente'}
+            {/* Status (text only) */}
+            <span className="mono" style={{ fontSize: '0.62rem', fontWeight: 500, letterSpacing: '0.5px', textTransform: 'uppercase', color: statusColor }}>
+              {statusLabel}
             </span>
-            )}
-          </div>
-        </div>
-      </div>
 
-      {/* Expanded: images + official response + comments */}
-      {expanded && (
-        <>
-          {(imageList.length > 0 || answered) && (
-            <div style={{ padding: '16px 20px 0' }}>
-              {imageList.length > 0 && (
-                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
-                  {imageList.map((img, i) => (
-                    <a key={i} href={img.dados} target="_blank" rel="noreferrer">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={img.dados} alt={img.nome}
-                        style={{ width: 84, height: 84, objectFit: 'cover', borderRadius: 6, border: '1px solid var(--border-light)', cursor: 'zoom-in' }} />
-                    </a>
-                  ))}
-                </div>
-              )}
-              {answered && (
-                <div style={{ borderRadius: 6, border: '1px solid var(--border-light)', overflow: 'hidden', marginBottom: 4 }}>
-                  <div style={{ padding: '9px 14px', background: 'var(--bg-subtle)', borderBottom: '1px solid var(--border-light)' }}>
-                    <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Resposta oficial</span>
-                  </div>
-                  <div style={{ padding: '12px 14px', background: '#fff' }}>
-                    <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--text-primary)', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>{item.resposta}</p>
-                  </div>
-                </div>
-              )}
+            {/* Date · Autor (right-aligned) */}
+            <span className="mono" style={{ fontSize: '0.62rem', color: 'var(--text-3)', marginLeft: 'auto', letterSpacing: '0.3px' }}>
+              {item.created_at} · {item.usuario_nome ?? 'Anônimo'}
+            </span>
+          </div>
+
+          {/* Title */}
+          <div
+            onClick={() => setExpanded(v => !v)}
+            style={{ fontSize: '0.92rem', fontWeight: 600, color: 'var(--text)', marginBottom: 6, letterSpacing: '-0.2px', cursor: 'pointer' }}
+            onMouseEnter={e => ((e.currentTarget as HTMLElement).style.color = 'var(--blue)')}
+            onMouseLeave={e => ((e.currentTarget as HTMLElement).style.color = 'var(--text)')}
+          >
+            {item.titulo}
+          </div>
+
+          {/* Description */}
+          <p style={{ fontSize: '0.82rem', color: 'var(--text-2)', lineHeight: 1.6, margin: 0 }}>
+            {expanded ? item.descricao : item.descricao?.slice(0, 220) + (item.descricao && item.descricao.length > 220 ? '…' : '')}
+          </p>
+
+          {/* Resposta oficial */}
+          {item.resposta && (
+            <div style={{ marginTop: 14, padding: '12px 14px', borderLeft: '3px solid #1B8A4B', background: '#1B8A4B0a', borderRadius: '0 3px 3px 0' }}>
+              <div className="mono" style={{ fontSize: '0.62rem', fontWeight: 600, letterSpacing: '0.5px', textTransform: 'uppercase', color: '#1B8A4B', marginBottom: 5 }}>
+                Resposta da equipe
+              </div>
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-2)', lineHeight: 1.55, margin: 0 }}>{item.resposta}</p>
             </div>
           )}
-          <CommentSection
-            feedbackId={item.id}
-            currentUserId={currentUserId}
-            currentUserName={currentUserName}
-            isAdmin={isAdmin}
-            onCountChange={setCommentCount}
-          />
-        </>
-      )}
+
+          {/* Actions row */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
+            {/* Comment count */}
+            <button onClick={() => setExpanded(v => !v)}
+              style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, color: 'var(--text-3)', fontFamily: 'inherit', fontSize: '0.75rem' }}>
+              <MessageSquare size={13} strokeWidth={2} />
+              <span className="mono" style={{ fontSize: '0.7rem', fontWeight: 600 }}>{commentCount}</span>
+            </button>
+
+            {/* Admin: RESPONDER button */}
+            {isAdmin && (
+              <button
+                onClick={() => onRespond(item)}
+                className="mono"
+                style={{ marginTop: 0, padding: '5px 11px', border: '1px solid var(--border)', borderRadius: 3, background: 'var(--surface)', color: 'var(--text-2)', fontSize: '0.68rem', fontWeight: 500, cursor: 'pointer', letterSpacing: '0.5px' }}
+                onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--blue)'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--blue)'; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--border)'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-2)'; }}
+              >
+                RESPONDER
+              </button>
+            )}
+
+            {/* Admin: toggle status */}
+            {isAdmin && (
+              <button
+                onClick={() => onStatusChange(item.id, answered ? 'pendente' : 'respondida')}
+                className="mono"
+                style={{ padding: '5px 11px', border: `1px solid ${answered ? 'rgba(27,138,75,0.3)' : 'var(--border)'}`, borderRadius: 3, background: answered ? 'rgba(27,138,75,0.07)' : 'var(--surface)', color: answered ? '#1B8A4B' : 'var(--text-3)', fontSize: '0.68rem', fontWeight: 500, cursor: 'pointer', letterSpacing: '0.5px' }}
+              >
+                {answered ? 'PENDENTE' : 'RESPONDIDA'}
+              </button>
+            )}
+
+            {/* Edit/Delete (author or admin) */}
+            {(isAuthor || isAdmin) && (
+              <>
+                <button onClick={() => onEdit(item)}
+                  className="mono"
+                  style={{ padding: '5px 11px', border: '1px solid var(--border)', borderRadius: 3, background: 'var(--surface)', color: 'var(--text-2)', fontSize: '0.68rem', fontWeight: 500, cursor: 'pointer', letterSpacing: '0.5px' }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--text)'; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-2)'; }}
+                >
+                  EDITAR
+                </button>
+                <button onClick={() => onDelete(item)}
+                  className="mono"
+                  style={{ padding: '5px 11px', border: '1px solid rgba(180,35,24,0.2)', borderRadius: 3, background: 'rgba(180,35,24,0.05)', color: '#b42318', fontSize: '0.68rem', fontWeight: 500, cursor: 'pointer', letterSpacing: '0.5px' }}
+                >
+                  EXCLUIR
+                </button>
+              </>
+            )}
+          </div>
+
+          {/* Comments (expanded) */}
+          {expanded && (
+            <div style={{ marginTop: 14, borderTop: '1px solid var(--line-2)', paddingTop: 12 }}>
+              <CommentSection
+                feedbackId={item.id}
+                currentUserId={currentUserId}
+                currentUserName={currentUserName}
+                isAdmin={isAdmin}
+                onCountChange={setCommentCount}
+              />
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

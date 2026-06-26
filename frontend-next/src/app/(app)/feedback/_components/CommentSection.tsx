@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect, useCallback } from 'react';
 import { MessageSquare, Plus } from 'lucide-react';
@@ -26,7 +26,7 @@ function AddInput({ draft, submitting, onChange, onSubmit, onCancel }: AddInputP
         onKeyDown={e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) onSubmit(); }}
         style={{
           width: '100%', boxSizing: 'border-box',
-          padding: '8px 10px', borderRadius: 6,
+          padding: '8px 10px', borderRadius: 3,
           border: '1.5px solid var(--border-light)',
           fontFamily: 'inherit', fontSize: '0.83rem',
           color: 'var(--text-primary)', resize: 'none',
@@ -40,7 +40,7 @@ function AddInput({ draft, submitting, onChange, onSubmit, onCancel }: AddInputP
           onClick={onCancel}
           style={{
             padding: '5px 12px', background: 'none',
-            border: '1px solid var(--border-light)', borderRadius: 5,
+            border: '1px solid var(--border-light)', borderRadius: 3,
             fontSize: '0.78rem', cursor: 'pointer', fontFamily: 'inherit', color: 'var(--text-secondary)',
           }}
         >Cancelar</button>
@@ -49,7 +49,7 @@ function AddInput({ draft, submitting, onChange, onSubmit, onCancel }: AddInputP
           disabled={submitting || !draft.trim()}
           style={{
             padding: '5px 14px', background: 'var(--primary)', color: '#fff',
-            border: 'none', borderRadius: 5, fontSize: '0.78rem', fontWeight: 700,
+            border: 'none', borderRadius: 3, fontSize: '0.78rem', fontWeight: 700,
             fontFamily: 'inherit',
             cursor: submitting || !draft.trim() ? 'not-allowed' : 'pointer',
             opacity: draft.trim() ? 1 : 0.5,

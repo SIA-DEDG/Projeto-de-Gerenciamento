@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
@@ -32,7 +32,7 @@ function ToolbarButton({
       style={{
         padding: '3px 7px',
         border: 'none',
-        borderRadius: 4,
+        borderRadius: 3,
         background: active ? '#e8f0fe' : 'transparent',
         color: active ? '#0052cc' : '#42526e',
         fontWeight: active ? 700 : 400,
@@ -96,7 +96,7 @@ export default function RichTextEditor({ value, onChange, placeholder }: Props) 
     <div
       style={{
         border: '1px solid #dfe1e6',
-        borderRadius: 4,
+        borderRadius: 3,
         background: '#fff',
         overflow: 'hidden',
       }}

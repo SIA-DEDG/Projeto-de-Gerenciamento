@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 import { Calendar, ChevronRight, ChevronLeft, ListTodo } from 'lucide-react';
@@ -65,30 +65,30 @@ export default function MonthCalendar({ items, title, onClickDay, onMonthChange 
   const todayStr = ymd(now);
 
   return (
-    <div style={{ background: '#fff', borderRadius: 16, border: '1px solid var(--border-light)', overflow: 'hidden', boxShadow: '0 2px 12px rgba(3,78,162,0.06)' }}>
+    <div style={{ background: '#fff', borderRadius: 3, border: '1px solid var(--border-light)', overflow: 'hidden', boxShadow: '0 2px 12px rgba(3,78,162,0.06)' }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid var(--border-light)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--primary-light)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ width: 32, height: 32, borderRadius: 3, background: 'var(--primary-light)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Calendar width={16} height={16} color="var(--primary)" />
           </div>
           {title && <span style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--text-primary)' }}>{title}</span>}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <button onClick={prev} style={{ background: 'var(--bg-subtle)', border: '1px solid var(--border-light)', borderRadius: 8, width: 30, height: 30, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', transition: 'all 0.15s' }}>
+          <button onClick={prev} style={{ background: 'var(--bg-subtle)', border: '1px solid var(--border-light)', borderRadius: 3, width: 30, height: 30, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', transition: 'all 0.15s' }}>
             <ChevronLeft width={13} height={13} />
           </button>
           <span style={{ fontWeight: 700, fontSize: '0.92rem', color: 'var(--text-primary)', minWidth: 130, textAlign: 'center' }}>
             {MONTHS[month]} {year}
           </span>
-          <button onClick={next} style={{ background: 'var(--bg-subtle)', border: '1px solid var(--border-light)', borderRadius: 8, width: 30, height: 30, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', transition: 'all 0.15s' }}>
+          <button onClick={next} style={{ background: 'var(--bg-subtle)', border: '1px solid var(--border-light)', borderRadius: 3, width: 30, height: 30, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', transition: 'all 0.15s' }}>
             <ChevronRight width={13} height={13} />
           </button>
         </div>
       </div>
 
       {/* Weekday headers */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', background: 'var(--bg-app)', borderBottom: '1px solid var(--border-light)' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(110px, 1fr))', background: 'var(--bg-app)', borderBottom: '1px solid var(--border-light)', overflowX: 'auto' }}>
         {WEEKDAYS.map((w, i) => (
           <div key={w} style={{
             padding: '9px 4px',
@@ -105,7 +105,7 @@ export default function MonthCalendar({ items, title, onClickDay, onMonthChange 
       </div>
 
       {/* Days grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(110px, 1fr))', overflowX: 'auto' }}>
         {cells.map((day, idx) => {
           const col = idx % 7;
           const isWeekend = col === 0 || col === 6;
@@ -119,9 +119,9 @@ export default function MonthCalendar({ items, title, onClickDay, onMonthChange 
               key={idx}
               onClick={() => day !== null && onClickDay && onClickDay(dayStr)}
               style={{
-                minHeight: 76,
+                minHeight: 100,
                 overflow: 'hidden',
-                padding: '6px 6px 4px',
+                padding: '6px 6px 6px',
                 borderRight: col !== 6 ? '1px solid var(--border-light)' : 'none',
                 borderBottom: idx < cells.length - 7 ? '1px solid var(--border-light)' : 'none',
                 background: day === null ? 'var(--bg-app)' : isWeekend ? '#fafbfc' : '#fff',
@@ -145,7 +145,7 @@ export default function MonthCalendar({ items, title, onClickDay, onMonthChange 
                   }}>
                     {day}
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                     {dayItems.slice(0, 2).map((item) => (
                       <div
                         key={item.id}
@@ -155,15 +155,15 @@ export default function MonthCalendar({ items, title, onClickDay, onMonthChange 
                           background: item.bg,
                           borderLeft: `3px solid ${item.color}`,
                           borderRadius: '0 4px 4px 0',
-                          padding: '2px 5px',
+                          padding: '4px 6px',
                           overflow: 'hidden',
                           cursor: item.onClick ? 'pointer' : 'default',
                         }}
                       >
                         {item.subtitle && (
-                          <div style={{ fontSize: '0.62rem', fontWeight: 700, color: item.color, lineHeight: 1.2, marginBottom: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.subtitle}</div>
+                          <div style={{ fontSize: '0.7rem', fontWeight: 700, color: item.color, lineHeight: 1.3, marginBottom: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.subtitle}</div>
                         )}
-                        <div style={{ fontSize: '0.62rem', fontWeight: 500, color: item.color, opacity: 0.85, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.label}</div>
+                        <div style={{ fontSize: '0.7rem', fontWeight: 500, color: item.color, opacity: 0.85, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.label}</div>
                       </div>
                     ))}
                     {dayItems.length > 2 && (

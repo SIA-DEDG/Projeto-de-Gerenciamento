@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useMemo } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
@@ -111,7 +111,7 @@ function MonthView({ tasks, year, month, todayStr, selectedDay, onDayClick, onVi
                           title={task.activity}
                           style={{
                             background: priorityStyle.bg, borderLeft: `3px solid ${priorityStyle.color}`,
-                            borderRadius: 4, padding: '2px 5px', marginBottom: 2, cursor: 'pointer',
+                            borderRadius: 3, padding: '2px 5px', marginBottom: 2, cursor: 'pointer',
                           }}
                         >
                           <div style={{ fontSize: '0.63rem', fontWeight: 600, color: priorityStyle.color, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -131,7 +131,7 @@ function MonthView({ tasks, year, month, todayStr, selectedDay, onDayClick, onVi
                         color: 'var(--primary)',
                         background: 'var(--primary-light)',
                         border: '1px solid var(--primary)',
-                        borderRadius: 10, padding: '1px 7px',
+                        borderRadius: 3, padding: '1px 7px',
                         display: 'inline-flex', alignItems: 'center', gap: 3,
                         marginTop: 2, cursor: 'pointer',
                       }}>
@@ -199,7 +199,7 @@ function WeekView({ tasks, weekStart, todayStr, onViewTask }: {
                     onClick={() => onViewTask(task)}
                     style={{
                       background: priorityStyle.bg, borderLeft: `4px solid ${priorityStyle.color}`,
-                      borderRadius: 7, padding: '8px 10px', marginBottom: 6, cursor: 'pointer',
+                      borderRadius: 3, padding: '8px 10px', marginBottom: 6, cursor: 'pointer',
                       boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
                       transition: 'transform 0.12s, box-shadow 0.12s',
                     }}
@@ -278,7 +278,7 @@ function DayPanel({ dayStr, tasks, onViewTask, onClose }: {
           <span style={{
             background: dayTasks.length === 0 ? '#f4f5f7' : 'var(--primary)',
             color: dayTasks.length === 0 ? 'var(--text-muted)' : '#fff',
-            borderRadius: 20, padding: '2px 10px',
+            borderRadius: 3, padding: '2px 10px',
             fontSize: '0.72rem', fontWeight: 700,
           }}>
             {dayTasks.length} atividade{dayTasks.length !== 1 ? 's' : ''}
@@ -286,7 +286,7 @@ function DayPanel({ dayStr, tasks, onViewTask, onClose }: {
         </div>
         <button
           onClick={onClose}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: '1.2rem', lineHeight: 1, padding: '2px 6px', borderRadius: 4 }}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: '1.2rem', lineHeight: 1, padding: '2px 6px', borderRadius: 3 }}
           title="Fechar"
         >
           ×
@@ -307,7 +307,7 @@ function DayPanel({ dayStr, tasks, onViewTask, onClose }: {
                 onClick={() => onViewTask(task)}
                 style={{
                   background: '#fff', borderLeft: `4px solid ${priorityStyle.color}`,
-                  borderRadius: 8, padding: '12px 14px',
+                  borderRadius: 3, padding: '12px 14px',
                   cursor: 'pointer', minWidth: 220, maxWidth: 300, flex: '1 1 220px',
                   boxShadow: '0 1px 6px rgba(0,0,0,0.07)',
                   border: `1px solid ${priorityStyle.border}`,
@@ -334,7 +334,7 @@ function DayPanel({ dayStr, tasks, onViewTask, onClose }: {
                   </span>
                   <span style={{
                     fontSize: '0.62rem', background: priorityStyle.bg, color: priorityStyle.color,
-                    borderRadius: 4, padding: '2px 7px', fontWeight: 600,
+                    borderRadius: 3, padding: '2px 7px', fontWeight: 600,
                     border: `1px solid ${priorityStyle.border}`,
                   }}>
                     {task.status}
@@ -443,7 +443,7 @@ export default function TaskCalendarView({ tasks, onViewTask }: Props) {
     <>
       <style>{`@keyframes slideDown { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }`}</style>
       <div style={{
-        background: '#fff', borderRadius: 14, border: '1px solid var(--border-light)',
+        background: '#fff', borderRadius: 3, border: '1px solid var(--border-light)',
         overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
       }}>
         {/* Toolbar */}
@@ -453,12 +453,12 @@ export default function TaskCalendarView({ tasks, onViewTask }: Props) {
           flexWrap: 'wrap', gap: 10,
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ display: 'flex', background: 'var(--bg-subtle)', borderRadius: 8, padding: 3, gap: 2 }}>
+            <div style={{ display: 'flex', background: 'var(--bg-subtle)', borderRadius: 3, padding: 3, gap: 2 }}>
               {(['week', 'month'] as const).map(v => (
                 <button key={v} onClick={() => { setViewMode(v); setSelectedDay(null); }} style={{
                   background: viewMode === v ? '#fff' : 'transparent',
                   border: viewMode === v ? '1px solid var(--border-light)' : '1px solid transparent',
-                  borderRadius: 6, padding: '5px 14px', fontSize: '0.82rem', fontWeight: 600,
+                  borderRadius: 3, padding: '5px 14px', fontSize: '0.82rem', fontWeight: 600,
                   color: viewMode === v ? 'var(--primary)' : 'var(--text-muted)',
                   cursor: 'pointer', boxShadow: viewMode === v ? '0 1px 4px rgba(0,0,0,0.08)' : 'none',
                   transition: 'all 0.15s', fontFamily: 'inherit',
@@ -486,7 +486,7 @@ export default function TaskCalendarView({ tasks, onViewTask }: Props) {
             </button>
           </div>
 
-          <button onClick={goToday} style={{ background: 'none', border: '1px solid var(--border-light)', borderRadius: 7, padding: '5px 14px', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-secondary)', cursor: 'pointer', fontFamily: 'inherit' }}>
+          <button onClick={goToday} style={{ background: 'none', border: '1px solid var(--border-light)', borderRadius: 3, padding: '5px 14px', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-secondary)', cursor: 'pointer', fontFamily: 'inherit' }}>
             Hoje
           </button>
         </div>
@@ -527,7 +527,7 @@ export default function TaskCalendarView({ tasks, onViewTask }: Props) {
 }
 
 const NAV: React.CSSProperties = {
-  background: 'none', border: '1px solid var(--border-light)', borderRadius: 6,
+  background: 'none', border: '1px solid var(--border-light)', borderRadius: 3,
   width: 28, height: 28, cursor: 'pointer', display: 'flex',
   alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)',
 };

@@ -1,38 +1,8 @@
 'use client';
 
-import { Bug, Lightbulb, Check } from 'lucide-react';
+import { Search, Check } from 'lucide-react';
 import { type FeedbackItem } from '@/lib/api';
-import { SEVERITIES, type TypeFilter, type StatusFilter, type SeverityFilter, inp } from './types';
-import { Search } from 'lucide-react';
-
-interface NavItemProps {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}
-
-function NavItem({ active, onClick, children }: NavItemProps) {
-  return (
-    <button onClick={onClick}
-      style={{
-        width: '100%',
-        background: active ? 'rgba(3,78,162,0.08)' : 'none',
-        border: 'none',
-        cursor: 'pointer',
-        padding: '7px 12px',
-        borderRadius: 6,
-        textAlign: 'left',
-        fontFamily: 'inherit',
-        fontSize: '0.84rem',
-        color: active ? 'var(--primary)' : 'var(--text-primary)',
-        fontWeight: active ? 700 : 400,
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        transition: 'background 0.15s',
-      }}>
-      {children}
-    </button>
-  );
-}
+import { type TypeFilter, type StatusFilter, type SeverityFilter } from './types';
 
 interface Props {
   items: FeedbackItem[];
@@ -49,6 +19,30 @@ interface Props {
   currentUserId: string;
 }
 
+const SECTION_LABEL: React.CSSProperties = {
+  fontSize: '0.62rem', fontWeight: 500, color: 'var(--text-3)',
+  letterSpacing: '1.2px', textTransform: 'uppercase', marginBottom: 8,
+};
+
+function FilterItem({ active, color, onClick, children }: {
+  active: boolean; color: string; onClick: () => void; children: React.ReactNode;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        width: '100%', padding: '7px 9px', borderRadius: 3, fontSize: '0.82rem',
+        cursor: 'pointer', border: 'none', textAlign: 'left', fontFamily: 'inherit',
+        color: active ? color : 'var(--text-2)',
+        background: active ? `${color}0d` : 'transparent',
+        fontWeight: active ? 600 : 400,
+      }}
+    >
+      {children}
+    </button>
+  );
+}
+
 export default function FeedbackSidebar({
   items, search, setSearch,
   typeFilter, setTypeFilter,
@@ -57,113 +51,81 @@ export default function FeedbackSidebar({
   myOnly, setMyOnly,
   currentUserId,
 }: Props) {
-  const bugs        = items.filter(i => i.tipo === 'bug').length;
-  const sugestoes   = items.filter(i => i.tipo === 'melhoria').length;
-  const respondidas = items.filter(i => i.status === 'respondida').length;
-  const pendentes   = items.filter(i => i.status === 'pendente' || !i.status).length;
-  const mine        = items.filter(i => i.usuario_id === currentUserId).length;
-
-  const sectionLabel: React.CSSProperties = {
-    margin: '0 0 6px',
-    fontSize: '0.68rem',
-    fontWeight: 700,
-    color: 'var(--text-muted)',
-    textTransform: 'uppercase',
-    letterSpacing: '0.07em',
-    padding: '0 12px',
-  };
+  const mine = items.filter(i => i.usuario_id === currentUserId).length;
 
   return (
     <aside style={{
-      width: 240,
-      flexShrink: 0,
-      background: 'var(--bg-card)',
-      borderRight: '1px solid var(--border-light)',
-      display: 'flex',
-      flexDirection: 'column',
-      overflowY: 'auto',
+      width: 224, flexShrink: 0,
+      borderRight: '1px solid var(--line-1)',
+      overflowY: 'auto', padding: '20px 0',
+      background: 'var(--surface)',
     }}>
-      <div style={{ padding: '16px 14px', display: 'flex', flexDirection: 'column', gap: 18 }}>
 
-        {/* Pesquisa */}
-        <div style={{ position: 'relative' }}>
-          <Search size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-          <input type="text" placeholder="Pesquisar…" value={search}
+      {/* Pesquisa */}
+      <div style={{ padding: '0 18px 16px', borderBottom: '1px solid var(--line-2)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, border: '1px solid var(--border)', borderRadius: 3, padding: '7px 10px', background: 'var(--surface)' }}>
+          <Search size={13} color="var(--text-3)" />
+          <input
+            type="text"
+            placeholder="Buscar..."
+            value={search}
             onChange={e => setSearch(e.target.value)}
-            style={{ ...inp, paddingLeft: 32, fontSize: '0.82rem' }} />
+            style={{ border: 'none', outline: 'none', background: 'none', fontSize: '0.8rem', color: 'var(--text)', width: '100%', fontFamily: 'inherit' }}
+          />
         </div>
+      </div>
 
-        {/* TIPO */}
-        <div>
-          <p style={sectionLabel}>Tipo</p>
-          <NavItem active={typeFilter === 'todos' && !myOnly} onClick={() => { setTypeFilter('todos'); setMyOnly(false); }}>
-            <span>Todos</span>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 500 }}>{items.length}</span>
-          </NavItem>
-          <NavItem active={typeFilter === 'bug' && !myOnly} onClick={() => { setTypeFilter('bug'); setMyOnly(false); }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Bug size={13} />Bugs</span>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 500 }}>{bugs}</span>
-          </NavItem>
-          <NavItem active={typeFilter === 'melhoria' && !myOnly} onClick={() => { setTypeFilter('melhoria'); setMyOnly(false); }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Lightbulb size={13} />Sugestões</span>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 500 }}>{sugestoes}</span>
-          </NavItem>
+      {/* TIPO */}
+      <div style={{ padding: '14px 18px 8px' }}>
+        <div className="mono" style={SECTION_LABEL}>Tipo</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+          <FilterItem active={typeFilter === 'todos' && !myOnly} color="#034EA2" onClick={() => { setTypeFilter('todos'); setMyOnly(false); }}>Todos</FilterItem>
+          <FilterItem active={typeFilter === 'sugestao' && !myOnly} color="#034EA2" onClick={() => { setTypeFilter('sugestao'); setMyOnly(false); }}>Sugestão</FilterItem>
+          <FilterItem active={typeFilter === 'bug' && !myOnly} color="#b42318" onClick={() => { setTypeFilter('bug'); setMyOnly(false); }}>Bug</FilterItem>
+          <FilterItem active={typeFilter === 'melhoria' && !myOnly} color="#1B8A4B" onClick={() => { setTypeFilter('melhoria'); setMyOnly(false); }}>Melhoria</FilterItem>
+          <FilterItem active={typeFilter === 'duvida' && !myOnly} color="#A87A00" onClick={() => { setTypeFilter('duvida'); setMyOnly(false); }}>Dúvida</FilterItem>
         </div>
+      </div>
 
-        {/* STATUS */}
-        <div>
-          <p style={sectionLabel}>Status</p>
-          <NavItem active={statusFilter === 'todos' && !myOnly} onClick={() => { setStatusFilter('todos'); setMyOnly(false); }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Check size={13} />Todos os status</span>
-          </NavItem>
-          <NavItem active={statusFilter === 'respondidas' && !myOnly} onClick={() => { setStatusFilter('respondidas'); setMyOnly(false); }}>
-            <span>Respondidas</span>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 500 }}>{respondidas}</span>
-          </NavItem>
-          <NavItem active={statusFilter === 'pendentes' && !myOnly} onClick={() => { setStatusFilter('pendentes'); setMyOnly(false); }}>
-            <span>Pendentes</span>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 500 }}>{pendentes}</span>
-          </NavItem>
+      {/* STATUS */}
+      <div style={{ padding: '14px 18px 8px', borderTop: '1px solid var(--line-2)' }}>
+        <div className="mono" style={SECTION_LABEL}>Status</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+          <FilterItem active={statusFilter === 'todos' && !myOnly} color="#034EA2" onClick={() => { setStatusFilter('todos'); setMyOnly(false); }}>Todos</FilterItem>
+          <FilterItem active={statusFilter === 'pendentes' && !myOnly} color="#A87A00" onClick={() => { setStatusFilter('pendentes'); setMyOnly(false); }}>Pendentes</FilterItem>
+          <FilterItem active={statusFilter === 'respondidas' && !myOnly} color="#1B8A4B" onClick={() => { setStatusFilter('respondidas'); setMyOnly(false); }}>Respondidas</FilterItem>
         </div>
+      </div>
 
-        {/* SEVERIDADE — chips */}
-        <div>
-          <p style={sectionLabel}>Severidade</p>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, padding: '0 12px' }}>
-            {SEVERITIES.map(s => {
-              const active = severityFilter === s.value;
-              return (
-                <button key={s.value}
-                  onClick={() => setSeverityFilter(active ? 'todos' : s.value)}
-                  style={{
-                    padding: '4px 11px', borderRadius: 20, fontSize: '0.73rem', fontWeight: active ? 700 : 500,
-                    background: active ? 'rgba(3,78,162,0.1)' : 'var(--bg-subtle)',
-                    border: `1.5px solid ${active ? 'var(--primary)' : 'var(--border-light)'}`,
-                    color: active ? 'var(--primary)' : 'var(--text-secondary)',
-                    cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s',
-                  }}>
-                  {s.value}
-                </button>
-              );
-            })}
-          </div>
+      {/* SEVERIDADE */}
+      <div style={{ padding: '14px 18px 8px', borderTop: '1px solid var(--line-2)' }}>
+        <div className="mono" style={SECTION_LABEL}>Severidade</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+          <FilterItem active={severityFilter === 'todos'} color="#034EA2" onClick={() => setSeverityFilter('todos')}>Todos</FilterItem>
+          <FilterItem active={severityFilter === 'Alta'} color="#b42318" onClick={() => setSeverityFilter(severityFilter === 'Alta' ? 'todos' : 'Alta')}>Alta</FilterItem>
+          <FilterItem active={severityFilter === 'Média'} color="#A87A00" onClick={() => setSeverityFilter(severityFilter === 'Média' ? 'todos' : 'Média')}>Média</FilterItem>
+          <FilterItem active={severityFilter === 'Baixa'} color="#1B8A4B" onClick={() => setSeverityFilter(severityFilter === 'Baixa' ? 'todos' : 'Baixa')}>Baixa</FilterItem>
         </div>
+      </div>
 
-        <hr style={{ border: 'none', borderTop: '1px solid var(--border-light)', margin: 0 }} />
-
-        {/* Minhas publicações */}
-        <button
+      {/* Apenas minhas — checkbox style */}
+      <div style={{ padding: '14px 18px', borderTop: '1px solid var(--line-2)' }}>
+        <div
           onClick={() => setMyOnly(!myOnly)}
-          style={{
-            width: '100%', background: myOnly ? 'rgba(3,78,162,0.08)' : 'none', border: 'none', cursor: 'pointer',
-            padding: '7px 12px', borderRadius: 6, textAlign: 'left', fontFamily: 'inherit',
-            fontSize: '0.84rem', color: myOnly ? 'var(--primary)' : 'var(--text-secondary)',
-            fontWeight: myOnly ? 700 : 500, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            transition: 'background 0.15s',
+          style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '7px 9px', borderRadius: 3, cursor: 'pointer', background: myOnly ? '#034EA20d' : 'transparent' }}
+        >
+          <div style={{
+            width: 16, height: 16, borderRadius: 3, flexShrink: 0,
+            border: `1.5px solid ${myOnly ? '#034EA2' : 'var(--border)'}`,
+            background: myOnly ? '#034EA2' : 'var(--surface)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
-          <span>Minhas publicações {!myOnly && '→'}</span>
-          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 500 }}>{mine}</span>
-        </button>
+            {myOnly && <Check size={10} color="#fff" strokeWidth={3} />}
+          </div>
+          <span style={{ fontSize: '0.82rem', color: 'var(--text-2)' }}>
+            Apenas minhas{mine > 0 ? ` (${mine})` : ''}
+          </span>
+        </div>
       </div>
     </aside>
   );

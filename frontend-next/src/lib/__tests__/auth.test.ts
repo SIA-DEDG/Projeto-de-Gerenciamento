@@ -9,6 +9,9 @@ const mockUser = {
   role: 'Admin',
   username: 'test_user',
   must_change_password: false,
+  directoria_id: null,
+  directoria_name: null,
+  directoria_color: null,
 };
 
 function makeJwt(exp: number): string {

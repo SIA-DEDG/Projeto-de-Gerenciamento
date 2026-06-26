@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useRef, useState } from 'react';
 import { FileUp, CheckCircle } from 'lucide-react';
@@ -275,7 +275,7 @@ export default function ImportModal({ open, projects, users, onClose, onImported
         </div>
 
         {error && (
-          <div style={{ marginBottom: 12, padding: '8px 12px', background: '#ffebe6', borderRadius: 4, color: '#de350b', fontSize: '0.85rem' }}>
+          <div style={{ marginBottom: 12, padding: '8px 12px', background: '#ffebe6', borderRadius: 3, color: '#de350b', fontSize: '0.85rem' }}>
             {error}
           </div>
         )}
@@ -283,7 +283,7 @@ export default function ImportModal({ open, projects, users, onClose, onImported
         {/* STEP: upload */}
         {step === 'upload' && (
           <div
-            style={{ border: '2px dashed #dfe1e6', borderRadius: 8, padding: '40px 24px', textAlign: 'center', cursor: 'pointer', background: '#fafbfc' }}
+            style={{ border: '2px dashed #dfe1e6', borderRadius: 3, padding: '40px 24px', textAlign: 'center', cursor: 'pointer', background: '#fafbfc' }}
             onClick={() => inputRef.current?.click()}
             onDragOver={(e) => e.preventDefault()}
             onDrop={(e) => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) handleFile(f); }}
@@ -308,7 +308,7 @@ export default function ImportModal({ open, projects, users, onClose, onImported
               <strong style={{ color: '#172b4d' }}>{fileName}</strong> — {rows.length} atividade{rows.length !== 1 ? 's' : ''} encontrada{rows.length !== 1 ? 's' : ''}
             </div>
 
-            <div style={{ overflowX: 'auto', maxHeight: 360, overflowY: 'auto', border: '1px solid #dfe1e6', borderRadius: 4 }}>
+            <div style={{ overflowX: 'auto', maxHeight: 360, overflowY: 'auto', border: '1px solid #dfe1e6', borderRadius: 3 }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem' }}>
                 <thead>
                   <tr style={{ background: '#f4f5f7', position: 'sticky', top: 0 }}>

@@ -13,7 +13,7 @@ import { getToken, clearAuth } from './auth';
 const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
 
 const apiCache = new Map<string, { data: unknown; cachedAt: number }>();
-const TTL = 45_000; // 45 seconds
+const TTL = 60_000; // 60 seconds
 
 function cacheGet<T>(key: string): T | null {
   const hit = apiCache.get(key);
@@ -28,15 +28,33 @@ function cacheInvalidate(...keys: string[]): void {
   keys.forEach((k) => apiCache.delete(k));
 }
 
+// Requests em voo: evita requests paralelos duplicados para a mesma chave
+const inFlight = new Map<string, Promise<unknown>>();
+
 async function fetchCached<T>(key: string, fetcher: () => Promise<T>): Promise<T> {
   const hit = cacheGet<T>(key);
   if (hit !== null) {
-    fetcher().then((fresh) => cacheSet(key, fresh)).catch(() => null);
+    // Background refresh com deduplicação
+    if (!inFlight.has(key)) {
+      const p = fetcher()
+        .then((fresh) => cacheSet(key, fresh))
+        .catch(() => null)
+        .finally(() => inFlight.delete(key));
+      inFlight.set(key, p as Promise<unknown>);
+    }
     return hit;
   }
-  const data = await fetcher();
-  cacheSet(key, data);
-  return data;
+  // Se já há um fetch em voo para esta chave, aguarda e retorna do cache
+  if (inFlight.has(key)) {
+    await inFlight.get(key);
+    const cached = cacheGet<T>(key);
+    if (cached !== null) return cached;
+  }
+  const p = fetcher()
+    .then((data) => { cacheSet(key, data); return data; })
+    .finally(() => inFlight.delete(key));
+  inFlight.set(key, p as Promise<unknown>);
+  return p;
 }
 type RawTask = Omit<Task, 'status_group' | 'badge_color' | 'date'>;
 
@@ -47,6 +65,20 @@ export interface UserPublic {
   role: string;
   must_change_password: boolean;
   created_at: string;
+  directoria_id: string | null;
+  directoria_name: string | null;
+  directoria_color: string | null;
+}
+
+export interface Directoria {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  color: string | null;
+  active: boolean;
+  created_at: string;
+  member_count?: number;
 }
 
 export interface ActivityLog {
@@ -99,6 +131,16 @@ export async function fetchTasks(): Promise<Task[]> {
     return data.map(enrichTask);
   });
 }
+
+function readCache<T>(key: string): T | null {
+  const hit = apiCache.get(key);
+  if (!hit || Date.now() - hit.cachedAt > TTL) return null;
+  return hit.data as T;
+}
+
+export function getCachedTasks(): Task[] | null { return readCache<Task[]>('tasks'); }
+export function getCachedProjects(): Project[] | null { return readCache<Project[]>('projects'); }
+export function getCachedUsers(): UserPublic[] | null { return readCache<UserPublic[]>('users'); }
 
 export async function invalidateTasksCache(): Promise<void> {
   cacheInvalidate('tasks');
@@ -198,6 +240,49 @@ export async function deleteTask(id: string): Promise<void> {
   emitTasksChanged();
 }
 
+export async function fetchArchivedTasks(): Promise<Task[]> {
+  const data = await apiFetch<RawTask[]>('/api/tasks/archived');
+  return data.map(enrichTask);
+}
+
+export async function archiveTask(id: string): Promise<void> {
+  await apiFetch<void>(`/api/tasks/${id}/archive`, { method: 'PUT' });
+  cacheInvalidate('tasks');
+  emitTasksChanged();
+}
+
+export async function unarchiveTask(id: string): Promise<void> {
+  await apiFetch<void>(`/api/tasks/${id}/unarchive`, { method: 'PUT' });
+  cacheInvalidate('tasks');
+  emitTasksChanged();
+}
+
+// ── Anexos de atividades ──────────────────────────────────────────────────────
+import type { TaskAttachment } from '@/types';
+
+export async function addTaskFile(taskId: string, file: { name: string; data: string; mimeType: string; size: number }): Promise<TaskAttachment[]> {
+  return apiFetch<TaskAttachment[]>(`/api/tasks/${taskId}/attachments`, {
+    method: 'POST',
+    body: JSON.stringify({ type: 'file', name: file.name, fileData: file.data, mimeType: file.mimeType, size: file.size }),
+  });
+}
+
+export async function addTaskLink(taskId: string, name: string, url: string): Promise<TaskAttachment[]> {
+  return apiFetch<TaskAttachment[]>(`/api/tasks/${taskId}/attachments`, {
+    method: 'POST',
+    body: JSON.stringify({ type: 'link', name, url }),
+  });
+}
+
+export async function removeTaskAttachment(taskId: string, index: number): Promise<TaskAttachment[]> {
+  return apiFetch<TaskAttachment[]>(`/api/tasks/${taskId}/attachments/${index}`, { method: 'DELETE' });
+}
+
+export async function getTaskAttachmentUrl(taskId: string, index: number): Promise<string> {
+  const { url } = await apiFetch<{ url: string }>(`/api/tasks/${taskId}/attachments/${index}/url`);
+  return url;
+}
+
 export async function importTasks(rows: {
   category: string;
   activity: string;
@@ -281,8 +366,9 @@ export async function deleteTeamMember(name: string): Promise<void> {
 
 
 export async function login(username: string, password: string): Promise<{
-  token: string; user_id: string; name: string; role: string;
-  username: string; must_change_password: boolean;
+  token: string; user_id: string; name: string; role: string; username: string;
+  must_change_password: boolean; directoria_id: string | null;
+  directoria_name: string | null; directoria_color: string | null;
 }> {
   const response = await fetch(`${BASE_URL}/api/auth/login`, {
     method: 'POST',
@@ -344,18 +430,21 @@ export async function clearLogs(): Promise<void> {
 export interface Absence {
   id: string;
   user_id: string | null;
-  employee_name: string;        // name from JOIN — display only
+  employee_name: string;
+  directoria_id: string | null;
+  directoria_name: string | null;
   reason: string;
   justification: string | null;
   file_name: string | null;
   file_data: string | null;
   start_date: string;
   end_date: string;
+  approval_status: string;
   created_at: string;
 }
 
 export async function fetchAbsences(): Promise<Absence[]> {
-  return apiFetch<Absence[]>('/api/absences');
+  return fetchCached('absences', () => apiFetch<Absence[]>('/api/absences'));
 }
 
 export async function createAbsence(payload: {
@@ -367,14 +456,14 @@ export async function createAbsence(payload: {
   start_date: string;
   end_date: string;
 }): Promise<Absence> {
-  return apiFetch<Absence>('/api/absences', {
-    method: 'POST',
-    body: JSON.stringify(payload),
-  });
+  const result = await apiFetch<Absence>('/api/absences', { method: 'POST', body: JSON.stringify(payload) });
+  cacheInvalidate('absences');
+  return result;
 }
 
 export async function deleteAbsence(id: string): Promise<void> {
   await apiFetch<void>(`/api/absences/${id}`, { method: 'DELETE' });
+  cacheInvalidate('absences');
 }
 
 export async function updateAbsence(id: string, payload: {
@@ -383,21 +472,28 @@ export async function updateAbsence(id: string, payload: {
   start_date: string;
   end_date: string;
 }): Promise<Absence> {
-  return apiFetch<Absence>(`/api/absences/${id}`, {
-    method: 'PUT',
-    body: JSON.stringify(payload),
-  });
+  const result = await apiFetch<Absence>(`/api/absences/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
+  cacheInvalidate('absences');
+  return result;
+}
+
+export async function approveAbsence(id: string, approval_status: 'aprovada' | 'recusada' | 'pendente'): Promise<Absence> {
+  const result = await apiFetch<Absence>(`/api/absences/${id}/approval`, { method: 'PUT', body: JSON.stringify({ approval_status }) });
+  cacheInvalidate('absences');
+  return result;
 }
 
 export interface CalendarEvent {
   id: string;
   name: string;
-  responsibles: string;      // JSON array of names from junction — display only
+  responsibles: string;
   event_type: string;
   attendees: string | null;
   start_date: string;
   end_date: string;
   start_time: string | null;
+  minutes_file_name: string | null;
+  minutes_file_path: string | null; // path no Supabase Storage
   is_private: boolean;
   is_company_wide: boolean;
   created_at: string;
@@ -405,7 +501,7 @@ export interface CalendarEvent {
 }
 
 export async function fetchEvents(): Promise<CalendarEvent[]> {
-  return apiFetch<CalendarEvent[]>('/api/events');
+  return fetchCached('events', () => apiFetch<CalendarEvent[]>('/api/events'));
 }
 
 export async function createEvent(payload: {
@@ -419,10 +515,9 @@ export async function createEvent(payload: {
   is_private: boolean;
   is_company_wide?: boolean;
 }): Promise<CalendarEvent> {
-  return apiFetch<CalendarEvent>('/api/events', {
-    method: 'POST',
-    body: JSON.stringify(payload),
-  });
+  const result = await apiFetch<CalendarEvent>('/api/events', { method: 'POST', body: JSON.stringify(payload) });
+  cacheInvalidate('events');
+  return result;
 }
 
 export async function updateEvent(id: string, payload: {
@@ -436,14 +531,35 @@ export async function updateEvent(id: string, payload: {
   is_private: boolean;
   is_company_wide?: boolean;
 }): Promise<CalendarEvent> {
-  return apiFetch<CalendarEvent>(`/api/events/${id}`, {
-    method: 'PUT',
-    body: JSON.stringify(payload),
-  });
+  const result = await apiFetch<CalendarEvent>(`/api/events/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
+  cacheInvalidate('events');
+  return result;
 }
 
 export async function deleteEvent(id: string): Promise<void> {
   await apiFetch<void>(`/api/events/${id}`, { method: 'DELETE' });
+  cacheInvalidate('events');
+}
+
+export async function setEventMinutes(id: string, file_name: string, file_data: string): Promise<CalendarEvent> {
+  const result = await apiFetch<CalendarEvent>(`/api/events/${id}/minutes`, {
+    method: 'PUT',
+    body: JSON.stringify({ fileName: file_name, fileData: file_data }),
+  });
+  cacheInvalidate('events');
+  return result;
+}
+
+export async function removeEventMinutes(id: string): Promise<CalendarEvent> {
+  const result = await apiFetch<CalendarEvent>(`/api/events/${id}/minutes`, { method: 'DELETE' });
+  cacheInvalidate('events');
+  return result;
+}
+
+/** Obtém URL assinada (1h) para download da ata de um evento */
+export async function getEventMinutesUrl(id: string): Promise<string> {
+  const { url } = await apiFetch<{ url: string }>(`/api/events/${id}/minutes/url`);
+  return url;
 }
 
 export async function deleteUser(id: string): Promise<void> {
@@ -469,17 +585,18 @@ export async function adminResetUserPassword(id: string, newPassword: string): P
 
 export interface FeedbackItem {
   id: string;
-  tipo: 'bug' | 'melhoria';
+  tipo: string;
   titulo: string;
   descricao: string;
   severidade: string | null;
   usuario_id: string | null;
   usuario_nome: string | null;
-  imagens: string | null;
+  usuario_diretoria: string | null;
+  imagens: string[];
   resposta: string | null;
   status: 'pendente' | 'respondida';
   upvotes: number;
-  upvoted_by: string;
+  upvoted_by: string[];
   comment_count: number;
   created_at: string;
 }
@@ -495,56 +612,66 @@ export interface FeedbackComment {
 }
 
 export async function fetchFeedbacks(): Promise<FeedbackItem[]> {
-  return apiFetch<FeedbackItem[]>('/api/feedback');
+  return fetchCached('feedback', () => apiFetch<FeedbackItem[]>('/api/feedback'));
 }
 
 export async function submitFeedback(payload: {
-  tipo: 'bug' | 'melhoria';
+  tipo: string;
   titulo: string;
   descricao: string;
   severidade: string | null;
-  usuario_nome: string | null;
-  imagens: { nome: string; dados: string }[];
+  imagens: string[];
 }): Promise<FeedbackItem> {
-  return apiFetch<FeedbackItem>('/api/feedback', {
+  const result = await apiFetch<FeedbackItem>('/api/feedback', {
     method: 'POST',
     body: JSON.stringify(payload),
   });
+  cacheInvalidate('feedback');
+  return result;
 }
 
 export async function updateFeedback(id: string, payload: {
-  tipo: 'bug' | 'melhoria';
+  tipo: string;
   titulo: string;
   descricao: string;
   severidade: string | null;
-  imagens: { nome: string; dados: string }[];
+  imagens: string[];
 }): Promise<FeedbackItem> {
-  return apiFetch<FeedbackItem>(`/api/feedback/${id}`, {
+  const result = await apiFetch<FeedbackItem>(`/api/feedback/${id}`, {
     method: 'PUT',
     body: JSON.stringify(payload),
   });
+  cacheInvalidate('feedback');
+  return result;
 }
 
 export async function toggleFeedbackUpvote(id: string): Promise<FeedbackItem> {
-  return apiFetch<FeedbackItem>(`/api/feedback/${id}/upvote`, { method: 'POST' });
+  const result = await apiFetch<FeedbackItem>(`/api/feedback/${id}/upvote`, { method: 'POST' });
+  cacheInvalidate('feedback');
+  return result;
 }
 
 export async function deleteFeedback(id: string): Promise<void> {
-  return apiFetch<void>(`/api/feedback/${id}`, { method: 'DELETE' });
+  await apiFetch<void>(`/api/feedback/${id}`, { method: 'DELETE' });
+  cacheInvalidate('feedback');
 }
 
 export async function setFeedbackStatus(id: string, status: 'pendente' | 'respondida'): Promise<FeedbackItem> {
-  return apiFetch<FeedbackItem>(`/api/feedback/${id}/status`, {
+  const result = await apiFetch<FeedbackItem>(`/api/feedback/${id}/status`, {
     method: 'PUT',
     body: JSON.stringify({ status }),
   });
+  cacheInvalidate('feedback');
+  return result;
 }
 
 export async function setFeedbackResposta(id: string, resposta: string | null): Promise<FeedbackItem> {
-  return apiFetch<FeedbackItem>(`/api/feedback/${id}/resposta`, {
+  const result = await apiFetch<FeedbackItem>(`/api/feedback/${id}/resposta`, {
     method: 'PUT',
     body: JSON.stringify({ resposta }),
   });
+  cacheInvalidate('feedback');
+  return result;
 }
 
 export async function fetchComments(feedbackId: string): Promise<FeedbackComment[]> {
@@ -560,4 +687,55 @@ export async function addComment(feedbackId: string, conteudo: string, parentId?
 
 export async function deleteComment(feedbackId: string, commentId: string): Promise<void> {
   return apiFetch<void>(`/api/feedback/${feedbackId}/comments/${commentId}`, { method: 'DELETE' });
+}
+
+// ── Diretorias ────────────────────────────────────────────────────────────────
+
+export async function fetchDiretorias(): Promise<Directoria[]> {
+  return fetchCached('diretorias', () => apiFetch<Directoria[]>('/api/diretorias'));
+}
+
+export async function createDirectoria(payload: {
+  name: string; slug: string; description?: string | null; color?: string | null;
+}): Promise<Directoria> {
+  const result = await apiFetch<Directoria>('/api/diretorias', { method: 'POST', body: JSON.stringify(payload) });
+  cacheInvalidate('diretorias');
+  return result;
+}
+
+export async function updateDirectoria(id: string, payload: {
+  name?: string; description?: string | null; color?: string | null; active?: boolean;
+}): Promise<Directoria> {
+  const result = await apiFetch<Directoria>(`/api/diretorias/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
+  cacheInvalidate('diretorias');
+  return result;
+}
+
+export async function deleteDirectoria(id: string): Promise<void> {
+  await apiFetch<void>(`/api/diretorias/${id}`, { method: 'DELETE' });
+  cacheInvalidate('diretorias');
+}
+
+export async function toggleDirectoriaActive(id: string, active: boolean): Promise<Directoria> {
+  const result = await apiFetch<Directoria>(`/api/diretorias/${id}/active`, { method: 'PATCH', body: JSON.stringify({ active }) });
+  cacheInvalidate('diretorias');
+  return result;
+}
+
+export async function moveUserToDirectoria(directoriaId: string, userId: string): Promise<void> {
+  await apiFetch<void>(`/api/diretorias/${directoriaId}/member`, { method: 'PUT', body: JSON.stringify({ user_id: userId }) });
+  cacheInvalidate('users', 'diretorias', 'users_all');
+}
+
+export async function removeUserFromDirectoria(userId: string): Promise<void> {
+  await apiFetch<void>(`/api/diretorias/member/${userId}`, { method: 'DELETE' });
+  cacheInvalidate('users', 'diretorias', 'users_all');
+}
+
+export async function fetchAllUsers(): Promise<UserPublic[]> {
+  return fetchCached('users_all', () => apiFetch<UserPublic[]>('/api/users/all'));
+}
+
+export async function fetchDirectoriaMembers(directoriaId: string): Promise<UserPublic[]> {
+  return apiFetch<UserPublic[]>(`/api/diretorias/${directoriaId}/members`);
 }

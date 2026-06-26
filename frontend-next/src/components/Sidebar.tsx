@@ -1,37 +1,46 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import Link from 'next/link';
-import { LayoutGrid, User, Logs, CalendarDays, CalendarMinus, Folder, ChartPie, Settings, MessageSquareWarning, UserRoundPlus, UsersRound, LogOut } from 'lucide-react';
-import { usePathname, useRouter } from 'next/navigation';
-import { getUser, clearAuth, canManageUsers } from '@/lib/auth';
-
-const ROLE_LABELS: Record<string, string> = {
-  Estagiario: 'Estagiário(a)',
-  Funcionario: 'Funcionário(a)',
-  Tecnico: 'Técnico(a)',
-  Coordenador: 'Coordenador(a)',
-  Gerente: 'Gerente',
-  Diretor: 'Diretor(a)',
-  Admin: 'Administrador(a)',
-};
+import {
+  LayoutGrid, User, CalendarDays, CalendarMinus, Folder,
+  ChartPie, Logs, Settings, MessageSquareWarning,
+  UserRoundPlus, UsersRound, Archive, LogOut, Moon, Sun,
+} from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { getUser, clearAuth, canManageUsers, isSuperAdmin } from '@/lib/auth';
 import { fetchTasks, fetchFeedbacks } from '@/lib/api';
 import { onTasksChanged } from '@/lib/taskEvents';
-import { useRefetchOnFocus } from '@/lib/useRefetchOnFocus';
+import { useTabs, useActiveTab, PAGE_INFO, type PageType } from '@/context/TabsContext';
 
-export default function Sidebar() {
-  const pathname = usePathname();
+const ROLE_LABELS: Record<string, string> = {
+  Estagiario: 'ESTAGIÁRIO(A)',
+  Funcionario: 'FUNCIONÁRIO(A)',
+  Tecnico: 'TÉCNICO(A)',
+  Coordenador: 'COORDENADOR(A)',
+  Gerente: 'GERENTE',
+  Diretor: 'DIRETOR(A)',
+  Admin: 'ADMIN',
+};
+
+interface Props {
+  onToggleTheme: () => void;
+  isDark: boolean;
+}
+
+export default function Sidebar({ onToggleTheme, isDark }: Props) {
   const router = useRouter();
   const [user, setUser] = useState<ReturnType<typeof getUser>>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [pendingCount, setPendingCount] = useState(0);
+  const [pendingCountFeedback, setPendingCountFeedback] = useState(0);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  const { openTab } = useTabs();
+  const activeTab = useActiveTab();
 
   const initials = user?.name
     ? user.name.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase()
-    : 'VY';
-
-  const [menuOpen, setMenuOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
-  const [pendingCount, setPendingCount] = useState(0);
-  const [pendingCountFeedback, setPendingCountFeedback] = useState(0);
+    : 'SIA';
 
   useEffect(() => { setUser(getUser()); }, []);
 
@@ -39,205 +48,247 @@ export default function Sidebar() {
     const currentUser = getUser();
     if (!currentUser) return;
     fetchTasks().then((tasks) => {
-      const mine = tasks.filter((task) => {
-        if (task.status_group == 'done') return false;
-        if (task.responsible === currentUser.name) return true;
+      const mine = tasks.filter((t) => {
+        if (t.status_group === 'done') return false;
+        if (t.responsible === currentUser.name) return true;
         try {
-          const coResponsibles: string[] = task.co_responsibles ? JSON.parse(task.co_responsibles) : [];
-          return coResponsibles.includes(currentUser.name);
+          const co: string[] = t.co_responsibles ? JSON.parse(t.co_responsibles) : [];
+          return co.includes(currentUser.name);
         } catch { return false; }
       });
       setPendingCount(mine.length);
     }).catch(() => null);
   }, []);
 
-  const loadPendingfeedback = useCallback(() => {
-
-    fetchFeedbacks().then((feedback) => {
-      setPendingCountFeedback(feedback.length);
-    }).catch(() => null);
+  const loadPendingFeedback = useCallback(() => {
+    fetchFeedbacks().then((fb) => setPendingCountFeedback(fb.length)).catch(() => null);
   }, []);
 
   useEffect(() => { loadPending(); }, [loadPending]);
-  useRefetchOnFocus(loadPending);
   useEffect(() => onTasksChanged(loadPending), [loadPending]);
 
-  useEffect(() => { loadPendingfeedback(); }, [loadPendingfeedback]);
-  useRefetchOnFocus(loadPendingfeedback);
-  useEffect(() => onTasksChanged(loadPendingfeedback), [loadPendingfeedback]);
+  useEffect(() => { loadPendingFeedback(); }, [loadPendingFeedback]);
+  useEffect(() => onTasksChanged(loadPendingFeedback), [loadPendingFeedback]);
 
   useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setMenuOpen(false);
-      }
+    function handler(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
     }
-    if (menuOpen) document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
+    if (menuOpen) document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
   }, [menuOpen]);
 
-  function handleLogout() {
-    clearAuth();
-    router.replace('/login');
+  function handleLogout() { clearAuth(); router.replace('/login'); }
+
+  function nav(type: PageType) {
+    openTab(type);
+    history.replaceState(null, '', PAGE_INFO[type].path);
   }
+
+  function isActiveType(type: PageType) {
+    return activeTab?.type === type ? 'sidebar-nav-link active' : 'sidebar-nav-link';
+  }
+
+  function NavLink({ type, children, style }: { type: PageType; children: React.ReactNode; style?: React.CSSProperties }) {
+    return (
+      <button onClick={() => nav(type)} className={isActiveType(type)} style={{ background: 'none', border: 'none', cursor: 'pointer', width: '100%', textAlign: 'left', ...style }}>
+        {children}
+      </button>
+    );
+  }
+
+  const isAdmin = canManageUsers(user?.role);
+  const isSuperAdminUser = isSuperAdmin(user);
 
   return (
     <aside className="sidebar">
-      <div className="logo">
-        <div className="logo-icon">TS</div>
-        <div className="logo-text">
-          <span className="logo-title">Tasks SIA</span>
-          <span className="logo-subtitle">Atividades e Projetos</span>
+      {/* Logo
+      <div className="sidebar-logo">
+        <div className="sidebar-logo-mark">
+          <img src="/tasks.svg" alt="" />
         </div>
-      </div>
+        <div className="rail-hide" style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.2 }}>
+          <span className="sidebar-logo-name">Tasks SIA</span>
+          <span className="sidebar-logo-sub">DEDG · GOV-PI</span>
+        </div>
+      </div> */}
 
-      <div className="sidebar-divider" />
+      {/* Badge da diretoria */}
+      {user && (
+        <div className="rail-hide" style={{ padding: '10px 16px 0' }}>
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 7, padding: '6px 10px',
+            borderRadius: 3, background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)',
+          }}>
+            <div style={{
+              width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
+              background: isSuperAdminUser ? '#f59e0b' : (user.directoria_color ?? '#6b7280'),
+            }} />
+            <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.75)', fontWeight: 500, letterSpacing: '0.3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {isSuperAdminUser ? 'Sistema Global' : (user.directoria_name ?? 'Sem diretoria')}
+            </span>
+          </div>
+        </div>
+      )}
 
-      <div className="sidebar-scroll" style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
-        <div className="sidebar-section">
-          <div className="sidebar-section-title">Planejamento</div>
-          <ul className="nav">
-            <li className={pathname === '/' ? 'active' : ''}>
-              <Link href="/" className="nav-link">
-                <span className="nav-icon">
-                  <LayoutGrid size={18} />
-                </span>
-                Atividades
-              </Link>
+      {/* Navegação */}
+      <div className="sidebar-nav-area">
+        {/* PLANEJAMENTO */}
+        <div className="sidebar-group">
+          <span className="sidebar-group-label">Planejamento</span>
+          <ul className="sidebar-nav">
+            <li>
+              <NavLink type="board">
+                <span className="nav-icon"><LayoutGrid size={17} /></span>
+                <span className="rail-label">Atividades</span>
+              </NavLink>
             </li>
-            <li className={pathname === '/minhas-atividades' ? 'active' : ''}>
-              <Link href="/minhas-atividades" className="nav-link" style={{ justifyContent: 'space-between' }}>
-                <span style={{ display: 'flex', alignItems: 'center', gap: 'inherit' }}>
-                  <span className="nav-icon">
-                    <User size={18} />
-                  </span>
-                  Minhas Atividades
+            <li>
+              <NavLink type="minhas-atividades" style={{ justifyContent: 'space-between' }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
+                  <span className="nav-icon"><User size={17} /></span>
+                  <span className="rail-label">Minhas atividades</span>
                 </span>
                 {pendingCount > 0 && (
-                  <span style={{ background: '#ef4123', color: '#fff', fontSize: '0.65rem', fontWeight: 700, borderRadius: 20, minWidth: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 5px', flexShrink: 0, lineHeight: 1 }}>
-                    {pendingCount > 99 ? '99+' : pendingCount}
-                  </span>
+                  <span className="sidebar-nav-badge rail-label">{pendingCount > 99 ? '99+' : pendingCount}</span>
                 )}
-              </Link>
+              </NavLink>
             </li>
-            <li className={pathname === '/faltas' ? 'active' : ''}>
-              <Link href="/faltas" className="nav-link">
-                <span className="nav-icon">
-                  <CalendarMinus size={18} />
-                </span>
-                Faltas
-              </Link>
+            <li>
+              <NavLink type="eventos">
+                <span className="nav-icon"><CalendarDays size={17} /></span>
+                <span className="rail-label">Eventos</span>
+              </NavLink>
             </li>
-            <li className={pathname === '/eventos' ? 'active' : ''}>
-              <Link href="/eventos" className="nav-link">
-                <span className="nav-icon">
-                  <CalendarDays size={18} />
-                </span>
-                Eventos
-              </Link>
+            <li>
+              <NavLink type="faltas">
+                <span className="nav-icon"><CalendarMinus size={17} /></span>
+                <span className="rail-label">Faltas</span>
+              </NavLink>
             </li>
-            <li className={pathname === '/dashboards' ? 'active' : ''}>
-              <Link href="/dashboards" className="nav-link">
-                <ChartPie size={18} />
-                Dashboards
-              </Link>
-            </li>
-            <li className={pathname === '/projetos' ? 'active' : ''}>
-              <Link href="/projetos" className="nav-link">
-                <span className="nav-icon">
-                  <Folder size={18} />
-                </span>
-                Projetos
-              </Link>
-            </li>
-            <li className={pathname === '/logs' ? 'active' : ''}>
-              <Link href="/logs" className="nav-link">
-                <span className="nav-icon">
-                  <Logs size={18} />
-                </span>
-                Logs
-              </Link>
+            <li>
+              <NavLink type="arquivadas">
+                <span className="nav-icon"><Archive size={17} /></span>
+                <span className="rail-label">Arquivadas</span>
+              </NavLink>
             </li>
           </ul>
         </div>
 
         <div className="sidebar-divider" />
 
-        <div className="sidebar-section">
-          <div className="sidebar-section-title">Configuração</div>
-          <ul className="nav">
-            <li className={pathname === '/configuracoes' ? 'active' : ''}>
-              <Link href="/configuracoes" className="nav-link">
-                <span className="nav-icon">
-                  <Settings size={18} />
-                </span>
-                Configurações
-              </Link>
+        {/* ANÁLISE */}
+        <div className="sidebar-group">
+          <span className="sidebar-group-label">Análise</span>
+          <ul className="sidebar-nav">
+            <li>
+              <NavLink type="dashboards">
+                <span className="nav-icon"><ChartPie size={17} /></span>
+                <span className="rail-label">Dashboards</span>
+              </NavLink>
             </li>
-            <li className={pathname === '/feedback' ? 'active' : ''}>
-              <Link href="/feedback" className="nav-link">
-                <span className="nav-icon">
-                  <MessageSquareWarning size={18} />
-                </span>
-                Relatar Feedback
-                {pendingCountFeedback > 0 && (
-                  <span style={{ background: '#ef4123', color: '#fff', fontSize: '0.65rem', fontWeight: 700, borderRadius: 20, minWidth: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 5px', flexShrink: 0, lineHeight: 1 }}>
-                    {pendingCountFeedback > 99 ? '99+' : pendingCountFeedback}
-                  </span>
-                )}
-              </Link>
+            <li>
+              <NavLink type="projetos">
+                <span className="nav-icon"><Folder size={17} /></span>
+                <span className="rail-label">Projetos</span>
+              </NavLink>
             </li>
-            {canManageUsers(user?.role) && (
-              <li className={pathname === '/admin/registro' ? 'active' : ''}>
-                <Link href="/admin/registro" className="nav-link">
-                  <span className="nav-icon">
-                    <UserRoundPlus size={18} />
-                  </span>
-                  Cadastrar usuário
-                </Link>
-              </li>
-            )}
-            {canManageUsers(user?.role) && (
-              <li className={pathname === '/admin/usuarios' ? 'active' : ''}>
-                <Link href="/admin/usuarios" className="nav-link">
-                  <span className="nav-icon">
-                    <UsersRound size={18} />
-                  </span>
-                  Gerenciar usuários
-                </Link>
-              </li>
-            )}
+            <li>
+              <NavLink type="logs">
+                <span className="nav-icon"><Logs size={17} /></span>
+                <span className="rail-label">Logs</span>
+              </NavLink>
+            </li>
           </ul>
         </div>
-      </div>{/* fim container scrollable */}
 
+        <div className="sidebar-divider" />
+
+        {/* SISTEMA */}
+        <div className="sidebar-group">
+          <span className="sidebar-group-label">Sistema</span>
+          <ul className="sidebar-nav">
+            <li>
+              <NavLink type="configuracoes">
+                <span className="nav-icon"><Settings size={17} /></span>
+                <span className="rail-label">Configurações</span>
+              </NavLink>
+            </li>
+            <li>
+              <NavLink type="feedback" style={{ justifyContent: 'space-between' }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
+                  <span className="nav-icon"><MessageSquareWarning size={17} /></span>
+                  <span className="rail-label">Feedback</span>
+                </span>
+                {pendingCountFeedback > 0 && (
+                  <span className="sidebar-nav-badge rail-label">{pendingCountFeedback > 99 ? '99+' : pendingCountFeedback}</span>
+                )}
+              </NavLink>
+            </li>
+          </ul>
+        </div>
+
+        {/* ADMIN — condicional */}
+        {isAdmin && (
+          <>
+            <div className="sidebar-divider" />
+            <div className="sidebar-group">
+              <span className="sidebar-group-label">Admin</span>
+              <ul className="sidebar-nav">
+                <li>
+                  <NavLink type="admin-registro">
+                    <span className="nav-icon"><UserRoundPlus size={17} /></span>
+                    <span className="rail-label">Cadastrar usuário</span>
+                  </NavLink>
+                </li>
+                <li>
+                  <NavLink type="admin-usuarios">
+                    <span className="nav-icon"><UsersRound size={17} /></span>
+                    <span className="rail-label">Gerenciar usuários</span>
+                  </NavLink>
+                </li>
+                {isSuperAdminUser && (
+                  <li>
+                    <NavLink type="admin-diretorias">
+                      <span className="nav-icon"><Folder size={17} /></span>
+                      <span className="rail-label">Diretorias</span>
+                    </NavLink>
+                  </li>
+                )}
+              </ul>
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Rodapé */}
       <div className="sidebar-footer">
-        <div className="sidebar-user" style={{ position: 'relative' }} ref={menuRef}>
-          <button
-            className="sidebar-user-btn"
-            onClick={() => setMenuOpen((isOpen) => !isOpen)}
-            title="Conta"
-          >
+        {/* Botão alternar tema */}
+        <button className="sidebar-theme-btn" onClick={onToggleTheme}>
+          <span className="nav-icon">
+            {isDark ? <Sun size={16} /> : <Moon size={16} />}
+          </span>
+          <span className="rail-label">{isDark ? 'Tema claro' : 'Tema escuro'}</span>
+        </button>
+
+        {/* Usuário */}
+        <div className="sidebar-user-wrap" ref={menuRef}>
+          <button className="sidebar-user-btn" onClick={() => setMenuOpen((o) => !o)}>
             <div className="sidebar-avatar">{initials}</div>
-            <div className="sidebar-user-info">
+            <div className="sidebar-user-info rail-hide">
               <span className="sidebar-user-name">{user?.name ?? 'Usuário'}</span>
               <span className="sidebar-user-role">{ROLE_LABELS[user?.role ?? ''] ?? user?.role ?? ''}</span>
             </div>
           </button>
 
           {menuOpen && (
-            <div className="sidebar-account-menu">
-              <Link
-                href="/configuracoes"
-                className="sidebar-account-item"
-                onClick={() => setMenuOpen(false)}
-                style={{ display: 'flex', alignItems: 'center' }}
-              >
-                <Settings size={14} style={{ marginRight: 8 }} />
+            <div className="sidebar-user-menu">
+              <button onClick={() => { nav('configuracoes'); setMenuOpen(false); }} className="sidebar-user-menu-item" style={{ background: 'none', border: 'none', cursor: 'pointer', width: '100%', textAlign: 'left' }}>
+                <Settings size={14} />
                 Configurações
-              </Link>
-              <button className="sidebar-account-item sidebar-account-logout" onClick={handleLogout}>
-                <LogOut size={14} style={{ marginRight: 8 }} />
+              </button>
+              <button className="sidebar-user-menu-item danger" onClick={handleLogout}>
+                <LogOut size={14} />
                 Sair
               </button>
             </div>

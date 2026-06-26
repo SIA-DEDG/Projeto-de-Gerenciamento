@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import type { Task } from '@/types';
 import { avatarColor, initials } from '@/lib/utils';
@@ -86,7 +86,7 @@ export default function TaskDetailModal({ open, task, projectName, onClose, onEd
         {/* Piauí flag stripe */}
         <div style={{
           height: 5, flexShrink: 0,
-          background: 'linear-gradient(to right, #034ea2 40%, #fdb913 40% 55%, #ef4123 55% 75%, #007932 75%)',
+          background: 'linear-gradient(to right, var(--blue) 40%, #fdb913 40% 55%, #ef4123 55% 75%, #007932 75%)',
         }} />
 
         {/* ── Panel header ──────────────────────── */}
@@ -128,7 +128,7 @@ export default function TaskDetailModal({ open, task, projectName, onClose, onEd
           {/* Status + Priority + Category */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
             <span style={{
-              padding: '3px 9px', borderRadius: 4,
+              padding: '3px 9px', borderRadius: 3,
               background: statusChip.bg, color: statusChip.color,
               fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.03em',
             }}>
@@ -137,7 +137,7 @@ export default function TaskDetailModal({ open, task, projectName, onClose, onEd
             {task.priority && (
               <span style={{
                 display: 'inline-flex', alignItems: 'center', gap: 5,
-                padding: '3px 9px', borderRadius: 4,
+                padding: '3px 9px', borderRadius: 3,
                 background: `${accentColor}14`, color: accentColor,
                 fontSize: '0.72rem', fontWeight: 700,
               }}>
@@ -147,7 +147,7 @@ export default function TaskDetailModal({ open, task, projectName, onClose, onEd
             )}
             {task.category && (
               <span style={{
-                padding: '3px 9px', borderRadius: 4,
+                padding: '3px 9px', borderRadius: 3,
                 background: 'var(--bg-subtle)', color: 'var(--text-secondary)',
                 fontSize: '0.72rem', fontWeight: 600,
                 border: '1px solid var(--border-light)',

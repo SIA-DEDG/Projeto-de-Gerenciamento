@@ -1,20 +1,26 @@
-export type StatusGroup = 'pending' | 'in_progress' | 'done';
+export type StatusGroup = 'pending' | 'in_progress' | 'review' | 'done';
+
+export type TaskAttachment =
+  | { type: 'file'; name: string; path: string; size: number; mimeType: string }
+  | { type: 'link'; name: string; url: string };
 
 export interface Task {
   id: string;
   category: string;
   activity: string;
   description?: string;
-  responsible_id?: string | null;   // UUID FK — used when sending to API
-  responsible: string;              // name from JOIN — used for display
+  responsible_id?: string | null;
+  responsible: string;
   status: string;
   priority: string;
   created_at: string;
+  updated_at?: string;
   project_id?: string | null;
-  co_responsibles?: string | null;    // JSON array of names from junction — display only
-  co_responsible_ids?: string | null; // JSON array of UUIDs from junction — used for updates
+  co_responsibles?: string | null;
+  co_responsible_ids?: string | null;
   external_collaborators?: string | null;
   deadline?: string | null;
+  attachments?: TaskAttachment[];
   // enriched client-side
   status_group: StatusGroup;
   badge_color: string;

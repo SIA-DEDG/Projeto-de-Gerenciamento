@@ -1,5 +1,81 @@
 import type { StatusGroup } from '@/types';
 
+// ── Status ────────────────────────────────────────────────────────────────────
+
+/** Cor hex de cada grupo de status (usada em cards, lista e spinebars). */
+export const STATUS_COLORS: Record<StatusGroup, string> = {
+  pending:     '#9aa1ac',
+  in_progress: 'var(--blue)',
+  review:      '#E0A92E',
+  done:        '#1B8A4B',
+};
+
+/** Próximo grupo de status no fluxo de trabalho. `done` não tem próximo. */
+export const STATUS_NEXT: Partial<Record<StatusGroup, StatusGroup>> = {
+  pending:     'in_progress',
+  in_progress: 'review',
+  review:      'done',
+};
+
+/** Definição das colunas do quadro Kanban — ordem e aparência. */
+export const KANBAN_COLUMNS: { id: StatusGroup; title: string; color: string }[] = [
+  { id: 'pending',     title: 'Pendente',     color: 'var(--s-pending)' },
+  { id: 'in_progress', title: 'Em Andamento', color: 'var(--s-progress)' },
+  { id: 'review',      title: 'Em Revisão',   color: 'var(--s-review)' },
+  { id: 'done',        title: 'Concluído',    color: 'var(--s-done)' },
+];
+
+// ── Priority ──────────────────────────────────────────────────────────────────
+
+export const PRIORITY_COLORS: Record<string, string> = {
+  Alta:  'var(--blue)',
+  Média: 'var(--text-2)',
+  Baixa: 'var(--text-3)',
+};
+
+// ── Co-responsible helpers ────────────────────────────────────────────────────
+
+/**
+ * Converte a lista JSON de nomes de co-responsáveis para seus IDs correspondentes.
+ * Retorna null quando não há nomes válidos ou a string não é JSON válido.
+ */
+export function resolveCoResponsibleIds(
+  coResponsiblesJson: string | null | undefined,
+  users: { id: string; name: string }[],
+): string[] | null {
+  if (!coResponsiblesJson) return null;
+  try {
+    const names = JSON.parse(coResponsiblesJson) as string[];
+    const ids = names
+      .map((name) => users.find((u) => u.name === name)?.id)
+      .filter((id): id is string => !!id);
+    return ids.length > 0 ? ids : null;
+  } catch {
+    return null;
+  }
+}
+
+// ── Deadline display ──────────────────────────────────────────────────────────
+
+/**
+ * Retorna texto e cor do prazo para exibição na view lista.
+ * Tarefas concluídas nunca são marcadas como atrasadas.
+ */
+export function taskDeadlineDisplay(
+  deadline: string | null | undefined,
+  statusGroup: StatusGroup,
+): { text: string; color: string } {
+  if (!deadline) return { text: '—', color: 'var(--text-3)' };
+  const today = new Date().toISOString().split('T')[0];
+  if (statusGroup !== 'done' && deadline < today) {
+    return { text: 'Atrasada', color: '#b42318' };
+  }
+  const [, mm, dd] = deadline.split('-');
+  return { text: `${dd}/${mm}`, color: 'var(--text-3)' };
+}
+
+// ── Avatar ────────────────────────────────────────────────────────────────────
+
 const AVATAR_COLORS = ['#0052cc', '#36b37e', '#ff5630', '#ffab00', '#6554c0', '#00b8d9'];
 
 export function avatarColor(name: string): string {
@@ -35,9 +111,11 @@ const IN_PROGRESS_STATUSES = [
   'Design/Conteúdo', 'Se necessário', 'Identidade Visual', 'Técnico', 'Redação',
   'Em Andamento',
 ];
+const REVIEW_STATUSES = ['Em Revisão'];
 
 export function statusGroup(status: string): StatusGroup {
   if (COMPLETED_STATUSES.includes(status)) return 'done';
+  if (REVIEW_STATUSES.includes(status)) return 'review';
   if (IN_PROGRESS_STATUSES.includes(status)) return 'in_progress';
   return 'pending';
 }
@@ -51,6 +129,7 @@ export function categoryColor(category: string): string {
 
 export function statusGroupLabel(g: StatusGroup | string): string {
   if (g === 'done') return 'Concluído';
+  if (g === 'review') return 'Em Revisão';
   if (g === 'in_progress') return 'Em Andamento';
   return 'Pendente';
 }
@@ -59,13 +138,15 @@ export function statusLabelToDb(sg: StatusGroup): string {
   const map: Record<StatusGroup, string> = {
     pending: 'Pendente',
     in_progress: 'Em Andamento',
+    review: 'Em Revisão',
     done: 'Concluído',
   };
   return map[sg] ?? 'Pendente';
 }
 
 export function statusClass(g: StatusGroup | string): string {
-  if (g === 'done') return 'status-tag status-done';
-  if (g === 'in_progress') return 'status-tag status-progress';
-  return 'status-tag status-todo';
+  if (g === 'done') return 'status-chip done';
+  if (g === 'review') return 'status-chip review';
+  if (g === 'in_progress') return 'status-chip progress';
+  return 'status-chip pending';
 }

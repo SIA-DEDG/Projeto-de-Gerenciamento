@@ -16,26 +16,28 @@ services:
       timeout: 5s
       retries: 5
 
-  # backend:
-  #   build:
-  #     context: ./backend
-  #     dockerfile: Dockerfile
-  #   environment:
-  #     HOST: 0.0.0.0
-  #     PORT: "3001"
-  #     DATABASE_URL: postgresql://postgres:postgres@postgres:5432/sia_gestor
-  #   ports:
-  #     - "3001:3001"
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
+  backend:
+    build:
+      context: ./backend-express
+      dockerfile: Dockerfile
+    env_file:
+      - .env.dev
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/sia_gestor
+      NODE_ENV: production
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: sh -c "npx prisma migrate deploy && node dist/server.js"
 
   # frontend:
   #   build:
   #     context: ./frontend-next
   #     dockerfile: Dockerfile
   #     args:
-  #       NEXT_PUBLIC_BACKEND_URL: http://localhost:3001
+  #       NEXT_PUBLIC_BACKEND_URL: http://localhost:8080
   #   ports:
   #     - "3000:3000"
   #   depends_on:
