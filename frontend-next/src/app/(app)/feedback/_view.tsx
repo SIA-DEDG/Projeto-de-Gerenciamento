@@ -163,7 +163,19 @@ export default function FeedbackPage() {
 
   return (
     <>
-      <PageHeader eyebrow="Sistema · Comunicação" title="Feedback & Sugestões" />
+      <PageHeader eyebrow="Sistema · Comunicação" title="Feedback & Sugestões"
+        tabBarRight={
+          <button
+            onClick={() => setShowForm(s => !s)}
+            style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '0 16px', height: 40, border: 'none', borderBottom: '2px solid transparent', background: 'transparent', color: 'var(--blue)', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', flexShrink: 0, fontFamily: 'inherit' }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--surface-2)')}
+            onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+          >
+            <Plus size={14} />
+            Novo feedback
+          </button>
+        }
+      />
 
       {/* 3-column layout */}
       <div style={{ height: '100%', display: 'flex', overflow: 'hidden', flex: 1, minHeight: 0 }}>
@@ -191,9 +203,9 @@ export default function FeedbackPage() {
                 title="Mostrar/ocultar filtros"
                 style={{
                   display: 'flex', alignItems: 'center', gap: 7, padding: '7px 12px', borderRadius: 3,
-                  border: `1.5px solid ${filtersOpen ? '#034EA2' : 'var(--border)'}`,
-                  background: filtersOpen ? '#034EA20d' : 'var(--surface)',
-                  color: filtersOpen ? '#034EA2' : 'var(--text-2)',
+                  border: `1.5px solid ${filtersOpen ? 'var(--blue)' : 'var(--border)'}`,
+                  background: filtersOpen ? 'var(--primary-light)' : 'var(--surface)',
+                  color: filtersOpen ? 'var(--blue)' : 'var(--text-2)',
                   fontSize: '0.78rem', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit',
                 }}
               >
@@ -211,23 +223,14 @@ export default function FeedbackPage() {
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <button onClick={() => setSort('votos')} className="mono"
-                style={{ padding: '5px 13px', borderRadius: 20, border: `1.5px solid ${sort === 'votos' ? '#034EA2' : 'var(--border)'}`, background: sort === 'votos' ? '#034EA2' : 'var(--surface)', color: sort === 'votos' ? '#fff' : 'var(--text-2)', fontSize: '0.72rem', fontWeight: sort === 'votos' ? 600 : 500, cursor: 'pointer', letterSpacing: '0.5px', fontFamily: 'inherit' }}>
+                style={{ padding: '5px 13px', borderRadius: 3, border: `1.5px solid ${sort === 'votos' ? 'var(--blue)' : 'var(--border)'}`, background: sort === 'votos' ? 'var(--blue)' : 'var(--surface)', color: sort === 'votos' ? '#fff' : 'var(--text-2)', fontSize: '0.72rem', fontWeight: sort === 'votos' ? 600 : 500, cursor: 'pointer', letterSpacing: '0.5px', fontFamily: 'inherit' }}>
                 POPULARES
               </button>
               <button onClick={() => setSort('recentes')} className="mono"
-                style={{ padding: '5px 13px', borderRadius: 20, border: `1.5px solid ${sort === 'recentes' ? '#034EA2' : 'var(--border)'}`, background: sort === 'recentes' ? '#034EA2' : 'var(--surface)', color: sort === 'recentes' ? '#fff' : 'var(--text-2)', fontSize: '0.72rem', fontWeight: sort === 'recentes' ? 600 : 500, cursor: 'pointer', letterSpacing: '0.5px', fontFamily: 'inherit' }}>
+                style={{ padding: '5px 13px', borderRadius: 3, border: `1.5px solid ${sort === 'recentes' ? 'var(--blue)' : 'var(--border)'}`, background: sort === 'recentes' ? 'var(--blue)' : 'var(--surface)', color: sort === 'recentes' ? '#fff' : 'var(--text-2)', fontSize: '0.72rem', fontWeight: sort === 'recentes' ? 600 : 500, cursor: 'pointer', letterSpacing: '0.5px', fontFamily: 'inherit' }}>
                 RECENTES
               </button>
               <div style={{ width: 1, height: 22, background: 'var(--line-1)', margin: '0 2px' }} />
-              <button
-                onClick={() => setShowForm(s => !s)}
-                style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '7px 14px', borderRadius: 3, border: 'none', background: '#034EA2', color: '#fff', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
-                onMouseEnter={e => (e.currentTarget.style.background = '#023e82')}
-                onMouseLeave={e => (e.currentTarget.style.background = '#034EA2')}
-              >
-                <Plus size={14} />
-                Novo feedback
-              </button>
             </div>
           </div>
 
@@ -294,7 +297,7 @@ export default function FeedbackPage() {
                 const active = fbTipo === t;
                 return (
                   <button key={t} onClick={() => setFbTipo(t)}
-                    style={{ padding: '8px 0', fontSize: '0.82rem', fontWeight: active ? 600 : 500, border: 'none', borderRight: i < 2 ? '1px solid var(--border)' : 'none', background: active ? '#034EA2' : 'var(--surface)', color: active ? '#fff' : 'var(--text-2)', cursor: 'pointer', fontFamily: 'inherit', flex: 1 }}>
+                    style={{ padding: '8px 0', fontSize: '0.82rem', fontWeight: active ? 600 : 500, border: 'none', borderRight: i < 2 ? '1px solid var(--border)' : 'none', background: active ? 'var(--blue)' : 'var(--surface)', color: active ? '#fff' : 'var(--text-2)', cursor: 'pointer', fontFamily: 'inherit', flex: 1 }}>
                     {labels[t]}
                   </button>
                 );
@@ -304,21 +307,21 @@ export default function FeedbackPage() {
             <label className="mono" style={{ display: 'block', fontSize: '0.63rem', fontWeight: 500, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--text-3)', marginBottom: 7 }}>Assunto</label>
             <input value={fbAssunto} onChange={e => setFbAssunto(e.target.value)} placeholder="Resuma em poucas palavras"
               style={{ width: '100%', padding: '9px 11px', border: '1px solid var(--border)', borderRadius: 3, fontSize: '0.84rem', background: 'var(--surface)', color: 'var(--text)', outline: 'none', boxSizing: 'border-box', marginBottom: 14, fontFamily: 'inherit' }}
-              onFocus={e => { e.target.style.borderColor = '#034EA2'; e.target.style.boxShadow = 'inset 0 0 0 1px #034EA2'; }}
+              onFocus={e => { e.target.style.borderColor = 'var(--blue)'; e.target.style.boxShadow = 'inset 0 0 0 1px #034EA2'; }}
               onBlur={e => { e.target.style.borderColor = 'var(--border)'; e.target.style.boxShadow = 'none'; }} />
 
             <label className="mono" style={{ display: 'block', fontSize: '0.63rem', fontWeight: 500, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--text-3)', marginBottom: 7 }}>Descrição</label>
             <textarea value={fbDesc} onChange={e => setFbDesc(e.target.value)} placeholder="Descreva com detalhes..."
               style={{ width: '100%', minHeight: 110, resize: 'vertical', padding: '9px 11px', border: '1px solid var(--border)', borderRadius: 3, fontSize: '0.84rem', lineHeight: 1.55, background: 'var(--surface)', color: 'var(--text)', outline: 'none', boxSizing: 'border-box', marginBottom: 16, fontFamily: 'inherit' }}
-              onFocus={e => { e.target.style.borderColor = '#034EA2'; e.target.style.boxShadow = 'inset 0 0 0 1px #034EA2'; }}
+              onFocus={e => { e.target.style.borderColor = 'var(--blue)'; e.target.style.boxShadow = 'inset 0 0 0 1px #034EA2'; }}
               onBlur={e => { e.target.style.borderColor = 'var(--border)'; e.target.style.boxShadow = 'none'; }} />
 
             <button
               onClick={handleInlineSubmit}
               disabled={fbSaving}
-              style={{ width: '100%', padding: 10, border: 'none', borderRadius: 3, background: fbSaving ? 'var(--text-3)' : '#034EA2', color: '#fff', fontSize: '0.84rem', fontWeight: 600, cursor: fbSaving ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, fontFamily: 'inherit' }}
-              onMouseEnter={e => { if (!fbSaving) e.currentTarget.style.background = '#023e82'; }}
-              onMouseLeave={e => { if (!fbSaving) e.currentTarget.style.background = '#034EA2'; }}>
+              style={{ width: '100%', padding: 10, border: 'none', borderRadius: 3, background: fbSaving ? 'var(--text-3)' : 'var(--blue)', color: '#fff', fontSize: '0.84rem', fontWeight: 600, cursor: fbSaving ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, fontFamily: 'inherit' }}
+              onMouseEnter={e => { if (!fbSaving) e.currentTarget.style.background = 'var(--blue-h)'; }}
+              onMouseLeave={e => { if (!fbSaving) e.currentTarget.style.background = 'var(--blue)'; }}>
               <Send size={14} strokeWidth={2} />
               {fbSaving ? 'Publicando…' : 'Publicar'}
             </button>

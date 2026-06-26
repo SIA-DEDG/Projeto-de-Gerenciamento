@@ -1,12 +1,13 @@
 'use client';
 
 import { useEffect, useState, lazy, Suspense, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import Sidebar from './Sidebar';
 import { TabsProvider, useTabs } from '@/context/TabsContext';
 import type { PageType } from '@/context/TabsContext';
-import { getUser, isSuperAdmin } from '@/lib/auth';
+import { getUser, isSuperAdmin, clearAuth } from '@/lib/auth';
 
-const THEME_KEY  = 'sia-theme';
+const THEME_KEY = 'sia-theme';
 const ACCENT_KEY = 'sia-accent';
 
 function darkenHex(hex: string, pct: number): string {
@@ -23,14 +24,15 @@ export function applyAccentColor(hex: string) {
   const b = parseInt(hex.slice(5, 7), 16);
   const rgb = `${r},${g},${b}`;
   const h = darkenHex(hex, 15);
+  const sidebarBg = darkenHex(hex, 40);
   const root = document.documentElement;
-  root.style.setProperty('--blue',          hex);
-  root.style.setProperty('--blue-h',        h);
-  root.style.setProperty('--primary',       hex);
+  root.style.setProperty('--blue', hex);
+  root.style.setProperty('--blue-h', h);
+  root.style.setProperty('--primary', hex);
   root.style.setProperty('--primary-hover', h);
   root.style.setProperty('--primary-light', `rgba(${rgb},0.08)`);
-  root.style.setProperty('--primary-glow',  `rgba(${rgb},0.2)`);
-  root.style.setProperty('--s-progress',    hex);
+  root.style.setProperty('--primary-glow', `rgba(${rgb},0.2)`);
+  root.style.setProperty('--sidebar-bg', sidebarBg);
   let style = document.getElementById('sia-accent-css') as HTMLStyleElement | null;
   if (!style) {
     style = document.createElement('style');
@@ -38,26 +40,27 @@ export function applyAccentColor(hex: string) {
     document.head.appendChild(style);
   }
   style.textContent = `
-    :root { --blue:${hex}; --blue-h:${h}; --primary:${hex}; --s-progress:${hex};
-            --primary-light:rgba(${rgb},0.08); --primary-glow:rgba(${rgb},0.2); }
+    :root { --blue:${hex}; --blue-h:${h}; --primary:${hex};
+            --primary-light:rgba(${rgb},0.08); --primary-glow:rgba(${rgb},0.2);
+            --sidebar-bg:${sidebarBg}; }
   `;
 }
 
 // ── Lazy views — um componente por página ─────────────────────────────────────
 const PAGE_VIEWS: Record<PageType, React.LazyExoticComponent<() => React.JSX.Element | null>> = {
-  'board':             lazy(() => import('@/app/(app)/_view')),
+  'board': lazy(() => import('@/app/(app)/_view')),
   'minhas-atividades': lazy(() => import('@/app/(app)/minhas-atividades/_view')),
-  'arquivadas':        lazy(() => import('@/app/(app)/arquivadas/_view')),
-  'eventos':           lazy(() => import('@/app/(app)/eventos/_view')),
-  'faltas':            lazy(() => import('@/app/(app)/faltas/_view')),
-  'projetos':          lazy(() => import('@/app/(app)/projetos/_view')),
-  'dashboards':        lazy(() => import('@/app/(app)/dashboards/_view')),
-  'feedback':          lazy(() => import('@/app/(app)/feedback/_view')),
-  'logs':              lazy(() => import('@/app/(app)/logs/_view')),
-  'configuracoes':     lazy(() => import('@/app/(app)/configuracoes/_view')),
-  'admin-registro':    lazy(() => import('@/app/(app)/admin/registro/_view')),
-  'admin-usuarios':    lazy(() => import('@/app/(app)/admin/usuarios/_view')),
-  'admin-diretorias':  lazy(() => import('@/app/(app)/admin/diretorias/_view')),
+  'arquivadas': lazy(() => import('@/app/(app)/arquivadas/_view')),
+  'eventos': lazy(() => import('@/app/(app)/eventos/_view')),
+  'faltas': lazy(() => import('@/app/(app)/faltas/_view')),
+  'projetos': lazy(() => import('@/app/(app)/projetos/_view')),
+  'dashboards': lazy(() => import('@/app/(app)/dashboards/_view')),
+  'feedback': lazy(() => import('@/app/(app)/feedback/_view')),
+  'logs': lazy(() => import('@/app/(app)/logs/_view')),
+  'configuracoes': lazy(() => import('@/app/(app)/configuracoes/_view')),
+  'admin-registro': lazy(() => import('@/app/(app)/admin/registro/_view')),
+  'admin-usuarios': lazy(() => import('@/app/(app)/admin/usuarios/_view')),
+  'admin-diretorias': lazy(() => import('@/app/(app)/admin/diretorias/_view')),
 };
 
 // ── Renderizador de abas — todas montadas, só a ativa é visível ───────────────
@@ -100,6 +103,11 @@ function TabViewport() {
 
 // ── Popup sem diretoria ───────────────────────────────────────────────────────
 function SemDirectoriaModal() {
+
+  const router = useRouter();
+
+  function handleLogout() {clearAuth(); router.replace('/login'); }
+
   return (
     <div style={{
       position: 'fixed', inset: 0, zIndex: 9999,
@@ -121,11 +129,14 @@ function SemDirectoriaModal() {
             Sem diretoria<br />vinculada
           </h2>
           <p style={{ margin: '0 0 24px', fontSize: '0.88rem', color: 'var(--text-2)', lineHeight: 1.65 }}>
-            Sua conta ainda não está associada a nenhuma diretoria. Entre em contato com o <strong style={{ color: 'var(--text)', fontWeight: 600 }}>Gabinete</strong> para que seu acesso seja regularizado.
+            Sua conta ainda não está associada a nenhuma diretoria. Entre em contato com o <strong style={{ color: 'var(--text)', fontWeight: 600 }}>Suporte</strong> para que seu acesso seja regularizado.
           </p>
           <div style={{ borderTop: '1px solid var(--line-1)', paddingTop: 18, fontSize: '0.78rem', color: 'var(--text-3)' }}>
             Caso já tenha solicitado, aguarde a confirmação.
           </div>
+          <button onClick={handleLogout} style={{ marginTop: 24, width: '100%', padding: '10px 0', background: '#034EA2', color: '#fff', fontSize: '0.88rem', fontWeight: 600, borderRadius: 3, border: 'none', cursor: 'pointer' }}>
+            Voltar para a tela de login
+          </button>
         </div>
       </div>
     </div>

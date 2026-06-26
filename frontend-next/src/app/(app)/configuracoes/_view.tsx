@@ -643,7 +643,7 @@ function AparenciaSection() {
                     if (/^#[0-9a-fA-F]{6}$/.test(v)) handleAccentChange(v);
                     else setAccent(v);
                   }}
-                  style={{ flex: 1, padding: '8px 10px', border: '1px solid var(--border)', borderRadius: 4, fontSize: '0.82rem', fontFamily: 'var(--mono)', color: 'var(--text)', background: 'var(--surface)', outline: 'none', letterSpacing: '0.5px' }}
+                  style={{ width: 100, flex: 1, padding: '8px 10px', border: '1px solid var(--border)', borderRadius: 4, fontSize: '0.82rem', fontFamily: 'var(--mono)', color: 'var(--text)', background: 'var(--surface)', outline: 'none', letterSpacing: '0.5px' }}
                   onFocus={e => (e.target.style.borderColor = accent)}
                   onBlur={e => (e.target.style.borderColor = 'var(--border)')}
                 />

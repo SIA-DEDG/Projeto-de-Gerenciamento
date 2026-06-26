@@ -280,7 +280,7 @@ function FaltaModal({ users, currentUserId, currentUserName, existing, canApprov
 export default function FaltasPage() {
   const currentUser = getUser();
   // Gabinete vê tudo independente do role (Coordenadores incluídos)
-  const canApprove  = canApproveFaltas(currentUser?.role);
+  const canApprove  = canApproveFaltas(currentUser);
   // Gabinete vê todas as diretorias; Super-Admin também
   const isGabinete  = isSuperAdmin(currentUser) || currentUser?.directoria_name?.toLowerCase() === 'gabinete';
   // Gabinete vê tudo independente do role (Coordenadores incluídos)
@@ -310,7 +310,6 @@ export default function FaltasPage() {
     setLoading(true);
     try {
       const fetches: Promise<unknown>[] = [fetchAbsences()];
-      // Gabinete/Admin vê todos os usuários e diretorias para filtrar
       if (isGabinete) {
         fetches.push(fetchAllUsers(), fetchDiretorias());
       } else {

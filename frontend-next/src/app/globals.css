@@ -39,11 +39,14 @@
   --gold-t: #a87a00;
   --red:    #b42318;
 
-  /* Status — cor dos fios/chips */
+  /* Status — cor dos fios/chips (fixos — não seguem o accent) */
   --s-pending:  #9aa1ac;
-  --s-progress: var(--blue);
+  --s-progress: #034ea2;
   --s-review:   #e0a92e;
   --s-done:     #1b8a4b;
+
+  /* Sidebar */
+  --sidebar-bg: #072f63;
 
   /* Layout */
   --sidebar-w: 228px;
@@ -175,7 +178,7 @@ input::placeholder, textarea::placeholder { color: var(--text-3); opacity: 1; }
   top: 0;
   bottom: 0;
   width: 64px;
-  background: #072f63;
+  background: var(--sidebar-bg, #072f63);
   border-right: 1px solid rgba(255,255,255,0.07);
   display: flex;
   flex-direction: column;

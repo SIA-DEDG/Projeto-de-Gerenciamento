@@ -32,13 +32,13 @@ export default function BoardPage() {
   const { patchActiveTab } = useTabs();
   const activeTab = useActiveTab();
   const tabFilters = activeTab?.filters;
-  const search         = tabFilters?.search         ?? '';
-  const filterUser     = tabFilters?.filterUser     ?? '';
+  const search = tabFilters?.search ?? '';
+  const filterUser = tabFilters?.filterUser ?? '';
   const filterPriority = tabFilters?.filterPriority ?? '';
-  const filterProject  = tabFilters?.filterProject  ?? '';
+  const filterProject = tabFilters?.filterProject ?? '';
   const filterDateFrom = tabFilters?.filterDateFrom ?? '';
-  const filterDateTo   = tabFilters?.filterDateTo   ?? '';
-  const view           = tabFilters?.view           ?? 'kanban';
+  const filterDateTo = tabFilters?.filterDateTo ?? '';
+  const view = tabFilters?.view ?? 'kanban';
 
   // ── Estado e operações do board ───────────────────────────────────────────
 
@@ -63,11 +63,11 @@ export default function BoardPage() {
   // ── Filtragem de tarefas ──────────────────────────────────────────────────
 
   const filteredTasks = useMemo(() => allTasks.filter((t) => {
-    if (filterUser     && t.responsible                             !== filterUser)                   return false;
-    if (filterPriority && t.priority?.toLowerCase()                !== filterPriority.toLowerCase()) return false;
-    if (filterProject  && t.project_id                             !== filterProject)                 return false;
-    if (filterDateFrom && t.date                                   <  filterDateFrom)                 return false;
-    if (filterDateTo   && t.date                                   >  filterDateTo)                   return false;
+    if (filterUser && t.responsible !== filterUser) return false;
+    if (filterPriority && t.priority?.toLowerCase() !== filterPriority.toLowerCase()) return false;
+    if (filterProject && t.project_id !== filterProject) return false;
+    if (filterDateFrom && t.date < filterDateFrom) return false;
+    if (filterDateTo && t.date > filterDateTo) return false;
     if (search) {
       const q = search.toLowerCase();
       if (!t.activity.toLowerCase().includes(q)
@@ -81,14 +81,14 @@ export default function BoardPage() {
 
   const todayStr = new Date().toISOString().split('T')[0];
   const boardStats = useMemo(() => {
-    const doneCount      = filteredTasks.filter(t => t.status_group === 'done').length;
-    const openCount      = filteredTasks.length - doneCount;
-    const overdueCount   = filteredTasks.filter(t => t.status_group !== 'done' && t.deadline && t.deadline < todayStr).length;
-    const completedPct   = filteredTasks.length > 0 ? Math.round((doneCount / filteredTasks.length) * 100) : 0;
+    const doneCount = filteredTasks.filter(t => t.status_group === 'done').length;
+    const openCount = filteredTasks.length - doneCount;
+    const overdueCount = filteredTasks.filter(t => t.status_group !== 'done' && t.deadline && t.deadline < todayStr).length;
+    const completedPct = filteredTasks.length > 0 ? Math.round((doneCount / filteredTasks.length) * 100) : 0;
     return [
-      { label: 'ABERTAS',   value: String(openCount),      color: 'var(--blue)' },
-      { label: 'ATRASADAS', value: String(overdueCount),   color: '#b42318' },
-      { label: 'CONCLUÍDO', value: `${completedPct}%`,    color: '#1B8A4B' },
+      { label: 'ABERTAS', value: String(openCount), color: 'var(--blue)' },
+      { label: 'ATRASADAS', value: String(overdueCount), color: '#b42318' },
+      { label: 'CONCLUÍDO', value: `${completedPct}%`, color: '#1B8A4B' },
     ];
   }, [filteredTasks, todayStr]);
 
@@ -98,11 +98,11 @@ export default function BoardPage() {
     id: t.id,
     title: t.activity,
     start_date: t.deadline ?? t.date,
-    end_date:   t.deadline ?? t.date,
-    color: t.status_group === 'done'        ? 'var(--s-done)'
-         : t.status_group === 'review'      ? 'var(--s-review)'
-         : t.status_group === 'in_progress' ? 'var(--s-progress)'
-         : 'var(--s-pending)',
+    end_date: t.deadline ?? t.date,
+    color: t.status_group === 'done' ? 'var(--s-done)'
+      : t.status_group === 'review' ? 'var(--s-review)'
+        : t.status_group === 'in_progress' ? 'var(--s-progress)'
+          : 'var(--s-pending)',
     label: t.responsible,
   })), [filteredTasks]);
 
@@ -125,7 +125,7 @@ export default function BoardPage() {
   function exportCSV() {
     const header = ['Atividade', 'Categoria', 'Responsável', 'Status', 'Prioridade', 'Prazo', 'Criado em', 'Projeto', 'Co-responsáveis', 'Colaboradores externos'];
     const rows = filteredTasks.map((t) => {
-      const projectName    = projects.find((p) => p.id === t.project_id)?.name ?? '';
+      const projectName = projects.find((p) => p.id === t.project_id)?.name ?? '';
       const coResponsibles = t.co_responsibles
         ? (() => { try { return (JSON.parse(t.co_responsibles!) as string[]).join('; '); } catch { return ''; } })()
         : '';
@@ -135,9 +135,9 @@ export default function BoardPage() {
       .map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(','))
       .join('\n');
     const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
-    const url  = URL.createObjectURL(blob);
+    const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    link.href     = url;
+    link.href = url;
     link.download = `atividades_${new Date().toISOString().split('T')[0]}.csv`;
     document.body.appendChild(link);
     link.click();
@@ -292,10 +292,10 @@ export default function BoardPage() {
             items={calendarItems}
             onItemClick={(item) => { const t = allTasks.find((x) => x.id === item.id); if (t) setOpenedTask(t); }}
             legend={[
-              { color: 'var(--s-pending)',  label: 'Pendente' },
+              { color: 'var(--s-pending)', label: 'Pendente' },
               { color: 'var(--s-progress)', label: 'Em Andamento' },
-              { color: 'var(--s-review)',   label: 'Em Revisão' },
-              { color: 'var(--s-done)',     label: 'Concluído' },
+              { color: 'var(--s-review)', label: 'Em Revisão' },
+              { color: 'var(--s-done)', label: 'Concluído' },
             ]}
           />
         </div>

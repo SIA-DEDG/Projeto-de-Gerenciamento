@@ -14,7 +14,7 @@ ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointE
 
 const C = {
   pending:    '#9aa1ac',
-  in_progress:'var(--blue)',
+  in_progress:'#034ea2',
   review:     '#e0a92e',
   done:       '#1b8a4b',
   overdue:    '#b42318',
@@ -348,7 +348,7 @@ export default function DashboardsPage() {
                 {teamData.map((m, i) => (
                   <div key={m.name} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     <span className="mono" style={{ fontSize: '0.62rem', color: 'var(--text-3)', width: 16, textAlign: 'right', flexShrink: 0 }}>{i + 1}</span>
-                    <div style={{ width: 26, height: 26, borderRadius: '50%', background: 'var(--blue)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.6rem', fontWeight: 600, flexShrink: 0 }}>
+                    <div style={{ width: 26, height: 26, borderRadius: '50%', background: '#034ea2', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.6rem', fontWeight: 600, flexShrink: 0 }}>
                       {m.name.split(' ').map((w: string) => w[0]).slice(0, 2).join('')}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>

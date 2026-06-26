@@ -79,8 +79,8 @@ export default function FeedbackSidebar({
       <div style={{ padding: '14px 18px 8px' }}>
         <div className="mono" style={SECTION_LABEL}>Tipo</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-          <FilterItem active={typeFilter === 'todos' && !myOnly} color="#034EA2" onClick={() => { setTypeFilter('todos'); setMyOnly(false); }}>Todos</FilterItem>
-          <FilterItem active={typeFilter === 'sugestao' && !myOnly} color="#034EA2" onClick={() => { setTypeFilter('sugestao'); setMyOnly(false); }}>Sugestão</FilterItem>
+          <FilterItem active={typeFilter === 'todos' && !myOnly} color="var(--blue)" onClick={() => { setTypeFilter('todos'); setMyOnly(false); }}>Todos</FilterItem>
+          <FilterItem active={typeFilter === 'sugestao' && !myOnly} color="var(--blue)" onClick={() => { setTypeFilter('sugestao'); setMyOnly(false); }}>Sugestão</FilterItem>
           <FilterItem active={typeFilter === 'bug' && !myOnly} color="#b42318" onClick={() => { setTypeFilter('bug'); setMyOnly(false); }}>Bug</FilterItem>
           <FilterItem active={typeFilter === 'melhoria' && !myOnly} color="#1B8A4B" onClick={() => { setTypeFilter('melhoria'); setMyOnly(false); }}>Melhoria</FilterItem>
           <FilterItem active={typeFilter === 'duvida' && !myOnly} color="#A87A00" onClick={() => { setTypeFilter('duvida'); setMyOnly(false); }}>Dúvida</FilterItem>
@@ -91,7 +91,7 @@ export default function FeedbackSidebar({
       <div style={{ padding: '14px 18px 8px', borderTop: '1px solid var(--line-2)' }}>
         <div className="mono" style={SECTION_LABEL}>Status</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-          <FilterItem active={statusFilter === 'todos' && !myOnly} color="#034EA2" onClick={() => { setStatusFilter('todos'); setMyOnly(false); }}>Todos</FilterItem>
+          <FilterItem active={statusFilter === 'todos' && !myOnly} color="var(--blue)" onClick={() => { setStatusFilter('todos'); setMyOnly(false); }}>Todos</FilterItem>
           <FilterItem active={statusFilter === 'pendentes' && !myOnly} color="#A87A00" onClick={() => { setStatusFilter('pendentes'); setMyOnly(false); }}>Pendentes</FilterItem>
           <FilterItem active={statusFilter === 'respondidas' && !myOnly} color="#1B8A4B" onClick={() => { setStatusFilter('respondidas'); setMyOnly(false); }}>Respondidas</FilterItem>
         </div>
@@ -101,7 +101,7 @@ export default function FeedbackSidebar({
       <div style={{ padding: '14px 18px 8px', borderTop: '1px solid var(--line-2)' }}>
         <div className="mono" style={SECTION_LABEL}>Severidade</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-          <FilterItem active={severityFilter === 'todos'} color="#034EA2" onClick={() => setSeverityFilter('todos')}>Todos</FilterItem>
+          <FilterItem active={severityFilter === 'todos'} color="var(--blue)" onClick={() => setSeverityFilter('todos')}>Todos</FilterItem>
           <FilterItem active={severityFilter === 'Alta'} color="#b42318" onClick={() => setSeverityFilter(severityFilter === 'Alta' ? 'todos' : 'Alta')}>Alta</FilterItem>
           <FilterItem active={severityFilter === 'Média'} color="#A87A00" onClick={() => setSeverityFilter(severityFilter === 'Média' ? 'todos' : 'Média')}>Média</FilterItem>
           <FilterItem active={severityFilter === 'Baixa'} color="#1B8A4B" onClick={() => setSeverityFilter(severityFilter === 'Baixa' ? 'todos' : 'Baixa')}>Baixa</FilterItem>
@@ -112,7 +112,7 @@ export default function FeedbackSidebar({
       <div style={{ padding: '14px 18px', borderTop: '1px solid var(--line-2)' }}>
         <div
           onClick={() => setMyOnly(!myOnly)}
-          style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '7px 9px', borderRadius: 3, cursor: 'pointer', background: myOnly ? '#034EA20d' : 'transparent' }}
+          style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '7px 9px', borderRadius: 3, cursor: 'pointer', background: myOnly ? 'var(--primary-light)' : 'transparent' }}
         >
           <div style={{
             width: 16, height: 16, borderRadius: 3, flexShrink: 0,
