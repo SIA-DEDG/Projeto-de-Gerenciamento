@@ -55,7 +55,9 @@ export default function LoginPage() {
 
         {/* Logo centralizado */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 32 }}>
-          <div style={{ width: 48, height: 48, borderRadius: 3, background: '#072f63', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#E0A92E', fontSize: 26, lineHeight: 1, boxShadow: '0 0 0 6px rgba(7,47,99,0.08)' }}>★</div>
+          <div style={{ width: 48, height: 48, borderRadius: 3, background: '#072f63', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#E0A92E', fontSize: 26, lineHeight: 1, boxShadow: '0 0 0 6px rgba(7,47,99,0.08)' }}>
+            <img style={{ width: 50 }} src="favicon.ico" alt="" />
+          </div>
           <div style={{ marginTop: 11, fontWeight: 700, fontSize: '1.08rem', color: '#072f63', letterSpacing: '-0.2px' }}>Tasks SIA</div>
           <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '0.62rem', color: '#9aa1ac', letterSpacing: '1.2px', textTransform: 'uppercase', marginTop: 3 }}>Sistema de Gestão · DEDG</div>
         </div>

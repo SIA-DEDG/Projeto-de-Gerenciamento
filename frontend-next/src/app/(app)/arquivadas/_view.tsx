@@ -1,7 +1,7 @@
 ﻿﻿'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { Archive, Search, RotateCcw } from 'lucide-react';
+import { Archive, Search, RotateCcw, Trash2 } from 'lucide-react';
 import { fetchArchivedTasks, unarchiveTask, deleteTask } from '@/lib/api';
 import ConfirmModal from '@/components/ConfirmModal';
 import { useToast } from '@/hooks/useToast';
@@ -34,7 +34,7 @@ export default function ArquivadasPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [confirm, setConfirm] = useState<{ title: string; message?: string; onConfirm: () => void } | null>(null);
+  const [confirm, setConfirm] = useState<{ title: string; message?: string; onConfirm: () => void; danger?: boolean } | null>(null);
   const [acting, setActing] = useState<string | null>(null);
 
   const load = useCallback(async () => {
@@ -59,6 +59,24 @@ export default function ArquivadasPage() {
       addToast('success', 'Restaurada', `"${task.activity}" voltou ao quadro.`);
     } catch { addToast('error', 'Erro', 'Não foi possível restaurar.'); }
     finally { setActing(null); }
+  }
+
+  function handleDeleteConfirm(task: Task) {
+    setConfirm({
+      title: 'Excluir atividade arquivada',
+      message: `Deseja excluir permanentemente "${task.activity}"? Esta ação não pode ser desfeita.`,
+      danger: true,
+      onConfirm: async () => {
+        setConfirm(null);
+        setActing(task.id);
+        try {
+          await deleteTask(task.id);
+          setTasks(prev => prev.filter(t => t.id !== task.id));
+          addToast('success', 'Excluída', 'Atividade removida permanentemente.');
+        } catch { addToast('error', 'Erro', 'Não foi possível excluir.'); }
+        finally { setActing(null); }
+      },
+    });
   }
 
   return (
@@ -98,8 +116,8 @@ export default function ArquivadasPage() {
           </div>
 
           {/* Cabeçalho da tabela */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 190px 130px 150px 120px', gap: 24, padding: '13px 32px', borderBottom: '1px solid var(--line-1)' }}>
-            {['Atividade', 'Projeto', 'Status', 'Criado em', 'Ação'].map(h => (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 190px 130px 150px 160px', gap: 24, padding: '13px 32px', borderBottom: '1px solid var(--line-1)' }}>
+            {['Atividade', 'Projeto', 'Status', 'Criado em', 'Ações'].map(h => (
               <span key={h} className="mono" style={{ fontSize: '0.64rem', fontWeight: 500, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--text-3)' }}>{h}</span>
             ))}
           </div>
@@ -107,7 +125,7 @@ export default function ArquivadasPage() {
           {/* Linhas */}
           {filtered.map(task => (
             <div key={task.id}
-              style={{ display: 'grid', gridTemplateColumns: '1fr 190px 130px 150px 120px', gap: 24, alignItems: 'center', padding: '16px 32px', borderBottom: '1px solid var(--line-2)', cursor: 'default', transition: 'background 0.1s' }}
+              style={{ display: 'grid', gridTemplateColumns: '1fr 190px 130px 150px 160px', gap: 24, alignItems: 'center', padding: '16px 32px', borderBottom: '1px solid var(--line-2)', cursor: 'default', transition: 'background 0.1s' }}
               onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'var(--surface-2)'}
               onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = ''}>
               {/* Atividade */}
@@ -133,15 +151,22 @@ export default function ArquivadasPage() {
               {/* Data */}
               <span className="mono" style={{ fontSize: '0.74rem', color: 'var(--text-3)', letterSpacing: '0.3px' }}>{task.created_at?.slice(0, 10) ?? '—'}</span>
 
-              {/* Ação */}
-              <div>
+              {/* Ações */}
+              <div style={{ display: 'flex', gap: 6 }}>
                 <button onClick={() => handleRestore(task)} disabled={acting === task.id}
                   className="mono"
-                  style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', border: '1px solid var(--border)', borderRadius: 3, background: 'var(--surface)', color: 'var(--text-2)', fontSize: '0.66rem', fontWeight: 500, letterSpacing: '0.5px', textTransform: 'uppercase', cursor: acting === task.id ? 'not-allowed' : 'pointer', fontFamily: 'inherit', transition: 'color 0.12s, border-color 0.12s' }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 10px', border: '1px solid var(--border)', borderRadius: 3, background: 'var(--surface)', color: 'var(--text-2)', fontSize: '0.66rem', fontWeight: 500, letterSpacing: '0.5px', textTransform: 'uppercase', cursor: acting === task.id ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}
                   onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--blue)'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--blue)'; }}
                   onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-2)'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--border)'; }}>
-                  <RotateCcw size={12} />
+                  <RotateCcw size={11} />
                   Restaurar
+                </button>
+                <button onClick={() => handleDeleteConfirm(task)} disabled={acting === task.id}
+                  title="Excluir permanentemente"
+                  style={{ display: 'flex', alignItems: 'center', padding: '6px 8px', border: '1px solid rgba(180,35,24,0.25)', borderRadius: 3, background: 'rgba(180,35,24,0.05)', color: '#b42318', cursor: acting === task.id ? 'not-allowed' : 'pointer' }}
+                  onMouseEnter={e => (e.currentTarget.style.background = 'rgba(180,35,24,0.10)')}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'rgba(180,35,24,0.05)')}>
+                  <Trash2 size={13} />
                 </button>
               </div>
             </div>
@@ -149,7 +174,7 @@ export default function ArquivadasPage() {
         </div>
       )}
 
-      <ConfirmModal open={!!confirm} title={confirm?.title ?? ''} message={confirm?.message} confirmLabel="Excluir" danger onConfirm={() => confirm?.onConfirm()} onClose={() => setConfirm(null)} />
+      <ConfirmModal open={!!confirm} title={confirm?.title ?? ''} message={confirm?.message} confirmLabel="Excluir" danger={confirm?.danger} onConfirm={() => confirm?.onConfirm()} onClose={() => setConfirm(null)} />
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />
     </>
   );

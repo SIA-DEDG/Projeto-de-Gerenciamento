@@ -257,7 +257,7 @@ export default function BoardPage() {
         <div style={{ flex: 1 }} />
 
         {/* Ações: importar e exportar */}
-        <button
+        {/* <button
           onClick={() => setImportModalOpen(true)}
           title="Importar atividades via CSV"
           style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 11px', border: '1px solid var(--border)', borderRadius: 3, background: 'var(--surface)', color: 'var(--text-2)', fontSize: '0.78rem', cursor: 'pointer', fontFamily: 'inherit' }}
@@ -274,7 +274,7 @@ export default function BoardPage() {
           onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'var(--border)')}
         >
           <Download size={13} />Exportar
-        </button>
+        </button> */}
 
         <span className="mono" style={{ fontSize: '0.72rem', color: 'var(--text-3)', letterSpacing: '0.5px' }}>
           {filteredTasks.length} ATIVIDADES

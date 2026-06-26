@@ -6,7 +6,7 @@ import { logAction } from '../../lib/logger';
 const pid = (req: Request) => req.params['id'] as string;
 
 export async function listAbsences(req: Request, res: Response, next: NextFunction): Promise<void> {
-  try { res.json(await svc.listAbsences(req.user.sub, req.user.role, req.user.directoriaId!)); } catch (err) { next(err); }
+  try { res.json(await svc.listAbsences(req.user.sub, req.user.role, req.user.directoriaId)); } catch (err) { next(err); }
 }
 
 export async function createAbsence(req: Request, res: Response, next: NextFunction): Promise<void> {

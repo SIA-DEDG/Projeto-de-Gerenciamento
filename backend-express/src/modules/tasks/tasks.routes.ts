@@ -148,7 +148,12 @@ router.delete('/:id', authenticate, ctrl.deleteTask);
  *       200:
  *         description: Tarefa desarquivada
  */
-router.put('/:id/archive', authenticate, ctrl.archiveTask);
+router.put('/:id/archive',   authenticate, ctrl.archiveTask);
 router.put('/:id/unarchive', authenticate, ctrl.unarchiveTask);
+
+// Anexos
+router.post('/:id/attachments',              authenticate, ctrl.addAttachment);
+router.delete('/:id/attachments/:idx',       authenticate, ctrl.removeAttachment);
+router.get('/:id/attachments/:idx/url',      authenticate, ctrl.getAttachmentUrl);
 
 export default router;

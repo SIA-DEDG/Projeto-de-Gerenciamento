@@ -311,10 +311,19 @@ input::placeholder, textarea::placeholder { color: var(--text-3); opacity: 1; }
   margin-left: auto;
   font-family: var(--mono);
   font-size: 0.66rem;
-  font-weight: 500;
-  color: #E0A92E;
+  font-weight: 700;
+  color: #fff;
   flex-shrink: 0;
   white-space: nowrap;
+  background: #e03131;
+  border-radius: 20px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 0 2px rgba(224,49,49,0.25);
 }
 
 .sidebar-divider {

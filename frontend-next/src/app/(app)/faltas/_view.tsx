@@ -8,9 +8,10 @@ import { useToast } from '@/hooks/useToast';
 import ToastContainer from '@/components/ToastContainer';
 import {
   fetchAbsences, createAbsence, updateAbsence, deleteAbsence, approveAbsence,
-  fetchUsers, type Absence, type UserPublic,
+  fetchUsers, fetchAllUsers, fetchDiretorias,
+  type Absence, type UserPublic, type Directoria,
 } from '@/lib/api';
-import { getUser, canSeeAllAbsences, canApproveFaltas } from '@/lib/auth';
+import { getUser, canSeeAllAbsences, canApproveFaltas, isSuperAdmin } from '@/lib/auth';
 import PageHeader from '@/components/PageHeader';
 
 const REASON_COLORS: Record<string, string> = {
@@ -278,15 +279,26 @@ function FaltaModal({ users, currentUserId, currentUserName, existing, canApprov
 /* ── Página ──────────────────────────────────────────────────────────── */
 export default function FaltasPage() {
   const currentUser = getUser();
-  const seeAll     = canSeeAllAbsences(currentUser?.role);
-  const canApprove = canApproveFaltas(currentUser?.role); // Gerente, Diretor, Admin
+  // Gabinete vê tudo independente do role (Coordenadores incluídos)
+  const canApprove  = canApproveFaltas(currentUser?.role);
+  // Gabinete vê todas as diretorias; Super-Admin também
+  const isGabinete  = isSuperAdmin(currentUser) || currentUser?.directoria_name?.toLowerCase() === 'gabinete';
+  // Gabinete vê tudo independente do role (Coordenadores incluídos)
+  const seeAll      = canSeeAllAbsences(currentUser?.role) || isGabinete;
   const { toasts, addToast, dismissToast } = useToast();
   const now = new Date();
 
-  const [absences, setAbsences] = useState<Absence[]>([]);
-  const [users, setUsers]       = useState<UserPublic[]>([]);
-  const [loading, setLoading]   = useState(true);
-  const [view, setView]         = useState<'list' | 'calendar'>('list');
+  const [absences, setAbsences]       = useState<Absence[]>([]);
+  const [users, setUsers]             = useState<UserPublic[]>([]);
+  const [diretorias, setDiretorias]   = useState<Directoria[]>([]);
+  const [loading, setLoading]         = useState(true);
+  const [view, setView]               = useState<'list' | 'calendar'>('list');
+
+  // Filtros
+  const [filterDiretoria, setFilterDiretoria] = useState('');
+  const [filterUser, setFilterUser]           = useState('');
+  const [filterMonth, setFilterMonth]         = useState(''); // 'YYYY-MM' ou ''
+  const [filterStatus, setFilterStatus]       = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editingAbsence, setEditingAbsence] = useState<Absence | null>(null);
   const [confirm, setConfirm] = useState<{ title: string; message?: string; onConfirm: () => void } | null>(null);
@@ -297,11 +309,19 @@ export default function FaltasPage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [fetchedAbsences, allUsers] = await Promise.all([fetchAbsences(), fetchUsers()]);
+      const fetches: Promise<unknown>[] = [fetchAbsences()];
+      // Gabinete/Admin vê todos os usuários e diretorias para filtrar
+      if (isGabinete) {
+        fetches.push(fetchAllUsers(), fetchDiretorias());
+      } else {
+        fetches.push(fetchUsers());
+      }
+      const [fetchedAbsences, allUsers, dirs] = await Promise.all(fetches) as [Absence[], UserPublic[], Directoria[]?];
       setAbsences(fetchedAbsences);
-      setUsers(allUsers.filter(u => u.role !== 'Admin'));
+      setUsers((allUsers ?? []).filter((u: UserPublic) => u.role !== 'Admin'));
+      if (dirs) setDiretorias(dirs);
     } finally { setLoading(false); }
-  }, []);
+  }, [isGabinete]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -321,7 +341,17 @@ export default function FaltasPage() {
   }
 
   /* ── Dados calculados ── */
-  const visibleAbsences = seeAll ? absences : absences.filter(a => a.user_id === currentUser?.user_id);
+  const baseAbsences = seeAll ? absences : absences.filter(a => a.user_id === currentUser?.user_id);
+  const visibleAbsences = baseAbsences.filter(a => {
+    if (filterDiretoria && a.directoria_id !== filterDiretoria) return false;
+    if (filterUser && a.user_id !== filterUser) return false;
+    if (filterMonth) {
+      const ym = a.start_date?.slice(0, 7); // 'YYYY-MM'
+      if (ym !== filterMonth) return false;
+    }
+    if (filterStatus && a.approval_status !== filterStatus) return false;
+    return true;
+  });
 
   const approved  = visibleAbsences.filter(a => a.approval_status === 'aprovada').length;
   const pending   = visibleAbsences.filter(a => a.approval_status === 'pendente' || !a.approval_status).length;
@@ -390,6 +420,49 @@ export default function FaltasPage() {
         <button style={tabStyle(view === 'calendar')} onClick={() => setView('calendar')}>Calendário</button>
       </div>
 
+      {/* Filtros — só para quem pode ver mais de um usuário */}
+      {seeAll && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 32px', borderBottom: '1px solid var(--line-1)', flexShrink: 0, flexWrap: 'wrap', background: 'var(--surface-2)' }}>
+          {/* Diretoria — só para Gabinete/Admin */}
+          {isGabinete && diretorias.length > 0 && (
+            <select value={filterDiretoria} onChange={e => setFilterDiretoria(e.target.value)}
+              style={{ height: 34, padding: '0 10px', border: '1px solid var(--border)', borderRadius: 3, fontSize: '0.82rem', background: filterDiretoria ? '#034EA20d' : 'var(--surface)', color: filterDiretoria ? '#034EA2' : 'var(--text-2)', fontFamily: 'inherit', cursor: 'pointer' }}>
+              <option value="">Todas as diretorias</option>
+              {diretorias.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+            </select>
+          )}
+          {/* Usuário */}
+          <select value={filterUser} onChange={e => setFilterUser(e.target.value)}
+            style={{ height: 34, padding: '0 10px', border: '1px solid var(--border)', borderRadius: 3, fontSize: '0.82rem', background: filterUser ? '#034EA20d' : 'var(--surface)', color: filterUser ? '#034EA2' : 'var(--text-2)', fontFamily: 'inherit', cursor: 'pointer' }}>
+            <option value="">Todos os usuários</option>
+            {users.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
+          </select>
+          {/* Mês */}
+          <input type="month" value={filterMonth} onChange={e => setFilterMonth(e.target.value)}
+            style={{ height: 34, padding: '0 10px', border: '1px solid var(--border)', borderRadius: 3, fontSize: '0.82rem', background: filterMonth ? '#034EA20d' : 'var(--surface)', color: filterMonth ? '#034EA2' : 'var(--text-2)', fontFamily: 'inherit', cursor: 'pointer' }} />
+          {/* Status */}
+          <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}
+            style={{ height: 34, padding: '0 10px', border: '1px solid var(--border)', borderRadius: 3, fontSize: '0.82rem', background: filterStatus ? '#034EA20d' : 'var(--surface)', color: filterStatus ? '#034EA2' : 'var(--text-2)', fontFamily: 'inherit', cursor: 'pointer' }}>
+            <option value="">Todos os status</option>
+            <option value="pendente">Pendente</option>
+            <option value="aprovada">Aprovada</option>
+            <option value="recusada">Recusada</option>
+          </select>
+          {/* Limpar */}
+          {(filterDiretoria || filterUser || filterMonth || filterStatus) && (
+            <button onClick={() => { setFilterDiretoria(''); setFilterUser(''); setFilterMonth(''); setFilterStatus(''); }}
+              style={{ height: 34, padding: '0 12px', border: '1px solid var(--border)', borderRadius: 3, fontSize: '0.82rem', background: 'var(--surface)', color: 'var(--text-3)', fontFamily: 'inherit', cursor: 'pointer' }}>
+              Limpar filtros
+            </button>
+          )}
+          {(filterDiretoria || filterUser || filterMonth || filterStatus) && (
+            <span className="mono" style={{ fontSize: '0.7rem', color: 'var(--text-3)', marginLeft: 'auto' }}>
+              {visibleAbsences.length} resultado(s)
+            </span>
+          )}
+        </div>
+      )}
+
       {/* Conteúdo */}
       {loading ? (
         <div className="loading-state">Carregando…</div>
@@ -434,7 +507,12 @@ export default function FaltasPage() {
                   <div className="mono" style={{ width: 28, height: 28, borderRadius: '50%', background: '#072f63', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: `${28 * 0.36}px`, fontWeight: 500, flexShrink: 0, border: '1.5px solid var(--surface)', letterSpacing: '0.5px' }}>
                     {initials(row.employee_name)}
                   </div>
-                  <span style={{ fontSize: '0.86rem', fontWeight: 500, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{row.employee_name}</span>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: '0.86rem', fontWeight: 500, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{row.employee_name}</div>
+                    {isGabinete && row.directoria_name && (
+                      <div className="mono" style={{ fontSize: '0.62rem', color: 'var(--text-3)', letterSpacing: '0.3px', marginTop: 2 }}>{row.directoria_name}</div>
+                    )}
+                  </div>
                 </div>
 
                 {/* Tipo */}

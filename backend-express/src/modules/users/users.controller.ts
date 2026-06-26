@@ -48,7 +48,7 @@ export async function updateRole(req: Request, res: Response, next: NextFunction
 export async function adminResetPassword(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const { id } = req.params as { id: string };
-    const { new_password } = resetPasswordSchema.parse(req.body);
+    const { newPassword: new_password } = resetPasswordSchema.parse(req.body);
     await svc.adminResetPassword(id, new_password, req.user.directoriaId);
     void logAction(req.user.sub, req.user.username, 'UPDATE', 'user', id, 'Senha redefinida', req.user.directoriaId ?? undefined);
     res.json({ message: 'Senha redefinida com sucesso' });

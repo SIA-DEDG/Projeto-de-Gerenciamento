@@ -58,3 +58,27 @@ export async function moveMember(req: Request, res: Response, next: NextFunction
     next(err);
   }
 }
+
+export async function deleteDirectoria(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const id = pid(req);
+    await svc.deleteDirectoria(id);
+    void logAction(req.user.sub, req.user.username, 'DELETE', 'directoria', id, 'Diretoria excluída');
+    res.sendStatus(204);
+  } catch (err: any) {
+    if (err.status) { res.status(err.status).json({ error: err.message }); return; }
+    next(err);
+  }
+}
+
+export async function removeMember(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const userId = req.params['userId'] as string;
+    await svc.removeMember(userId);
+    void logAction(req.user.sub, req.user.username, 'UPDATE', 'user', userId, 'Usuário desvinculado da diretoria');
+    res.json({ message: 'Vínculo removido com sucesso' });
+  } catch (err: any) {
+    if (err.status) { res.status(err.status).json({ error: err.message }); return; }
+    next(err);
+  }
+}

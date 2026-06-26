@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { X, Paperclip, Trash2, Clock, ChevronDown } from 'lucide-react';
+import { X, Paperclip, Trash2, Clock, ChevronDown, Link as LinkIcon } from 'lucide-react';
 import type { Task, Project } from '@/types';
 import type { UserPublic } from '@/lib/api';
 import { STATUS_COLORS, PRIORITY_COLORS, statusGroup } from '@/lib/utils';
@@ -14,6 +14,11 @@ export interface ActivityAttachment {
   type: string;
   size: number;
   data: string; // base64
+}
+
+export interface ActivityLink {
+  name: string;
+  url: string;
 }
 
 interface Props {
@@ -38,6 +43,7 @@ interface Props {
     external_collaborators: string | null;
     deadline: string | null;
     attachments?: ActivityAttachment[];
+    links?: ActivityLink[];
   }) => void;
 }
 
@@ -322,6 +328,8 @@ export default function ActivityModal({
   const [form, setForm] = useState(EMPTY);
   const [noDeadline, setNoDeadline] = useState(false);
   const [attachments, setAttachments] = useState<ActivityAttachment[]>([]);
+  const [links, setLinks] = useState<ActivityLink[]>([]);
+  const [linkInput, setLinkInput] = useState({ name: '', url: '' });
 
   useEffect(() => {
     if (!open) return;
@@ -355,6 +363,7 @@ export default function ActivityModal({
       external_collaborators: form.external_collaborators.trim() || null,
       deadline: noDeadline ? null : (form.deadline.trim() || null),
       attachments: attachments.length > 0 ? attachments : undefined,
+      links: links.length > 0 ? links : undefined,
     });
   }
 
@@ -500,8 +509,51 @@ export default function ActivityModal({
 
             {/* Anexos */}
             <div>
-              <Label>Anexos</Label>
+              <Label>Arquivos anexados</Label>
               <AttachmentField attachments={attachments} onChange={setAttachments} />
+            </div>
+
+            {/* Links */}
+            <div>
+              <Label>Links</Label>
+              <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+                <input
+                  value={linkInput.name} onChange={e => setLinkInput(v => ({ ...v, name: e.target.value }))}
+                  placeholder="Nome (ex: Relatório no Drive)"
+                  style={{ flex: 1, padding: '9px 12px', border: '1px solid var(--border)', borderRadius: 3, fontSize: '0.84rem', background: 'var(--surface)', color: 'var(--text)', outline: 'none', fontFamily: 'inherit' }} />
+                <input
+                  value={linkInput.url} onChange={e => setLinkInput(v => ({ ...v, url: e.target.value }))}
+                  placeholder="https://..."
+                  style={{ flex: 2, padding: '9px 12px', border: '1px solid var(--border)', borderRadius: 3, fontSize: '0.84rem', background: 'var(--surface)', color: 'var(--text)', outline: 'none', fontFamily: 'inherit' }} />
+                <button type="button"
+                  onClick={() => {
+                    const url = linkInput.url.trim();
+                    if (!url) return;
+                    const name = linkInput.name.trim() || url;
+                    setLinks(prev => [...prev, { name, url }]);
+                    setLinkInput({ name: '', url: '' });
+                  }}
+                  style={{ padding: '9px 14px', border: 'none', borderRadius: 3, background: '#034EA2', color: '#fff', fontSize: '0.82rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}>
+                  <LinkIcon size={14} />
+                </button>
+              </div>
+              {links.length > 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {links.map((l, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '7px 10px', border: '1px solid var(--line-1)', borderRadius: 3, background: 'var(--surface-2)' }}>
+                      <LinkIcon size={13} color="var(--blue)" style={{ flexShrink: 0 }} />
+                      <span style={{ fontSize: '0.78rem', color: 'var(--text)', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{l.name}</span>
+                      <span style={{ fontSize: '0.7rem', color: 'var(--text-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 180 }}>{l.url}</span>
+                      <button type="button" onClick={() => setLinks(prev => prev.filter((_, j) => j !== i))}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)', display: 'flex', alignItems: 'center', padding: 2, borderRadius: 2 }}
+                        onMouseEnter={e => (e.currentTarget.style.color = '#b42318')}
+                        onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-3)')}>
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Actions */}

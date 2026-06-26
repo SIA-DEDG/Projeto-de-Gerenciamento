@@ -7,11 +7,11 @@ import { logAction } from '../../lib/logger';
 const pid = (req: Request) => req.params['id'] as string;
 
 export async function listTasks(req: Request, res: Response, next: NextFunction): Promise<void> {
-  try { res.json(await svc.listTasks(req.user.directoriaId!)); } catch (err) { next(err); }
+  try { res.json(await svc.listTasks(req.user.directoriaId)); } catch (err) { next(err); }
 }
 
 export async function listArchived(req: Request, res: Response, next: NextFunction): Promise<void> {
-  try { res.json(await svc.listArchivedTasks(req.user.directoriaId!)); } catch (err) { next(err); }
+  try { res.json(await svc.listArchivedTasks(req.user.directoriaId)); } catch (err) { next(err); }
 }
 
 export async function getTask(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -71,4 +71,59 @@ export async function unarchiveTask(req: Request, res: Response, next: NextFunct
     void logAction(req.user.sub, req.user.username, 'UNARCHIVE', 'task', id, 'Tarefa desarquivada');
     res.json(task);
   } catch (err) { next(err); }
+}
+
+// ── Anexos ────────────────────────────────────────────────────────────────────
+
+export async function addAttachment(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const id = pid(req);
+    const { type, name, url, fileData, mimeType, size } = req.body as {
+      type: 'file' | 'link'; name: string; url?: string;
+      fileData?: string; mimeType?: string; size?: number;
+    };
+
+    if (type === 'link') {
+      if (!url) { res.status(400).json({ error: 'url obrigatória para link' }); return; }
+      const attachments = await svc.addAttachment(id, { type: 'link', name, url });
+      res.json(attachments);
+      return;
+    }
+
+    // Arquivo: upload para Supabase
+    if (!fileData) { res.status(400).json({ error: 'fileData obrigatório para arquivo' }); return; }
+    const { uploadFile, storageEnabled } = await import('../../lib/storage');
+    const dirId = req.user.directoriaId ?? 'global';
+    let path: string;
+    if (storageEnabled()) {
+      const ext = name.split('.').pop() ?? 'bin';
+      path = await uploadFile(`diretorias/${dirId}/tasks/${id}/${Date.now()}.${ext}`, fileData, mimeType ?? 'application/octet-stream');
+    } else {
+      path = `__base64__:${fileData.slice(0, 50)}`;
+    }
+    const attachments = await svc.addAttachment(id, { type: 'file', name, path, size: size ?? 0, mimeType: mimeType ?? '' });
+    res.json(attachments);
+  } catch (err) { next(err); }
+}
+
+export async function removeAttachment(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const id = pid(req);
+    const idx = parseInt(req.params['idx'] as string, 10);
+    if (isNaN(idx)) { res.status(400).json({ error: 'índice inválido' }); return; }
+    const attachments = await svc.removeAttachment(id, idx);
+    res.json(attachments);
+  } catch (err) { next(err); }
+}
+
+export async function getAttachmentUrl(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const id = pid(req);
+    const idx = parseInt(req.params['idx'] as string, 10);
+    const url = await svc.getAttachmentSignedUrl(id, idx);
+    res.json({ url });
+  } catch (err: any) {
+    if (err.status) { res.status(err.status).json({ error: err.message }); return; }
+    next(err);
+  }
 }

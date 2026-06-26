@@ -6,6 +6,7 @@ import {
   fetchTasks, createTask, updateTask, deleteTask, archiveTask,
   fetchProjects, fetchUsers,
   getCachedTasks, getCachedProjects, getCachedUsers,
+  addTaskFile, addTaskLink,
 } from '@/lib/api';
 import type { UserPublic } from '@/lib/api';
 import { resolveCoResponsibleIds, STATUS_NEXT } from '@/lib/utils';
@@ -26,6 +27,8 @@ export interface ActivityFormData {
   co_responsibles: string | null;
   external_collaborators: string | null;
   deadline: string | null;
+  attachments?: { name: string; type: string; size: number; data: string }[];
+  links?: { name: string; url: string }[];
 }
 
 export interface ConfirmDialogState {
@@ -132,14 +135,28 @@ export function useTaskBoard() {
 
     if (existingTask) {
       const updated = await updateTask(existingTask, payload);
-      setAllTasks((curr) => curr.map((x) => x.id === existingTask.id ? updated : x));
-      if (openedTask?.id === existingTask.id) setOpenedTask(updated);
+      await uploadAttachments(existingTask.id, formData);
+      const refreshed = await fetchTasks().then(ts => ts.find(t => t.id === existingTask.id) ?? updated);
+      setAllTasks((curr) => curr.map((x) => x.id === existingTask.id ? refreshed : x));
+      if (openedTask?.id === existingTask.id) setOpenedTask(refreshed);
       return null;
     } else {
       const created = await createTask(payload);
-      setAllTasks((curr) => [...curr, created]);
-      return created;
+      await uploadAttachments(created.id, formData);
+      const refreshed = await fetchTasks().then(ts => ts.find(t => t.id === created.id) ?? created);
+      setAllTasks((curr) => [...curr.filter(x => x.id !== created.id), refreshed]);
+      return refreshed;
     }
+  }
+
+  async function uploadAttachments(taskId: string, formData: ActivityFormData) {
+    const fileUploads = (formData.attachments ?? []).map(f =>
+      addTaskFile(taskId, { name: f.name, data: f.data, mimeType: f.type, size: f.size }).catch(() => null)
+    );
+    const linkUploads = (formData.links ?? []).map(l =>
+      addTaskLink(taskId, l.name, l.url).catch(() => null)
+    );
+    await Promise.all([...fileUploads, ...linkUploads]);
   }
 
   // ── Excluir atividade ─────────────────────────────────────────────────────

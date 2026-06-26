@@ -134,9 +134,9 @@ function ResetPasswordModal({ user, onClose, onSuccess }: { user: UserPublic; on
 
 export default function UsuariosPage() {
   const currentUser = getUser();
-  const myId    = currentUser?.user_id ?? '';
-  const myRole  = currentUser?.role ?? '';
-  const iAmAdmin = myRole === 'Admin';
+  const myId     = currentUser?.user_id ?? '';
+  const myRole   = currentUser?.role ?? '';
+  const iAmAdmin = myRole === 'Admin'; // Super-Admin — vê todos os usuários de todas as diretorias
 
   const [users, setUsers]         = useState<UserPublic[]>([]);
   const [loading, setLoading]     = useState(true);
@@ -244,8 +244,8 @@ export default function UsuariosPage() {
         ) : (
           <div>
             {/* Cabeçalho */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 180px 110px 72px', padding: '11px 32px', background: 'var(--surface-2)', borderBottom: '1px solid var(--line-1)' }}>
-              {['Colaborador', 'Perfil', 'Cadastro', ''].map((h, i) => (
+            <div style={{ display: 'grid', gridTemplateColumns: iAmAdmin ? '1fr 140px 180px 110px 72px' : '1fr 180px 110px 72px', padding: '11px 32px', background: 'var(--surface-2)', borderBottom: '1px solid var(--line-1)' }}>
+              {(iAmAdmin ? ['Colaborador', 'Diretoria', 'Perfil', 'Cadastro', ''] : ['Colaborador', 'Perfil', 'Cadastro', '']).map((h, i) => (
                 <span key={i} className="mono" style={{ fontSize: '0.62rem', fontWeight: 500, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--text-3)' }}>{h}</span>
               ))}
             </div>
@@ -263,7 +263,7 @@ export default function UsuariosPage() {
 
               return (
                 <div key={user.id}
-                  style={{ display: 'grid', gridTemplateColumns: '1fr 180px 110px 72px', padding: '14px 32px', alignItems: 'center', borderBottom: '1px solid var(--line-2)', transition: 'background 0.1s' }}
+                  style={{ display: 'grid', gridTemplateColumns: iAmAdmin ? '1fr 140px 180px 110px 72px' : '1fr 180px 110px 72px', padding: '14px 32px', alignItems: 'center', borderBottom: '1px solid var(--line-2)', transition: 'background 0.1s' }}
                   onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-2)')}
                   onMouseLeave={e => (e.currentTarget.style.background = '')}>
 
@@ -280,6 +280,20 @@ export default function UsuariosPage() {
                       <div className="mono" style={{ fontSize: '0.65rem', color: 'var(--text-3)', marginTop: 2, letterSpacing: '0.3px' }}>@{user.username}</div>
                     </div>
                   </div>
+
+                  {/* Diretoria — só para Admin que vê todos */}
+                  {iAmAdmin && (
+                    <div style={{ minWidth: 0 }}>
+                      {user.directoria_name ? (
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: '0.78rem', color: 'var(--text-2)' }}>
+                          <span style={{ width: 7, height: 7, borderRadius: '50%', background: user.directoria_color ?? '#6b7280', flexShrink: 0 }} />
+                          {user.directoria_name}
+                        </span>
+                      ) : (
+                        <span className="mono" style={{ fontSize: '0.68rem', color: 'var(--text-3)' }}>—</span>
+                      )}
+                    </div>
+                  )}
 
                   {/* Perfil — select estilizado quando editável, chip quando não */}
                   {canAct && !isSelf ? (

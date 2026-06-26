@@ -5,7 +5,7 @@ import { Trash2, Pencil, ChevronLeft, ChevronRight, Clock, ChevronDown, Check, P
 import Calendario, { type CalendarioItem } from '@/components/Calendario';
 import {
   fetchEvents, createEvent, updateEvent, deleteEvent, fetchUsers,
-  setEventMinutes, removeEventMinutes,
+  setEventMinutes, removeEventMinutes, getEventMinutesUrl,
   type CalendarEvent, type UserPublic,
 } from '@/lib/api';
 import ConfirmModal from '@/components/ConfirmModal';
@@ -854,20 +854,38 @@ export default function EventosPage() {
               <div className="mono" style={{ fontSize: '0.8rem', letterSpacing: '0.5px' }}>Nenhuma ata anexada ainda. Abra um evento realizado para anexar.</div>
             </div>
           ) : atasEvents.map(a => (
-            <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '16px 32px', borderBottom: '1px solid var(--line-2)', cursor: 'pointer', transition: 'background 0.12s' }}
+            <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '16px 32px', borderBottom: '1px solid var(--line-2)', transition: 'background 0.12s' }}
               onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'var(--surface-2)'}
               onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = ''}>
-              <div style={{ width: 38, height: 38, border: '1px solid var(--border)', borderRadius: 3, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--blue)', flexShrink: 0 }}>
+              {/* Ícone */}
+              <div style={{ width: 40, height: 40, border: '1px solid var(--border)', borderRadius: 3, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--blue)', flexShrink: 0, background: 'var(--surface-2)' }}>
                 <FileText size={18} />
               </div>
+              {/* Info — evento em destaque */}
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: '0.88rem', fontWeight: 500, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.minutes_file_name}</div>
-                <div className="mono" style={{ fontSize: '0.64rem', color: 'var(--text-3)', letterSpacing: '0.3px', marginTop: 3 }}>{a.start_date}</div>
+                <div style={{ fontSize: '0.92rem', fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 3 }}>
+                  {a.name}
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Paperclip size={11} color="var(--text-3)" />
+                  <span style={{ fontSize: '0.76rem', color: 'var(--text-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.minutes_file_name}</span>
+                  <span style={{ color: 'var(--border)' }}>·</span>
+                  <span className="mono" style={{ fontSize: '0.68rem', color: 'var(--text-3)', letterSpacing: '0.3px', flexShrink: 0 }}>{a.start_date}</span>
+                </div>
               </div>
-              <div style={{ fontSize: '0.8rem', color: 'var(--text-2)', maxWidth: 230, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.name}</div>
+              {/* Baixar */}
               <button
-                onClick={async (e) => { e.stopPropagation(); const updated = await removeEventMinutes(a.id); setEvents(curr => curr.map(x => x.id === a.id ? updated : x)); addToast('success', 'Ata removida', ''); }}
-                style={{ width: 34, height: 34, border: '1px solid var(--border)', borderRadius: 3, background: 'var(--surface)', color: 'var(--text-2)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontFamily: 'inherit' }}
+                onClick={async () => { try { const url = await getEventMinutesUrl(a.id); window.open(url, '_blank'); } catch { addToast('error', 'Erro', 'Não foi possível baixar a ata.'); } }}
+                title="Baixar ata"
+                style={{ width: 34, height: 34, border: '1px solid var(--border)', borderRadius: 3, background: 'var(--surface)', color: 'var(--blue)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+                onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--blue)'; (e.currentTarget as HTMLButtonElement).style.background = 'var(--surface-2)'; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--border)'; (e.currentTarget as HTMLButtonElement).style.background = 'var(--surface)'; }}>
+                <Download size={15} />
+              </button>
+              {/* Remover */}
+              <button
+                onClick={async () => { const updated = await removeEventMinutes(a.id); setEvents(curr => curr.map(x => x.id === a.id ? updated : x)); addToast('success', 'Ata removida', ''); }}
+                style={{ width: 34, height: 34, border: '1px solid var(--border)', borderRadius: 3, background: 'var(--surface)', color: 'var(--text-2)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
                 onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = '#b42318'; (e.currentTarget as HTMLButtonElement).style.color = '#b42318'; }}
                 onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--border)'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-2)'; }}
                 title="Remover ata"

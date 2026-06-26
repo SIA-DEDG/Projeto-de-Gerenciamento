@@ -6,7 +6,7 @@ import { logAction } from '../../lib/logger';
 const pid = (req: Request) => req.params['id'] as string;
 
 export async function listProjects(req: Request, res: Response, next: NextFunction): Promise<void> {
-  try { res.json(await svc.listProjects(req.user.directoriaId!)); } catch (err) { next(err); }
+  try { res.json(await svc.listProjects(req.user.directoriaId)); } catch (err) { next(err); }
 }
 
 export async function getProject(req: Request, res: Response, next: NextFunction): Promise<void> {

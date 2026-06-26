@@ -16,7 +16,7 @@ export async function register(req: Request, res: Response, next: NextFunction):
     const data = registerSchema.parse(req.body);
     // Super-Admin pode criar em qualquer diretoria; Gerente/Diretor só na sua
     const directoriaId = req.user.role === 'Admin'
-      ? (data.directoria_id ?? null)
+      ? (data.directoriaId ?? null)
       : (req.user.directoriaId ?? null);
     const user = await authService.register({ ...data, directoriaId });
     res.status(201).json(user);
@@ -28,8 +28,8 @@ export async function register(req: Request, res: Response, next: NextFunction):
 
 export async function changePassword(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const { current_password, new_password } = changePasswordSchema.parse(req.body);
-    await authService.changePassword(req.user.sub, current_password, new_password);
+    const { currentPassword, newPassword } = changePasswordSchema.parse(req.body);
+    await authService.changePassword(req.user.sub, currentPassword, newPassword);
     res.json({ message: 'Senha alterada com sucesso' });
   } catch (err: any) {
     if (err.status) { res.status(err.status).json({ error: err.message }); return; }
@@ -39,8 +39,8 @@ export async function changePassword(req: Request, res: Response, next: NextFunc
 
 export async function setInitialPassword(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const { new_password } = setInitialPasswordSchema.parse(req.body);
-    await authService.setInitialPassword(req.user.sub, new_password);
+    const { newPassword } = setInitialPasswordSchema.parse(req.body);
+    await authService.setInitialPassword(req.user.sub, newPassword);
     res.json({ message: 'Senha definida com sucesso' });
   } catch (err) { next(err); }
 }

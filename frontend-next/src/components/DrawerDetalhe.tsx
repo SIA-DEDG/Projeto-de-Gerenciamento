@@ -1,8 +1,10 @@
 'use client';
 
-import { X, Archive, Trash2, Pencil, Folder, Calendar, Clock } from 'lucide-react';
-import type { Task } from '@/types';
+import { useState } from 'react';
+import { X, Archive, Trash2, Pencil, Folder, Calendar, Clock, Paperclip, Link as LinkIcon, Download, ExternalLink } from 'lucide-react';
+import type { Task, TaskAttachment } from '@/types';
 import { avatarColor, initials, statusGroupLabel } from '@/lib/utils';
+import { getTaskAttachmentUrl, removeTaskAttachment } from '@/lib/api';
 
 interface Props {
   task: Task;
@@ -52,6 +54,88 @@ function deadlineBadge(deadline: string | null | undefined, isDone: boolean): { 
   if (diff === 0) return { label: 'Vence hoje',   color: '#A87A00', bg: 'rgba(168,122,0,0.08)' };
   if (diff <= 3)  return { label: 'Em breve',     color: '#A87A00', bg: 'rgba(168,122,0,0.08)' };
   return null;
+}
+
+function formatSize(bytes: number) {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+}
+
+function AttachmentsSection({ task }: { task: Task }) {
+  const [attachments, setAttachments] = useState<TaskAttachment[]>(task.attachments ?? []);
+  const [loading, setLoading] = useState<number | null>(null);
+
+  async function handleDownload(att: TaskAttachment & { type: 'file' }, idx: number) {
+    setLoading(idx);
+    try {
+      const url = await getTaskAttachmentUrl(task.id, idx);
+      window.open(url, '_blank');
+    } catch { /* silent */ } finally { setLoading(null); }
+  }
+
+  async function handleRemove(idx: number) {
+    try {
+      const updated = await removeTaskAttachment(task.id, idx);
+      setAttachments(updated);
+    } catch { /* silent */ }
+  }
+
+  const files = attachments.filter((a): a is TaskAttachment & { type: 'file' } => a.type === 'file');
+  const links = attachments.filter((a): a is TaskAttachment & { type: 'link' } => a.type === 'link');
+
+  if (attachments.length === 0) return null;
+
+  return (
+    <div>
+      <div className="mono" style={{ fontSize: '0.62rem', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--text-3)', marginBottom: 10 }}>
+        Anexos ({attachments.length})
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        {files.map((f, i) => {
+          const idx = attachments.indexOf(f);
+          return (
+            <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 11px', border: '1px solid var(--line-1)', borderRadius: 3, background: 'var(--surface-2)' }}>
+              <Paperclip size={13} color="var(--text-3)" style={{ flexShrink: 0 }} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: '0.82rem', color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.name}</div>
+                <div className="mono" style={{ fontSize: '0.64rem', color: 'var(--text-3)' }}>{formatSize(f.size)}</div>
+              </div>
+              <button onClick={() => handleDownload(f, idx)} disabled={loading === idx}
+                title="Baixar"
+                style={{ width: 28, height: 28, border: '1px solid var(--border)', borderRadius: 3, background: 'var(--surface)', color: loading === idx ? 'var(--text-3)' : 'var(--blue)', cursor: loading === idx ? 'wait' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <Download size={13} />
+              </button>
+              <button onClick={() => handleRemove(idx)} title="Remover"
+                style={{ width: 28, height: 28, border: '1px solid rgba(180,35,24,0.2)', borderRadius: 3, background: 'rgba(180,35,24,0.05)', color: '#b42318', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <Trash2 size={12} />
+              </button>
+            </div>
+          );
+        })}
+        {links.map((l) => {
+          const idx = attachments.indexOf(l);
+          return (
+            <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 11px', border: '1px solid var(--line-1)', borderRadius: 3, background: 'var(--surface-2)' }}>
+              <LinkIcon size={13} color="var(--blue)" style={{ flexShrink: 0 }} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: '0.82rem', color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{l.name}</div>
+                <div style={{ fontSize: '0.7rem', color: 'var(--text-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{l.url}</div>
+              </div>
+              <a href={l.url} target="_blank" rel="noreferrer" title="Abrir link"
+                style={{ width: 28, height: 28, border: '1px solid var(--border)', borderRadius: 3, background: 'var(--surface)', color: 'var(--blue)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, textDecoration: 'none' }}>
+                <ExternalLink size={13} />
+              </a>
+              <button onClick={() => handleRemove(idx)} title="Remover"
+                style={{ width: 28, height: 28, border: '1px solid rgba(180,35,24,0.2)', borderRadius: 3, background: 'rgba(180,35,24,0.05)', color: '#b42318', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <Trash2 size={12} />
+              </button>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
 }
 
 export default function DrawerDetalhe({ task, onClose, onEdit, onDelete, onAdvanceStatus, onArchive }: Props) {
@@ -261,6 +345,9 @@ export default function DrawerDetalhe({ task, onClose, onEdit, onDelete, onAdvan
               <span style={{ fontSize: '0.84rem', color: 'var(--text-2)' }}>{task.external_collaborators}</span>
             </div>
           )}
+
+          {/* Anexos */}
+          <AttachmentsSection task={task} />
         </div>
 
         {/* Footer */}

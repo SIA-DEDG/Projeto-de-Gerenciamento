@@ -14,8 +14,8 @@ function fmt(e: EventWithResponsibles) {
   return { ...rest, responsibles: responsibles.map((r) => r.user.name) };
 }
 
-export const listEvents = (directoriaId: string) =>
-  prisma.event.findMany({ where: { archived: false, directoriaId }, include, orderBy: { startDate: 'desc' } })
+export const listEvents = (directoriaId: string | null) =>
+  prisma.event.findMany({ where: { archived: false, ...(directoriaId ? { directoriaId } : {}) }, include, orderBy: { startDate: 'desc' } })
     .then((es) => es.map((e) => fmt(e as EventWithResponsibles)));
 
 export const createEvent = async (directoriaId: string, data: {

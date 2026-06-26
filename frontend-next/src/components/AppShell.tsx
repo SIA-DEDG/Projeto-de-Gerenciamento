@@ -4,6 +4,7 @@ import { useEffect, useState, lazy, Suspense, useRef } from 'react';
 import Sidebar from './Sidebar';
 import { TabsProvider, useTabs } from '@/context/TabsContext';
 import type { PageType } from '@/context/TabsContext';
+import { getUser, isSuperAdmin } from '@/lib/auth';
 
 const THEME_KEY  = 'sia-theme';
 const ACCENT_KEY = 'sia-accent';
@@ -97,9 +98,45 @@ function TabViewport() {
   );
 }
 
+// ── Popup sem diretoria ───────────────────────────────────────────────────────
+function SemDirectoriaModal() {
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 9999,
+      background: 'rgba(7,47,99,0.18)', backdropFilter: 'blur(6px)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24,
+    }}>
+      <div style={{
+        background: 'var(--surface)', borderRadius: 3, maxWidth: 400, width: '100%',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.06), 0 12px 40px rgba(3,78,162,0.12)',
+        overflow: 'hidden',
+      }}>
+        {/* Linha azul no topo */}
+        <div style={{ height: 3, background: '#034EA2' }} />
+        <div style={{ padding: '36px 36px 32px' }}>
+          <p className="mono" style={{ margin: '0 0 6px', fontSize: '0.62rem', fontWeight: 600, letterSpacing: '1.2px', textTransform: 'uppercase', color: '#034EA2' }}>
+            Acesso restrito
+          </p>
+          <h2 style={{ margin: '0 0 14px', fontSize: '1.35rem', fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.3px', lineHeight: 1.2 }}>
+            Sem diretoria<br />vinculada
+          </h2>
+          <p style={{ margin: '0 0 24px', fontSize: '0.88rem', color: 'var(--text-2)', lineHeight: 1.65 }}>
+            Sua conta ainda não está associada a nenhuma diretoria. Entre em contato com o <strong style={{ color: 'var(--text)', fontWeight: 600 }}>Gabinete</strong> para que seu acesso seja regularizado.
+          </p>
+          <div style={{ borderTop: '1px solid var(--line-1)', paddingTop: 18, fontSize: '0.78rem', color: 'var(--text-3)' }}>
+            Caso já tenha solicitado, aguarde a confirmação.
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── AppShell ─────────────────────────────────────────────────────────────────
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const user = typeof window !== 'undefined' ? getUser() : null;
+  const semDiretoria = !!user && !isSuperAdmin(user) && !user.directoria_id;
 
   useEffect(() => {
     const saved = typeof window !== 'undefined' ? localStorage.getItem(THEME_KEY) : null;
@@ -118,6 +155,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <TabsProvider>
+      {semDiretoria && <SemDirectoriaModal />}
       <div className={`app-container${theme === 'dark' ? ' theme-dark' : ''}`}>
         <div className="sidebar-rail-wrapper">
           <Sidebar onToggleTheme={toggleTheme} isDark={theme === 'dark'} />

@@ -9,5 +9,5 @@ export const updateRoleSchema = z.object({
 });
 
 export const resetPasswordSchema = z.object({
-  new_password: z.string().min(6),
+  newPassword: z.string().min(6), // camelCase após middleware
 });

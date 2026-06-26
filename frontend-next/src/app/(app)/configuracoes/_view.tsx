@@ -279,11 +279,6 @@ function PerfilSection() {
         value={<span className="mono" style={{ fontSize: '0.82rem' }}>{user?.username ?? '—'}</span>}
       />
       <ProfileRow
-        icon={<Mail size={14} strokeWidth={2} />}
-        label="E-mail"
-        value={<span className="mono" style={{ fontSize: '0.82rem' }}>{user?.username ?? '—'}</span>}
-      />
-      <ProfileRow
         icon={<Shield size={14} strokeWidth={2} />}
         label="Cargo"
         value={
@@ -731,129 +726,129 @@ function ContaSection() {
 
 // ── Seção Sistema (notificações + atualização) ────────────────────────────────
 
-function SistemaSection() {
-  const [settings, setSettings] = useState<Settings>(getSettings);
-  const [saved, setSaved] = useState(false);
+// function SistemaSection() {
+//   const [settings, setSettings] = useState<Settings>(getSettings);
+//   const [saved, setSaved] = useState(false);
 
-  function handleSave(e: React.FormEvent) {
-    e.preventDefault();
-    saveSettings(settings);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
-  }
+//   function handleSave(e: React.FormEvent) {
+//     e.preventDefault();
+//     saveSettings(settings);
+//     setSaved(true);
+//     setTimeout(() => setSaved(false), 3000);
+//   }
 
-  return (
-    <section style={{ marginTop: 40 }}>
-      <SectionHeader
-        icon={<Bell size={15} strokeWidth={2} />}
-        title="Notificações"
-        subtitle="Perfil e canais de alertas"
-      />
-      <div style={{ borderTop: '1px solid var(--line-1)', marginBottom: 16 }} />
+//   return (
+//     <section style={{ marginTop: 40 }}>
+//       <SectionHeader
+//         icon={<Bell size={15} strokeWidth={2} />}
+//         title="Notificações"
+//         subtitle="Perfil e canais de alertas"
+//       />
+//       <div style={{ borderTop: '1px solid var(--line-1)', marginBottom: 16 }} />
 
-      <form onSubmit={handleSave} style={{ maxWidth: 380 }}>
-        <div style={{ marginBottom: 14 }}>
-          <label htmlFor="sys-notif" style={labelStyle}>Perfil de notificação</label>
-          <select
-            id="sys-notif"
-            value={settings.notificationProfile}
-            onChange={e => setSettings({ ...settings, notificationProfile: e.target.value })}
-            style={{ ...inputStyle, appearance: 'none', cursor: 'pointer' }}
-          >
-            <option value="completo">Completo</option>
-            <option value="somente_critico">Somente crítico</option>
-            <option value="silencioso">Silencioso</option>
-          </select>
-        </div>
+//       <form onSubmit={handleSave} style={{ maxWidth: 380 }}>
+//         <div style={{ marginBottom: 14 }}>
+//           <label htmlFor="sys-notif" style={labelStyle}>Perfil de notificação</label>
+//           <select
+//             id="sys-notif"
+//             value={settings.notificationProfile}
+//             onChange={e => setSettings({ ...settings, notificationProfile: e.target.value })}
+//             style={{ ...inputStyle, appearance: 'none', cursor: 'pointer' }}
+//           >
+//             <option value="completo">Completo</option>
+//             <option value="somente_critico">Somente crítico</option>
+//             <option value="silencioso">Silencioso</option>
+//           </select>
+//         </div>
 
-        <div style={{ marginBottom: 14 }}>
-          <label htmlFor="sys-channel" style={labelStyle}>Canal de alertas</label>
-          <select
-            id="sys-channel"
-            value={settings.alertChannel}
-            onChange={e => setSettings({ ...settings, alertChannel: e.target.value })}
-            style={{ ...inputStyle, appearance: 'none', cursor: 'pointer' }}
-          >
-            <option value="email">E-mail</option>
-            <option value="in_app">No sistema</option>
-            <option value="email_e_sistema">E-mail + sistema</option>
-          </select>
-        </div>
+//         <div style={{ marginBottom: 14 }}>
+//           <label htmlFor="sys-channel" style={labelStyle}>Canal de alertas</label>
+//           <select
+//             id="sys-channel"
+//             value={settings.alertChannel}
+//             onChange={e => setSettings({ ...settings, alertChannel: e.target.value })}
+//             style={{ ...inputStyle, appearance: 'none', cursor: 'pointer' }}
+//           >
+//             <option value="email">E-mail</option>
+//             <option value="in_app">No sistema</option>
+//             <option value="email_e_sistema">E-mail + sistema</option>
+//           </select>
+//         </div>
 
-        <div style={{ marginBottom: 14 }}>
-          <label htmlFor="sys-refresh" style={labelStyle}>Atualização automática</label>
-          <select
-            id="sys-refresh"
-            value={settings.refreshInterval}
-            onChange={e => setSettings({ ...settings, refreshInterval: e.target.value })}
-            style={{ ...inputStyle, appearance: 'none', cursor: 'pointer' }}
-          >
-            <option value="5">A cada 5 minutos</option>
-            <option value="15">A cada 15 minutos</option>
-            <option value="30">A cada 30 minutos</option>
-            <option value="manual">Manual</option>
-          </select>
-        </div>
+//         <div style={{ marginBottom: 14 }}>
+//           <label htmlFor="sys-refresh" style={labelStyle}>Atualização automática</label>
+//           <select
+//             id="sys-refresh"
+//             value={settings.refreshInterval}
+//             onChange={e => setSettings({ ...settings, refreshInterval: e.target.value })}
+//             style={{ ...inputStyle, appearance: 'none', cursor: 'pointer' }}
+//           >
+//             <option value="5">A cada 5 minutos</option>
+//             <option value="15">A cada 15 minutos</option>
+//             <option value="30">A cada 30 minutos</option>
+//             <option value="manual">Manual</option>
+//           </select>
+//         </div>
 
-        {/* Toggle email */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '12px 0',
-          marginBottom: 20,
-          borderBottom: '1px solid var(--line-2)',
-        }}>
-          <div>
-            <div style={{ fontSize: '0.85rem', fontWeight: 500, color: 'var(--text)', display: 'flex', alignItems: 'center', gap: 6 }}>
-              <Mail size={13} strokeWidth={2} />
-              Notificações por e-mail
-            </div>
-            <div style={{ fontSize: '0.73rem', color: 'var(--text-3)', marginTop: 2 }}>
-              Receba alertas de atividades por e-mail
-            </div>
-          </div>
-          <label className="toggle-switch" style={{ flexShrink: 0 }}>
-            <input
-              type="checkbox"
-              checked={settings.emailEnabled}
-              onChange={e => setSettings({ ...settings, emailEnabled: e.target.checked })}
-            />
-            <span className="toggle-track" />
-          </label>
-        </div>
+//         {/* Toggle email */}
+//         <div style={{
+//           display: 'flex',
+//           alignItems: 'center',
+//           justifyContent: 'space-between',
+//           padding: '12px 0',
+//           marginBottom: 20,
+//           borderBottom: '1px solid var(--line-2)',
+//         }}>
+//           <div>
+//             <div style={{ fontSize: '0.85rem', fontWeight: 500, color: 'var(--text)', display: 'flex', alignItems: 'center', gap: 6 }}>
+//               <Mail size={13} strokeWidth={2} />
+//               Notificações por e-mail
+//             </div>
+//             <div style={{ fontSize: '0.73rem', color: 'var(--text-3)', marginTop: 2 }}>
+//               Receba alertas de atividades por e-mail
+//             </div>
+//           </div>
+//           <label className="toggle-switch" style={{ flexShrink: 0 }}>
+//             <input
+//               type="checkbox"
+//               checked={settings.emailEnabled}
+//               onChange={e => setSettings({ ...settings, emailEnabled: e.target.checked })}
+//             />
+//             <span className="toggle-track" />
+//           </label>
+//         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-          <button
-            type="submit"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-              padding: '10px 20px',
-              background: 'var(--blue)',
-              color: '#fff',
-              border: 'none',
-              borderRadius: 3,
-              fontSize: '0.82rem',
-              fontWeight: 600,
-              fontFamily: 'inherit',
-              cursor: 'pointer',
-              transition: 'background 0.12s',
-            }}
-          >
-            {saved ? <><Check size={13} /> Salvo!</> : <><Save size={13} /> Salvar preferências</>}
-          </button>
-          {saved && (
-            <span style={{ fontSize: '0.78rem', color: '#1B8A4B', display: 'flex', alignItems: 'center', gap: 5 }}>
-              <Check size={12} strokeWidth={2.5} /> Preferências salvas.
-            </span>
-          )}
-        </div>
-      </form>
-    </section>
-  );
-}
+//         <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+//           <button
+//             type="submit"
+//             style={{
+//               display: 'flex',
+//               alignItems: 'center',
+//               gap: 6,
+//               padding: '10px 20px',
+//               background: 'var(--blue)',
+//               color: '#fff',
+//               border: 'none',
+//               borderRadius: 3,
+//               fontSize: '0.82rem',
+//               fontWeight: 600,
+//               fontFamily: 'inherit',
+//               cursor: 'pointer',
+//               transition: 'background 0.12s',
+//             }}
+//           >
+//             {saved ? <><Check size={13} /> Salvo!</> : <><Save size={13} /> Salvar preferências</>}
+//           </button>
+//           {saved && (
+//             <span style={{ fontSize: '0.78rem', color: '#1B8A4B', display: 'flex', alignItems: 'center', gap: 5 }}>
+//               <Check size={12} strokeWidth={2.5} /> Preferências salvas.
+//             </span>
+//           )}
+//         </div>
+//       </form>
+//     </section>
+//   );
+// }
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
@@ -868,7 +863,7 @@ export default function ConfiguracoesPage() {
           <PerfilSection />
           <SegurancaSection />
           <AparenciaSection />
-          <SistemaSection />
+          {/* <SistemaSection /> */}
           <ContaSection />
         </div>
       </div>

@@ -10,7 +10,9 @@ router.post('/',          authenticate, requireAdmin, ctrl.createDirectoria);
 router.get('/:id',        authenticate, requireAdmin, ctrl.getDirectoria);
 router.get('/:id/members', authenticate, requireAdmin, ctrl.listMembers);
 router.put('/:id',        authenticate, requireAdmin, ctrl.updateDirectoria);
+router.delete('/:id',     authenticate, requireAdmin, ctrl.deleteDirectoria);
 router.patch('/:id/active', authenticate, requireAdmin, ctrl.toggleActive);
-router.put('/:id/member', authenticate, requireAdmin, ctrl.moveMember);
+router.put('/:id/member',          authenticate, requireAdmin, ctrl.moveMember);
+router.delete('/member/:userId',   authenticate, requireAdmin, ctrl.removeMember);
 
 export default router;

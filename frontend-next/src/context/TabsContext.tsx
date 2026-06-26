@@ -98,13 +98,23 @@ const INITIAL_TABS: Tab[] = [
   { id: 'tb0', type: 'board', name: 'Atividades', filters: { ...DEFAULT_FILTERS } },
 ];
 
-const LS_TABS = 'sia-tabs';
-const LS_ACTIVE = 'sia-active-tab';
+function getUserId(): string {
+  if (typeof window === 'undefined') return 'anon';
+  try {
+    const raw = sessionStorage.getItem('sia_user') ?? localStorage.getItem('sia_user');
+    if (raw) return (JSON.parse(raw) as { user_id?: string }).user_id ?? 'anon';
+  } catch {}
+  return 'anon';
+}
+
+const uid = typeof window !== 'undefined' ? getUserId() : 'anon';
+const LS_TABS   = `sia-tabs-${uid}`;
+const LS_ACTIVE = `sia-active-tab-${uid}`;
 
 function loadTabs(): Tab[] {
   if (typeof window === 'undefined') return INITIAL_TABS;
   try {
-    const raw = localStorage.getItem(LS_TABS);
+    const raw = localStorage.getItem(`sia-tabs-${getUserId()}`);
     if (raw) {
       const parsed = JSON.parse(raw) as Tab[];
       if (Array.isArray(parsed) && parsed.length > 0) return parsed;
@@ -116,7 +126,7 @@ function loadTabs(): Tab[] {
 function loadActiveId(tabs: Tab[]): string {
   if (typeof window === 'undefined') return tabs[0].id;
   try {
-    const saved = localStorage.getItem(LS_ACTIVE);
+    const saved = localStorage.getItem(`sia-active-tab-${getUserId()}`);
     if (saved && tabs.find(t => t.id === saved)) return saved;
   } catch {}
   return tabs[0].id;

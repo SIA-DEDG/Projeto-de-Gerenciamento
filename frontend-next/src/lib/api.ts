@@ -257,6 +257,32 @@ export async function unarchiveTask(id: string): Promise<void> {
   emitTasksChanged();
 }
 
+// ── Anexos de atividades ──────────────────────────────────────────────────────
+import type { TaskAttachment } from '@/types';
+
+export async function addTaskFile(taskId: string, file: { name: string; data: string; mimeType: string; size: number }): Promise<TaskAttachment[]> {
+  return apiFetch<TaskAttachment[]>(`/api/tasks/${taskId}/attachments`, {
+    method: 'POST',
+    body: JSON.stringify({ type: 'file', name: file.name, fileData: file.data, mimeType: file.mimeType, size: file.size }),
+  });
+}
+
+export async function addTaskLink(taskId: string, name: string, url: string): Promise<TaskAttachment[]> {
+  return apiFetch<TaskAttachment[]>(`/api/tasks/${taskId}/attachments`, {
+    method: 'POST',
+    body: JSON.stringify({ type: 'link', name, url }),
+  });
+}
+
+export async function removeTaskAttachment(taskId: string, index: number): Promise<TaskAttachment[]> {
+  return apiFetch<TaskAttachment[]>(`/api/tasks/${taskId}/attachments/${index}`, { method: 'DELETE' });
+}
+
+export async function getTaskAttachmentUrl(taskId: string, index: number): Promise<string> {
+  const { url } = await apiFetch<{ url: string }>(`/api/tasks/${taskId}/attachments/${index}/url`);
+  return url;
+}
+
 export async function importTasks(rows: {
   category: string;
   activity: string;
@@ -405,6 +431,8 @@ export interface Absence {
   id: string;
   user_id: string | null;
   employee_name: string;
+  directoria_id: string | null;
+  directoria_name: string | null;
   reason: string;
   justification: string | null;
   file_name: string | null;
@@ -683,6 +711,11 @@ export async function updateDirectoria(id: string, payload: {
   return result;
 }
 
+export async function deleteDirectoria(id: string): Promise<void> {
+  await apiFetch<void>(`/api/diretorias/${id}`, { method: 'DELETE' });
+  cacheInvalidate('diretorias');
+}
+
 export async function toggleDirectoriaActive(id: string, active: boolean): Promise<Directoria> {
   const result = await apiFetch<Directoria>(`/api/diretorias/${id}/active`, { method: 'PATCH', body: JSON.stringify({ active }) });
   cacheInvalidate('diretorias');
@@ -691,7 +724,12 @@ export async function toggleDirectoriaActive(id: string, active: boolean): Promi
 
 export async function moveUserToDirectoria(directoriaId: string, userId: string): Promise<void> {
   await apiFetch<void>(`/api/diretorias/${directoriaId}/member`, { method: 'PUT', body: JSON.stringify({ user_id: userId }) });
-  cacheInvalidate('users', 'diretorias');
+  cacheInvalidate('users', 'diretorias', 'users_all');
+}
+
+export async function removeUserFromDirectoria(userId: string): Promise<void> {
+  await apiFetch<void>(`/api/diretorias/member/${userId}`, { method: 'DELETE' });
+  cacheInvalidate('users', 'diretorias', 'users_all');
 }
 
 export async function fetchAllUsers(): Promise<UserPublic[]> {

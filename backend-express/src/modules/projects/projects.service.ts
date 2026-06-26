@@ -10,8 +10,8 @@ function fmt(p: ProjectWithOwner) {
   return { ...rest, owner: owner?.name ?? null };
 }
 
-export const listProjects = (directoriaId: string) =>
-  prisma.project.findMany({ where: { directoriaId }, include, orderBy: { createdAt: 'desc' } })
+export const listProjects = (directoriaId: string | null) =>
+  prisma.project.findMany({ where: directoriaId ? { directoriaId } : {}, include, orderBy: { createdAt: 'desc' } })
     .then((ps) => ps.map((p) => fmt(p as ProjectWithOwner)));
 
 export const getProject = (id: string) =>
