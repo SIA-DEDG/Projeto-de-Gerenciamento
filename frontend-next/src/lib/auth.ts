@@ -50,6 +50,11 @@ export function isSuperAdmin(user: StoredUser | null): boolean {
   return user?.role === 'Admin' && !user?.directoria_id;
 }
 
+// Pode criar/editar projetos e eventos (Funcionario e acima — Estagiário não)
+export function canManageProjects(role: string | undefined): boolean {
+  return hasMinRole(role, 'Funcionario');
+}
+
 export function isAdmin(role: string | undefined): boolean {
   return role === 'Admin';
 }

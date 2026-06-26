@@ -1,5 +1,8 @@
 import { Router } from 'express';
-import { authenticate } from '../../middleware/auth.middleware';
+import { authenticate, requireRole } from '../../middleware/auth.middleware';
+
+// Estagiário pode visualizar mas não criar/editar/excluir projetos
+const requireFuncionario = requireRole('Admin', 'Diretor', 'Gerente', 'Coordenador', 'Tecnico', 'Funcionario');
 import * as ctrl from './projects.controller';
 
 const router = Router();
@@ -44,7 +47,7 @@ const router = Router();
  *         description: Projeto criado
  */
 router.get('/', authenticate, ctrl.listProjects);
-router.post('/', authenticate, ctrl.createProject);
+router.post('/', authenticate, requireFuncionario, ctrl.createProject);
 
 /**
  * @swagger
@@ -84,7 +87,7 @@ router.post('/', authenticate, ctrl.createProject);
  *         description: Deletado
  */
 router.get('/:id', authenticate, ctrl.getProject);
-router.put('/:id', authenticate, ctrl.updateProject);
-router.delete('/:id', authenticate, ctrl.deleteProject);
+router.put('/:id', authenticate, requireFuncionario, ctrl.updateProject);
+router.delete('/:id', authenticate, requireFuncionario, ctrl.deleteProject);
 
 export default router;

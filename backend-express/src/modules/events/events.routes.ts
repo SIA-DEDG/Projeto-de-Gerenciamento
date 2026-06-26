@@ -1,5 +1,7 @@
 import { Router } from 'express';
-import { authenticate } from '../../middleware/auth.middleware';
+import { authenticate, requireRole } from '../../middleware/auth.middleware';
+
+const requireFuncionario = requireRole('Admin', 'Diretor', 'Gerente', 'Coordenador', 'Tecnico', 'Funcionario');
 import * as ctrl from './events.controller';
 
 const router = Router();
@@ -43,7 +45,7 @@ const router = Router();
  *         description: Evento criado
  */
 router.get('/', authenticate, ctrl.listEvents);
-router.post('/', authenticate, ctrl.createEvent);
+router.post('/', authenticate, requireFuncionario, ctrl.createEvent);
 
 /**
  * @swagger
@@ -71,8 +73,8 @@ router.post('/', authenticate, ctrl.createEvent);
  *       204:
  *         description: Deletado
  */
-router.put('/:id', authenticate, ctrl.updateEvent);
-router.delete('/:id', authenticate, ctrl.deleteEvent);
+router.put('/:id', authenticate, requireFuncionario, ctrl.updateEvent);
+router.delete('/:id', authenticate, requireFuncionario, ctrl.deleteEvent);
 
 /**
  * @swagger

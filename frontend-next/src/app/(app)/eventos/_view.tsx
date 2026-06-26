@@ -11,7 +11,7 @@ import {
 import ConfirmModal from '@/components/ConfirmModal';
 import { useToast } from '@/hooks/useToast';
 import ToastContainer from '@/components/ToastContainer';
-import { getUser } from '@/lib/auth';
+import { getUser, canManageProjects } from '@/lib/auth';
 import PageHeader from '@/components/PageHeader';
 
 // ?"??"? helpers ?"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"?
@@ -740,14 +740,16 @@ export default function EventosPage() {
         eyebrow="Agendamento de Eventos"
         title="Eventos"
         tabBarRight={
-          <button
-            onClick={() => openNew()}
-            style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '0 16px', height: 40, border: 'none', borderBottom: '2px solid transparent', background: 'transparent', color: 'var(--blue)', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', flexShrink: 0, fontFamily: 'inherit' }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--surface-2)')}
-            onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-          >
-            <Plus size={14} />Novo evento
-          </button>
+          canManageProjects(getUser()?.role) ? (
+            <button
+              onClick={() => openNew()}
+              style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '0 16px', height: 40, border: 'none', borderBottom: '2px solid transparent', background: 'transparent', color: 'var(--blue)', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', flexShrink: 0, fontFamily: 'inherit' }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--surface-2)')}
+              onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+            >
+              <Plus size={14} />Novo evento
+            </button>
+          ) : undefined
         }
       />
 

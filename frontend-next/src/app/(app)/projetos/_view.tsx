@@ -21,6 +21,7 @@ import { useRefetchOnFocus } from '@/lib/useRefetchOnFocus';
 import type { UserPublic } from '@/lib/api';
 import type { Task, Project } from '@/types';
 import PageHeader from '@/components/PageHeader';
+import { getUser, canManageProjects } from '@/lib/auth';
 
 const PAGE_SIZE = 12;
 
@@ -132,14 +133,16 @@ export default function ProjetosPage() {
         eyebrow="Portfólio da Diretoria"
         title="Projetos"
         tabBarRight={
-          <button
-            onClick={() => setProjectModal({ open: true, project: null })}
-            style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '0 16px', height: 40, border: 'none', borderBottom: '2px solid transparent', background: 'transparent', color: 'var(--blue)', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', flexShrink: 0, fontFamily: 'inherit' }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--surface-2)')}
-            onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-          >
-            <Plus size={14} />Novo projeto
-          </button>
+          canManageProjects(getUser()?.role) ? (
+            <button
+              onClick={() => setProjectModal({ open: true, project: null })}
+              style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '0 16px', height: 40, border: 'none', borderBottom: '2px solid transparent', background: 'transparent', color: 'var(--blue)', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', flexShrink: 0, fontFamily: 'inherit' }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--surface-2)')}
+              onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+            >
+              <Plus size={14} />Novo projeto
+            </button>
+          ) : undefined
         }
       />
 
