@@ -1,5 +1,5 @@
 const TOKEN_KEY = 'sia_token';
-const USER_KEY  = 'sia_user';
+const USER_KEY = 'sia_user';
 
 // Hierarquia de roles — índice maior = mais permissões
 export const ROLE_HIERARCHY = [
@@ -29,20 +29,25 @@ export function canResetPasswords(role: string | undefined): boolean {
   return hasMinRole(role, 'Gerente');
 }
 
-// Pode aprovar/recusar faltas (Gerente, Diretor e Admin — Coordenador não)
-export function canApproveFaltas(role: string | undefined): boolean {
-  return hasMinRole(role, 'Gerente');
+export function isGabinete(directoriaName: string | null | undefined): boolean {
+  if (!directoriaName) return false;
+  return directoriaName?.toLowerCase() === 'gabinete';
+}
+export interface StoredUser {
+  user_id: string;
+  name: string;
+  role: string;
+  username: string;
+  must_change_password: boolean;
+  directoria_id: string | null;
+  directoria_name: string | null;
+  directoria_color: string | null;
 }
 
-export interface StoredUser {
-  user_id:              string;
-  name:                 string;
-  role:                 string;
-  username:             string;
-  must_change_password: boolean;
-  directoria_id:        string | null;
-  directoria_name:      string | null;
-  directoria_color:     string | null;
+// Pode aprovar/recusar faltas (Gerente, Diretor e Admin ou Gabinete)
+export function canApproveFaltas(user: StoredUser | undefined | null): boolean {
+  if (!user) return false;
+  return hasMinRole(user?.role, 'Gerente') || isGabinete(user?.directoria_name);
 }
 
 // Super-Admin é role='Admin' sem diretoria vinculada
@@ -61,7 +66,7 @@ export function isAdmin(role: string | undefined): boolean {
 
 // remember=true → localStorage (persiste); false → sessionStorage (limpa ao fechar aba)
 export function setAuth(token: string, user: StoredUser, remember = false): void {
-  const keep  = remember ? localStorage  : sessionStorage;
+  const keep = remember ? localStorage : sessionStorage;
   const clear = remember ? sessionStorage : localStorage;
   keep.setItem(TOKEN_KEY, token);
   keep.setItem(USER_KEY, JSON.stringify(user));

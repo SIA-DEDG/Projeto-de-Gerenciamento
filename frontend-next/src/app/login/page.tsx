@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect } from 'react';
 import { Eye, EyeOff, ArrowRight } from 'lucide-react';
@@ -10,10 +10,10 @@ export default function LoginPage() {
   const router = useRouter();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [remember, setRemember]  = useState(false);
-  const [error, setError]        = useState('');
-  const [loading, setLoading]    = useState(false);
-  const [showPw, setShowPw]      = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated()) router.replace('/');
@@ -33,10 +33,10 @@ export default function LoginPage() {
         directoria_id: data.directoria_id ?? null,
         directoria_name: data.directoria_name ?? null,
         directoria_color: data.directoria_color ?? null,
-      }, remember);
+      }, rememberMe);
       router.replace(data.must_change_password ? '/redefinir-senha' : '/');
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Credenciais inválidas.');
+      setError('Credenciais inválidas.');
     } finally {
       setLoading(false);
     }
@@ -54,7 +54,6 @@ export default function LoginPage() {
         {/* Faixa de cores do Gov-PI no topo */}
         <div style={{ position: 'absolute', left: 0, right: 0, top: 0, height: 4, background: 'linear-gradient(90deg, var(--blue) 0 40%, #E0A92E 40% 55%, #b42318 55% 75%, #1B8A4B 75%)' }} />
 
-        {/* Logo centralizado */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 32 }}>
           <div style={{ width: 48, height: 48, borderRadius: 3, background: '#072f63', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#E0A92E', fontSize: 26, lineHeight: 1, boxShadow: '0 0 0 6px rgba(7,47,99,0.08)' }}>
             <img style={{ width: 50 }} src="favicon.ico" alt="" />
@@ -86,7 +85,7 @@ export default function LoginPage() {
             <label className="mono" style={{ display: 'block', fontSize: '0.66rem', fontWeight: 500, letterSpacing: '1px', textTransform: 'uppercase', color: '#6b7280', marginBottom: 7 }}>Senha</label>
             <div style={{ position: 'relative' }}>
               <input
-                type={showPw ? 'text' : 'password'}
+                type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
@@ -95,16 +94,16 @@ export default function LoginPage() {
                 onFocus={(e) => { e.target.style.borderColor = 'var(--blue)'; e.target.style.background = '#fff'; e.target.style.boxShadow = '0 0 0 3px var(--primary-light)'; }}
                 onBlur={(e)  => { e.target.style.borderColor = '#dde2ea'; e.target.style.background = '#f8f9fb'; e.target.style.boxShadow = 'none'; }}
               />
-              <button type="button" tabIndex={-1} onClick={() => setShowPw((v) => !v)}
+              <button type="button" tabIndex={-1} onClick={() => setShowPassword((prev) => !prev)}
                 style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#9aa1ac', display: 'flex', padding: 4 }}>
-                {showPw ? <Eye size={16} /> : <EyeOff size={16} />}
+                {showPassword ? <Eye size={16} /> : <EyeOff size={16} />}
               </button>
             </div>
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-              <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} style={{ width: 15, height: 15, accentColor: 'var(--blue)', cursor: 'pointer' }} />
+              <input type="checkbox" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} style={{ width: 15, height: 15, accentColor: 'var(--blue)', cursor: 'pointer' }} />
               <span style={{ fontSize: '0.82rem', color: '#344563' }}>Manter-me conectado</span>
             </label>
           </div>
@@ -131,7 +130,7 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '0.62rem', color: '#9aa1ac', letterSpacing: '0.5px', lineHeight: 1.7, textAlign: 'center', marginTop: 32 }}>
+        <div style={{ fontFamily: "'inter', monospace", fontSize: '0.62rem', color: '#9aa1ac', letterSpacing: '0.5px', lineHeight: 1.7, textAlign: 'center', marginTop: 32 }}>
           © 2026 Secretaria de Inteligência Artificial<br />
           Economia Digital, Ciência, Tecnologia e Inovação — SIA
         </div>
