@@ -27,8 +27,8 @@ export const listAbsences = async (userId: string, role: string, directoriaId: s
   let isGlobalViewer = !directoriaId;
   if (directoriaId) {
     // Qualquer membro do Gabinete (independente do role) vê todas as faltas
-    const dir = await prisma.directoria.findUnique({ where: { id: directoriaId }, select: { slug: true } });
-    if (dir?.slug === 'gabinete') isGlobalViewer = true;
+    const dir = await prisma.directoria.findUnique({ where: { id: directoriaId }, select: { slug: true, name: true } });
+    if (dir?.slug === 'gabinete' || dir?.name?.toLowerCase() === 'gabinete') isGlobalViewer = true;
   }
 
   const where = isGlobalViewer

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Eye, EyeOff, ArrowRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { login } from '@/lib/api';
+import { login, clearAllCache } from '@/lib/api';
 import { setAuth, isAuthenticated } from '@/lib/auth';
 
 export default function LoginPage() {
@@ -26,6 +26,7 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const data = await login(username, password);
+      clearAllCache();
       setAuth(data.token, {
         user_id: data.user_id, name: data.name, role: data.role,
         username: data.username, must_change_password: data.must_change_password,

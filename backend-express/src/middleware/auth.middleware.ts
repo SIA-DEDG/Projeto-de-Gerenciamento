@@ -47,3 +47,5 @@ export function requireRole(...roles: string[]) {
 
 export const requireManager = requireRole('Admin', 'Diretor', 'Gerente');
 export const requireAdmin = requireRole('Admin');
+
+

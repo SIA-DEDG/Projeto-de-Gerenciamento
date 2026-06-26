@@ -27,6 +27,10 @@ function cacheSet<T>(key: string, data: T): void {
 function cacheInvalidate(...keys: string[]): void {
   keys.forEach((k) => apiCache.delete(k));
 }
+export function clearAllCache(): void {
+  apiCache.clear();
+  inFlight.clear();
+}
 
 // Requests em voo: evita requests paralelos duplicados para a mesma chave
 const inFlight = new Map<string, Promise<unknown>>();

@@ -32,14 +32,14 @@ model Directoria {
 }
 
 model User {
-  id                 String    @id @default(uuid()) @db.Uuid
+  id                 String   @id @default(uuid()) @db.Uuid
   name               String
-  username           String    @unique
-  passwordHash       String    @map("password_hash")
-  role               String    @default("Funcionario")
-  mustChangePassword Boolean   @default(true) @map("must_change_password")
-  createdAt          DateTime  @default(now()) @map("created_at")
-  directoriaId       String?   @map("directoria_id") @db.Uuid
+  username           String   @unique
+  passwordHash       String   @map("password_hash")
+  role               String   @default("Funcionario")
+  mustChangePassword Boolean  @default(true) @map("must_change_password")
+  createdAt          DateTime @default(now()) @map("created_at")
+  directoriaId       String?  @map("directoria_id") @db.Uuid
 
   directoria         Directoria?         @relation(fields: [directoriaId], references: [id], onDelete: SetNull)
   ownedProjects      Project[]
@@ -85,19 +85,20 @@ model Task {
   responsibleId         String?   @map("responsible_id") @db.Uuid
   status                String
   priority              String    @default("Média")
-  createdAt             DateTime  @default(now()) @db.Date @map("created_at")
+  createdAt             DateTime  @default(now()) @map("created_at") @db.Date
   description           String?
   projectId             String?   @map("project_id") @db.Uuid
   directoriaId          String    @map("directoria_id") @db.Uuid
   externalCollaborators String?   @map("external_collaborators")
   deadline              DateTime? @db.Date
   archived              Boolean   @default(false)
-  attachments           String?   // JSON array de {type, name, url?, path?, size?, mimeType?}
+  attachments           String?
   updatedAt             DateTime  @updatedAt @map("updated_at")
+  completedAt           DateTime? @db.Date @map("completed_at")    
 
-  responsible    User?              @relation("responsible", fields: [responsibleId], references: [id], onDelete: SetNull)
-  project        Project?           @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  directoria     Directoria         @relation(fields: [directoriaId], references: [id], onDelete: Cascade)
+  responsible    User?               @relation("responsible", fields: [responsibleId], references: [id], onDelete: SetNull)
+  project        Project?            @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  directoria     Directoria          @relation(fields: [directoriaId], references: [id], onDelete: Cascade)
   coResponsibles TaskCoResponsible[]
 
   @@index([archived])
@@ -127,8 +128,8 @@ model Absence {
   justification  String?
   fileName       String?  @map("file_name")
   filePath       String?  @map("file_path")
-  startDate      DateTime @db.Date @map("start_date")
-  endDate        DateTime @db.Date @map("end_date")
+  startDate      DateTime @map("start_date") @db.Date
+  endDate        DateTime @map("end_date") @db.Date
   approvalStatus String   @default("pendente") @map("approval_status")
   createdAt      DateTime @default(now()) @map("created_at")
 
@@ -144,8 +145,8 @@ model Event {
   name            String
   eventType       String   @map("event_type")
   attendees       String?
-  startDate       DateTime @db.Date @map("start_date")
-  endDate         DateTime @db.Date @map("end_date")
+  startDate       DateTime @map("start_date") @db.Date
+  endDate         DateTime @map("end_date") @db.Date
   startTime       String?  @map("start_time")
   minutesFileName String?  @map("minutes_file_name")
   minutesFilePath String?  @map("minutes_file_path")
@@ -187,7 +188,7 @@ model Feedback {
   status           String   @default("pendente")
   createdAt        DateTime @default(now()) @map("created_at")
 
-  usuario  User?            @relation(fields: [usuarioId], references: [id], onDelete: SetNull)
+  usuario  User?             @relation(fields: [usuarioId], references: [id], onDelete: SetNull)
   upvotes  FeedbackUpvote[]
   comments FeedbackComment[]
 
@@ -217,10 +218,10 @@ model FeedbackComment {
   conteudo    String
   createdAt   DateTime @default(now()) @map("created_at")
 
-  feedback Feedback         @relation(fields: [feedbackId], references: [id], onDelete: Cascade)
-  parent   FeedbackComment? @relation("replies", fields: [parentId], references: [id], onDelete: Cascade)
+  feedback Feedback          @relation(fields: [feedbackId], references: [id], onDelete: Cascade)
+  parent   FeedbackComment?  @relation("replies", fields: [parentId], references: [id], onDelete: Cascade)
   replies  FeedbackComment[] @relation("replies")
-  usuario  User?            @relation(fields: [usuarioId], references: [id], onDelete: SetNull)
+  usuario  User?             @relation(fields: [usuarioId], references: [id], onDelete: SetNull)
 
   @@index([feedbackId])
   @@map("feedback_comments")

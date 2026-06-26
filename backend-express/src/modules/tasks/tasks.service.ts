@@ -34,29 +34,39 @@ function fmt(t: TaskWithRelations) {
   };
 }
 
+async function isGabineteDir(directoriaId: string): Promise<boolean> {
+  const dir = await prisma.directoria.findUnique({ where: { id: directoriaId }, select: { slug: true, name: true } });
+  return dir?.slug === 'gabinete' || dir?.name?.toLowerCase() === 'gabinete';
+}
+
 // Auto-arquivamento: tarefas "Concluído" há mais de 2 dias
-async function autoArchiveDoneTasks(directoriaId: string | null) {
+async function autoArchiveDoneTasks(directoriaId: string | null, globalViewer = false) {
   const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
   await prisma.task.updateMany({
     where: {
       archived: false,
       status: 'Concluído',
       updatedAt: { lt: twoDaysAgo },
-      ...(directoriaId ? { directoriaId } : {}),
+      ...(!globalViewer && directoriaId ? { directoriaId } : {}),
     },
     data: { archived: true },
   });
 }
 
 export const listTasks = async (directoriaId: string | null) => {
-  await autoArchiveDoneTasks(directoriaId);
-  return prisma.task.findMany({ where: { archived: false, ...(directoriaId ? { directoriaId } : {}) }, include, orderBy: { createdAt: 'desc' } })
+  const globalViewer = !directoriaId;
+  await autoArchiveDoneTasks(directoriaId, globalViewer);
+  const where = { archived: false, ...(!globalViewer && directoriaId ? { directoriaId } : {}) };
+  return prisma.task.findMany({ where, include, orderBy: { createdAt: 'desc' } })
     .then((ts) => ts.map((t) => fmt(t as TaskWithRelations)));
 };
 
-export const listArchivedTasks = (directoriaId: string | null) =>
-  prisma.task.findMany({ where: { archived: true, ...(directoriaId ? { directoriaId } : {}) }, include, orderBy: { createdAt: 'desc' } })
+export const listArchivedTasks = async (directoriaId: string | null) => {
+  const globalViewer = !directoriaId;
+  const where = { archived: true, ...(!globalViewer && directoriaId ? { directoriaId } : {}) };
+  return prisma.task.findMany({ where, include, orderBy: { createdAt: 'desc' } })
     .then((ts) => ts.map((t) => fmt(t as TaskWithRelations)));
+};
 
 export const getTask = (id: string) =>
   prisma.task.findUniqueOrThrow({ where: { id }, include })
