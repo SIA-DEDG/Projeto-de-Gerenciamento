@@ -34,37 +34,25 @@ function fmt(t: TaskWithRelations) {
   };
 }
 
-async function isGabineteDir(directoriaId: string): Promise<boolean> {
-  const dir = await prisma.directoria.findUnique({ where: { id: directoriaId }, select: { slug: true, name: true } });
-  return dir?.slug === 'gabinete' || dir?.name?.toLowerCase() === 'gabinete';
-}
-
 // Auto-arquivamento: tarefas "Concluído" há mais de 2 dias
-async function autoArchiveDoneTasks(directoriaId: string | null, globalViewer = false) {
+async function autoArchiveDoneTasks(directoriaId: string) {
   const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
   await prisma.task.updateMany({
-    where: {
-      archived: false,
-      status: 'Concluído',
-      updatedAt: { lt: twoDaysAgo },
-      ...(!globalViewer && directoriaId ? { directoriaId } : {}),
-    },
+    where: { archived: false, status: 'Concluído', updatedAt: { lt: twoDaysAgo }, directoriaId },
     data: { archived: true },
   });
 }
 
 export const listTasks = async (directoriaId: string | null) => {
-  const globalViewer = !directoriaId;
-  await autoArchiveDoneTasks(directoriaId, globalViewer);
-  const where = { archived: false, ...(!globalViewer && directoriaId ? { directoriaId } : {}) };
-  return prisma.task.findMany({ where, include, orderBy: { createdAt: 'desc' } })
+  if (!directoriaId) return [];
+  await autoArchiveDoneTasks(directoriaId);
+  return prisma.task.findMany({ where: { archived: false, directoriaId }, include, orderBy: { createdAt: 'desc' } })
     .then((ts) => ts.map((t) => fmt(t as TaskWithRelations)));
 };
 
 export const listArchivedTasks = async (directoriaId: string | null) => {
-  const globalViewer = !directoriaId;
-  const where = { archived: true, ...(!globalViewer && directoriaId ? { directoriaId } : {}) };
-  return prisma.task.findMany({ where, include, orderBy: { createdAt: 'desc' } })
+  if (!directoriaId) return [];
+  return prisma.task.findMany({ where: { archived: true, directoriaId }, include, orderBy: { createdAt: 'desc' } })
     .then((ts) => ts.map((t) => fmt(t as TaskWithRelations)));
 };
 
