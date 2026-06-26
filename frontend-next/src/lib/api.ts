@@ -631,6 +631,7 @@ export async function submitFeedback(payload: {
     body: JSON.stringify(payload),
   });
   cacheInvalidate('feedback');
+  emitTasksChanged();
   return result;
 }
 
@@ -658,6 +659,7 @@ export async function toggleFeedbackUpvote(id: string): Promise<FeedbackItem> {
 export async function deleteFeedback(id: string): Promise<void> {
   await apiFetch<void>(`/api/feedback/${id}`, { method: 'DELETE' });
   cacheInvalidate('feedback');
+  emitTasksChanged();
 }
 
 export async function setFeedbackStatus(id: string, status: 'pendente' | 'respondida'): Promise<FeedbackItem> {
