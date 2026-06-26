@@ -92,6 +92,8 @@ model Task {
   externalCollaborators String?   @map("external_collaborators")
   deadline              DateTime? @db.Date
   archived              Boolean   @default(false)
+  attachments           String?   // JSON array de {type, name, url?, path?, size?, mimeType?}
+  updatedAt             DateTime  @updatedAt @map("updated_at")
 
   responsible    User?              @relation("responsible", fields: [responsibleId], references: [id], onDelete: SetNull)
   project        Project?           @relation(fields: [projectId], references: [id], onDelete: Cascade)
