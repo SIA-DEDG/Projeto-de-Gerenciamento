@@ -707,6 +707,19 @@ export default function EventosPage() {
     return new Date(y, m - 1, d);
   }
 
+  function groupByMonth<T extends { start_date: string }>(items: T[]): { monthKey: string; label: string; items: T[] }[] {
+    const map = new Map<string, T[]>();
+    for (const item of items) {
+      const ym = item.start_date.slice(0, 7);
+      if (!map.has(ym)) map.set(ym, []);
+      map.get(ym)!.push(item);
+    }
+    return Array.from(map.entries()).map(([ym, evs]) => {
+      const [year, month] = ym.split('-').map(Number);
+      return { monthKey: ym, label: `${MONTHS[month - 1]} ${year}`, items: evs };
+    });
+  }
+
   function tabStyle(active: boolean): React.CSSProperties {
     return {
       border: 'none',
@@ -723,6 +736,28 @@ export default function EventosPage() {
   }
 
   const [pastOpen, setPastOpen] = useState(false);
+  const [filterEvMonth, setFilterEvMonth] = useState('');
+  const [filterEvType, setFilterEvType] = useState('');
+
+  const filteredForAgenda = useMemo(() => visibleEvents.filter(ev => {
+    if (filterEvMonth && !ev.start_date.startsWith(filterEvMonth)) return false;
+    if (filterEvType && ev.event_type !== filterEvType) return false;
+    return true;
+  }), [visibleEvents, filterEvMonth, filterEvType]);
+
+  /* ── Grupos de agenda (filtrados) ── */
+  const agendadosFilt = useMemo(() =>
+    filteredForAgenda.filter(ev => ev.end_date >= todayStr).sort((a, b) => a.start_date.localeCompare(b.start_date)),
+    [filteredForAgenda, todayStr]
+  );
+  const realizadosFilt = useMemo(() =>
+    filteredForAgenda.filter(ev => ev.end_date < todayStr).sort((a, b) => b.start_date.localeCompare(a.start_date)),
+    [filteredForAgenda, todayStr]
+  );
+  const evGroupsFilt = [
+    { label: 'Agendados', items: agendadosFilt },
+    { label: 'Realizados', items: realizadosFilt },
+  ].filter(g => g.items.length > 0);
 
   /* ?"??"? Calendario items ?"??"? */
   const calItems: CalendarioItem[] = useMemo(() => visibleEvents.map(ev => ({
@@ -763,86 +798,128 @@ export default function EventosPage() {
           {visibleEvents.length} EVENTOS
         </span>
       </div>
-      {/* ?.??.? AGENDA ?.??.? */}
+      {/* ── AGENDA ── */}
       {tab === 'agenda' && (
         <div style={{ flex: 1, overflowY: 'auto' }}>
+          {/* Barra de filtros */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 32px', borderBottom: '1px solid var(--line-1)', background: 'var(--surface-2)', flexWrap: 'wrap' }}>
+            <input
+              type="month"
+              value={filterEvMonth}
+              onChange={e => setFilterEvMonth(e.target.value)}
+              style={{ height: 28, padding: '0 8px', border: filterEvMonth ? '1px solid var(--blue)' : '1px solid var(--border)', borderRadius: 3, background: filterEvMonth ? 'var(--primary-light)' : 'var(--surface)', color: filterEvMonth ? 'var(--blue)' : 'var(--text-2)', fontSize: '0.74rem', fontFamily: 'inherit', cursor: 'pointer', outline: 'none' }}
+            />
+            <select
+              value={filterEvType}
+              onChange={e => setFilterEvType(e.target.value)}
+              style={{ height: 28, padding: '0 8px', border: filterEvType ? '1px solid var(--blue)' : '1px solid var(--border)', borderRadius: 3, background: filterEvType ? 'var(--primary-light)' : 'var(--surface)', color: filterEvType ? 'var(--blue)' : 'var(--text-2)', fontSize: '0.74rem', fontFamily: 'inherit', cursor: 'pointer', outline: 'none' }}
+            >
+              <option value="">Tipo</option>
+              {EV_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+            </select>
+            {(filterEvMonth || filterEvType) && (
+              <button
+                onClick={() => { setFilterEvMonth(''); setFilterEvType(''); }}
+                style={{ height: 28, padding: '0 10px', border: 'none', borderRadius: 3, background: 'transparent', color: 'var(--text-3)', fontSize: '0.74rem', fontFamily: 'inherit', cursor: 'pointer' }}
+                onMouseEnter={e => (e.currentTarget.style.color = 'var(--text)')}
+                onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-3)')}
+              >
+                Limpar
+              </button>
+            )}
+            <span className="mono" style={{ fontSize: '0.68rem', color: 'var(--text-3)', marginLeft: 'auto', letterSpacing: '0.5px' }}>
+              {filteredForAgenda.length} evento{filteredForAgenda.length !== 1 ? 's' : ''}
+            </span>
+          </div>
+
           {loading ? (
             <div className="loading-state">Carregando eventos…</div>
-          ) : evGroups.length === 0 ? (
+          ) : evGroupsFilt.length === 0 ? (
             <div className="empty-state"><p>Nenhum evento encontrado.</p></div>
-          ) : evGroups.map(group => (
+          ) : evGroupsFilt.map(group => (
             <div key={group.label}>
-              <div className="mono" style={{ fontSize: '0.66rem', fontWeight: 500, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--text-3)', padding: '22px 32px 10px' }}>
+              {/* Label do grupo: Agendados / Realizados */}
+              <div className="mono" style={{ fontSize: '0.66rem', fontWeight: 600, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--text-3)', padding: '20px 32px 0' }}>
                 {group.label}
               </div>
-              {group.items.map(ev => {
-                const dt = parseDateUTC(ev.start_date);
-                const isPast = ev.end_date < todayStr;
-                const resps = parseResps(ev.responsibles);
-                const dateColor = isPast ? 'var(--text-2)' : 'var(--blue)';
-                return (
-                  <div key={ev.id} onClick={() => { setPreview({ event: ev, cursorX: 0, cursorY: 0 }); }}
-                    style={{ display: 'flex', alignItems: 'center', gap: 18, padding: '16px 32px', borderTop: '1px solid var(--line-2)', cursor: 'pointer', transition: 'background 0.12s' }}
-                    onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'var(--surface-2)'}
-                    onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = ''}>
-                    {/* Bloco de data */}
-                    <div className="mono" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: 46, flexShrink: 0, lineHeight: 1.1 }}>
-                      <span style={{ fontSize: '0.56rem', fontWeight: 500, letterSpacing: '1px', color: 'var(--text-3)', textTransform: 'uppercase' }}>{WEEKDAYS_S[dt.getDay()]}</span>
-                      <span style={{ fontSize: '1.4rem', fontWeight: 500, color: dateColor, marginTop: 1 }}>{dt.getDate()}</span>
-                      <span style={{ fontSize: '0.54rem', fontWeight: 500, letterSpacing: '1px', color: 'var(--text-3)', textTransform: 'uppercase' }}>{MONTHS_S[dt.getMonth()]}</span>
-                    </div>
-                    {/* Divider */}
-                    <div style={{ width: 1, height: 44, background: 'var(--line-1)', flexShrink: 0 }} />
-                    {/* Info */}
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <span className="mono" style={{ fontSize: '0.6rem', fontWeight: 500, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--text-3)' }}>{ev.event_type}</span>
-                        <span style={{ color: 'var(--border)' }}>·</span>
-                        <span className="mono" style={{ fontSize: '0.6rem', fontWeight: 500, letterSpacing: '0.5px', textTransform: 'uppercase', color: isPast ? 'var(--text-2)' : 'var(--blue)' }}>
-                          {isPast ? 'Realizado' : 'Agendado'}
-                        </span>
-                      </div>
-                      <div style={{ fontSize: '0.95rem', fontWeight: 500, color: 'var(--text)', marginTop: 5, letterSpacing: '-0.1px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ev.name}</div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginTop: 8 }}>
-                        {ev.start_time && (
-                          <span style={{ display: 'flex', alignItems: 'center', gap: 5, color: 'var(--text-3)', fontSize: '0.74rem' }}>
-                            <Clock size={12} />
-                            {ev.start_time}
-                          </span>
-                        )}
-                        {ev.attendees && (
-                          <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: '0.74rem', color: 'var(--text-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 200 }}>
-                            <MapPin size={12} strokeWidth={1.8} />
-                            {`${ev.event_type} · ${ev.attendees}`}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    {/* Direita: avatares + badge */}
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 10, flexShrink: 0 }}>
-                      {resps.length > 0 && (
-                        <div style={{ display: 'flex', alignItems: 'center' }}>
-                          {resps.slice(0, 3).map((name, i) => {
-                            const inits = name.split(' ').filter(Boolean).map((w: string) => w[0]).slice(0, 2).join('').toUpperCase();
-                            return (
-                              <div key={name} className="mono" title={name} style={{ width: 28, height: 28, borderRadius: '50%', background: '#072f63', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.6rem', fontWeight: 500, marginLeft: i > 0 ? -6 : 0, border: '1.5px solid var(--surface)', flexShrink: 0, zIndex: 3 - i }}>
-                                {inits}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
-                      {/* Badge de ata */}
-                      {(ev.minutes_file_name || isPast) && (
-                        <span className="mono" style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: '0.62rem', fontWeight: 500, letterSpacing: '0.5px', textTransform: 'uppercase', color: ev.minutes_file_name ? '#157F3C' : '#A87A00' }}>
-                          <Paperclip size={11} />
-                          {ev.minutes_file_name ? 'Ata anexada' : 'Ata pendente'}
-                        </span>
-                      )}
-                    </div>
+
+              {/* Sub-grupos por mês */}
+              {groupByMonth(group.items).map(monthGroup => (
+                <div key={monthGroup.monthKey}>
+                  {/* Separador de mês */}
+                  <div style={{ padding: '10px 32px 8px', borderBottom: '1px solid var(--line-2)', marginTop: 12 }}>
+                    <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text)', letterSpacing: '-0.2px' }}>{monthGroup.label}</span>
                   </div>
-                );
-              })}
+
+                  {monthGroup.items.map(ev => {
+                    const dt = parseDateUTC(ev.start_date);
+                    const isPast = ev.end_date < todayStr;
+                    const resps = parseResps(ev.responsibles);
+                    const dateColor = isPast ? 'var(--text-2)' : 'var(--blue)';
+                    return (
+                      <div key={ev.id} onClick={() => { setPreview({ event: ev, cursorX: 0, cursorY: 0 }); }}
+                        style={{ display: 'flex', alignItems: 'center', gap: 18, padding: '16px 32px', borderTop: '1px solid var(--line-2)', cursor: 'pointer', transition: 'background 0.12s' }}
+                        onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'var(--surface-2)'}
+                        onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = ''}>
+                        {/* Bloco de data */}
+                        <div className="mono" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: 46, flexShrink: 0, lineHeight: 1.1 }}>
+                          <span style={{ fontSize: '0.56rem', fontWeight: 500, letterSpacing: '1px', color: 'var(--text-3)', textTransform: 'uppercase' }}>{WEEKDAYS_S[dt.getDay()]}</span>
+                          <span style={{ fontSize: '1.4rem', fontWeight: 500, color: dateColor, marginTop: 1 }}>{dt.getDate()}</span>
+                          <span style={{ fontSize: '0.54rem', fontWeight: 500, letterSpacing: '1px', color: 'var(--text-3)', textTransform: 'uppercase' }}>{MONTHS_S[dt.getMonth()]}</span>
+                        </div>
+                        {/* Divider */}
+                        <div style={{ width: 1, height: 44, background: 'var(--line-1)', flexShrink: 0 }} />
+                        {/* Info */}
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <span className="mono" style={{ fontSize: '0.6rem', fontWeight: 500, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--text-3)' }}>{ev.event_type}</span>
+                            <span style={{ color: 'var(--border)' }}>·</span>
+                            <span className="mono" style={{ fontSize: '0.6rem', fontWeight: 500, letterSpacing: '0.5px', textTransform: 'uppercase', color: isPast ? 'var(--text-2)' : 'var(--blue)' }}>
+                              {isPast ? 'Realizado' : 'Agendado'}
+                            </span>
+                          </div>
+                          <div style={{ fontSize: '0.95rem', fontWeight: 500, color: 'var(--text)', marginTop: 5, letterSpacing: '-0.1px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ev.name}</div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginTop: 8 }}>
+                            {ev.start_time && (
+                              <span style={{ display: 'flex', alignItems: 'center', gap: 5, color: 'var(--text-3)', fontSize: '0.74rem' }}>
+                                <Clock size={12} />
+                                {ev.start_time}
+                              </span>
+                            )}
+                            {ev.attendees && (
+                              <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: '0.74rem', color: 'var(--text-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 200 }}>
+                                <MapPin size={12} strokeWidth={1.8} />
+                                {`${ev.event_type} · ${ev.attendees}`}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        {/* Direita: avatares + badge */}
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 10, flexShrink: 0 }}>
+                          {resps.length > 0 && (
+                            <div style={{ display: 'flex', alignItems: 'center' }}>
+                              {resps.slice(0, 3).map((name, i) => {
+                                const inits = name.split(' ').filter(Boolean).map((w: string) => w[0]).slice(0, 2).join('').toUpperCase();
+                                return (
+                                  <div key={name} className="mono" title={name} style={{ width: 28, height: 28, borderRadius: '50%', background: '#072f63', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.6rem', fontWeight: 500, marginLeft: i > 0 ? -6 : 0, border: '1.5px solid var(--surface)', flexShrink: 0, zIndex: 3 - i }}>
+                                    {inits}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                          {(ev.minutes_file_name || isPast) && (
+                            <span className="mono" style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: '0.62rem', fontWeight: 500, letterSpacing: '0.5px', textTransform: 'uppercase', color: ev.minutes_file_name ? '#157F3C' : '#A87A00' }}>
+                              <Paperclip size={11} />
+                              {ev.minutes_file_name ? 'Ata anexada' : 'Ata pendente'}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ))}
             </div>
           ))}
         </div>

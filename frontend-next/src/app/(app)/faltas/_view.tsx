@@ -1,6 +1,6 @@
 ﻿﻿'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { Plus, AlertTriangle, X, ChevronDown, Pencil, Trash2 } from 'lucide-react';
 import Calendario, { type CalendarioItem } from '@/components/Calendario';
 import ConfirmModal from '@/components/ConfirmModal';
@@ -363,6 +363,20 @@ export default function FaltasPage() {
     { label: 'Servidores', value: servers,                 color: 'var(--blue)' },
   ];
 
+  const absencesByMonth = useMemo(() => {
+    const sorted = [...visibleAbsences].sort((a, b) => b.start_date.localeCompare(a.start_date));
+    const map = new Map<string, Absence[]>();
+    for (const row of sorted) {
+      const ym = row.start_date?.slice(0, 7) ?? '';
+      if (!map.has(ym)) map.set(ym, []);
+      map.get(ym)!.push(row);
+    }
+    return Array.from(map.entries()).map(([ym, rows]) => {
+      const [year, month] = ym.split('-').map(Number);
+      return { monthKey: ym, label: `${MONTHS_PT[month - 1]} ${year}`, rows };
+    });
+  }, [visibleAbsences]);
+
   const calItems: CalendarioItem[] = visibleAbsences.map(a => ({
     id: a.id,
     title: a.employee_name,
@@ -481,15 +495,21 @@ export default function FaltasPage() {
       ) : (
         <div style={{ flex: 1, overflow: 'auto' }}>
           {/* Cabeçalho da tabela */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1.3fr 120px 110px 1.2fr 160px 64px', gap: 14, padding: '14px 32px', borderBottom: '1px solid var(--line-1)' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1.3fr 120px 110px 1.2fr 160px 64px', gap: 14, padding: '14px 32px', borderBottom: '1px solid var(--line-1)', position: 'sticky', top: 0, background: 'var(--surface)', zIndex: 1 }}>
             {['Servidor','Tipo','Período','Justificativa','Situação',''].map((h, i) => (
               <span key={i} className="mono" style={{ fontSize: '0.64rem', fontWeight: 500, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--text-3)' }}>{h}</span>
             ))}
           </div>
 
-          {visibleAbsences.length === 0 ? (
+          {absencesByMonth.length === 0 ? (
             <div className="empty-state"><p>Nenhuma falta registrada.</p></div>
-          ) : visibleAbsences.map(row => {
+          ) : absencesByMonth.map(({ monthKey, label: monthLabel2, rows }) => (
+            <div key={monthKey}>
+              {/* Separador de mês */}
+              <div style={{ padding: '8px 32px', background: 'var(--surface-2)', borderBottom: '1px solid var(--line-1)', borderTop: '1px solid var(--line-1)' }}>
+                <span className="mono" style={{ fontSize: '0.62rem', fontWeight: 600, letterSpacing: '1.2px', textTransform: 'uppercase', color: 'var(--text-3)' }}>{monthLabel2}</span>
+              </div>
+              {rows.map(row => {
             const isPending   = !row.approval_status || row.approval_status === 'pendente';
             const isOwn       = row.user_id === currentUser?.user_id;
             const canEditRow  = canApprove || isOwn; // manager edita qualquer; usuário só a sua
@@ -576,8 +596,10 @@ export default function FaltasPage() {
                   )}
                 </div>
               </div>
-            );
-          })}
+              );
+            })}
+            </div>
+          ))}
         </div>
       )}
 
