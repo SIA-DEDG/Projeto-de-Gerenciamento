@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { usePathname } from 'next/navigation';
+import { getUser, canManageUsers, isAdmin } from '@/lib/auth';
 
 // ── Page types & paths ────────────────────────────────────────────────────────
 
@@ -98,26 +99,34 @@ const INITIAL_TABS: Tab[] = [
   { id: 'tb0', type: 'board', name: 'Atividades', filters: { ...DEFAULT_FILTERS } },
 ];
 
+const ADMIN_TAB_TYPES: Set<PageType> = new Set(['admin-registro', 'admin-usuarios', 'admin-diretorias']);
+
 function getUserId(): string {
   if (typeof window === 'undefined') return 'anon';
   try {
-    const raw = sessionStorage.getItem('sia_user') ?? localStorage.getItem('sia_user');
-    if (raw) return (JSON.parse(raw) as { user_id?: string }).user_id ?? 'anon';
+    const storedUserJson = sessionStorage.getItem('sia_user') ?? localStorage.getItem('sia_user');
+    if (storedUserJson) return (JSON.parse(storedUserJson) as { user_id?: string }).user_id ?? 'anon';
   } catch {}
   return 'anon';
 }
 
-const uid = typeof window !== 'undefined' ? getUserId() : 'anon';
-const LS_TABS   = `sia-tabs-${uid}`;
-const LS_ACTIVE = `sia-active-tab-${uid}`;
+function getTabsStorageKey()   { return `sia-tabs-${getUserId()}`; }
+function getActiveTabStorageKey() { return `sia-active-tab-${getUserId()}`; }
+
+function filterTabsForUser(tabs: Tab[]): Tab[] {
+  const user = typeof window !== 'undefined' ? getUser() : null;
+  const userCanAdmin = isAdmin(user?.role) || canManageUsers(user?.role);
+  if (userCanAdmin) return tabs;
+  return tabs.filter(t => !ADMIN_TAB_TYPES.has(t.type));
+}
 
 function loadTabs(): Tab[] {
   if (typeof window === 'undefined') return INITIAL_TABS;
   try {
-    const raw = localStorage.getItem(`sia-tabs-${getUserId()}`);
-    if (raw) {
-      const parsed = JSON.parse(raw) as Tab[];
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    const storedTabsJson = localStorage.getItem(getTabsStorageKey());
+    if (storedTabsJson) {
+      const permittedTabs = filterTabsForUser(JSON.parse(storedTabsJson) as Tab[]);
+      if (Array.isArray(permittedTabs) && permittedTabs.length > 0) return permittedTabs;
     }
   } catch {}
   return INITIAL_TABS;
@@ -126,8 +135,8 @@ function loadTabs(): Tab[] {
 function loadActiveId(tabs: Tab[]): string {
   if (typeof window === 'undefined') return tabs[0].id;
   try {
-    const saved = localStorage.getItem(`sia-active-tab-${getUserId()}`);
-    if (saved && tabs.find(t => t.id === saved)) return saved;
+    const savedActiveTabId = localStorage.getItem(getActiveTabStorageKey());
+    if (savedActiveTabId && tabs.find(t => t.id === savedActiveTabId)) return savedActiveTabId;
   } catch {}
   return tabs[0].id;
 }
@@ -147,11 +156,11 @@ export function TabsProvider({ children }: { children: React.ReactNode }) {
   activeTabIdRef.current = activeTabId;
 
   useEffect(() => {
-    try { localStorage.setItem(LS_TABS, JSON.stringify(tabs)); } catch {}
+    try { localStorage.setItem(getTabsStorageKey(), JSON.stringify(tabs)); } catch {}
   }, [tabs]);
 
   useEffect(() => {
-    try { localStorage.setItem(LS_ACTIVE, activeTabId); } catch {}
+    try { localStorage.setItem(getActiveTabStorageKey(), activeTabId); } catch {}
   }, [activeTabId]);
 
   // On initial load: sync active tab to the current URL path

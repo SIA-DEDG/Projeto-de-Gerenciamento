@@ -26,12 +26,12 @@ export default function TabBar({ rightSlot }: TabBarProps = {}) {
   const { tabs, activeTabId, openTab, closeTab, activateTab, renameTab, reorderTabs, closeAllTabs } = useTabs();
 
   const [renamingId, setRenamingId]   = useState<string | null>(null);
-  const [renameVal, setRenameVal]     = useState('');
+  const [renameInputValue, setRenameVal]     = useState('');
   const renameRef = useRef<HTMLInputElement>(null);
-  const barRef    = useRef<HTMLDivElement>(null);
+  const tabBarRef    = useRef<HTMLDivElement>(null);
 
   // drag state
-  const dragIndexRef = useRef<number | null>(null);
+  const dragSourceIndexRef = useRef<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
   useEffect(() => {
@@ -43,8 +43,8 @@ export default function TabBar({ rightSlot }: TabBarProps = {}) {
 
   // Scroll active tab into view
   useEffect(() => {
-    if (!barRef.current) return;
-    const active = barRef.current.querySelector('[data-active="true"]') as HTMLElement | null;
+    if (!tabBarRef.current) return;
+    const active = tabBarRef.current.querySelector('[data-active="true"]') as HTMLElement | null;
     if (active) active.scrollIntoView({ inline: 'nearest', block: 'nearest' });
   }, [activeTabId]);
 
@@ -69,7 +69,7 @@ export default function TabBar({ rightSlot }: TabBarProps = {}) {
   }
 
   function commitRename() {
-    if (renamingId) renameTab(renamingId, renameVal.trim() || 'Aba');
+    if (renamingId) renameTab(renamingId, renameInputValue.trim() || 'Aba');
     setRenamingId(null);
   }
 
@@ -80,34 +80,34 @@ export default function TabBar({ rightSlot }: TabBarProps = {}) {
 
   // ── Drag handlers ─────────────────────────────────────────────────────────
   function onDragStart(e: React.DragEvent, index: number) {
-    dragIndexRef.current = index;
+    dragSourceIndexRef.current = index;
     e.dataTransfer.effectAllowed = 'move';
-    const ghost = document.createElement('div');
-    ghost.style.cssText = 'position:absolute;top:-9999px;opacity:0;';
-    document.body.appendChild(ghost);
-    e.dataTransfer.setDragImage(ghost, 0, 0);
-    setTimeout(() => document.body.removeChild(ghost), 0);
+    const dragImageElement = document.createElement('div');
+    dragImageElement.style.cssText = 'position:absolute;top:-9999px;opacity:0;';
+    document.body.appendChild(dragImageElement);
+    e.dataTransfer.setDragImage(dragImageElement, 0, 0);
+    setTimeout(() => document.body.removeChild(dragImageElement), 0);
   }
 
   function onDragOver(e: React.DragEvent, index: number) {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
-    if (dragIndexRef.current !== null && dragIndexRef.current !== index) {
+    if (dragSourceIndexRef.current !== null && dragSourceIndexRef.current !== index) {
       setDragOverIndex(index);
     }
   }
 
   function onDrop(e: React.DragEvent, index: number) {
     e.preventDefault();
-    if (dragIndexRef.current !== null && dragIndexRef.current !== index) {
-      reorderTabs(dragIndexRef.current, index);
+    if (dragSourceIndexRef.current !== null && dragSourceIndexRef.current !== index) {
+      reorderTabs(dragSourceIndexRef.current, index);
     }
-    dragIndexRef.current = null;
+    dragSourceIndexRef.current = null;
     setDragOverIndex(null);
   }
 
   function onDragEnd() {
-    dragIndexRef.current = null;
+    dragSourceIndexRef.current = null;
     setDragOverIndex(null);
   }
 
@@ -127,13 +127,13 @@ export default function TabBar({ rightSlot }: TabBarProps = {}) {
       )}
 
       {/* Área scrollável das abas */}
-      <div ref={barRef} className="tab-bar-scroll">
+      <div ref={tabBarRef} className="tab-bar-scroll">
         {tabs.map((tab, index) => {
           const active       = tab.id === activeTabId;
           const filtered     = tabHasFilters(tab);
           const canClose     = tabs.length > 1;
           const isBoard      = BOARD_LIKE.has(tab.type);
-          const isDragTarget = dragOverIndex === index && dragIndexRef.current !== index;
+          const isDragTarget = dragOverIndex === index && dragSourceIndexRef.current !== index;
           const href         = PAGE_INFO[tab.type].path;
 
           return (
@@ -154,7 +154,7 @@ export default function TabBar({ rightSlot }: TabBarProps = {}) {
                   {isBoard && <span className="tab-view-icon"><ViewIcon view={tab.filters.view} /></span>}
                   <input
                     ref={renameRef}
-                    value={renameVal}
+                    value={renameInputValue}
                     onChange={e => setRenameVal(e.target.value)}
                     onBlur={commitRename}
                     onKeyDown={handleKeyDown}

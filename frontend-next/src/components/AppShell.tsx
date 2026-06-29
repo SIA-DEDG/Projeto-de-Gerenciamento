@@ -10,26 +10,26 @@ import { getUser, isSuperAdmin, clearAuth } from '@/lib/auth';
 const THEME_KEY = 'sia-theme';
 const ACCENT_KEY = 'sia-accent';
 
-function darkenHex(hex: string, pct: number): string {
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-  const f = 1 - pct / 100;
-  return `#${[r, g, b].map(v => Math.max(0, Math.round(v * f)).toString(16).padStart(2, '0')).join('')}`;
+function darkenHex(hex: string, percentage: number): string {
+  const red   = parseInt(hex.slice(1, 3), 16);
+  const green = parseInt(hex.slice(3, 5), 16);
+  const blue  = parseInt(hex.slice(5, 7), 16);
+  const darkenFactor = 1 - percentage / 100;
+  return `#${[red, green, blue].map(channel => Math.max(0, Math.round(channel * darkenFactor)).toString(16).padStart(2, '0')).join('')}`;
 }
 
 export function applyAccentColor(hex: string) {
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-  const rgb = `${r},${g},${b}`;
-  const h = darkenHex(hex, 15);
+  const red   = parseInt(hex.slice(1, 3), 16);
+  const green = parseInt(hex.slice(3, 5), 16);
+  const blue  = parseInt(hex.slice(5, 7), 16);
+  const rgb = `${red},${green},${blue}`;
+  const hoverAccentColor = darkenHex(hex, 15);
   const sidebarBg = darkenHex(hex, 40);
   const root = document.documentElement;
   root.style.setProperty('--blue', hex);
-  root.style.setProperty('--blue-h', h);
+  root.style.setProperty('--blue-h', hoverAccentColor);
   root.style.setProperty('--primary', hex);
-  root.style.setProperty('--primary-hover', h);
+  root.style.setProperty('--primary-hover', hoverAccentColor);
   root.style.setProperty('--primary-light', `rgba(${rgb},0.08)`);
   root.style.setProperty('--primary-glow', `rgba(${rgb},0.2)`);
   root.style.setProperty('--sidebar-bg', sidebarBg);
@@ -40,7 +40,7 @@ export function applyAccentColor(hex: string) {
     document.head.appendChild(style);
   }
   style.textContent = `
-    :root { --blue:${hex}; --blue-h:${h}; --primary:${hex};
+    :root { --blue:${hex}; --blue-h:${hoverAccentColor}; --primary:${hex};
             --primary-light:rgba(${rgb},0.08); --primary-glow:rgba(${rgb},0.2);
             --sidebar-bg:${sidebarBg}; }
   `;

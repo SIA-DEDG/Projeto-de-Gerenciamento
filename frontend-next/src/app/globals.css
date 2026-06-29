@@ -1155,7 +1155,7 @@ input::placeholder, textarea::placeholder { color: var(--text-3); opacity: 1; }
 /* ══════════════════════════════════════════════════════════════════════════
    DASHBOARD
    ══════════════════════════════════════════════════════════════════════════ */
-.dashboard-body { padding: 20px 32px; display: flex; flex-direction: column; gap: 20px; }
+.dashboard-body { padding: 20px 32px; display: flex; flex-direction: column; gap: 20px; background: #f9f9f9; }
 
 .kpi-strip {
   display: flex;
