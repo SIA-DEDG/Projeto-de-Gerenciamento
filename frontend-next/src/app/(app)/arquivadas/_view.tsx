@@ -10,23 +10,23 @@ import type { Task } from '@/types';
 import PageHeader from '@/components/PageHeader';
 
 const PRIO_COLOR: Record<string, string> = {
-  Alta:  '#b42318',
+  Alta: '#b42318',
   Média: '#A87A00',
   Baixa: '#157F3C',
 };
 
 const STATUS_COLOR: Record<string, string> = {
-  pending:     '#9aa1ac',
+  pending: '#9aa1ac',
   in_progress: 'var(--blue)',
-  review:      '#E0A92E',
-  done:        '#1B8A4B',
+  review: '#E0A92E',
+  done: '#1B8A4B',
 };
 
 const STATUS_LABEL: Record<string, string> = {
-  pending:     'Pendente',
+  pending: 'Pendente',
   in_progress: 'Em Andamento',
-  review:      'Em Revisão',
-  done:        'Concluído',
+  review: 'Em Revisão',
+  done: 'Concluído',
 };
 
 export default function ArquivadasPage() {
@@ -34,8 +34,14 @@ export default function ArquivadasPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [filterStatus, setFilterStatus] = useState('');
+  const [filterPriority, setFilterPriority] = useState('');
+  const [filterCategory, setFilterCategory] = useState('');
+  const [filterResponsible, setFilterResponsible] = useState('');
   const [confirm, setConfirm] = useState<{ title: string; message?: string; onConfirm: () => void; danger?: boolean } | null>(null);
   const [acting, setActing] = useState<string | null>(null);
+
+  const categories = useMemo(() => [...new Set(tasks.map(t => t.category).filter(Boolean))].sort(), [tasks]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -45,11 +51,21 @@ export default function ArquivadasPage() {
 
   useEffect(() => { load(); }, [load]);
 
+  const activeFilterCount = [filterStatus, filterPriority, filterCategory].filter(Boolean).length;
+
   const filtered = useMemo(() => {
-    if (!search.trim()) return tasks;
-    const q = search.toLowerCase();
-    return tasks.filter(t => t.activity.toLowerCase().includes(q) || t.responsible.toLowerCase().includes(q) || t.category.toLowerCase().includes(q));
-  }, [tasks, search]);
+    return tasks.filter(t => {
+      if (search.trim()) {
+        const q = search.toLowerCase();
+        if (!t.activity.toLowerCase().includes(q) && !t.responsible.toLowerCase().includes(q) && !t.category.toLowerCase().includes(q)) return false;
+      }
+      if (filterStatus && t.status_group !== filterStatus) return false;
+      if (filterPriority && t.priority !== filterPriority) return false;
+      if (filterCategory && t.category !== filterCategory) return false;
+      if (filterResponsible && t.responsible !== filterResponsible) return false;
+      return true;
+    });
+  }, [tasks, search, filterStatus, filterPriority, filterCategory, filterResponsible]);
 
   async function handleRestore(task: Task) {
     setActing(task.id);
@@ -108,9 +124,68 @@ export default function ArquivadasPage() {
         </div>
       ) : (
         <div style={{ flex: 1, overflow: 'auto' }}>
-          {/* Contagem */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '16px 32px', borderBottom: '1px solid var(--line-1)' }}>
-            <span className="mono" style={{ fontSize: '0.72rem', color: 'var(--text-3)', letterSpacing: '0.5px' }}>
+          {/* Filtros + contagem */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 32px', borderBottom: '1px solid var(--line-1)', flexWrap: 'wrap' }}>
+            {/* Status */}
+            <select
+              value={filterStatus}
+              onChange={e => setFilterStatus(e.target.value)}
+              style={{ height: 28, padding: '0 8px', border: filterStatus ? '1px solid var(--blue)' : '1px solid var(--border)', borderRadius: 3, background: filterStatus ? 'var(--primary-light)' : 'var(--surface)', color: filterStatus ? 'var(--blue)' : 'var(--text-2)', fontSize: '0.74rem', fontFamily: 'inherit', cursor: 'pointer', outline: 'none' }}
+            >
+              <option value="">Status</option>
+              <option value="pending">Pendente</option>
+              <option value="in_progress">Em Andamento</option>
+              <option value="review">Em Revisão</option>
+              <option value="done">Concluído</option>
+            </select>
+
+            {/* Prioridade */}
+            <select
+              value={filterPriority}
+              onChange={e => setFilterPriority(e.target.value)}
+              style={{ height: 28, padding: '0 8px', border: filterPriority ? '1px solid var(--blue)' : '1px solid var(--border)', borderRadius: 3, background: filterPriority ? 'var(--primary-light)' : 'var(--surface)', color: filterPriority ? 'var(--blue)' : 'var(--text-2)', fontSize: '0.74rem', fontFamily: 'inherit', cursor: 'pointer', outline: 'none' }}
+            >
+              <option value="">Prioridade</option>
+              <option value="Alta">Alta</option>
+              <option value="Média">Média</option>
+              <option value="Baixa">Baixa</option>
+            </select>
+
+            {/* Categoria */}
+            {categories.length > 0 && (
+              <select
+                value={filterCategory}
+                onChange={e => setFilterCategory(e.target.value)}
+                style={{ height: 28, padding: '0 8px', border: filterCategory ? '1px solid var(--blue)' : '1px solid var(--border)', borderRadius: 3, background: filterCategory ? 'var(--primary-light)' : 'var(--surface)', color: filterCategory ? 'var(--blue)' : 'var(--text-2)', fontSize: '0.74rem', fontFamily: 'inherit', cursor: 'pointer', outline: 'none' }}
+              >
+                <option value="">Categoria</option>
+                {categories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+              </select>
+            )}
+
+            {/* Resposável */}
+            <select
+              value={filterResponsible}
+              onChange={e => setFilterResponsible(e.target.value)}
+              style={{ height: 28, padding: '0 8px', border: filterResponsible ? '1px solid var(--blue)' : '1px solid var(--border)', borderRadius: 3, background: filterResponsible ? 'var(--primary-light)' : 'var(--surface)', color: filterResponsible ? 'var(--blue)' : 'var(--text-2)', fontSize: '0.74rem', fontFamily: 'inherit', cursor: 'pointer', outline: 'none' }}
+            >
+              <option value="">Todos</option>
+              {[...new Set(tasks.map(t => t.responsible).filter(Boolean))].sort().map(res => <option key={res} value={res}>{res}</option>)}
+            </select>
+
+            {/* Limpar filtros */}
+            {activeFilterCount > 0 && (
+              <button
+                onClick={() => { setFilterStatus(''); setFilterPriority(''); setFilterCategory(''); }}
+                style={{ height: 28, padding: '0 10px', border: 'none', borderRadius: 3, background: 'transparent', color: 'var(--text-3)', fontSize: '0.74rem', fontFamily: 'inherit', cursor: 'pointer' }}
+                onMouseEnter={e => (e.currentTarget.style.color = 'var(--text)')}
+                onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-3)')}
+              >
+                Limpar ({activeFilterCount})
+              </button>
+            )}
+
+            <span className="mono" style={{ fontSize: '0.72rem', color: 'var(--text-3)', letterSpacing: '0.5px', marginLeft: 'auto' }}>
               {filtered.length} ATIVIDADES ARQUIVADAS
             </span>
           </div>
