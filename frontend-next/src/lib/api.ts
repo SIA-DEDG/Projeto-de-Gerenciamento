@@ -403,10 +403,12 @@ export async function setInitialPassword(newPassword: string): Promise<void> {
 export async function registerUser(payload: {
   name: string; username: string; role: string;
 }): Promise<{ user_id: string; name: string; role: string; temp_password: string }> {
-  return apiFetch('/api/auth/register', {
+  const result = await apiFetch<{ user_id: string; name: string; role: string; temp_password: string }>('/api/auth/register', {
     method: 'POST',
     body: JSON.stringify(payload),
   });
+  cacheInvalidate('users', 'users_all');
+  return result;
 }
 
 

@@ -1,7 +1,7 @@
 ﻿﻿'use client';
 
 import { useState, useEffect } from 'react';
-import { registerUser, deleteUser, fetchUsers } from '@/lib/api';
+import { registerUser, deleteUser, fetchAllUsers } from '@/lib/api';
 import { getUser } from '@/lib/auth';
 import { useToast } from '@/hooks/useToast';
 import ToastContainer from '@/components/ToastContainer';
@@ -71,8 +71,11 @@ export default function RegistroPage() {
   useEffect(() => {
     const stored = loadHistory();
     if (stored.length === 0) { setHistory([]); return; }
-    fetchUsers().then(users => {
-      const pending = stored.filter(e => users.find(u => u.id === e.user_id)?.must_change_password === true);
+    fetchAllUsers().then(users => {
+      const pending = stored.filter(e => {
+        const found = users.find(u => u.id === e.user_id);
+        return !found || found.must_change_password === true;
+      });
       if (pending.length !== stored.length) saveHistory(pending);
       setHistory(pending);
     }).catch(() => setHistory(stored));
