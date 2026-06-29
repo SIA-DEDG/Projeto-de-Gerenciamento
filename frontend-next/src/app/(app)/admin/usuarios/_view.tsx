@@ -1,6 +1,6 @@
 ﻿﻿'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { fetchUsers, deleteUser, updateUserRole, adminResetUserPassword } from '@/lib/api';
 import { getUser, canResetPasswords } from '@/lib/auth';
 import type { UserPublic } from '@/lib/api';
@@ -205,6 +205,22 @@ export default function UsuariosPage() {
     return u.name.toLowerCase().includes(q) || u.username.toLowerCase().includes(q);
   });
 
+  // Agrupamento por diretoria — só para admin e sem busca ativa
+  const dirGroups = useMemo(() => {
+    if (!iAmAdmin || search) return null;
+    const map = new Map<string, { name: string; color: string | null; users: UserPublic[] }>();
+    for (const u of filtered) {
+      const key = u.directoria_id ?? '__sem_diretoria__';
+      if (!map.has(key)) map.set(key, { name: u.directoria_name ?? 'Sem diretoria', color: u.directoria_color ?? null, users: [] });
+      map.get(key)!.users.push(u);
+    }
+    return Array.from(map.values()).sort((a, b) => {
+      if (a.name === 'Sem diretoria') return 1;
+      if (b.name === 'Sem diretoria') return -1;
+      return a.name.localeCompare(b.name);
+    });
+  }, [iAmAdmin, search, filtered]);
+
   return (
     <>
       <PageHeader
@@ -244,13 +260,14 @@ export default function UsuariosPage() {
         ) : (
           <div>
             {/* Cabeçalho */}
-            <div style={{ display: 'grid', gridTemplateColumns: iAmAdmin ? '1fr 140px 180px 110px 72px' : '1fr 180px 110px 72px', padding: '11px 32px', background: 'var(--surface-2)', borderBottom: '1px solid var(--line-1)' }}>
-              {(iAmAdmin ? ['Colaborador', 'Diretoria', 'Perfil', 'Cadastro', ''] : ['Colaborador', 'Perfil', 'Cadastro', '']).map((h, i) => (
+            <div style={{ display: 'grid', gridTemplateColumns: iAmAdmin && !dirGroups ? '1fr 140px 180px 110px 72px' : iAmAdmin && dirGroups ? '1fr 180px 110px 72px' : '1fr 180px 110px 72px', padding: '11px 32px', background: 'var(--surface-2)', borderBottom: '1px solid var(--line-1)', position: 'sticky', top: 0, zIndex: 1 }}>
+              {(iAmAdmin && !dirGroups ? ['Colaborador', 'Diretoria', 'Perfil', 'Cadastro', ''] : ['Colaborador', 'Perfil', 'Cadastro', '']).map((h, i) => (
                 <span key={i} className="mono" style={{ fontSize: '0.62rem', fontWeight: 500, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--text-3)' }}>{h}</span>
               ))}
             </div>
 
-            {filtered.map((user) => {
+            {/* Lista flat — não-admin OU admin com busca ativa */}
+            {(!iAmAdmin || !dirGroups) && filtered.map((user) => {
               const isSelf        = user.id === myId;
               const targetIsAdmin = user.role === 'Admin';
               const canAct        = iAmAdmin || !targetIsAdmin;
@@ -263,7 +280,7 @@ export default function UsuariosPage() {
 
               return (
                 <div key={user.id}
-                  style={{ display: 'grid', gridTemplateColumns: iAmAdmin ? '1fr 140px 180px 110px 72px' : '1fr 180px 110px 72px', padding: '14px 32px', alignItems: 'center', borderBottom: '1px solid var(--line-2)', transition: 'background 0.1s' }}
+                  style={{ display: 'grid', gridTemplateColumns: (iAmAdmin && !dirGroups) ? '1fr 140px 180px 110px 72px' : '1fr 180px 110px 72px', padding: '14px 32px', alignItems: 'center', borderBottom: '1px solid var(--line-2)', transition: 'background 0.1s' }}
                   onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-2)')}
                   onMouseLeave={e => (e.currentTarget.style.background = '')}>
 
@@ -281,8 +298,8 @@ export default function UsuariosPage() {
                     </div>
                   </div>
 
-                  {/* Diretoria — só para Admin que vê todos */}
-                  {iAmAdmin && (
+                  {/* Diretoria — só para Admin em busca (flat list) */}
+                  {(iAmAdmin && !dirGroups) && (
                     <div style={{ minWidth: 0 }}>
                       {user.directoria_name ? (
                         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: '0.78rem', color: 'var(--text-2)' }}>
@@ -357,6 +374,94 @@ export default function UsuariosPage() {
                 </div>
               );
             })}
+            {/* Admin sem busca — agrupado por diretoria */}
+            {iAmAdmin && dirGroups && dirGroups.map(group => (
+              <div key={group.name}>
+                {/* Cabeçalho do grupo */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 32px', background: 'var(--surface-2)', borderTop: '1px solid var(--line-1)', borderBottom: '1px solid var(--line-1)' }}>
+                  {group.color
+                    ? <span style={{ width: 8, height: 8, borderRadius: '50%', background: group.color, flexShrink: 0 }} />
+                    : <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--text-3)', flexShrink: 0 }} />
+                  }
+                  <span style={{ fontSize: '0.86rem', fontWeight: 600, color: 'var(--text)' }}>{group.name}</span>
+                  <span className="mono" style={{ fontSize: '0.62rem', color: 'var(--text-3)', marginLeft: 4 }}>
+                    {group.users.length} membro{group.users.length !== 1 ? 's' : ''}
+                  </span>
+                </div>
+
+                {group.users.map((user) => {
+                  const isSelf        = user.id === myId;
+                  const targetIsAdmin = user.role === 'Admin';
+                  const canAct        = !targetIsAdmin;
+                  const canReset      = canResetPasswords(myRole) && !isSelf && canAct;
+                  const roles         = allowedRoles(user);
+                  const color         = avatarColor(user.name);
+                  const inits         = user.name.split(' ').map((w: string) => w[0]).slice(0, 2).join('').toUpperCase();
+                  const { color: roleColor, background: roleBg } = roleBadgeStyle(user.role);
+                  const roleLabel     = ALL_ROLES.find(r => r.value === user.role)?.label ?? user.role;
+                  return (
+                    <div key={user.id}
+                      style={{ display: 'grid', gridTemplateColumns: '1fr 180px 110px 72px', padding: '14px 32px', alignItems: 'center', borderBottom: '1px solid var(--line-2)', transition: 'background 0.1s' }}
+                      onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-2)')}
+                      onMouseLeave={e => (e.currentTarget.style.background = '')}>
+
+                      {/* Colaborador */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
+                        <div className="mono" style={{ width: 36, height: 36, borderRadius: '50%', flexShrink: 0, background: color, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.64rem', fontWeight: 700, letterSpacing: '0.5px' }}>{inits}</div>
+                        <div style={{ minWidth: 0 }}>
+                          <div style={{ fontSize: '0.88rem', fontWeight: 500, color: 'var(--text)', display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                            {user.name}
+                            {isSelf && <span className="mono" style={{ fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.5px', color: 'var(--blue)', background: 'var(--primary-light)', borderRadius: 3, padding: '1px 6px', textTransform: 'uppercase' }}>Você</span>}
+                          </div>
+                          <div className="mono" style={{ fontSize: '0.65rem', color: 'var(--text-3)', marginTop: 2, letterSpacing: '0.3px' }}>@{user.username}</div>
+                        </div>
+                      </div>
+
+                      {/* Perfil */}
+                      {canAct && !isSelf ? (
+                        <div style={{ position: 'relative', width: 'fit-content' }}>
+                          <select value={user.role} disabled={roleUpdating === user.id} onChange={e => handleRoleChange(user, e.target.value)}
+                            style={{ appearance: 'none', padding: '5px 26px 5px 10px', borderRadius: 4, border: `1.5px solid ${roleColor}40`, background: roleBg, color: roleColor, fontSize: '0.72rem', fontFamily: 'var(--mono)', fontWeight: 700, letterSpacing: '0.4px', textTransform: 'uppercase', cursor: roleUpdating === user.id ? 'wait' : 'pointer', outline: 'none', opacity: roleUpdating === user.id ? 0.6 : 1, transition: 'opacity 0.15s' }}>
+                            {roles.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
+                          </select>
+                          <ChevronDown size={11} style={{ position: 'absolute', right: 7, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: roleColor, opacity: 0.7 }} />
+                        </div>
+                      ) : (
+                        <span className="mono" style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.4px', textTransform: 'uppercase', color: roleColor, background: roleBg, padding: '5px 10px', borderRadius: 4, width: 'fit-content' }}>
+                          {roleLabel}
+                        </span>
+                      )}
+
+                      {/* Cadastro */}
+                      <span className="mono" style={{ fontSize: '0.72rem', color: 'var(--text-3)', letterSpacing: '0.3px' }}>
+                        {user.created_at ? new Date(user.created_at).toLocaleDateString('pt-BR') : '—'}
+                      </span>
+
+                      {/* Ações */}
+                      <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end', alignItems: 'center' }}>
+                        {canReset && (
+                          <button type="button" title="Redefinir senha" onClick={() => setResetModal(user)}
+                            style={{ width: 30, height: 30, border: '1px solid var(--border)', borderRadius: 3, background: 'var(--surface)', color: 'var(--text-3)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.12s', flexShrink: 0 }}
+                            onMouseEnter={e => { const b = e.currentTarget; b.style.borderColor = 'var(--blue)'; b.style.color = 'var(--blue)'; b.style.background = 'var(--primary-light)'; }}
+                            onMouseLeave={e => { const b = e.currentTarget; b.style.borderColor = 'var(--border)'; b.style.color = 'var(--text-3)'; b.style.background = 'var(--surface)'; }}>
+                            <Lock size={13} />
+                          </button>
+                        )}
+                        {canAct && !isSelf && (
+                          <button type="button" title="Excluir usuário" onClick={() => handleDelete(user)} disabled={deleting === user.id}
+                            style={{ width: 30, height: 30, border: '1px solid var(--border)', borderRadius: 3, background: 'var(--surface)', color: 'var(--text-3)', cursor: deleting === user.id ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.12s', opacity: deleting === user.id ? 0.4 : 1, flexShrink: 0 }}
+                            onMouseEnter={e => { if (deleting !== user.id) { const b = e.currentTarget; b.style.borderColor = '#b42318'; b.style.color = '#b42318'; b.style.background = 'rgba(180,35,24,0.06)'; } }}
+                            onMouseLeave={e => { const b = e.currentTarget; b.style.borderColor = 'var(--border)'; b.style.color = 'var(--text-3)'; b.style.background = 'var(--surface)'; }}>
+                            <Trash2 size={13} />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
+
             {false && ( // keep old table structure for TS compliance
               <table style={{ display: 'none' }}>
                 <thead><tr><th></th></tr></thead>
