@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { authenticate } from '../../middleware/auth.middleware';
-import * as ctrl from './tasks.controller';
+import * as tasksController from './tasks.controller';
 
 const router = Router();
 
@@ -45,8 +45,8 @@ const router = Router();
  *       201:
  *         description: Tarefa criada
  */
-router.get('/', authenticate, ctrl.listTasks);
-router.post('/', authenticate, ctrl.createTask);
+router.get('/', authenticate, tasksController.listTasks);
+router.post('/', authenticate, tasksController.createTask);
 
 /**
  * @swagger
@@ -66,7 +66,7 @@ router.post('/', authenticate, ctrl.createTask);
  *       201:
  *         description: Tarefas criadas
  */
-router.post('/batch', authenticate, ctrl.createBatch);
+router.post('/batch', authenticate, tasksController.createBatch);
 
 /**
  * @swagger
@@ -78,7 +78,7 @@ router.post('/batch', authenticate, ctrl.createBatch);
  *       200:
  *         description: Lista de tarefas arquivadas
  */
-router.get('/archived', authenticate, ctrl.listArchived);
+router.get('/archived', authenticate, tasksController.listArchived);
 
 /**
  * @swagger
@@ -117,9 +117,9 @@ router.get('/archived', authenticate, ctrl.listArchived);
  *       204:
  *         description: Deletada
  */
-router.get('/:id', authenticate, ctrl.getTask);
-router.put('/:id', authenticate, ctrl.updateTask);
-router.delete('/:id', authenticate, ctrl.deleteTask);
+router.get('/:id', authenticate, tasksController.getTask);
+router.put('/:id', authenticate, tasksController.updateTask);
+router.delete('/:id', authenticate, tasksController.deleteTask);
 
 /**
  * @swagger
@@ -148,12 +148,74 @@ router.delete('/:id', authenticate, ctrl.deleteTask);
  *       200:
  *         description: Tarefa desarquivada
  */
-router.put('/:id/archive',   authenticate, ctrl.archiveTask);
-router.put('/:id/unarchive', authenticate, ctrl.unarchiveTask);
+router.put('/:id/archive',   authenticate, tasksController.archiveTask);
+router.put('/:id/unarchive', authenticate, tasksController.unarchiveTask);
 
-// Anexos
-router.post('/:id/attachments',              authenticate, ctrl.addAttachment);
-router.delete('/:id/attachments/:idx',       authenticate, ctrl.removeAttachment);
-router.get('/:id/attachments/:idx/url',      authenticate, ctrl.getAttachmentUrl);
+/**
+ * @swagger
+ * /tasks/{id}/attachments:
+ *   post:
+ *     tags: [Tasks]
+ *     summary: Adicionar anexo à tarefa
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string, format: uuid }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [fileName, fileData]
+ *             properties:
+ *               fileName: { type: string }
+ *               fileData: { type: string, description: Base64 do arquivo }
+ *     responses:
+ *       200:
+ *         description: Anexo adicionado
+ * /tasks/{id}/attachments/{idx}:
+ *   delete:
+ *     tags: [Tasks]
+ *     summary: Remover anexo da tarefa
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string, format: uuid }
+ *       - in: path
+ *         name: idx
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: Anexo removido
+ * /tasks/{id}/attachments/{idx}/url:
+ *   get:
+ *     tags: [Tasks]
+ *     summary: Obter URL de download do anexo
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string, format: uuid }
+ *       - in: path
+ *         name: idx
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: URL pré-assinada do anexo
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 url: { type: string }
+ */
+router.post('/:id/attachments',              authenticate, tasksController.addAttachment);
+router.delete('/:id/attachments/:idx',       authenticate, tasksController.removeAttachment);
+router.get('/:id/attachments/:idx/url',      authenticate, tasksController.getAttachmentUrl);
 
 export default router;

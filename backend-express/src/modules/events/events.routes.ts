@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { authenticate, requireRole } from '../../middleware/auth.middleware';
 
 const requireFuncionario = requireRole('Admin', 'Diretor', 'Gerente', 'Coordenador', 'Tecnico', 'Funcionario');
-import * as ctrl from './events.controller';
+import * as eventsController from './events.controller';
 
 const router = Router();
 
@@ -44,8 +44,8 @@ const router = Router();
  *       201:
  *         description: Evento criado
  */
-router.get('/', authenticate, ctrl.listEvents);
-router.post('/', authenticate, requireFuncionario, ctrl.createEvent);
+router.get('/', authenticate, eventsController.listEvents);
+router.post('/', authenticate, requireFuncionario, eventsController.createEvent);
 
 /**
  * @swagger
@@ -73,8 +73,8 @@ router.post('/', authenticate, requireFuncionario, ctrl.createEvent);
  *       204:
  *         description: Deletado
  */
-router.put('/:id', authenticate, requireFuncionario, ctrl.updateEvent);
-router.delete('/:id', authenticate, requireFuncionario, ctrl.deleteEvent);
+router.put('/:id', authenticate, requireFuncionario, eventsController.updateEvent);
+router.delete('/:id', authenticate, requireFuncionario, eventsController.deleteEvent);
 
 /**
  * @swagger
@@ -112,8 +112,30 @@ router.delete('/:id', authenticate, requireFuncionario, ctrl.deleteEvent);
  *       200:
  *         description: Ata removida
  */
-router.put('/:id/minutes', authenticate, ctrl.setMinutes);
-router.delete('/:id/minutes', authenticate, ctrl.removeMinutes);
-router.get('/:id/minutes/url', authenticate, ctrl.getMinutesUrl);
+router.put('/:id/minutes', authenticate, eventsController.setMinutes);
+router.delete('/:id/minutes', authenticate, eventsController.removeMinutes);
+
+/**
+ * @swagger
+ * /events/{id}/minutes/url:
+ *   get:
+ *     tags: [Events]
+ *     summary: Obter URL de download da ata
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string, format: uuid }
+ *     responses:
+ *       200:
+ *         description: URL pré-assinada da ata
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 url: { type: string }
+ */
+router.get('/:id/minutes/url', authenticate, eventsController.getMinutesUrl);
 
 export default router;
