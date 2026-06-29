@@ -6,7 +6,7 @@ import { getUser } from '@/lib/auth';
 import { useToast } from '@/hooks/useToast';
 import ToastContainer from '@/components/ToastContainer';
 import ConfirmModal from '@/components/ConfirmModal';
-import { Check, Copy, Trash2, RefreshCw, Lock } from 'lucide-react';
+import { Check, Copy, Trash2, RefreshCw, Lock, FileDown } from 'lucide-react';
 import PageHeader from '@/components/PageHeader';
 
 const ROLES: { value: string; label: string; desc: string; color: string }[] = [
@@ -58,10 +58,37 @@ export default function RegistroPage() {
 
   const [history, setHistory]     = useState<PasswordEntry[]>([]);
   const [copied, setCopied]       = useState<string | null>(null);
+  const [copiedComunicado, setCopiedComunicado] = useState(false);
   const [success, setSuccess]     = useState<PasswordEntry | null>(null);
   const [removing, setRemoving]   = useState<string | null>(null);
   const [removeErr, setRemoveErr] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<PasswordEntry | null>(null);
+
+  function gerarComunicado(entries: PasswordEntry[]): string {
+    const credenciais = entries.map(e =>
+      `${e.name}\nUsuário: ${e.username}\nSenha provisória: ${e.temp_password}`
+    ).join('\n\n');
+
+    return `Segue as credenciais de acesso para a ferramenta de gestão:
+
+${credenciais}
+
+Primeiramente, acessem: https://vyntra-livid.vercel.app
+
+Após o login, será possível alterar a senha provisória para uma senha definitiva.
+
+As atividades já cadastradas estão vinculadas aos seus respectivos responsáveis, conforme estavam anteriormente.
+
+Qualquer problema ou dúvida, podem me avisar.
+
+Lembrando que existe uma aba de Feedback na ferramenta para reportar problemas, dúvidas e sugestões de melhoria.`;
+  }
+
+  async function handleCopiarComunicado() {
+    await navigator.clipboard.writeText(gerarComunicado(history));
+    setCopiedComunicado(true);
+    setTimeout(() => setCopiedComunicado(false), 2500);
+  }
 
   useEffect(() => {
     if (!usernameTouched && fullName) setUsername(toUsername(fullName));
@@ -274,6 +301,18 @@ export default function RegistroPage() {
             <div style={{ flex: 1 }}>
               <div style={{ fontWeight: 600, fontSize: '0.88rem', color: 'var(--text)' }}>Senhas temporárias aguardando entrega</div>
             </div>
+            {history.length > 0 && (
+              <button
+                type="button"
+                onClick={handleCopiarComunicado}
+                style={{ display: 'flex', alignItems: 'center', gap: 6, height: 30, padding: '0 12px', border: '1px solid var(--border)', borderRadius: 3, background: copiedComunicado ? '#f0fdf4' : 'var(--surface)', color: copiedComunicado ? '#157F3C' : 'var(--text-2)', fontSize: '0.74rem', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s', flexShrink: 0 }}
+                onMouseEnter={e => { if (!copiedComunicado) { e.currentTarget.style.borderColor = 'var(--blue)'; e.currentTarget.style.color = 'var(--blue)'; }}}
+                onMouseLeave={e => { if (!copiedComunicado) { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-2)'; }}}
+              >
+                {copiedComunicado ? <Check size={13} /> : <FileDown size={13} />}
+                {copiedComunicado ? 'Copiado!' : 'Copiar comunicado'}
+              </button>
+            )}
             <span className="mono" style={{ background: history.length > 0 ? 'rgba(224,169,46,0.1)' : 'var(--surface-2)', color: history.length > 0 ? '#A87A00' : 'var(--text-3)', borderRadius: 3, padding: '2px 10px', fontSize: '0.72rem', fontWeight: 700 }}>
               {history.length} pendente{history.length !== 1 ? 's' : ''}
             </span>
