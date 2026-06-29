@@ -31,6 +31,7 @@ export default function Sidebar({ onToggleTheme, isDark }: Props) {
   const router = useRouter();
   const [user, setUser] = useState<ReturnType<typeof getUser>>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [sidebarExpanded, setSidebarExpanded] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
   const [pendingCountFeedback, setPendingCountFeedback] = useState(0);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -101,7 +102,11 @@ export default function Sidebar({ onToggleTheme, isDark }: Props) {
   const isSuperAdminUser = isSuperAdmin(user);
 
   return (
-    <aside className="sidebar">
+    <aside
+      className="sidebar"
+      onMouseEnter={() => setSidebarExpanded(true)}
+      onMouseLeave={() => { setSidebarExpanded(false); setMenuOpen(false); }}
+    >
       {/* Logo
       <div className="sidebar-logo">
         <div className="sidebar-logo-mark">
@@ -273,7 +278,7 @@ export default function Sidebar({ onToggleTheme, isDark }: Props) {
 
         {/* Usuário */}
         <div className="sidebar-user-wrap" ref={menuRef}>
-          <button className="sidebar-user-btn" onClick={() => setMenuOpen((o) => !o)}>
+          <button className="sidebar-user-btn" onClick={() => sidebarExpanded && setMenuOpen((o) => !o)}>
             <div className="sidebar-avatar">{initials}</div>
             <div className="sidebar-user-info rail-hide">
               <span className="sidebar-user-name">{user?.name ?? 'Usuário'}</span>
