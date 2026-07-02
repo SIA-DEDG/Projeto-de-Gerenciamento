@@ -376,6 +376,7 @@ export default function BoardPage() {
         task={activityModal.task}
         defaultStatus={activityModal.defaultStatus}
         projects={projects}
+        tasks={allTasks}
         users={users}
         onClose={closeActivityModal}
         onSave={handleSaveActivity}

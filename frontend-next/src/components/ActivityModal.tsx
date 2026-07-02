@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { X, Paperclip, Trash2, Clock, ChevronDown, Link as LinkIcon } from 'lucide-react';
 import type { Task, Project } from '@/types';
 import type { UserPublic } from '@/lib/api';
-import { STATUS_COLORS, PRIORITY_COLORS, statusGroup } from '@/lib/utils';
+import { STATUS_COLORS, PRIORITY_COLORS, statusGroup, userProjectIds } from '@/lib/utils';
+import { getUser } from '@/lib/auth';
 import RichTextEditor from './RichTextEditor';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -27,6 +28,7 @@ interface Props {
   defaultStatus?: string;
   defaultResponsible?: string;
   projects: Project[];
+  tasks?: Task[];
   users: UserPublic[];
   fixedProjectId?: string | null;
   onClose: () => void;
@@ -323,13 +325,14 @@ function PreviewCard({ activity, category, priority, status, responsible, deadli
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function ActivityModal({
-  open, task, defaultStatus, defaultResponsible, projects, users, fixedProjectId, onClose, onSave,
+  open, task, defaultStatus, defaultResponsible, projects, tasks = [], users, fixedProjectId, onClose, onSave,
 }: Props) {
   const [form, setForm] = useState(EMPTY);
   const [noDeadline, setNoDeadline] = useState(false);
   const [attachments, setAttachments] = useState<ActivityAttachment[]>([]);
   const [links, setLinks] = useState<ActivityLink[]>([]);
   const [linkInput, setLinkInput] = useState({ name: '', url: '' });
+  const [onlyMyProjects, setOnlyMyProjects] = useState(true);
 
   // Inicializa o formulário apenas quando o modal ABRE ou quando muda a tarefa em edição.
   // NÃO deve depender de `projects`/`users` etc.: essas props recebem novas referências
@@ -351,6 +354,9 @@ export default function ActivityModal({
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, task]);
+
+  const myName = getUser()?.name ?? '';
+  const myProjectIds = useMemo(() => userProjectIds(projects, tasks, myName), [projects, tasks, myName]);
 
   if (!open) return null;
 
@@ -374,6 +380,11 @@ export default function ActivityModal({
   const showProjectSelect = fixedProjectId == null;
   const fixedProject = fixedProjectId != null ? projects.find(p => p.id === fixedProjectId) : null;
   const isEdit = !!task;
+
+  // Filtra o select de projeto para "meus projetos" (mantém sempre o já selecionado visível).
+  const visibleProjects = onlyMyProjects
+    ? projects.filter(p => myProjectIds.has(p.id) || p.id === form.project_id)
+    : projects;
 
   const inp: React.CSSProperties = { width: '100%', padding: '10px 13px', border: '1px solid var(--border)', borderRadius: 3, fontSize: '0.88rem', background: 'var(--surface)', color: 'var(--text)', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' };
 
@@ -441,11 +452,21 @@ export default function ActivityModal({
             <div style={{ display: 'grid', gridTemplateColumns: showProjectSelect ? '1fr 1fr' : '1fr', gap: 14 }}>
               {showProjectSelect && (
                 <div>
-                  <Label>Projeto</Label>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                    <div className="mono" style={{ fontSize: '0.66rem', fontWeight: 500, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--text-3)' }}>Projeto</div>
+                    <button type="button" onClick={() => setOnlyMyProjects(v => !v)} disabled={!myName}
+                      title="Mostrar apenas projetos em que você é responsável ou participa"
+                      style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', padding: 0, cursor: myName ? 'pointer' : 'default', fontFamily: 'inherit' }}>
+                      <span className="mono" style={{ fontSize: '0.58rem', fontWeight: 600, letterSpacing: '0.5px', textTransform: 'uppercase', color: onlyMyProjects ? 'var(--blue)' : 'var(--text-3)' }}>Meus projetos</span>
+                      <span style={{ position: 'relative', width: 24, height: 14, borderRadius: 7, background: onlyMyProjects ? 'var(--blue)' : 'var(--line-2)', transition: 'background .12s', flexShrink: 0 }}>
+                        <span style={{ position: 'absolute', top: 2, left: onlyMyProjects ? 12 : 2, width: 10, height: 10, borderRadius: '50%', background: '#fff', transition: 'left .14s' }} />
+                      </span>
+                    </button>
+                  </div>
                   <div style={{ position: 'relative' }}>
                     <select value={form.project_id ?? ''} onChange={e => setForm({ ...form, project_id: e.target.value || null })} style={{ ...inp, padding: '11px 32px 11px 13px', appearance: 'none', cursor: 'pointer' }}>
                       <option value="">— Sem projeto —</option>
-                      {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                      {visibleProjects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                     </select>
                     <ChevronDown size={12} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-3)' }} />
                   </div>

@@ -1,4 +1,25 @@
-import type { StatusGroup } from '@/types';
+import type { StatusGroup, Project, Task } from '@/types';
+
+// ── Projetos do usuário ─────────────────────────────────────────────────────────
+
+/**
+ * IDs dos projetos em que o usuário é dono (owner) OU participa de alguma atividade
+ * vinculada a ele (responsável ou co-responsável das tasks do projeto).
+ */
+export function userProjectIds(projects: Project[], tasks: Task[], userName: string | null | undefined): Set<string> {
+  const ids = new Set<string>();
+  if (!userName) return ids;
+  for (const p of projects) if (p.owner === userName) ids.add(p.id);
+  for (const t of tasks) {
+    if (!t.project_id || ids.has(t.project_id)) continue;
+    let mine = t.responsible === userName;
+    if (!mine && t.co_responsibles) {
+      try { mine = (JSON.parse(t.co_responsibles) as string[]).includes(userName); } catch { /* ignore */ }
+    }
+    if (mine) ids.add(t.project_id);
+  }
+  return ids;
+}
 
 // ── Status ────────────────────────────────────────────────────────────────────
 

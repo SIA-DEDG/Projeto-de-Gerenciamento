@@ -454,7 +454,7 @@ export default function ProjetosPage() {
       )}
 
       <ProjectModal open={projectModal.open} project={projectModal.project} onClose={() => setProjectModal({ open: false, project: null })} onSave={handleSaveProject} users={users} />
-      <ActivityModal open={activityModal.open} task={activityModal.task} projects={projects} users={users} fixedProjectId={activityModal.projectId} onClose={() => setActivityModal({ open: false, task: null, projectId: null })} onSave={handleSaveActivity} />
+      <ActivityModal open={activityModal.open} task={activityModal.task} projects={projects} tasks={tasks} users={users} fixedProjectId={activityModal.projectId} onClose={() => setActivityModal({ open: false, task: null, projectId: null })} onSave={handleSaveActivity} />
       <ConfirmModal open={!!confirm} title={confirm?.title ?? ''} message={confirm?.message} confirmLabel="Excluir" danger onConfirm={() => confirm?.onConfirm()} onClose={() => setConfirm(null)} />
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />
     </>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { DndContext, closestCenter, PointerSensor, useSensors, useSensor } from '@dnd-kit/core';
 import ActivityModal from '@/components/ActivityModal';
 import DrawerDetalhe from '@/components/DrawerDetalhe';
@@ -12,7 +12,7 @@ import PageHeader from '@/components/PageHeader';
 import ToastContainer from '@/components/ToastContainer';
 import { useToast } from '@/hooks/useToast';
 import { useTaskBoard, type ActivityFormData } from '@/hooks/useTaskBoard';
-import { KANBAN_COLUMNS } from '@/lib/utils';
+import { KANBAN_COLUMNS, userProjectIds } from '@/lib/utils';
 import { getUser } from '@/lib/auth';
 import { useTabs, useActiveTab } from '@/context/TabsContext';
 import { Search, Plus } from 'lucide-react';
@@ -58,6 +58,17 @@ export default function MinhasAtividadesPage() {
     cancelSelection();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab?.id]);
+
+  // Filtro do dropdown de projeto: só "meus projetos" (ativo por padrão).
+  const [onlyMyProjectsFilter, setOnlyMyProjectsFilter] = useState(true);
+  const myProjectIds = useMemo(
+    () => userProjectIds(projects, allTasks, currentUser?.name),
+    [projects, allTasks, currentUser?.name],
+  );
+  const filterProjectOptions = useMemo(
+    () => (onlyMyProjectsFilter ? projects.filter((p) => myProjectIds.has(p.id) || p.id === filterProject) : projects),
+    [onlyMyProjectsFilter, projects, myProjectIds, filterProject],
+  );
 
   // ── Filtragem: apenas tarefas do usuário atual ────────────────────────────
 
@@ -195,8 +206,18 @@ export default function MinhasAtividadesPage() {
         <select value={filterProject} onChange={(e) => patchActiveTab({ filterProject: e.target.value })}
           style={{ padding: '7px 11px', borderRadius: 3, border: filterProject ? '1px solid var(--blue)' : '1px solid var(--border)', background: 'var(--surface)', color: filterProject ? 'var(--blue)' : 'var(--text-2)', fontSize: '0.8rem', fontWeight: filterProject ? 600 : 400, cursor: 'pointer', outline: 'none' }}>
           <option value="">Projeto</option>
-          {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+          {filterProjectOptions.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
         </select>
+
+        {/* Toggle: só meus projetos no filtro */}
+        <button type="button" onClick={() => setOnlyMyProjectsFilter((v) => !v)} disabled={!currentUser?.name}
+          title="Mostrar no filtro apenas projetos em que você é responsável ou participa"
+          style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '7px 11px', borderRadius: 3, border: onlyMyProjectsFilter ? '1px solid var(--blue)' : '1px solid var(--border)', background: 'var(--surface)', color: onlyMyProjectsFilter ? 'var(--blue)' : 'var(--text-2)', fontSize: '0.8rem', fontWeight: onlyMyProjectsFilter ? 600 : 400, cursor: currentUser?.name ? 'pointer' : 'default', fontFamily: 'inherit', flexShrink: 0 }}>
+          Meus projetos
+          <span style={{ position: 'relative', width: 24, height: 14, borderRadius: 7, background: onlyMyProjectsFilter ? 'var(--blue)' : 'var(--line-2)', transition: 'background .12s', flexShrink: 0 }}>
+            <span style={{ position: 'absolute', top: 2, left: onlyMyProjectsFilter ? 12 : 2, width: 10, height: 10, borderRadius: '50%', background: '#fff', transition: 'left .14s' }} />
+          </span>
+        </button>
 
         {/* Filtro por data */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 4, border: filterDateFrom || filterDateTo ? '1px solid var(--blue)' : '1px solid var(--border)', borderRadius: 3, padding: '0 8px', height: 34, background: 'var(--surface)' }}>
@@ -316,6 +337,7 @@ export default function MinhasAtividadesPage() {
         defaultStatus={activityModal.defaultStatus}
         defaultResponsible={currentUser?.name}
         projects={projects}
+        tasks={allTasks}
         users={users}
         onClose={closeActivityModal}
         onSave={handleSaveActivity}
