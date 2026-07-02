@@ -43,7 +43,7 @@ function AvatarHeroCard() {
         top: 0,
         bottom: 0,
         width: 6,
-        background: 'linear-gradient(var(--blue) 0 38%, #E0A92E 38% 62%, #1B8A4B 62% 100%)',
+        background: 'linear-gradient(var(--blue-fixed) 0 38%, #E0A92E 38% 62%, #1B8A4B 62% 100%)',
       }} />
 
       {/* Avatar */}

@@ -26,7 +26,7 @@ const PRIORITY_COLOR: Record<string, string> = {
 
 const STATUS_COLOR: Record<string, string> = {
   pending:     '#9aa1ac',
-  in_progress: 'var(--blue)',
+  in_progress: '#034ea2',
   review:      '#E0A92E',
   done:        '#1B8A4B',
 };
@@ -172,7 +172,7 @@ export default function DrawerDetalhe({ task, onClose, onEdit, onDelete, onAdvan
       }}>
 
         {/* Stripe Gov-PI */}
-        <div style={{ height: 4, flexShrink: 0, background: 'linear-gradient(90deg,var(--blue) 0 40%,#E0A92E 40% 55%,#b42318 55% 75%,#1B8A4B 75%)' }} />
+        <div style={{ height: 4, flexShrink: 0, background: 'linear-gradient(90deg,var(--blue-fixed) 0 40%,#E0A92E 40% 55%,#b42318 55% 75%,#1B8A4B 75%)' }} />
 
         {/* Header */}
         <div style={{ padding: '20px 24px 16px', borderBottom: '1px solid var(--line-1)', flexShrink: 0 }}>

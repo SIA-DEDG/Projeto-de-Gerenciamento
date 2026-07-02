@@ -32,6 +32,9 @@
   /* Marca / acento (iguais nos dois temas) */
   --blue:   #034ea2;
   --blue-h: #023e82;
+  /* Azul FIXO da marca — nunca segue o accent configurável (listras, status "Em
+     andamento", pontos de cabeçalho, perfil). Não é sobrescrito por applyAccentColor. */
+  --blue-fixed: #034ea2;
   --navy:   #072f63;
   --green:  #1b8a4b;
   --green-t:#157f3c;
@@ -856,7 +859,7 @@ input::placeholder, textarea::placeholder { color: var(--text-3); opacity: 1; }
   flex-shrink: 0;
 }
 .status-chip.pending  { color: var(--text-3); background: var(--surface-2); }
-.status-chip.progress { color: var(--blue);   background: var(--primary-light); }
+.status-chip.progress { color: var(--blue-fixed); background: rgba(3,78,162,0.08); }
 .status-chip.review   { color: var(--gold-t); background: rgba(224,169,46,0.1); }
 .status-chip.done     { color: var(--green-t);background: rgba(27,138,75,0.08); }
 

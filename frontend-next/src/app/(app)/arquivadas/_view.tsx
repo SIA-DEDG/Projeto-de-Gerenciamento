@@ -17,7 +17,7 @@ const PRIO_COLOR: Record<string, string> = {
 
 const STATUS_COLOR: Record<string, string> = {
   pending: '#9aa1ac',
-  in_progress: 'var(--blue)',
+  in_progress: '#034ea2',
   review: '#E0A92E',
   done: '#1B8A4B',
 };

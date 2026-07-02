@@ -28,14 +28,14 @@ interface KanbanColumnProps {
 
 const COLUMN_TINT_COLOR: Record<StatusGroup, string> = {
   pending:     'rgba(154,161,172,0.12)',
-  in_progress: 'var(--primary-light)',
+  in_progress: 'rgba(3,78,162,0.1)',
   review:      'rgba(224,169,46,0.1)',
   done:        'rgba(27,138,75,0.1)',
 };
 
 const COLUMN_TITLE_COLOR: Record<StatusGroup, string> = {
   pending:     'var(--text-3)',
-  in_progress: 'var(--blue)',
+  in_progress: '#034ea2',
   review:      '#A87A00',
   done:        '#157F3C',
 };
