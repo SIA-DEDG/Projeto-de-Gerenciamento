@@ -5,6 +5,9 @@ import { X, Archive, Trash2, Pencil, Folder, Calendar, Clock, Paperclip, Link as
 import type { Task, TaskAttachment } from '@/types';
 import { avatarColor, initials, statusGroupLabel } from '@/lib/utils';
 import { getTaskAttachmentUrl, removeTaskAttachment } from '@/lib/api';
+import { openSignedUrl } from '@/lib/download';
+import { useToast } from '@/hooks/useToast';
+import ToastContainer from './ToastContainer';
 
 interface Props {
   task: Task;
@@ -65,20 +68,24 @@ function formatSize(bytes: number) {
 function AttachmentsSection({ task }: { task: Task }) {
   const [attachments, setAttachments] = useState<TaskAttachment[]>(task.attachments ?? []);
   const [loading, setLoading] = useState<number | null>(null);
+  const { toasts, addToast, dismissToast } = useToast();
 
   async function handleDownload(att: TaskAttachment & { type: 'file' }, idx: number) {
     setLoading(idx);
     try {
-      const url = await getTaskAttachmentUrl(task.id, idx);
-      window.open(url, '_blank');
-    } catch { /* silent */ } finally { setLoading(null); }
+      await openSignedUrl(() => getTaskAttachmentUrl(task.id, idx));
+    } catch {
+      addToast('error', 'Download falhou', 'Não foi possível baixar o anexo. Tente novamente.');
+    } finally { setLoading(null); }
   }
 
   async function handleRemove(idx: number) {
     try {
       const updated = await removeTaskAttachment(task.id, idx);
       setAttachments(updated);
-    } catch { /* silent */ }
+    } catch {
+      addToast('error', 'Erro', 'Não foi possível remover o anexo.');
+    }
   }
 
   const files = attachments.filter((a): a is TaskAttachment & { type: 'file' } => a.type === 'file');
@@ -134,6 +141,7 @@ function AttachmentsSection({ task }: { task: Task }) {
           );
         })}
       </div>
+      <ToastContainer toasts={toasts} onDismiss={dismissToast} />
     </div>
   );
 }

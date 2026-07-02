@@ -150,5 +150,7 @@ export const getAttachmentSignedUrl = async (id: string, index: number): Promise
   if (!att || att.type !== 'file') throw Object.assign(new Error('Anexo não encontrado'), { status: 404 });
   const { getSignedUrl, storageEnabled } = await import('../../lib/storage');
   if (!storageEnabled()) throw Object.assign(new Error('Storage não configurado'), { status: 503 });
-  return getSignedUrl(att.path);
+  // Passa o nome original (salvo no banco) para o download vir com o nome certo,
+  // e não com o timestamp usado como chave no storage.
+  return getSignedUrl(att.path, undefined, att.name);
 };

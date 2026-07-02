@@ -11,6 +11,7 @@ import {
 import ConfirmModal from '@/components/ConfirmModal';
 import { useToast } from '@/hooks/useToast';
 import ToastContainer from '@/components/ToastContainer';
+import { openSignedUrl } from '@/lib/download';
 import { getUser, canManageProjects } from '@/lib/auth';
 import PageHeader from '@/components/PageHeader';
 
@@ -954,7 +955,7 @@ export default function EventosPage() {
               </div>
               {/* Baixar */}
               <button
-                onClick={async () => { try { const url = await getEventMinutesUrl(a.id); window.open(url, '_blank'); } catch { addToast('error', 'Erro', 'Não foi possível baixar a ata.'); } }}
+                onClick={async () => { try { await openSignedUrl(() => getEventMinutesUrl(a.id)); } catch { addToast('error', 'Erro', 'Não foi possível baixar a ata.'); } }}
                 title="Baixar ata"
                 style={{ width: 34, height: 34, border: '1px solid var(--border)', borderRadius: 3, background: 'var(--surface)', color: 'var(--blue)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
                 onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--blue)'; (e.currentTarget as HTMLButtonElement).style.background = 'var(--surface-2)'; }}
@@ -1113,9 +1114,7 @@ export default function EventosPage() {
                         {ev.minutes_file_path && (
                           <button onClick={async () => {
                             try {
-                              const { getEventMinutesUrl } = await import('@/lib/api');
-                              const url = await getEventMinutesUrl(ev.id);
-                              window.open(url, '_blank');
+                              await openSignedUrl(() => getEventMinutesUrl(ev.id));
                             } catch { addToast('error', 'Erro', 'Não foi possível gerar o link de download.'); }
                           }}
                             title="Baixar ata"

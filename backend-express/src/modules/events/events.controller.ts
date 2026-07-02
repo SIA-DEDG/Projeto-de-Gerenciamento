@@ -76,7 +76,7 @@ export async function getMinutesUrl(req: Request, res: Response, next: NextFunct
     if (!event?.minutesFilePath) { res.status(404).json({ error: 'Ata não encontrada' }); return; }
     const { getSignedUrl, storageEnabled } = await import('../../lib/storage');
     if (!storageEnabled()) { res.status(503).json({ error: 'Storage não configurado' }); return; }
-    const url = await getSignedUrl(event.minutesFilePath);
+    const url = await getSignedUrl(event.minutesFilePath, undefined, event.minutesFileName ?? undefined);
     res.json({ url });
   } catch (err) { next(err); }
 }

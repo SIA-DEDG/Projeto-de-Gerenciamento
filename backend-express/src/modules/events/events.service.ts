@@ -62,7 +62,7 @@ export const updateEvent = async (id: string, data: {
 export const deleteEvent = (id: string) => prisma.event.delete({ where: { id } });
 
 export const getEventById = (id: string) =>
-  prisma.event.findUnique({ where: { id }, select: { minutesFilePath: true } });
+  prisma.event.findUnique({ where: { id }, select: { minutesFilePath: true, minutesFileName: true } });
 
 export const setMinutes = (id: string, minutesFileName: string, minutesFilePath: string) =>
   prisma.event.update({ where: { id }, data: { minutesFileName, minutesFilePath }, include })
