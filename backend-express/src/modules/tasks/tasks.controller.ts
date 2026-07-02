@@ -92,12 +92,15 @@ export async function addAttachment(req: Request, res: Response, next: NextFunct
 
     // Arquivo: upload para Supabase
     if (!fileData) { res.status(400).json({ error: 'fileData obrigatório para arquivo' }); return; }
-    const { uploadFile, storageEnabled } = await import('../../lib/storage');
+    const { uploadFile, storageEnabled, sanitizeStorageName } = await import('../../lib/storage');
     const dirId = req.user.directoriaId ?? 'global';
     let path: string;
     if (storageEnabled()) {
-      const ext = name.split('.').pop() ?? 'bin';
-      path = await uploadFile(`diretorias/${dirId}/tasks/${id}/${Date.now()}.${ext}`, fileData, mimeType ?? 'application/octet-stream');
+      // Guarda o arquivo com o NOME ORIGINAL como última parte do path (dentro de
+      // uma subpasta com timestamp para garantir unicidade). Assim o download vem
+      // com o nome certo mesmo se o Content-Disposition não for aplicado.
+      const safeName = sanitizeStorageName(name);
+      path = await uploadFile(`diretorias/${dirId}/tasks/${id}/${Date.now()}/${safeName}`, fileData, mimeType ?? 'application/octet-stream');
     } else {
       path = `__base64__:${fileData.slice(0, 50)}`;
     }

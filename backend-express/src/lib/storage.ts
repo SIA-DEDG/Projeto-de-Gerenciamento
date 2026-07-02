@@ -11,10 +11,15 @@ function getClient() {
   return createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_KEY);
 }
 
-/**
- * Faz upload de um arquivo (base64) para o Supabase Storage.
- * Retorna o path dentro do bucket (ex: "atas/event-123.pdf").
- */
+export function sanitizeStorageName(name: string): string {
+  const cleaned = name
+    .replace(/[/\\]/g, '_') 
+    .replace(/[\x00-\x1f\x7f]/g, '') 
+    .replace(/[<>:"|?*]/g, '_')
+    .trim();
+  return cleaned || 'arquivo';
+}
+
 export async function uploadFile(
   path: string,
   base64Data: string,
@@ -29,9 +34,6 @@ export async function uploadFile(
   return path;
 }
 
-/**
- * Gera uma URL assinada temporária para download (válida por 1h por padrão).
- */
 export async function getSignedUrl(path: string, expiresIn = SIGNED_URL_TTL, downloadName?: string): Promise<string> {
   const supabase = getClient();
   const { data, error } = await supabase.storage
@@ -41,21 +43,15 @@ export async function getSignedUrl(path: string, expiresIn = SIGNED_URL_TTL, dow
   return data.signedUrl;
 }
 
-/**
- * Remove um arquivo do bucket. Silencia erros (arquivo pode já não existir).
- */
 export async function deleteFile(path: string): Promise<void> {
   try {
     const supabase = getClient();
     await supabase.storage.from(BUCKET).remove([path]);
   } catch {
-    // não bloqueia a operação principal
+    
   }
 }
 
-/**
- * Verifica se o Supabase está configurado.
- */
 export function storageEnabled(): boolean {
   return !!(env.SUPABASE_URL && env.SUPABASE_SERVICE_KEY);
 }
