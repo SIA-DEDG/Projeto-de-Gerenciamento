@@ -3,6 +3,7 @@
 import { useEffect, useState, lazy, Suspense, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Sidebar from './Sidebar';
+import FeedbackReplyNotice from './FeedbackReplyNotice';
 import { TabsProvider, useTabs } from '@/context/TabsContext';
 import type { PageType } from '@/context/TabsContext';
 import { getUser, isSuperAdmin, clearAuth } from '@/lib/auth';
@@ -181,6 +182,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </main>
       </div>
+      {!semDiretoria && <FeedbackReplyNotice />}
     </TabsProvider>
   );
 }
