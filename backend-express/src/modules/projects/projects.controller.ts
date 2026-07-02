@@ -15,8 +15,12 @@ export async function getProject(req: Request, res: Response, next: NextFunction
 
 export async function createProject(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
+    if (!req.user.directoriaId) {
+      res.status(400).json({ error: 'Seu usuário não está vinculado a uma diretoria, então não é possível criar projetos.' });
+      return;
+    }
     const data = schema.parse(req.body);
-    const project = await svc.createProject(req.user.directoriaId!, data);
+    const project = await svc.createProject(req.user.directoriaId, data);
     void logAction(req.user.sub, req.user.username, 'CREATE', 'project', project.id, `Projeto "${project.name}" criado`, req.user.directoriaId ?? undefined);
     res.status(201).json(project);
   } catch (err) { next(err); }

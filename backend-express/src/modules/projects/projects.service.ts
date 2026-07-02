@@ -6,8 +6,18 @@ type ProjectWithOwner = Project & { owner: Pick<User, 'name'> | null };
 const include = { owner: { select: { name: true } } } as const;
 
 function fmt(p: ProjectWithOwner) {
-  const { owner, ...rest } = p;
-  return { ...rest, owner: owner?.name ?? null };
+  return {
+    id: p.id,
+    name: p.name,
+    category: p.category,
+    owner_id: p.ownerId,
+    owner: p.owner?.name ?? null,
+    deadline: p.deadline ? p.deadline.toISOString().slice(0, 10) : null,
+    executive_status: p.executiveStatus,
+    objective: p.objective,
+    scope: p.scope,
+    summary: p.summary,
+  };
 }
 
 export const listProjects = (directoriaId: string | null) =>

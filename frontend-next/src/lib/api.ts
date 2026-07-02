@@ -313,7 +313,19 @@ export async function fetchProjects(): Promise<Project[]> {
   return fetchCached('projects', () => apiFetch<Project[]>('/api/projects'));
 }
 
-export async function createProject(payload: Omit<Project, 'id' | 'owner'>): Promise<Project> {
+// Payload no formato que o backend (Zod/Prisma) espera — camelCase.
+export interface ProjectWritePayload {
+  name: string;
+  category?: string | null;
+  ownerId?: string | null;
+  deadline?: string | null;
+  executiveStatus?: string | null;
+  objective?: string | null;
+  scope?: string | null;
+  summary?: string | null;
+}
+
+export async function createProject(payload: ProjectWritePayload): Promise<Project> {
   const result = await apiFetch<Project>('/api/projects', {
     method: 'POST',
     body: JSON.stringify(payload),
@@ -324,11 +336,11 @@ export async function createProject(payload: Omit<Project, 'id' | 'owner'>): Pro
 
 export async function updateProject(
   existing: Project,
-  updates: Partial<Omit<Project, 'id' | 'owner'>>,
+  payload: ProjectWritePayload,
 ): Promise<Project> {
   const result = await apiFetch<Project>(`/api/projects/${existing.id}`, {
     method: 'PUT',
-    body: JSON.stringify({ ...existing, ...updates, owner: undefined }),
+    body: JSON.stringify(payload),
   });
   cacheInvalidate('projects');
   return result;

@@ -18,6 +18,7 @@ import {
 } from '@/lib/api';
 import { avatarColor, initials, statusGroupLabel, resolveCoResponsibleIds } from '@/lib/utils';
 import { useRefetchOnFocus } from '@/lib/useRefetchOnFocus';
+import { onTasksChanged } from '@/lib/taskEvents';
 import type { UserPublic } from '@/lib/api';
 import type { Task, Project } from '@/types';
 import PageHeader from '@/components/PageHeader';
@@ -45,8 +46,11 @@ export default function ProjetosPage() {
   const [users, setUsers]       = useState<UserPublic[]>([]);
   const [loading, setLoading]   = useState(true);
   const [search, setSearch]     = useState('');
+  const [onlyMine, setOnlyMine] = useState(true);
   const [page, setPage]         = useState(1);
   const { toasts, addToast, dismissToast } = useToast();
+
+  const myName = getUser()?.name ?? '';
 
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [projectModal, setProjectModal] = useState<{ open: boolean; project: Project | null }>({ open: false, project: null });
@@ -62,23 +66,58 @@ export default function ProjetosPage() {
 
   useEffect(() => { load(); }, [load]);
   useRefetchOnFocus(load);
+  // Reage a qualquer criação/edição/exclusão de atividade (mesmo feita em outra tela)
+  // para atualizar membros e progresso dos projetos sem precisar recarregar a página.
+  useEffect(() => onTasksChanged(load), [load]);
 
-  const filteredProjects = useMemo(() => projects.filter((p) => p.name.toLowerCase().includes(search.toLowerCase())), [projects, search]);
+  // Nomes envolvidos num projeto: responsáveis e co-responsáveis das atividades vinculadas.
+  const projectMemberNames = useCallback((projectId: string): Set<string> => {
+    const names = tasks
+      .filter((t) => t.project_id === projectId)
+      .flatMap((t) => [t.responsible, ...(t.co_responsibles ? (() => { try { return JSON.parse(t.co_responsibles!) as string[]; } catch { return []; } })() : [])])
+      .filter(Boolean) as string[];
+    return new Set(names);
+  }, [tasks]);
+
+  // Sou "membro" de um projeto se for o responsável (owner) ou participar de alguma atividade dele.
+  const isMyProject = useCallback((p: Project): boolean =>
+    (!!myName && p.owner === myName) || projectMemberNames(p.id).has(myName),
+  [myName, projectMemberNames]);
+
+  const filteredProjects = useMemo(
+    () => projects.filter((p) => p.name.toLowerCase().includes(search.toLowerCase()) && (!onlyMine || isMyProject(p))),
+    [projects, search, onlyMine, isMyProject],
+  );
   const totalPages = Math.max(1, Math.ceil(filteredProjects.length / PAGE_SIZE));
   const pagedProjects = filteredProjects.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-  useEffect(() => { setPage(1); }, [search]);
+  useEffect(() => { setPage(1); }, [search, onlyMine]);
 
   async function handleSaveProject(data: Omit<Project, 'id'>) {
     const { project } = projectModal;
     setProjectModal({ open: false, project: null });
-    if (project) {
-      const updated = await updateProject(project, data);
-      setProjects((curr) => curr.map((p) => (p.id === updated.id ? updated : p)));
-      if (selectedProject?.id === updated.id) setSelectedProject(updated);
-    } else {
-      const created = await createProject(data);
-      setProjects((curr) => [...curr, created]);
-      addToast('success', 'Projeto criado', `"${created.name}" criado.`);
+    const payload = {
+      name: data.name,
+      category: data.category?.trim() || null,
+      ownerId: users.find((u) => u.name === data.owner)?.id ?? null,
+      deadline: data.deadline?.trim() || null,
+      executiveStatus: data.executive_status || null,
+      objective: data.objective?.trim() || null,
+      scope: data.scope?.trim() || null,
+      summary: data.summary?.trim() || null,
+    };
+    try {
+      if (project) {
+        const updated = await updateProject(project, payload);
+        setProjects((curr) => curr.map((p) => (p.id === updated.id ? updated : p)));
+        if (selectedProject?.id === updated.id) setSelectedProject(updated);
+        addToast('success', 'Projeto atualizado', `"${updated.name}" salvo.`);
+      } else {
+        const created = await createProject(payload);
+        setProjects((curr) => [...curr, created]);
+        addToast('success', 'Projeto criado', `"${created.name}" criado.`);
+      }
+    } catch (err) {
+      addToast('error', 'Não foi possível salvar', err instanceof Error ? err.message : 'Tente novamente.');
     }
   }
 
@@ -147,11 +186,27 @@ export default function ProjetosPage() {
       />
 
       {/* ── Search bar ── */}
-      <div style={{ padding: '14px 32px 0', flexShrink: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 7, border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '6px 10px', background: 'var(--surface)', maxWidth: 320 }}>
+      <div style={{ padding: '14px 32px 0', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 7, border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '6px 10px', background: 'var(--surface)', maxWidth: 320, flex: '1 1 220px' }}>
           <Search size={13} style={{ color: 'var(--text-3)', flexShrink: 0 }} />
           <input type="text" placeholder="Buscar projeto..." value={search} onChange={(e) => setSearch(e.target.value)} style={{ border: 'none', outline: 'none', background: 'none', fontSize: '0.82rem', color: 'var(--text)', width: '100%', fontFamily: 'inherit' }} />
         </div>
+
+        {/* Toggle: Meus projetos */}
+        <button
+          type="button"
+          onClick={() => setOnlyMine((v) => !v)}
+          aria-pressed={onlyMine}
+          title={myName ? 'Mostrar apenas projetos em que você é responsável ou participa de alguma atividade' : 'Faça login para filtrar seus projetos'}
+          disabled={!myName}
+          style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 12px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', background: onlyMine ? 'var(--blue)' : 'var(--surface)', color: onlyMine ? '#fff' : 'var(--text-2)', fontSize: '0.78rem', fontWeight: 600, cursor: myName ? 'pointer' : 'not-allowed', opacity: myName ? 1 : 0.5, fontFamily: 'inherit', flexShrink: 0, transition: 'background 0.12s, color 0.12s' }}
+        >
+          <User size={13} />
+          Meus projetos
+          <span style={{ position: 'relative', width: 26, height: 15, borderRadius: 8, background: onlyMine ? 'rgba(255,255,255,0.4)' : 'var(--line-2)', transition: 'background 0.12s', flexShrink: 0 }}>
+            <span style={{ position: 'absolute', top: 2, left: onlyMine ? 13 : 2, width: 11, height: 11, borderRadius: '50%', background: '#fff', transition: 'left 0.14s', boxShadow: '0 1px 2px rgba(0,0,0,0.2)' }} />
+          </span>
+        </button>
       </div>
 
       {loading ? (
