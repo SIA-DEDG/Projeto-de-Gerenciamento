@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
-import { Trash2, Pencil, ChevronLeft, ChevronRight, Clock, ChevronDown, Check, Plus, FileText, Paperclip, X as XIcon, Calendar, Users, User, MapPin, Download } from 'lucide-react';
+import { Trash2, Pencil, ChevronLeft, ChevronRight, Clock, ChevronDown, Check, Plus, FileText, Paperclip, X as XIcon, Calendar, Users, User, MapPin, Download, Search, Link as LinkIcon } from 'lucide-react';
 import Calendario, { type CalendarioItem } from '@/components/Calendario';
 import {
   fetchEvents, createEvent, updateEvent, deleteEvent, fetchUsers,
@@ -14,8 +14,6 @@ import ToastContainer from '@/components/ToastContainer';
 import { openSignedUrl } from '@/lib/download';
 import { getUser, canManageProjects } from '@/lib/auth';
 import PageHeader from '@/components/PageHeader';
-
-// ?"??"? helpers ?"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"?
 
 const WEEKDAYS_SHORT = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 const MONTHS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
@@ -193,7 +191,7 @@ function EventPreview({
       border: '1px solid var(--line-1)',
     }}>
       {/* Stripe Gov-PI */}
-      <div style={{ height: 4, background: 'linear-gradient(90deg,var(--blue) 0 40%,#E0A92E 40% 55%,#b42318 55% 75%,#1B8A4B 75%)', flexShrink: 0 }} />
+      <div style={{ height: 4, background: 'linear-gradient(90deg,var(--blue-fixed) 0 40%,#E0A92E 40% 55%,#b42318 55% 75%,#1B8A4B 75%)', flexShrink: 0 }} />
 
       {/* Header: nome + chips + fechar */}
       <div style={{ padding: '14px 16px 12px', borderBottom: '1px solid var(--line-1)' }}>
@@ -482,7 +480,7 @@ export default function EventosPage() {
   const todayStr = ymd(now);
   const me = getUser();
   const { toasts, addToast, dismissToast } = useToast();
-  const [confirmDialog, setConfirmDialog] = useState<{ title: string; message?: string; onConfirm: () => void } | null>(null);
+  const [confirmDialog, setConfirmDialog] = useState<{ title: string; message?: string; confirmLabel?: string; onConfirm: () => void } | null>(null);
 
   const [events, setEvents]     = useState<CalendarEvent[]>([]);
   const [users, setUsers]       = useState<UserPublic[]>([]);
@@ -518,9 +516,9 @@ export default function EventosPage() {
   // Form
   const [evName, setEvName]         = useState('');
   const [respList, setRespList]     = useState<string[]>([]);
-  const [evEventType, setEvEventType] = useState('Reunião'); // tipo do evento (select)
+  const [evEventType, setEvEventType] = useState('Reunião');
   const [evType, setEvType]         = useState<'Presencial'|'Online'|'Híbrido'>('Presencial'); // modalidade
-  const [evLocal, setEvLocal]       = useState(''); // local ou link
+  const [evLocal, setEvLocal]       = useState('');
   const [attendees, setAttendees]   = useState('');
   const [startDate, setStartDate]   = useState('');
   const [endDate, setEndDate]       = useState('');
@@ -534,7 +532,7 @@ export default function EventosPage() {
   const [respOpen, setRespOpen]     = useState(false);
   const [ataFile, setAtaFile]       = useState<{ name: string; data: string } | null>(null);
 
-  const EV_TYPES = ['Reunião', 'Workshop', 'Comitê', 'Visita', 'Assembleia', 'Evento externo'];
+  const EV_TYPES = ['Reunião', 'Workshop', 'Comitê', 'Visita', 'Assembleia', 'Evento externo', 'Outro'];
   const MODALIDADE_OPTIONS = ['Presencial', 'Online', 'Híbrido'] as const;
 
   async function load() {
@@ -695,10 +693,14 @@ export default function EventosPage() {
     { label: 'Realizados', items: realizados },
   ].filter(g => g.items.length > 0);
 
-  const atasEvents = useMemo(() =>
-    visibleEvents.filter(ev => ev.minutes_file_name),
-    [visibleEvents]
-  );
+  const [ataSearch, setAtaSearch] = useState('');
+  const atasEvents = useMemo(() => {
+    const q = ataSearch.trim().toLowerCase();
+    return visibleEvents.filter(ev =>
+      ev.minutes_file_name &&
+      (!q || ev.name.toLowerCase().includes(q) || ev.minutes_file_name.toLowerCase().includes(q)),
+    );
+  }, [visibleEvents, ataSearch]);
 
   const WEEKDAYS_S = ['Dom','Seg','Ter','Qua','Qui','Sex','S?b'];
   const MONTHS_S   = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
@@ -737,14 +739,16 @@ export default function EventosPage() {
   }
 
   const [pastOpen, setPastOpen] = useState(false);
-  const [filterEvMonth, setFilterEvMonth] = useState('');
+  const [filterEvMonth, setFilterEvMonth] = useState(''); // 'MM'
+  const [filterEvDay, setFilterEvDay] = useState('');     // 'DD'
   const [filterEvType, setFilterEvType] = useState('');
 
   const filteredForAgenda = useMemo(() => visibleEvents.filter(ev => {
-    if (filterEvMonth && !ev.start_date.startsWith(filterEvMonth)) return false;
+    if (filterEvMonth && ev.start_date.slice(5, 7) !== filterEvMonth) return false;
+    if (filterEvDay && ev.start_date.slice(8, 10) !== filterEvDay) return false;
     if (filterEvType && ev.event_type !== filterEvType) return false;
     return true;
-  }), [visibleEvents, filterEvMonth, filterEvType]);
+  }), [visibleEvents, filterEvMonth, filterEvDay, filterEvType]);
 
   /* ── Grupos de agenda (filtrados) ── */
   const agendadosFilt = useMemo(() =>
@@ -789,50 +793,74 @@ export default function EventosPage() {
         }
       />
 
-      {/* Sub-tabs */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 18, padding: '18px 32px', borderBottom: '1px solid var(--line-1)', flexShrink: 0 }}>
+      {/* Sub-tabs + filtros (mesma linha, estilo Atividades) */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 18, padding: '18px 32px', borderBottom: '1px solid var(--line-1)', flexShrink: 0, flexWrap: 'wrap' }}>
         <button style={{ background: 'none', border: 'none', padding: '0 0 4px', fontSize: '.86rem', fontWeight: tab === 'agenda' ? 600 : 400, color: tab === 'agenda' ? 'var(--text)' : 'var(--text-3)', cursor: 'pointer', borderBottom: tab === 'agenda' ? '2px solid var(--blue)' : '2px solid transparent', letterSpacing: '-.1px', fontFamily: 'inherit' }} onClick={() => setTab('agenda')}>Agenda</button>
         <button style={{ background: 'none', border: 'none', padding: '0 0 4px', fontSize: '.86rem', fontWeight: tab === 'atas' ? 600 : 400, color: tab === 'atas' ? 'var(--text)' : 'var(--text-3)', cursor: 'pointer', borderBottom: tab === 'atas' ? '2px solid var(--blue)' : '2px solid transparent', letterSpacing: '-.1px', fontFamily: 'inherit' }} onClick={() => setTab('atas')}>Atas de reunião</button>
         <button style={{ background: 'none', border: 'none', padding: '0 0 4px', fontSize: '.86rem', fontWeight: tab === 'calendar' ? 600 : 400, color: tab === 'calendar' ? 'var(--text)' : 'var(--text-3)', cursor: 'pointer', borderBottom: tab === 'calendar' ? '2px solid var(--blue)' : '2px solid transparent', letterSpacing: '-.1px', fontFamily: 'inherit' }} onClick={() => setTab('calendar')}>Calendário</button>
+
+        {tab === 'agenda' && (
+          <>
+            <div style={{ width: 1, height: 20, background: 'var(--border)', flexShrink: 0 }} />
+
+            {/* Mês */}
+            <select value={filterEvMonth} onChange={e => setFilterEvMonth(e.target.value)}
+              style={{ padding: '7px 11px', borderRadius: 3, border: filterEvMonth ? '1px solid var(--blue)' : '1px solid var(--border)', background: 'var(--surface)', color: filterEvMonth ? 'var(--blue)' : 'var(--text-2)', fontSize: '0.8rem', fontWeight: filterEvMonth ? 600 : 400, cursor: 'pointer', outline: 'none' }}>
+              <option value="">Mês</option>
+              {MONTHS.map((m, i) => <option key={m} value={String(i + 1).padStart(2, '0')}>{m}</option>)}
+            </select>
+
+            {/* Dia */}
+            <select value={filterEvDay} onChange={e => setFilterEvDay(e.target.value)}
+              style={{ padding: '7px 11px', borderRadius: 3, border: filterEvDay ? '1px solid var(--blue)' : '1px solid var(--border)', background: 'var(--surface)', color: filterEvDay ? 'var(--blue)' : 'var(--text-2)', fontSize: '0.8rem', fontWeight: filterEvDay ? 600 : 400, cursor: 'pointer', outline: 'none' }}>
+              <option value="">Dia</option>
+              {Array.from({ length: 31 }, (_, i) => String(i + 1).padStart(2, '0')).map(d => <option key={d} value={d}>{d}</option>)}
+            </select>
+
+            {/* Tipo */}
+            <select value={filterEvType} onChange={e => setFilterEvType(e.target.value)}
+              style={{ padding: '7px 11px', borderRadius: 3, border: filterEvType ? '1px solid var(--blue)' : '1px solid var(--border)', background: 'var(--surface)', color: filterEvType ? 'var(--blue)' : 'var(--text-2)', fontSize: '0.8rem', fontWeight: filterEvType ? 600 : 400, cursor: 'pointer', outline: 'none' }}>
+              <option value="">Tipo</option>
+              {EV_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+            </select>
+
+            {(filterEvMonth || filterEvDay || filterEvType) && (
+              <button onClick={() => { setFilterEvMonth(''); setFilterEvDay(''); setFilterEvType(''); }}
+                className="mono"
+                style={{ fontSize: '0.7rem', fontWeight: 500, color: 'var(--blue)', background: 'none', border: 'none', cursor: 'pointer', letterSpacing: '0.5px' }}>
+                LIMPAR
+              </button>
+            )}
+          </>
+        )}
+
+        {tab === 'atas' && (
+          <>
+            <div style={{ width: 1, height: 20, background: 'var(--border)', flexShrink: 0 }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, border: '1px solid var(--border)', borderRadius: 3, padding: '7px 11px', width: 260 }}>
+              <Search size={13} style={{ color: 'var(--text-3)', flexShrink: 0 }} />
+              <input value={ataSearch} onChange={e => setAtaSearch(e.target.value)} placeholder="Buscar ata ou evento..."
+                style={{ border: 'none', outline: 'none', background: 'none', fontSize: '0.82rem', color: 'var(--text)', width: '100%', fontFamily: 'inherit' }} />
+              {ataSearch && (
+                <button onClick={() => setAtaSearch('')} title="Limpar"
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)', display: 'flex', alignItems: 'center', padding: 0 }}>
+                  <XIcon size={13} />
+                </button>
+              )}
+            </div>
+          </>
+        )}
+
         <div style={{ flex: 1 }} />
         <span className="mono" style={{ fontSize: '0.72rem', color: 'var(--text-3)', letterSpacing: '0.5px' }}>
-          {visibleEvents.length} EVENTOS
+          {tab === 'agenda' ? `${filteredForAgenda.length} EVENTO${filteredForAgenda.length !== 1 ? 'S' : ''}`
+            : tab === 'atas' ? `${atasEvents.length} ATA${atasEvents.length !== 1 ? 'S' : ''}`
+            : `${visibleEvents.length} EVENTO${visibleEvents.length !== 1 ? 'S' : ''}`}
         </span>
       </div>
       {/* ── AGENDA ── */}
       {tab === 'agenda' && (
         <div style={{ flex: 1, overflowY: 'auto' }}>
-          {/* Barra de filtros */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 32px', borderBottom: '1px solid var(--line-1)', background: 'var(--surface-2)', flexWrap: 'wrap' }}>
-            <input
-              type="month"
-              value={filterEvMonth}
-              onChange={e => setFilterEvMonth(e.target.value)}
-              style={{ height: 28, padding: '0 8px', border: filterEvMonth ? '1px solid var(--blue)' : '1px solid var(--border)', borderRadius: 3, background: filterEvMonth ? 'var(--primary-light)' : 'var(--surface)', color: filterEvMonth ? 'var(--blue)' : 'var(--text-2)', fontSize: '0.74rem', fontFamily: 'inherit', cursor: 'pointer', outline: 'none' }}
-            />
-            <select
-              value={filterEvType}
-              onChange={e => setFilterEvType(e.target.value)}
-              style={{ height: 28, padding: '0 8px', border: filterEvType ? '1px solid var(--blue)' : '1px solid var(--border)', borderRadius: 3, background: filterEvType ? 'var(--primary-light)' : 'var(--surface)', color: filterEvType ? 'var(--blue)' : 'var(--text-2)', fontSize: '0.74rem', fontFamily: 'inherit', cursor: 'pointer', outline: 'none' }}
-            >
-              <option value="">Tipo</option>
-              {EV_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-            </select>
-            {(filterEvMonth || filterEvType) && (
-              <button
-                onClick={() => { setFilterEvMonth(''); setFilterEvType(''); }}
-                style={{ height: 28, padding: '0 10px', border: 'none', borderRadius: 3, background: 'transparent', color: 'var(--text-3)', fontSize: '0.74rem', fontFamily: 'inherit', cursor: 'pointer' }}
-                onMouseEnter={e => (e.currentTarget.style.color = 'var(--text)')}
-                onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-3)')}
-              >
-                Limpar
-              </button>
-            )}
-            <span className="mono" style={{ fontSize: '0.68rem', color: 'var(--text-3)', marginLeft: 'auto', letterSpacing: '0.5px' }}>
-              {filteredForAgenda.length} evento{filteredForAgenda.length !== 1 ? 's' : ''}
-            </span>
-          </div>
-
           {loading ? (
             <div className="loading-state">Carregando eventos…</div>
           ) : evGroupsFilt.length === 0 ? (
@@ -931,7 +959,7 @@ export default function EventosPage() {
         <div style={{ flex: 1, overflowY: 'auto', borderTop: '1px solid var(--line-1)' }}>
           {atasEvents.length === 0 ? (
             <div style={{ padding: '60px', textAlign: 'center', color: 'var(--text-3)' }}>
-              <div className="mono" style={{ fontSize: '0.8rem', letterSpacing: '0.5px' }}>Nenhuma ata anexada ainda. Abra um evento realizado para anexar.</div>
+              <div className="mono" style={{ fontSize: '0.8rem', letterSpacing: '0.5px' }}>{ataSearch ? 'Nenhuma ata encontrada para a busca.' : 'Nenhuma ata anexada ainda. Abra um evento realizado para anexar.'}</div>
             </div>
           ) : atasEvents.map(a => (
             <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '16px 32px', borderBottom: '1px solid var(--line-2)', transition: 'background 0.12s' }}
@@ -964,7 +992,12 @@ export default function EventosPage() {
               </button>
               {/* Remover */}
               <button
-                onClick={async () => { const updated = await removeEventMinutes(a.id); setEvents(curr => curr.map(x => x.id === a.id ? updated : x)); addToast('success', 'Ata removida', ''); }}
+                onClick={() => setConfirmDialog({
+                  title: 'Remover ata',
+                  message: `A ata "${a.minutes_file_name}" será removida permanentemente. Deseja continuar?`,
+                  confirmLabel: 'Remover',
+                  onConfirm: async () => { const updated = await removeEventMinutes(a.id); setEvents(curr => curr.map(x => x.id === a.id ? updated : x)); addToast('success', 'Ata removida', ''); },
+                })}
                 style={{ width: 34, height: 34, border: '1px solid var(--border)', borderRadius: 3, background: 'var(--surface)', color: 'var(--text-2)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
                 onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = '#b42318'; (e.currentTarget as HTMLButtonElement).style.color = '#b42318'; }}
                 onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--border)'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-2)'; }}
@@ -1025,7 +1058,7 @@ export default function EventosPage() {
             }} onClick={e => e.stopPropagation()}>
 
               {/* Stripe Gov-PI */}
-              <div style={{ height: 4, background: 'linear-gradient(90deg,var(--blue) 0 40%,#E0A92E 40% 55%,#b42318 55% 75%,#1B8A4B 75%)', flexShrink: 0 }} />
+              <div style={{ height: 4, background: 'linear-gradient(90deg,var(--blue-fixed) 0 40%,#E0A92E 40% 55%,#b42318 55% 75%,#1B8A4B 75%)', flexShrink: 0 }} />
 
               {/* Header */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 24px', borderBottom: '1px solid var(--line-1)', flexShrink: 0 }}>
@@ -1126,12 +1159,17 @@ export default function EventosPage() {
                         )}
                       </div>
                       {/* Remover */}
-                      <button onClick={async () => {
-                        const updated = await removeEventMinutes(ev.id);
-                        setEvents(curr => curr.map(x => x.id === ev.id ? updated : x));
-                        closePreview();
-                        addToast('success', 'Ata removida', '');
-                      }} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 14px', border: '1px solid rgba(180,35,24,0.2)', borderRadius: 3, background: 'rgba(180,35,24,0.04)', color: '#b42318', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', alignSelf: 'flex-start' }}
+                      <button onClick={() => setConfirmDialog({
+                        title: 'Remover ata',
+                        message: `A ata "${ev.minutes_file_name}" será removida permanentemente. Deseja continuar?`,
+                        confirmLabel: 'Remover',
+                        onConfirm: async () => {
+                          const updated = await removeEventMinutes(ev.id);
+                          setEvents(curr => curr.map(x => x.id === ev.id ? updated : x));
+                          closePreview();
+                          addToast('success', 'Ata removida', '');
+                        },
+                      })} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 14px', border: '1px solid rgba(180,35,24,0.2)', borderRadius: 3, background: 'rgba(180,35,24,0.04)', color: '#b42318', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', alignSelf: 'flex-start' }}
                         onMouseEnter={e => (e.currentTarget.style.background = 'rgba(180,35,24,0.10)')}
                         onMouseLeave={e => (e.currentTarget.style.background = 'rgba(180,35,24,0.04)')}>
                         <Trash2 size={13} />Remover ata
@@ -1211,7 +1249,7 @@ export default function EventosPage() {
             <div className="ssel" style={{ position: 'fixed', top: 0, right: 0, bottom: 0, width: 500, maxWidth: '94%', background: 'var(--surface)', overflowY: 'auto', zIndex: 201, borderLeft: '1px solid var(--line-1)', animation: 'drawin .24s cubic-bezier(.4,0,.2,1) both', display: 'flex', flexDirection: 'column' }}>
 
               {/* Stripe Gov-PI */}
-              <div style={{ height: 4, flexShrink: 0, background: 'linear-gradient(90deg,var(--blue) 0 40%,#E0A92E 40% 55%,#b42318 55% 75%,#1B8A4B 75%)' }} />
+              <div style={{ height: 4, flexShrink: 0, background: 'linear-gradient(90deg,var(--blue-fixed) 0 40%,#E0A92E 40% 55%,#b42318 55% 75%,#1B8A4B 75%)' }} />
 
               {/* ── Header ── */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 28px', borderBottom: '1px solid var(--line-1)', flexShrink: 0, position: 'sticky', top: 4, background: 'var(--surface)', zIndex: 2 }}>
@@ -1475,7 +1513,7 @@ export default function EventosPage() {
         open={!!confirmDialog}
         title={confirmDialog?.title ?? ''}
         message={confirmDialog?.message}
-        confirmLabel="Excluir"
+        confirmLabel={confirmDialog?.confirmLabel ?? 'Excluir'}
         danger
         onConfirm={() => confirmDialog?.onConfirm()}
         onClose={() => setConfirmDialog(null)}
