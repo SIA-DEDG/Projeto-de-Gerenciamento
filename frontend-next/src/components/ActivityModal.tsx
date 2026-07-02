@@ -331,6 +331,9 @@ export default function ActivityModal({
   const [links, setLinks] = useState<ActivityLink[]>([]);
   const [linkInput, setLinkInput] = useState({ name: '', url: '' });
 
+  // Inicializa o formulário apenas quando o modal ABRE ou quando muda a tarefa em edição.
+  // NÃO deve depender de `projects`/`users` etc.: essas props recebem novas referências
+  // a cada refetch em segundo plano, e re-executar aqui apagaria o que o usuário digitou/colou.
   useEffect(() => {
     if (!open) return;
     setAttachments([]);
@@ -346,7 +349,8 @@ export default function ActivityModal({
       setNoDeadline(false);
       setForm({ ...EMPTY, status: defaultStatus ?? 'Pendente', project_id: pid, responsible: defaultResponsible ?? '' });
     }
-  }, [open, task, defaultStatus, defaultResponsible, projects, fixedProjectId]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, task]);
 
   if (!open) return null;
 
