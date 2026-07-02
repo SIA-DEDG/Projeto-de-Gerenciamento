@@ -6,7 +6,7 @@ import {
   fetchTasks, createTask, updateTask, deleteTask, archiveTask,
   fetchProjects, fetchUsers,
   getCachedTasks, getCachedProjects, getCachedUsers,
-  addTaskFile, addTaskLink,
+  addTaskFile, addTaskLink, removeTaskAttachment,
 } from '@/lib/api';
 import type { UserPublic } from '@/lib/api';
 import { resolveCoResponsibleIds, STATUS_NEXT } from '@/lib/utils';
@@ -29,6 +29,7 @@ export interface ActivityFormData {
   deadline: string | null;
   attachments?: { name: string; type: string; size: number; data: string }[];
   links?: { name: string; url: string }[];
+  removedAttachmentIndices?: number[];
 }
 
 export interface ConfirmDialogState {
@@ -135,6 +136,7 @@ export function useTaskBoard() {
 
     if (existingTask) {
       const updated = await updateTask(existingTask, payload);
+      await removeAttachments(existingTask.id, formData.removedAttachmentIndices);
       await uploadAttachments(existingTask.id, formData);
       const refreshed = await fetchTasks().then(ts => ts.find(t => t.id === existingTask.id) ?? updated);
       setAllTasks((curr) => curr.map((x) => x.id === existingTask.id ? refreshed : x));
@@ -146,6 +148,15 @@ export function useTaskBoard() {
       const refreshed = await fetchTasks().then(ts => ts.find(t => t.id === created.id) ?? created);
       setAllTasks((curr) => [...curr.filter(x => x.id !== created.id), refreshed]);
       return refreshed;
+    }
+  }
+
+  // Remove anexos pelos índices originais. Ordem decrescente para que cada remoção
+  // não invalide os índices ainda pendentes (o backend filtra pelo índice atual).
+  async function removeAttachments(taskId: string, indices?: number[]) {
+    if (!indices?.length) return;
+    for (const idx of [...indices].sort((a, b) => b - a)) {
+      await removeTaskAttachment(taskId, idx).catch(() => null);
     }
   }
 

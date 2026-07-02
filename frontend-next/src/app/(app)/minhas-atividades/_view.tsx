@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { DndContext, closestCenter, PointerSensor, useSensors, useSensor } from '@dnd-kit/core';
 import ActivityModal from '@/components/ActivityModal';
 import DrawerDetalhe from '@/components/DrawerDetalhe';
@@ -59,15 +59,14 @@ export default function MinhasAtividadesPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab?.id]);
 
-  // Filtro do dropdown de projeto: só "meus projetos" (ativo por padrão).
-  const [onlyMyProjectsFilter, setOnlyMyProjectsFilter] = useState(true);
+  // Filtro do dropdown de projeto: sempre restrito aos projetos do usuário.
   const myProjectIds = useMemo(
-    () => userProjectIds(projects, allTasks, currentUser?.name),
-    [projects, allTasks, currentUser?.name],
+    () => userProjectIds(projects, allTasks, currentUser?.name, currentUser?.user_id),
+    [projects, allTasks, currentUser?.name, currentUser?.user_id],
   );
   const filterProjectOptions = useMemo(
-    () => (onlyMyProjectsFilter ? projects.filter((p) => myProjectIds.has(p.id) || p.id === filterProject) : projects),
-    [onlyMyProjectsFilter, projects, myProjectIds, filterProject],
+    () => projects.filter((p) => myProjectIds.has(p.id) || p.id === filterProject),
+    [projects, myProjectIds, filterProject],
   );
 
   // ── Filtragem: apenas tarefas do usuário atual ────────────────────────────
@@ -166,7 +165,7 @@ export default function MinhasAtividadesPage() {
       />
 
       {/* Toolbar: view + busca + filtros */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 18, padding: '18px 32px', borderBottom: '1px solid var(--line-1)', flexShrink: 0, background: 'var(--surface)', flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '18px 32px', borderBottom: '1px solid var(--line-1)', flexShrink: 0, background: 'var(--surface)', flexWrap: 'wrap' }}>
         {/* Seletor de view */}
         <div style={{ display: 'flex', gap: 18 }}>
           {(['kanban', 'list', 'calendar'] as const).map((v) => {
@@ -184,7 +183,7 @@ export default function MinhasAtividadesPage() {
         <div style={{ width: 1, height: 20, background: 'var(--border)', flexShrink: 0 }} />
 
         {/* Busca */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, border: '1px solid var(--border)', borderRadius: 3, padding: '7px 11px', width: 230 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, border: '1px solid var(--border)', borderRadius: 3, padding: '7px 11px', flex: '1 1 160px', minWidth: 140, maxWidth: 230 }}>
           <Search size={13} style={{ color: 'var(--text-3)', flexShrink: 0 }} />
           <input
             value={search}
@@ -204,20 +203,10 @@ export default function MinhasAtividadesPage() {
         </select>
 
         <select value={filterProject} onChange={(e) => patchActiveTab({ filterProject: e.target.value })}
-          style={{ padding: '7px 11px', borderRadius: 3, border: filterProject ? '1px solid var(--blue)' : '1px solid var(--border)', background: 'var(--surface)', color: filterProject ? 'var(--blue)' : 'var(--text-2)', fontSize: '0.8rem', fontWeight: filterProject ? 600 : 400, cursor: 'pointer', outline: 'none' }}>
+          style={{ padding: '7px 11px', borderRadius: 3, border: filterProject ? '1px solid var(--blue)' : '1px solid var(--border)', background: 'var(--surface)', color: filterProject ? 'var(--blue)' : 'var(--text-2)', fontSize: '0.8rem', fontWeight: filterProject ? 600 : 400, cursor: 'pointer', outline: 'none', maxWidth: 130, flexShrink: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           <option value="">Projeto</option>
           {filterProjectOptions.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
         </select>
-
-        {/* Toggle: só meus projetos no filtro */}
-        <button type="button" onClick={() => setOnlyMyProjectsFilter((v) => !v)} disabled={!currentUser?.name}
-          title="Mostrar no filtro apenas projetos em que você é responsável ou participa"
-          style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '7px 11px', borderRadius: 3, border: onlyMyProjectsFilter ? '1px solid var(--blue)' : '1px solid var(--border)', background: 'var(--surface)', color: onlyMyProjectsFilter ? 'var(--blue)' : 'var(--text-2)', fontSize: '0.8rem', fontWeight: onlyMyProjectsFilter ? 600 : 400, cursor: currentUser?.name ? 'pointer' : 'default', fontFamily: 'inherit', flexShrink: 0 }}>
-          Meus projetos
-          <span style={{ position: 'relative', width: 24, height: 14, borderRadius: 7, background: onlyMyProjectsFilter ? 'var(--blue)' : 'var(--line-2)', transition: 'background .12s', flexShrink: 0 }}>
-            <span style={{ position: 'absolute', top: 2, left: onlyMyProjectsFilter ? 12 : 2, width: 10, height: 10, borderRadius: '50%', background: '#fff', transition: 'left .14s' }} />
-          </span>
-        </button>
 
         {/* Filtro por data */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 4, border: filterDateFrom || filterDateTo ? '1px solid var(--blue)' : '1px solid var(--border)', borderRadius: 3, padding: '0 8px', height: 34, background: 'var(--surface)' }}>

@@ -51,6 +51,7 @@ export default function ProjetosPage() {
   const { toasts, addToast, dismissToast } = useToast();
 
   const myName = getUser()?.name ?? '';
+  const myId = getUser()?.user_id ?? null;
 
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [projectModal, setProjectModal] = useState<{ open: boolean; project: Project | null }>({ open: false, project: null });
@@ -81,8 +82,8 @@ export default function ProjetosPage() {
 
   // Sou "membro" de um projeto se for o responsável (owner) ou participar de alguma atividade dele.
   const isMyProject = useCallback((p: Project): boolean =>
-    (!!myName && p.owner === myName) || projectMemberNames(p.id).has(myName),
-  [myName, projectMemberNames]);
+    (!!myId && p.owner_id === myId) || (!!myName && p.owner === myName) || projectMemberNames(p.id).has(myName),
+  [myId, myName, projectMemberNames]);
 
   const filteredProjects = useMemo(
     () => projects.filter((p) => p.name.toLowerCase().includes(search.toLowerCase()) && (!onlyMine || isMyProject(p))),
@@ -307,7 +308,7 @@ export default function ProjetosPage() {
           pTasks2.flatMap(t => [t.responsible, ...(t.co_responsibles ? (() => { try { return JSON.parse(t.co_responsibles!) as string[]; } catch { return []; } })() : [])]).filter(Boolean)
         )) as string[];
         const nameInitials = selectedProject.name.split(' ').filter(Boolean).slice(0, 2).map((w: string) => w[0]).join('').toUpperCase();
-        const statusColors2: Record<string, string> = { pending: '#9aa1ac', in_progress: 'var(--blue)', review: '#E0A92E', done: '#1B8A4B' };
+        const statusColors2: Record<string, string> = { pending: '#9aa1ac', in_progress: '#034ea2', review: '#E0A92E', done: '#1B8A4B' };
         return (
           <>
             {/* Backdrop */}
@@ -318,7 +319,7 @@ export default function ProjetosPage() {
               style={{ position: 'fixed', top: 0, right: 0, bottom: 0, width: 560, maxWidth: '96%', background: 'var(--surface)', overflowY: 'auto', zIndex: 51, borderLeft: '1px solid var(--line-1)', animation: 'drawin .26s cubic-bezier(.4,0,.2,1) both' }}>
 
               {/* 4px stripe — 4 cores Gov-PI */}
-              <div style={{ height: 4, background: 'linear-gradient(90deg,var(--blue) 0 40%,#E0A92E 40% 55%,#b42318 55% 75%,#1B8A4B 75%)', flexShrink: 0 }} />
+              <div style={{ height: 4, background: 'linear-gradient(90deg,var(--blue-fixed) 0 40%,#E0A92E 40% 55%,#b42318 55% 75%,#1B8A4B 75%)', flexShrink: 0 }} />
 
               {/* Header: icon box + name + status + close */}
               <div style={{ padding: '22px 28px', borderBottom: '1px solid var(--line-1)', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 14 }}>

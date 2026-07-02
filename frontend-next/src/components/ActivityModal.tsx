@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { X, Paperclip, Trash2, Clock, ChevronDown, Link as LinkIcon } from 'lucide-react';
+import { X, Paperclip, Trash2, Clock, ChevronDown, Link as LinkIcon, Pencil } from 'lucide-react';
 import type { Task, Project } from '@/types';
 import type { UserPublic } from '@/lib/api';
 import { STATUS_COLORS, PRIORITY_COLORS, statusGroup, userProjectIds } from '@/lib/utils';
@@ -46,6 +46,7 @@ interface Props {
     deadline: string | null;
     attachments?: ActivityAttachment[];
     links?: ActivityLink[];
+    removedAttachmentIndices?: number[];
   }) => void;
 }
 
@@ -331,6 +332,9 @@ export default function ActivityModal({
   const [noDeadline, setNoDeadline] = useState(false);
   const [attachments, setAttachments] = useState<ActivityAttachment[]>([]);
   const [links, setLinks] = useState<ActivityLink[]>([]);
+  // Links já salvos na atividade (com o índice original em task.attachments, usado para remover).
+  const [existingLinks, setExistingLinks] = useState<{ name: string; url: string; idx: number }[]>([]);
+  const [removedLinkIdxs, setRemovedLinkIdxs] = useState<number[]>([]);
   const [linkInput, setLinkInput] = useState({ name: '', url: '' });
   const [onlyMyProjects, setOnlyMyProjects] = useState(true);
 
@@ -340,6 +344,15 @@ export default function ActivityModal({
   useEffect(() => {
     if (!open) return;
     setAttachments([]);
+    setLinks([]);
+    setLinkInput({ name: '', url: '' });
+    setRemovedLinkIdxs([]);
+    setExistingLinks(
+      (task?.attachments ?? [])
+        .map((a, idx) => ({ a, idx }))
+        .filter((e): e is { a: { type: 'link'; name: string; url: string }; idx: number } => e.a.type === 'link')
+        .map(({ a, idx }) => ({ name: a.name, url: a.url, idx })),
+    );
     if (task) {
       const sg = task.status_group;
       const mapped = sg === 'done' ? 'Concluído' : sg === 'review' ? 'Em Revisão' : sg === 'in_progress' ? 'Em Andamento' : 'Pendente';
@@ -348,7 +361,7 @@ export default function ActivityModal({
       setNoDeadline(!task.deadline);
       setForm({ activity: task.activity, description: task.description ?? '', project_id: task.project_id ?? null, status: mapped, responsible: task.responsible, date: task.date ?? '', priority: task.priority ?? 'Média', co_responsibles: co, external_collaborators: task.external_collaborators ?? '', deadline: task.deadline ?? '' });
     } else {
-      const pid = fixedProjectId ?? projects[0]?.id ?? null;
+      const pid = fixedProjectId ?? null;
       setNoDeadline(false);
       setForm({ ...EMPTY, status: defaultStatus ?? 'Pendente', project_id: pid, responsible: defaultResponsible ?? '' });
     }
@@ -356,7 +369,8 @@ export default function ActivityModal({
   }, [open, task]);
 
   const myName = getUser()?.name ?? '';
-  const myProjectIds = useMemo(() => userProjectIds(projects, tasks, myName), [projects, tasks, myName]);
+  const myId = getUser()?.user_id ?? null;
+  const myProjectIds = useMemo(() => userProjectIds(projects, tasks, myName, myId), [projects, tasks, myName, myId]);
 
   if (!open) return null;
 
@@ -374,6 +388,7 @@ export default function ActivityModal({
       deadline: noDeadline ? null : (form.deadline.trim() || null),
       attachments: attachments.length > 0 ? attachments : undefined,
       links: links.length > 0 ? links : undefined,
+      removedAttachmentIndices: removedLinkIdxs.length > 0 ? removedLinkIdxs : undefined,
     });
   }
 
@@ -397,12 +412,12 @@ export default function ActivityModal({
       <div style={{ position: 'fixed', top: 0, right: 0, bottom: 0, width: 700, maxWidth: '94%', background: 'var(--surface)', overflowY: 'auto', zIndex: 61, borderLeft: '1px solid var(--line-1)', animation: 'drawin .24s cubic-bezier(.4,0,.2,1) both', display: 'flex', flexDirection: 'column' }}>
 
         {/* Stripe Gov-PI */}
-        <div style={{ height: 4, flexShrink: 0, background: 'linear-gradient(90deg,var(--blue) 0 40%,#E0A92E 40% 55%,#b42318 55% 75%,#1B8A4B 75%)' }} />
+        <div style={{ height: 4, flexShrink: 0, background: 'linear-gradient(90deg,var(--blue-fixed) 0 40%,#E0A92E 40% 55%,#b42318 55% 75%,#1B8A4B 75%)' }} />
 
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 28px', borderBottom: '1px solid var(--line-1)', flexShrink: 0, position: 'sticky', top: 4, background: 'var(--surface)', zIndex: 2 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ width: 7, height: 7, borderRadius: 2, background: 'var(--blue)', flexShrink: 0 }} />
+            <span style={{ width: 7, height: 7, borderRadius: 2, background: 'var(--blue-fixed)', flexShrink: 0 }} />
             <span className="mono" style={{ fontSize: '0.7rem', fontWeight: 600, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--text-2)' }}>
               {isEdit ? 'Editar atividade' : 'Nova atividade'}
             </span>
@@ -562,14 +577,39 @@ export default function ActivityModal({
                   <LinkIcon size={14} />
                 </button>
               </div>
-              {links.length > 0 && (
+              {(existingLinks.some(l => !removedLinkIdxs.includes(l.idx)) || links.length > 0) && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {existingLinks.filter(l => !removedLinkIdxs.includes(l.idx)).map((l) => (
+                    <div key={`e${l.idx}`} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '7px 10px', border: '1px solid var(--line-1)', borderRadius: 3, background: 'var(--surface-2)' }}>
+                      <LinkIcon size={13} color="var(--blue)" style={{ flexShrink: 0 }} />
+                      <a href={l.url} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.78rem', color: 'var(--text)', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textDecoration: 'none' }}>{l.name}</a>
+                      <span style={{ fontSize: '0.7rem', color: 'var(--text-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 180 }}>{l.url}</span>
+                      <button type="button" title="Editar" onClick={() => { setLinkInput({ name: l.name, url: l.url }); setRemovedLinkIdxs(prev => prev.includes(l.idx) ? prev : [...prev, l.idx]); }}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)', display: 'flex', alignItems: 'center', padding: 2, borderRadius: 2 }}
+                        onMouseEnter={e => (e.currentTarget.style.color = 'var(--blue)')}
+                        onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-3)')}>
+                        <Pencil size={13} />
+                      </button>
+                      <button type="button" title="Remover" onClick={() => setRemovedLinkIdxs(prev => [...prev, l.idx])}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)', display: 'flex', alignItems: 'center', padding: 2, borderRadius: 2 }}
+                        onMouseEnter={e => (e.currentTarget.style.color = '#b42318')}
+                        onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-3)')}>
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                  ))}
                   {links.map((l, i) => (
                     <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '7px 10px', border: '1px solid var(--line-1)', borderRadius: 3, background: 'var(--surface-2)' }}>
                       <LinkIcon size={13} color="var(--blue)" style={{ flexShrink: 0 }} />
                       <span style={{ fontSize: '0.78rem', color: 'var(--text)', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{l.name}</span>
                       <span style={{ fontSize: '0.7rem', color: 'var(--text-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 180 }}>{l.url}</span>
-                      <button type="button" onClick={() => setLinks(prev => prev.filter((_, j) => j !== i))}
+                      <button type="button" title="Editar" onClick={() => { setLinkInput({ name: l.name, url: l.url }); setLinks(prev => prev.filter((_, j) => j !== i)); }}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)', display: 'flex', alignItems: 'center', padding: 2, borderRadius: 2 }}
+                        onMouseEnter={e => (e.currentTarget.style.color = 'var(--blue)')}
+                        onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-3)')}>
+                        <Pencil size={13} />
+                      </button>
+                      <button type="button" title="Remover" onClick={() => setLinks(prev => prev.filter((_, j) => j !== i))}
                         style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)', display: 'flex', alignItems: 'center', padding: 2, borderRadius: 2 }}
                         onMouseEnter={e => (e.currentTarget.style.color = '#b42318')}
                         onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-3)')}>

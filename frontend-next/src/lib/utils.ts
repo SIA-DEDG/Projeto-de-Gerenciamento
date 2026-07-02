@@ -5,13 +5,24 @@ import type { StatusGroup, Project, Task } from '@/types';
 /**
  * IDs dos projetos em que o usuário é dono (owner) OU participa de alguma atividade
  * vinculada a ele (responsável ou co-responsável das tasks do projeto).
+ *
+ * A titularidade é conferida por `owner_id` (robusto contra diferenças de acento/
+ * espaço/caixa no nome) e, como fallback, pelo nome do owner.
  */
-export function userProjectIds(projects: Project[], tasks: Task[], userName: string | null | undefined): Set<string> {
+export function userProjectIds(
+  projects: Project[],
+  tasks: Task[],
+  userName: string | null | undefined,
+  userId?: string | null,
+): Set<string> {
   const ids = new Set<string>();
-  if (!userName) return ids;
-  for (const p of projects) if (p.owner === userName) ids.add(p.id);
+  if (!userName && !userId) return ids;
+  for (const p of projects) {
+    if ((userId && p.owner_id === userId) || (userName && p.owner === userName)) ids.add(p.id);
+  }
   for (const t of tasks) {
     if (!t.project_id || ids.has(t.project_id)) continue;
+    if (!userName) continue;
     let mine = t.responsible === userName;
     if (!mine && t.co_responsibles) {
       try { mine = (JSON.parse(t.co_responsibles) as string[]).includes(userName); } catch { /* ignore */ }
@@ -26,7 +37,7 @@ export function userProjectIds(projects: Project[], tasks: Task[], userName: str
 /** Cor hex de cada grupo de status (usada em cards, lista e spinebars). */
 export const STATUS_COLORS: Record<StatusGroup, string> = {
   pending:     '#9aa1ac',
-  in_progress: 'var(--blue)',
+  in_progress: '#034ea2', // azul FIXO — não segue o accent configurável
   review:      '#E0A92E',
   done:        '#1B8A4B',
 };

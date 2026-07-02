@@ -178,7 +178,7 @@ export default function BoardPage() {
       />
 
       {/* Toolbar: view + busca + filtros */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 18, padding: '18px 32px', borderBottom: '1px solid var(--line-1)', flexShrink: 0, background: 'var(--surface)', flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '18px 32px', borderBottom: '1px solid var(--line-1)', flexShrink: 0, background: 'var(--surface)', flexWrap: 'wrap' }}>
         {/* Seletor de view */}
         <div style={{ display: 'flex', gap: 18 }}>
           {(['kanban', 'list', 'calendar'] as const).map((v) => {
@@ -196,7 +196,7 @@ export default function BoardPage() {
         <div style={{ width: 1, height: 20, background: 'var(--border)', flexShrink: 0 }} />
 
         {/* Busca */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, border: '1px solid var(--border)', borderRadius: 3, padding: '7px 11px', width: 230 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, border: '1px solid var(--border)', borderRadius: 3, padding: '7px 11px', flex: '1 1 160px', minWidth: 140, maxWidth: 230 }}>
           <Search size={14} style={{ color: '#a7adb6', flexShrink: 0 }} />
           <input
             value={search}
@@ -222,7 +222,7 @@ export default function BoardPage() {
         </select>
 
         <select value={filterProject} onChange={(e) => patchActiveTab({ filterProject: e.target.value })}
-          style={{ padding: '7px 11px', borderRadius: 3, border: filterProject ? '1px solid var(--blue)' : '1px solid var(--border)', background: 'var(--surface)', color: filterProject ? 'var(--blue)' : 'var(--text-2)', fontSize: '0.8rem', fontWeight: filterProject ? 600 : 400, cursor: 'pointer', outline: 'none' }}>
+          style={{ padding: '7px 11px', borderRadius: 3, border: filterProject ? '1px solid var(--blue)' : '1px solid var(--border)', background: 'var(--surface)', color: filterProject ? 'var(--blue)' : 'var(--text-2)', fontSize: '0.8rem', fontWeight: filterProject ? 600 : 400, cursor: 'pointer', outline: 'none', maxWidth: 130, flexShrink: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           <option value="">Projeto</option>
           {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
         </select>
