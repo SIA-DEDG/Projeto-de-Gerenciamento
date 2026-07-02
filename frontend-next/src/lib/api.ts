@@ -682,6 +682,7 @@ export async function setFeedbackStatus(id: string, status: 'pendente' | 'respon
     body: JSON.stringify({ status }),
   });
   cacheInvalidate('feedback');
+  emitTasksChanged(); // atualiza o badge de pendentes na sidebar
   return result;
 }
 

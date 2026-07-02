@@ -62,7 +62,8 @@ export default function Sidebar({ onToggleTheme, isDark }: Props) {
   }, []);
 
   const loadPendingFeedback = useCallback(() => {
-    fetchFeedbacks().then((fb) => setPendingCountFeedback(fb.length)).catch(() => null);
+    // Conta apenas perguntas/feedbacks ainda pendentes; respondidas saem do badge.
+    fetchFeedbacks().then((fb) => setPendingCountFeedback(fb.filter((f) => f.status !== 'respondida').length)).catch(() => null);
   }, []);
 
   useEffect(() => { loadPending(); }, [loadPending]);
@@ -107,20 +108,8 @@ export default function Sidebar({ onToggleTheme, isDark }: Props) {
       onMouseEnter={() => setSidebarExpanded(true)}
       onMouseLeave={() => { setSidebarExpanded(false); setMenuOpen(false); }}
     >
-      {/* Logo
-      <div className="sidebar-logo">
-        <div className="sidebar-logo-mark">
-          <img src="/tasks.svg" alt="" />
-        </div>
-        <div className="rail-hide" style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.2 }}>
-          <span className="sidebar-logo-name">Tasks SIA</span>
-          <span className="sidebar-logo-sub">DEDG · GOV-PI</span>
-        </div>
-      </div> */}
-
-      {/* Badge da diretoria */}
       {user && (
-        <div className="rail-hide" style={{ padding: '10px 16px 0' }}>
+        <div style={{ padding: '10px 16px 0' }}>
           <div style={{
             display: 'flex', alignItems: 'center', gap: 7, padding: '6px 10px',
             borderRadius: 3, background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)',
