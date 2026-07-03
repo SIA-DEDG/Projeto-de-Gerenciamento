@@ -1,12 +1,13 @@
 'use client';
 
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { X, Paperclip, Trash2, Clock, ChevronDown, Link as LinkIcon, Pencil } from 'lucide-react';
+import { X, Paperclip, Trash2, Clock, ChevronDown, Link as LinkIcon, Pencil, Plus } from 'lucide-react';
 import type { Task, Project } from '@/types';
 import type { UserPublic } from '@/lib/api';
 import { STATUS_COLORS, PRIORITY_COLORS, statusGroup, userProjectIds } from '@/lib/utils';
 import { getUser } from '@/lib/auth';
 import RichTextEditor from './RichTextEditor';
+import ConfirmModal from './ConfirmModal';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -67,7 +68,7 @@ const EMPTY = {
 
 function Label({ children }: { children: React.ReactNode }) {
   return (
-    <div className="mono" style={{ fontSize: '0.66rem', fontWeight: 500, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--text-3)', marginBottom: 6 }}>
+    <div className="mono" style={{ fontSize: '0.66rem', fontWeight: 500, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--text-3)', marginBottom: 6, justifyContent: 'space-between', display: 'flex' }}>
       {children}
     </div>
   );
@@ -332,15 +333,12 @@ export default function ActivityModal({
   const [noDeadline, setNoDeadline] = useState(false);
   const [attachments, setAttachments] = useState<ActivityAttachment[]>([]);
   const [links, setLinks] = useState<ActivityLink[]>([]);
-  // Links já salvos na atividade (com o índice original em task.attachments, usado para remover).
   const [existingLinks, setExistingLinks] = useState<{ name: string; url: string; idx: number }[]>([]);
   const [removedLinkIdxs, setRemovedLinkIdxs] = useState<number[]>([]);
   const [linkInput, setLinkInput] = useState({ name: '', url: '' });
   const [onlyMyProjects, setOnlyMyProjects] = useState(true);
+  const [confirmRemoveLink, setConfirmRemoveLink] = useState<{ name: string; idx: number } | null>(null);
 
-  // Inicializa o formulário apenas quando o modal ABRE ou quando muda a tarefa em edição.
-  // NÃO deve depender de `projects`/`users` etc.: essas props recebem novas referências
-  // a cada refetch em segundo plano, e re-executar aqui apagaria o que o usuário digitou/colou.
   useEffect(() => {
     if (!open) return;
     setAttachments([]);
@@ -555,7 +553,9 @@ export default function ActivityModal({
 
             {/* Links */}
             <div>
-              <Label>Links</Label>
+              <Label>
+                <p>Links</p> <p>Adicionar</p>
+              </Label>
               <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
                 <input
                   value={linkInput.name} onChange={e => setLinkInput(v => ({ ...v, name: e.target.value }))}
@@ -574,7 +574,7 @@ export default function ActivityModal({
                     setLinkInput({ name: '', url: '' });
                   }}
                   style={{ padding: '9px 14px', border: 'none', borderRadius: 3, background: '#034EA2', color: '#fff', fontSize: '0.82rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}>
-                  <LinkIcon size={14} />
+                  <Plus size={14} />
                 </button>
               </div>
               {(existingLinks.some(l => !removedLinkIdxs.includes(l.idx)) || links.length > 0) && (
@@ -590,7 +590,7 @@ export default function ActivityModal({
                         onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-3)')}>
                         <Pencil size={13} />
                       </button>
-                      <button type="button" title="Remover" onClick={() => setRemovedLinkIdxs(prev => [...prev, l.idx])}
+                      <button type="button" title="Remover" onClick={() => setConfirmRemoveLink({ name: l.name, idx: l.idx })}
                         style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)', display: 'flex', alignItems: 'center', padding: 2, borderRadius: 2 }}
                         onMouseEnter={e => (e.currentTarget.style.color = '#b42318')}
                         onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-3)')}>
@@ -637,6 +637,16 @@ export default function ActivityModal({
           </div>
         </form>
       </div>
+
+      <ConfirmModal
+        open={confirmRemoveLink !== null}
+        title="Remover link"
+        message={confirmRemoveLink ? `Remover o link "${confirmRemoveLink.name}"?` : undefined}
+        confirmLabel="Remover"
+        danger
+        onConfirm={() => { if (confirmRemoveLink) setRemovedLinkIdxs(prev => [...prev, confirmRemoveLink.idx]); }}
+        onClose={() => setConfirmRemoveLink(null)}
+      />
     </>
   );
 }

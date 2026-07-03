@@ -14,8 +14,9 @@ import ToastContainer from '@/components/ToastContainer';
 import {
   fetchTasks, createTask, updateTask, deleteTask,
   fetchProjects, createProject, updateProject, deleteProject,
-  fetchUsers,
+  fetchUsers, addTaskFile, addTaskLink, removeTaskAttachment,
 } from '@/lib/api';
+import type { ActivityAttachment, ActivityLink } from '@/components/ActivityModal';
 import { avatarColor, initials, statusGroupLabel, resolveCoResponsibleIds } from '@/lib/utils';
 import { useRefetchOnFocus } from '@/lib/useRefetchOnFocus';
 import { onTasksChanged } from '@/lib/taskEvents';
@@ -140,6 +141,7 @@ export default function ProjetosPage() {
     activity: string; description: string; category: string; project_id: string | null;
     status: string; responsible: string; date: string; priority: string;
     co_responsibles: string | null; external_collaborators: string | null; deadline: string | null;
+    attachments?: ActivityAttachment[]; links?: ActivityLink[]; removedAttachmentIndices?: number[];
   }) {
     const { task } = activityModal;
     setActivityModal({ open: false, task: null, projectId: null });
@@ -148,12 +150,31 @@ export default function ProjetosPage() {
     const payload = { ...data, project_id: data.project_id ?? undefined, responsible_id, co_responsible_ids: coIds };
     if (task) {
       const updated = await updateTask(task, payload);
-      setTasks((curr) => curr.map((t) => (t.id === task.id ? updated : t)));
-      if (taskDrawer?.id === task.id) setTaskDrawer(updated);
+      await persistAttachments(task.id, data);
+      const refreshed = await fetchTasks().then((ts) => ts.find((t) => t.id === task.id) ?? updated);
+      setTasks((curr) => curr.map((t) => (t.id === task.id ? refreshed : t)));
+      if (taskDrawer?.id === task.id) setTaskDrawer(refreshed);
     } else {
       const created = await createTask(payload);
-      setTasks((curr) => [...curr, created]);
+      await persistAttachments(created.id, data);
+      const refreshed = await fetchTasks().then((ts) => ts.find((t) => t.id === created.id) ?? created);
+      setTasks((curr) => [...curr.filter((t) => t.id !== created.id), refreshed]);
     }
+  }
+
+  // Aplica remoções (índices originais, ordem decrescente) e uploads de arquivos/links.
+  async function persistAttachments(
+    taskId: string,
+    data: { attachments?: ActivityAttachment[]; links?: ActivityLink[]; removedAttachmentIndices?: number[] },
+  ) {
+    for (const idx of [...(data.removedAttachmentIndices ?? [])].sort((a, b) => b - a)) {
+      await removeTaskAttachment(taskId, idx).catch(() => null);
+    }
+    await Promise.all([
+      ...(data.attachments ?? []).map((f) =>
+        addTaskFile(taskId, { name: f.name, data: f.data, mimeType: f.type, size: f.size }).catch(() => null)),
+      ...(data.links ?? []).map((l) => addTaskLink(taskId, l.name, l.url).catch(() => null)),
+    ]);
   }
 
   function handleDeleteTask(id: string) {

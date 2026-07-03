@@ -125,18 +125,15 @@ function AttachmentsSection({ task }: { task: Task }) {
           return (
             <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 11px', border: '1px solid var(--line-1)', borderRadius: 3, background: 'var(--surface-2)' }}>
               <LinkIcon size={13} color="var(--blue)" style={{ flexShrink: 0 }} />
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: '0.82rem', color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{l.name}</div>
+              <a href={l.url} target="_blank" rel="noreferrer" title="Abrir link"
+                style={{ flex: 1, minWidth: 0, textDecoration: 'none' }}>
+                <div style={{ fontSize: '0.82rem', color: 'var(--blue)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{l.name}</div>
                 <div style={{ fontSize: '0.7rem', color: 'var(--text-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{l.url}</div>
-              </div>
+              </a>
               <a href={l.url} target="_blank" rel="noreferrer" title="Abrir link"
                 style={{ width: 28, height: 28, border: '1px solid var(--border)', borderRadius: 3, background: 'var(--surface)', color: 'var(--blue)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, textDecoration: 'none' }}>
                 <ExternalLink size={13} />
               </a>
-              <button onClick={() => handleRemove(idx)} title="Remover"
-                style={{ width: 28, height: 28, border: '1px solid rgba(180,35,24,0.2)', borderRadius: 3, background: 'rgba(180,35,24,0.05)', color: '#b42318', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <Trash2 size={12} />
-              </button>
             </div>
           );
         })}
