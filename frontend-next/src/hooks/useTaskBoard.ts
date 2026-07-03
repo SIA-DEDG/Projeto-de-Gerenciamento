@@ -6,12 +6,12 @@ import {
   fetchTasks, createTask, updateTask, deleteTask, archiveTask,
   fetchProjects, fetchUsers,
   getCachedTasks, getCachedProjects, getCachedUsers,
-  addTaskFile, addTaskLink, removeTaskAttachment,
+  addTaskFile, addTaskLink, removeTaskAttachment, invalidateTasksCache,
 } from '@/lib/api';
 import type { UserPublic } from '@/lib/api';
 import { resolveCoResponsibleIds, STATUS_NEXT } from '@/lib/utils';
 import { useRefetchOnFocus } from '@/lib/useRefetchOnFocus';
-import type { Task, StatusGroup, Project } from '@/types';
+import type { Task, StatusGroup, Project, TaskAttachment } from '@/types';
 
 // ── Tipos exportados ──────────────────────────────────────────────────────────
 
@@ -38,6 +38,16 @@ export interface ConfirmDialogState {
   confirmLabel?: string;
   danger?: boolean;
   onConfirm: () => void;
+}
+
+// Projeta localmente o resultado das mudanças de anexo (para atualização otimista da UI):
+// remove os índices marcados e acrescenta os novos links/arquivos.
+function applyAttachmentChanges(existing: TaskAttachment[], formData: ActivityFormData): TaskAttachment[] {
+  const removed = new Set(formData.removedAttachmentIndices ?? []);
+  const kept = existing.filter((_, i) => !removed.has(i));
+  const links: TaskAttachment[] = (formData.links ?? []).map((l) => ({ type: 'link', name: l.name, url: l.url }));
+  const files: TaskAttachment[] = (formData.attachments ?? []).map((f) => ({ type: 'file', name: f.name, path: '', size: f.size, mimeType: f.type }));
+  return [...kept, ...links, ...files];
 }
 
 // ── Hook ──────────────────────────────────────────────────────────────────────
@@ -135,39 +145,47 @@ export function useTaskBoard() {
     };
 
     if (existingTask) {
-      const updated = await updateTask(existingTask, payload);
-      await removeAttachments(existingTask.id, formData.removedAttachmentIndices);
-      await uploadAttachments(existingTask.id, formData);
-      const refreshed = await fetchTasks().then(ts => ts.find(t => t.id === existingTask.id) ?? updated);
-      setAllTasks((curr) => curr.map((x) => x.id === existingTask.id ? refreshed : x));
-      if (openedTask?.id === existingTask.id) setOpenedTask(refreshed);
+      // UI otimista: reflete a mudança de anexos na hora; a rede roda em 2º plano.
+      const optimistic = { ...existingTask, attachments: applyAttachmentChanges(existingTask.attachments ?? [], formData) };
+      setAllTasks((curr) => curr.map((x) => x.id === existingTask.id ? optimistic : x));
+      if (openedTask?.id === existingTask.id) setOpenedTask(optimistic);
+      try {
+        // Salva os anexos ANTES do updateTask: o refetch que ele dispara já vem com eles.
+        await persistAttachments(existingTask.id, formData);
+        const updated = await updateTask(existingTask, payload); // retorna a task já com os anexos finais
+        setAllTasks((curr) => curr.map((x) => x.id === existingTask.id ? updated : x));
+        if (openedTask?.id === existingTask.id) setOpenedTask(updated);
+        invalidateTasksCache(); // reconcilia outras telas em segundo plano
+      } catch {
+        setAllTasks((curr) => curr.map((x) => x.id === existingTask.id ? existingTask : x)); // reverte
+        if (openedTask?.id === existingTask.id) setOpenedTask(existingTask);
+      }
       return null;
     } else {
       const created = await createTask(payload);
-      await uploadAttachments(created.id, formData);
-      const refreshed = await fetchTasks().then(ts => ts.find(t => t.id === created.id) ?? created);
-      setAllTasks((curr) => [...curr.filter(x => x.id !== created.id), refreshed]);
-      return refreshed;
+      const finalAtts = await persistAttachments(created.id, formData);
+      const next = finalAtts ? { ...created, attachments: finalAtts } : created;
+      setAllTasks((curr) => [...curr.filter(x => x.id !== created.id), next]);
+      invalidateTasksCache();
+      return next;
     }
   }
 
-  // Remove anexos pelos índices originais. Ordem decrescente para que cada remoção
-  // não invalide os índices ainda pendentes (o backend filtra pelo índice atual).
-  async function removeAttachments(taskId: string, indices?: number[]) {
-    if (!indices?.length) return;
-    for (const idx of [...indices].sort((a, b) => b - a)) {
-      await removeTaskAttachment(taskId, idx).catch(() => null);
+  // Aplica remoções (índices originais, ordem decrescente) e uploads de arquivos/links,
+  // em sequência (evita perda de escrita na coluna JSON) e retorna a lista final de anexos
+  // devolvida pelo servidor. Propaga erro para o chamador reverter a UI otimista.
+  async function persistAttachments(taskId: string, formData: ActivityFormData): Promise<TaskAttachment[] | null> {
+    let latest: TaskAttachment[] | null = null;
+    for (const idx of [...(formData.removedAttachmentIndices ?? [])].sort((a, b) => b - a)) {
+      latest = await removeTaskAttachment(taskId, idx);
     }
-  }
-
-  async function uploadAttachments(taskId: string, formData: ActivityFormData) {
-    const fileUploads = (formData.attachments ?? []).map(f =>
-      addTaskFile(taskId, { name: f.name, data: f.data, mimeType: f.type, size: f.size }).catch(() => null)
-    );
-    const linkUploads = (formData.links ?? []).map(l =>
-      addTaskLink(taskId, l.name, l.url).catch(() => null)
-    );
-    await Promise.all([...fileUploads, ...linkUploads]);
+    for (const f of formData.attachments ?? []) {
+      latest = await addTaskFile(taskId, { name: f.name, data: f.data, mimeType: f.type, size: f.size });
+    }
+    for (const l of formData.links ?? []) {
+      latest = await addTaskLink(taskId, l.name, l.url);
+    }
+    return latest;
   }
 
   // ── Excluir atividade ─────────────────────────────────────────────────────

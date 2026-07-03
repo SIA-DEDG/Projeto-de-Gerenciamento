@@ -14,14 +14,14 @@ import ToastContainer from '@/components/ToastContainer';
 import {
   fetchTasks, createTask, updateTask, deleteTask,
   fetchProjects, createProject, updateProject, deleteProject,
-  fetchUsers, addTaskFile, addTaskLink, removeTaskAttachment,
+  fetchUsers, addTaskFile, addTaskLink, removeTaskAttachment, invalidateTasksCache,
 } from '@/lib/api';
 import type { ActivityAttachment, ActivityLink } from '@/components/ActivityModal';
 import { avatarColor, initials, statusGroupLabel, resolveCoResponsibleIds } from '@/lib/utils';
 import { useRefetchOnFocus } from '@/lib/useRefetchOnFocus';
 import { onTasksChanged } from '@/lib/taskEvents';
 import type { UserPublic } from '@/lib/api';
-import type { Task, Project } from '@/types';
+import type { Task, Project, TaskAttachment } from '@/types';
 import PageHeader from '@/components/PageHeader';
 import { getUser, canManageProjects } from '@/lib/auth';
 
@@ -39,6 +39,19 @@ function statusDot(s: string) {
   if (s === 'execucao') return 'var(--s-progress)';
   if (s === 'validacao') return 'var(--s-review)';
   return 'var(--s-pending)';
+}
+
+// Projeta localmente o resultado das mudanças de anexo (para atualização otimista da UI):
+// remove os índices marcados e acrescenta os novos links/arquivos.
+function applyAttachmentChanges(
+  existing: TaskAttachment[],
+  data: { attachments?: ActivityAttachment[]; links?: ActivityLink[]; removedAttachmentIndices?: number[] },
+): TaskAttachment[] {
+  const removed = new Set(data.removedAttachmentIndices ?? []);
+  const kept = existing.filter((_, i) => !removed.has(i));
+  const links: TaskAttachment[] = (data.links ?? []).map((l) => ({ type: 'link', name: l.name, url: l.url }));
+  const files: TaskAttachment[] = (data.attachments ?? []).map((f) => ({ type: 'file', name: f.name, path: '', size: f.size, mimeType: f.type }));
+  return [...kept, ...links, ...files];
 }
 
 export default function ProjetosPage() {
@@ -149,32 +162,53 @@ export default function ProjetosPage() {
     const coIds = resolveCoResponsibleIds(data.co_responsibles, users);
     const payload = { ...data, project_id: data.project_id ?? undefined, responsible_id, co_responsible_ids: coIds };
     if (task) {
-      const updated = await updateTask(task, payload);
-      await persistAttachments(task.id, data);
-      const refreshed = await fetchTasks().then((ts) => ts.find((t) => t.id === task.id) ?? updated);
-      setTasks((curr) => curr.map((t) => (t.id === task.id ? refreshed : t)));
-      if (taskDrawer?.id === task.id) setTaskDrawer(refreshed);
+      // UI otimista: reflete a mudança de anexos na hora; a rede roda em 2º plano.
+      const optimistic = { ...task, attachments: applyAttachmentChanges(task.attachments ?? [], data) };
+      setTasks((curr) => curr.map((t) => (t.id === task.id ? optimistic : t)));
+      if (taskDrawer?.id === task.id) setTaskDrawer(optimistic);
+      try {
+        // Salva os anexos ANTES do updateTask: o refetch que ele dispara já vem com eles.
+        await persistAttachments(task.id, data);
+        const updated = await updateTask(task, payload); // retorna a task já com os anexos finais
+        setTasks((curr) => curr.map((t) => (t.id === task.id ? updated : t)));
+        if (taskDrawer?.id === task.id) setTaskDrawer(updated);
+        invalidateTasksCache(); // reconcilia outras telas em segundo plano
+      } catch {
+        setTasks((curr) => curr.map((t) => (t.id === task.id ? task : t))); // reverte
+        if (taskDrawer?.id === task.id) setTaskDrawer(task);
+        addToast('error', 'Não foi possível salvar', 'As alterações foram desfeitas.');
+      }
     } else {
-      const created = await createTask(payload);
-      await persistAttachments(created.id, data);
-      const refreshed = await fetchTasks().then((ts) => ts.find((t) => t.id === created.id) ?? created);
-      setTasks((curr) => [...curr.filter((t) => t.id !== created.id), refreshed]);
+      try {
+        const created = await createTask(payload);
+        const finalAtts = await persistAttachments(created.id, data);
+        const next = finalAtts ? { ...created, attachments: finalAtts } : created;
+        setTasks((curr) => [...curr.filter((t) => t.id !== created.id), next]);
+        invalidateTasksCache();
+      } catch {
+        addToast('error', 'Não foi possível criar a atividade', 'Tente novamente.');
+      }
     }
   }
 
-  // Aplica remoções (índices originais, ordem decrescente) e uploads de arquivos/links.
+  // Aplica remoções (índices originais, ordem decrescente) e uploads de arquivos/links,
+  // em sequência (evita perda de escrita na coluna JSON) e retorna a lista final de anexos
+  // devolvida pelo servidor. Propaga erro para o chamador reverter a UI otimista.
   async function persistAttachments(
     taskId: string,
     data: { attachments?: ActivityAttachment[]; links?: ActivityLink[]; removedAttachmentIndices?: number[] },
-  ) {
+  ): Promise<TaskAttachment[] | null> {
+    let latest: TaskAttachment[] | null = null;
     for (const idx of [...(data.removedAttachmentIndices ?? [])].sort((a, b) => b - a)) {
-      await removeTaskAttachment(taskId, idx).catch(() => null);
+      latest = await removeTaskAttachment(taskId, idx);
     }
-    await Promise.all([
-      ...(data.attachments ?? []).map((f) =>
-        addTaskFile(taskId, { name: f.name, data: f.data, mimeType: f.type, size: f.size }).catch(() => null)),
-      ...(data.links ?? []).map((l) => addTaskLink(taskId, l.name, l.url).catch(() => null)),
-    ]);
+    for (const f of data.attachments ?? []) {
+      latest = await addTaskFile(taskId, { name: f.name, data: f.data, mimeType: f.type, size: f.size });
+    }
+    for (const l of data.links ?? []) {
+      latest = await addTaskLink(taskId, l.name, l.url);
+    }
+    return latest;
   }
 
   function handleDeleteTask(id: string) {

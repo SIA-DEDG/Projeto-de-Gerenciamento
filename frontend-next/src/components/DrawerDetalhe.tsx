@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, Archive, Trash2, Pencil, Folder, Calendar, Clock, Paperclip, Link as LinkIcon, Download, ExternalLink } from 'lucide-react';
 import type { Task, TaskAttachment } from '@/types';
 import { avatarColor, initials, statusGroupLabel } from '@/lib/utils';
@@ -68,6 +68,9 @@ function formatSize(bytes: number) {
 function AttachmentsSection({ task }: { task: Task }) {
   const [attachments, setAttachments] = useState<TaskAttachment[]>(task.attachments ?? []);
   const [loading, setLoading] = useState<number | null>(null);
+
+  // Re-sincroniza quando a tarefa é atualizada (ex.: novo link salvo no editor).
+  useEffect(() => { setAttachments(task.attachments ?? []); }, [task.attachments]);
   const { toasts, addToast, dismissToast } = useToast();
 
   async function handleDownload(att: TaskAttachment & { type: 'file' }, idx: number) {
@@ -80,10 +83,12 @@ function AttachmentsSection({ task }: { task: Task }) {
   }
 
   async function handleRemove(idx: number) {
+    const prev = attachments;
+    setAttachments((curr) => curr.filter((_, i) => i !== idx)); // some da tela na hora
     try {
-      const updated = await removeTaskAttachment(task.id, idx);
-      setAttachments(updated);
+      await removeTaskAttachment(task.id, idx); // confirma no servidor em 2º plano
     } catch {
+      setAttachments(prev); // falhou: reverte
       addToast('error', 'Erro', 'Não foi possível remover o anexo.');
     }
   }
