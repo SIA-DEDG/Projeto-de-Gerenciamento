@@ -2,16 +2,15 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { getUser } from '@/lib/auth';
-import { fetchFeedbacks, toggleFeedbackUpvote, setFeedbackStatus, deleteFeedback, submitFeedback, type FeedbackItem } from '@/lib/api';
+import { fetchFeedbacks, toggleFeedbackUpvote, setFeedbackStatus, deleteFeedback, submitFeedback, updateFeedback, type FeedbackItem } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { Plus, ChevronLeft, ChevronRight, X, Send, Filter } from 'lucide-react';
 import ToastContainer from '@/components/ToastContainer';
 import ConfirmModal from '@/components/ConfirmModal';
-import FormModal from './_components/FormModal';
 import RespostaModal from './_components/RespostaModal';
 import FeedbackCard from './_components/FeedbackCard';
 import FeedbackSidebar from './_components/FeedbackSidebar';
-import { type TypeFilter, type StatusFilter, type SeverityFilter, type Sort } from './_components/types';
+import { type TypeFilter, type StatusFilter, type SeverityFilter, type Sort, type Severity, SEVERITIES } from './_components/types';
 import PageHeader from '@/components/PageHeader';
 
 export default function FeedbackPage() {
@@ -36,6 +35,7 @@ export default function FeedbackPage() {
   const [fbTipo, setFbTipo] = useState<'sugestao' | 'bug' | 'duvida'>('sugestao');
   const [fbAssunto, setFbAssunto] = useState('');
   const [fbDesc, setFbDesc] = useState('');
+  const [fbSeveridade, setFbSeveridade] = useState<Severity>('Média');
   const [fbSaving, setFbSaving] = useState(false);
 
   const [editTarget, setEditTarget] = useState<FeedbackItem | null>(null);
@@ -117,24 +117,53 @@ export default function FeedbackPage() {
     }
   }
 
+  function resetForm() {
+    setFbTipo('sugestao'); setFbAssunto(''); setFbDesc(''); setFbSeveridade('Média');
+  }
+
+  function openCreate() {
+    setEditTarget(null);
+    resetForm();
+    setShowForm(true);
+  }
+
+  function openEdit(item: FeedbackItem) {
+    setEditTarget(item);
+    setFbTipo(item.tipo === 'bug' ? 'bug' : item.tipo === 'duvida' ? 'duvida' : 'sugestao');
+    setFbAssunto(item.titulo);
+    setFbDesc(item.descricao);
+    setFbSeveridade((item.severidade as Severity) ?? 'Média');
+    setShowForm(true);
+  }
+
+  function closePanel() {
+    setShowForm(false);
+    setEditTarget(null);
+    resetForm();
+  }
+
   async function handleInlineSubmit() {
     if (!fbAssunto.trim()) { addToast('error', 'Campos obrigatórios', 'Informe o assunto.'); return; }
     if (!fbDesc.trim()) { addToast('error', 'Campos obrigatórios', 'Informe a descrição.'); return; }
     setFbSaving(true);
     try {
-      const created = await submitFeedback({
+      const payload = {
         tipo: fbTipo,
         titulo: fbAssunto.trim(),
         descricao: fbDesc.trim(),
-        severidade: null,
-        imagens: [],
-      });
-      handleCreated(created);
-      setFbAssunto('');
-      setFbDesc('');
-      setShowForm(false);
+        severidade: fbTipo === 'bug' ? fbSeveridade : null,
+        imagens: editTarget?.imagens ?? [],
+      };
+      if (editTarget) {
+        const updated = await updateFeedback(editTarget.id, payload);
+        handleUpdated(updated);
+      } else {
+        const created = await submitFeedback(payload);
+        handleCreated(created);
+      }
+      closePanel();
     } catch {
-      addToast('error', 'Erro', 'Não foi possível enviar o feedback.');
+      addToast('error', 'Erro', `Não foi possível ${editTarget ? 'salvar' : 'enviar'} o feedback.`);
     } finally {
       setFbSaving(false);
     }
@@ -166,7 +195,7 @@ export default function FeedbackPage() {
       <PageHeader eyebrow="Sistema · Comunicação" title="Feedback & Sugestões"
         tabBarRight={
           <button
-            onClick={() => setShowForm(s => !s)}
+            onClick={() => (showForm ? closePanel() : openCreate())}
             style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '0 16px', height: 40, border: 'none', borderBottom: '2px solid transparent', background: 'transparent', color: 'var(--blue)', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', flexShrink: 0, fontFamily: 'inherit' }}
             onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--surface-2)')}
             onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
@@ -248,7 +277,7 @@ export default function FeedbackPage() {
                 currentUserName={currentUserName}
                 isAdmin={isAdmin}
                 onUpvote={handleUpvote}
-                onEdit={it => setEditTarget(it)}
+                onEdit={openEdit}
                 onDelete={handleDelete}
                 onRespond={setRespondTarget}
                 onStatusChange={handleStatusChange}
@@ -278,8 +307,8 @@ export default function FeedbackPage() {
         {showForm && (
           <div className="ssel" style={{ width: 276, flexShrink: 0, borderLeft: '1px solid var(--line-1)', overflowY: 'auto', background: 'var(--surface)', padding: '20px 20px 28px' }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10, marginBottom: 4 }}>
-              <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text)' }}>Enviar feedback</div>
-              <button onClick={() => setShowForm(false)}
+              <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text)' }}>{editTarget ? 'Editar publicação' : 'Enviar feedback'}</div>
+              <button onClick={closePanel}
                 style={{ width: 26, height: 26, flexShrink: 0, borderRadius: 3, border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text-2)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                 onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-2)')}
                 onMouseLeave={e => (e.currentTarget.style.background = 'var(--surface)')}>
@@ -287,7 +316,7 @@ export default function FeedbackPage() {
               </button>
             </div>
             <p style={{ fontSize: '0.76rem', color: 'var(--text-3)', lineHeight: 1.5, margin: '0 0 18px' }}>
-              Relate um bug, sugestão ou dúvida para a equipe.
+              {editTarget ? 'Edite os dados da sua publicação.' : 'Relate um bug, sugestão ou dúvida para a equipe.'}
             </p>
 
             <label className="mono" style={{ display: 'block', fontSize: '0.63rem', fontWeight: 500, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--text-3)', marginBottom: 7 }}>Tipo</label>
@@ -303,6 +332,23 @@ export default function FeedbackPage() {
                 );
               })}
             </div>
+
+            {fbTipo === 'bug' && (
+              <>
+                <label className="mono" style={{ display: 'block', fontSize: '0.63rem', fontWeight: 500, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--text-3)', marginBottom: 7 }}>Severidade</label>
+                <div style={{ display: 'flex', gap: 6, marginBottom: 16 }}>
+                  {SEVERITIES.map(s => {
+                    const active = fbSeveridade === s.value;
+                    return (
+                      <button key={s.value} type="button" onClick={() => setFbSeveridade(s.value)}
+                        style={{ flex: 1, padding: '7px 0', fontSize: '0.8rem', fontWeight: active ? 700 : 500, border: `1.5px solid ${active ? s.color : 'var(--border)'}`, borderRadius: 3, background: active ? `${s.color}14` : 'var(--surface)', color: active ? s.color : 'var(--text-2)', cursor: 'pointer', fontFamily: 'inherit' }}>
+                        {s.value}
+                      </button>
+                    );
+                  })}
+                </div>
+              </>
+            )}
 
             <label className="mono" style={{ display: 'block', fontSize: '0.63rem', fontWeight: 500, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--text-3)', marginBottom: 7 }}>Assunto</label>
             <input value={fbAssunto} onChange={e => setFbAssunto(e.target.value)} placeholder="Resuma em poucas palavras"
@@ -323,21 +369,13 @@ export default function FeedbackPage() {
               onMouseEnter={e => { if (!fbSaving) e.currentTarget.style.background = 'var(--blue-h)'; }}
               onMouseLeave={e => { if (!fbSaving) e.currentTarget.style.background = 'var(--blue)'; }}>
               <Send size={14} strokeWidth={2} />
-              {fbSaving ? 'Publicando…' : 'Publicar'}
+              {fbSaving ? (editTarget ? 'Salvando…' : 'Publicando…') : (editTarget ? 'Salvar' : 'Publicar')}
             </button>
           </div>
         )}
       </div>
 
       {/* Modals */}
-      {editTarget && (
-        <FormModal
-          editItem={editTarget}
-          onClose={() => setEditTarget(null)}
-          onCreated={handleCreated}
-          onUpdated={handleUpdated}
-        />
-      )}
       {respondTarget && (
         <RespostaModal
           item={respondTarget}

@@ -692,6 +692,7 @@ export async function setFeedbackResposta(id: string, resposta: string | null): 
     body: JSON.stringify({ resposta }),
   });
   cacheInvalidate('feedback');
+  emitTasksChanged(); // status muda para respondida → atualiza o badge da sidebar
   return result;
 }
 

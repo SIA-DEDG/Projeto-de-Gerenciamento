@@ -65,9 +65,13 @@ export const setStatus = (id: string, status: string) =>
   prisma.feedback.update({ where: { id }, data: { status }, include })
     .then((f) => fmt(f as FeedbackWithRelations));
 
-export const setResposta = (id: string, resposta: string) =>
-  prisma.feedback.update({ where: { id }, data: { resposta }, include })
-    .then((f) => fmt(f as FeedbackWithRelations));
+export const setResposta = (id: string, resposta: string | null) =>
+  // Ao salvar uma resposta, marca como "respondida"; se a resposta for limpa, volta a "pendente".
+  prisma.feedback.update({
+    where: { id },
+    data: { resposta, status: resposta && resposta.trim() ? 'respondida' : 'pendente' },
+    include,
+  }).then((f) => fmt(f as FeedbackWithRelations));
 
 export const listComments = (feedbackId: string) =>
   prisma.feedbackComment.findMany({ where: { feedbackId }, orderBy: { createdAt: 'asc' } });

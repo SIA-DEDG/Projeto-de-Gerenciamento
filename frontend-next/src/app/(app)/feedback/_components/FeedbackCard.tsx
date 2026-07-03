@@ -169,7 +169,7 @@ export default function FeedbackCard({
                 onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--blue)'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--blue)'; }}
                 onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--border)'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-2)'; }}
               >
-                RESPONDER
+                {item.resposta ? 'EDITAR RESPOSTA' : 'RESPONDER'}
               </button>
             )}
 

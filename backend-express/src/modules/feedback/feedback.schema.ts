@@ -13,7 +13,7 @@ export const setStatusSchema = z.object({
 });
 
 export const setRespostaSchema = z.object({
-  resposta: z.string(),
+  resposta: z.string().nullable(),
 });
 
 export const commentSchema = z.object({

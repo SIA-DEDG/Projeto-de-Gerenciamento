@@ -1,7 +1,7 @@
 ﻿'use client';
 
 import { useState, useRef } from 'react';
-import { Bug, Lightbulb } from 'lucide-react';
+import { Bug, Lightbulb, HelpCircle } from 'lucide-react';
 import { submitFeedback, updateFeedback, type FeedbackItem } from '@/lib/api';
 import { emitTasksChanged } from '@/lib/taskEvents';
 import { SEVERITIES, type FeedbackType, type Severity, inp } from './types';
@@ -15,7 +15,9 @@ interface Props {
 
 export default function FormModal({ onClose, onCreated, editItem, onUpdated }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
-  const [tipo, setTipo] = useState<FeedbackType>((editItem?.tipo as FeedbackType) ?? 'bug');
+  // 'melhoria' é legado; normaliza para 'sugestao' (taxonomia atual: sugestao/bug/duvida).
+  const initialTipo: FeedbackType = editItem?.tipo === 'melhoria' ? 'sugestao' : ((editItem?.tipo as FeedbackType) ?? 'sugestao');
+  const [tipo, setTipo] = useState<FeedbackType>(initialTipo);
   const [titulo, setTitulo] = useState(editItem?.titulo ?? '');
   const [descricao, setDescricao] = useState(editItem?.descricao ?? '');
   const [severidade, setSeveridade] = useState<Severity>((editItem?.severidade as Severity) ?? 'Média');
@@ -85,8 +87,9 @@ export default function FormModal({ onClose, onCreated, editItem, onUpdated }: P
             <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#57606a', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Tipo</label>
             <div style={{ display: 'flex', gap: 8 }}>
               {([
-                { value: 'bug' as FeedbackType, label: 'Bug / Erro', Icon: Bug },
-                { value: 'melhoria' as FeedbackType, label: 'Sugestão', Icon: Lightbulb },
+                { value: 'sugestao' as FeedbackType, label: 'Sugestão', Icon: Lightbulb },
+                { value: 'bug' as FeedbackType, label: 'Problema', Icon: Bug },
+                { value: 'duvida' as FeedbackType, label: 'Dúvida', Icon: HelpCircle },
               ] as const).map(opt => {
                 const active = tipo === opt.value;
                 return (
