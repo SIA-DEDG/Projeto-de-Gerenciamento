@@ -11,6 +11,7 @@ import {
 import { useToast } from '@/hooks/useToast';
 import ToastContainer from '@/components/ToastContainer';
 import ConfirmModal from '@/components/ConfirmModal';
+import { useUnsavedGuard } from '@/hooks/useUnsavedGuard';
 import PageHeader from '@/components/PageHeader';
 
 const PRESET_COLORS = [
@@ -30,6 +31,14 @@ function DirectoriaModal({ initial, onClose, onSaved }: DirectoriaModalProps) {
   const [color, setColor] = useState(initial?.color ?? '#034EA2');
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState('');
+
+  const { requestClose, guard } = useUnsavedGuard(onClose);
+  const dirty = JSON.stringify({ name, slug, description, color }) !== JSON.stringify({
+    name: initial?.name ?? '',
+    slug: initial?.slug ?? '',
+    description: initial?.description ?? '',
+    color: initial?.color ?? '#034EA2',
+  });
 
   function autoSlug(v: string) {
     return v.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
@@ -51,12 +60,13 @@ function DirectoriaModal({ initial, onClose, onSaved }: DirectoriaModalProps) {
   }
 
   return (
-    <div onClick={e => { if (e.target === e.currentTarget) onClose(); }}
+    <>
+    <div onClick={e => { if (e.target === e.currentTarget) requestClose(dirty); }}
       style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(2px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
       <div style={{ background: 'var(--surface)', borderRadius: 3, width: '100%', maxWidth: 460, boxShadow: '0 20px 60px rgba(0,0,0,0.2)', overflow: 'hidden' }}>
         <div style={{ padding: '18px 20px 14px', borderBottom: '1px solid var(--line-1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text)' }}>{initial ? 'Editar diretoria' : 'Nova diretoria'}</div>
-          <button onClick={onClose} style={{ width: 28, height: 28, border: '1px solid var(--border)', background: 'var(--surface-2)', borderRadius: 3, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-3)' }}><X size={14} /></button>
+          <button onClick={() => requestClose(dirty)} style={{ width: 28, height: 28, border: '1px solid var(--border)', background: 'var(--surface-2)', borderRadius: 3, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-3)' }}><X size={14} /></button>
         </div>
         <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
           {/* Nome */}
@@ -97,7 +107,7 @@ function DirectoriaModal({ initial, onClose, onSaved }: DirectoriaModalProps) {
           {err && <div style={{ color: '#b42318', fontSize: '0.82rem', padding: '8px 10px', background: '#fef2f2', borderRadius: 3 }}>{err}</div>}
         </div>
         <div style={{ padding: '12px 20px', borderTop: '1px solid var(--line-1)', display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-          <button onClick={onClose} style={{ padding: '7px 16px', border: '1px solid var(--border)', borderRadius: 3, background: 'var(--surface-2)', color: 'var(--text-2)', cursor: 'pointer', fontSize: '0.84rem', fontFamily: 'inherit' }}>Cancelar</button>
+          <button onClick={() => requestClose(dirty)} style={{ padding: '7px 16px', border: '1px solid var(--border)', borderRadius: 3, background: 'var(--surface-2)', color: 'var(--text-2)', cursor: 'pointer', fontSize: '0.84rem', fontFamily: 'inherit' }}>Cancelar</button>
           <button onClick={handleSave} disabled={saving}
             style={{ padding: '7px 18px', border: 'none', borderRadius: 3, background: '#034EA2', color: '#fff', cursor: saving ? 'not-allowed' : 'pointer', fontSize: '0.84rem', fontWeight: 600, fontFamily: 'inherit', opacity: saving ? 0.7 : 1 }}>
             {saving ? 'Salvando…' : 'Salvar'}
@@ -105,6 +115,9 @@ function DirectoriaModal({ initial, onClose, onSaved }: DirectoriaModalProps) {
         </div>
       </div>
     </div>
+
+    {guard}
+    </>
   );
 }
 
@@ -173,7 +186,7 @@ function MembersModal({ directoria, onClose }: MembersModalProps) {
 
   return (
     <div onClick={e => { if (e.target === e.currentTarget) onClose(); }}
-      style={{ position: 'fixed', inset: 0, background: 'rgba(7,47,99,0.18)', backdropFilter: 'blur(6px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+      style={{ position: 'fixed', inset: 0, background: 'rgba(7,22,45,0.32)', backdropFilter: 'blur(6px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
       <div style={{ background: 'var(--surface)', borderRadius: 3, width: '100%', maxWidth: 640, height: '68vh', maxHeight: 520, boxShadow: '0 2px 4px rgba(0,0,0,0.06), 0 16px 48px rgba(3,78,162,0.14)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
         {/* Header */}

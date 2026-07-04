@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { X, ChevronDown } from 'lucide-react';
 import type { UserPublic } from '@/lib/api';
 import type { Project } from '@/types';
+import { useUnsavedGuard } from '@/hooks/useUnsavedGuard';
 
 interface Props {
   open: boolean;
@@ -85,9 +86,20 @@ export default function ProjectModal({ open, project, onClose, onSave, users = [
     }
   }, [open, project]);
 
+  const { requestClose, guard } = useUnsavedGuard(onClose);
+
   if (!open) return null;
 
   const isEdit = !!project;
+
+  // Compara o form atual com o estado pristino (mesma transformação do init) para saber
+  // se há alterações não salvas ao tentar fechar.
+  const pristine: Omit<Project, 'id'> = (() => {
+    if (!project) return EMPTY;
+    const { id, ...rest } = project; void id;
+    return { ...EMPTY, ...rest, deadline: rest.deadline ? rest.deadline.slice(0, 10) : '' };
+  })();
+  const dirty = JSON.stringify(form) !== JSON.stringify(pristine);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -105,7 +117,7 @@ export default function ProjectModal({ open, project, onClose, onSave, users = [
   return (
     <>
       {/* Backdrop */}
-      <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(7,22,45,0.32)', zIndex: 60 }} />
+      <div onClick={() => requestClose(dirty)} style={{ position: 'fixed', inset: 0, background: 'rgba(7,22,45,0.32)', zIndex: 60 }} />
 
       {/* Drawer */}
       <div style={{ position: 'fixed', top: 0, right: 0, bottom: 0, width: 700, maxWidth: '94%', background: 'var(--surface)', overflowY: 'auto', zIndex: 61, borderLeft: '1px solid var(--line-1)', animation: 'drawin .24s cubic-bezier(.4,0,.2,1) both', display: 'flex', flexDirection: 'column' }}>
@@ -121,7 +133,7 @@ export default function ProjectModal({ open, project, onClose, onSave, users = [
               {isEdit ? 'Editar projeto' : 'Novo projeto'}
             </span>
           </div>
-          <button type="button" onClick={onClose}
+          <button type="button" onClick={() => requestClose(dirty)}
             style={{ width: 30, height: 30, borderRadius: 3, border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text-2)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-2)')}
             onMouseLeave={e => (e.currentTarget.style.background = 'var(--surface)')}>
@@ -197,7 +209,7 @@ export default function ProjectModal({ open, project, onClose, onSave, users = [
                 onMouseLeave={e => (e.currentTarget.style.background = 'var(--blue)')}>
                 {isEdit ? 'Salvar alterações' : 'Criar projeto'}
               </button>
-              <button type="button" onClick={onClose} style={{ padding: '12px 18px', border: '1px solid var(--border)', borderRadius: 3, background: 'var(--surface)', color: 'var(--text)', fontSize: '0.84rem', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}
+              <button type="button" onClick={() => requestClose(dirty)} style={{ padding: '12px 18px', border: '1px solid var(--border)', borderRadius: 3, background: 'var(--surface)', color: 'var(--text)', fontSize: '0.84rem', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}
                 onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-2)')}
                 onMouseLeave={e => (e.currentTarget.style.background = 'var(--surface)')}>
                 Cancelar
@@ -206,6 +218,8 @@ export default function ProjectModal({ open, project, onClose, onSave, users = [
           </div>
         </form>
       </div>
+
+      {guard}
     </>
   );
 }

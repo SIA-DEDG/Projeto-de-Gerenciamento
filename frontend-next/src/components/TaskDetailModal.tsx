@@ -61,9 +61,9 @@ export default function TaskDetailModal({ open, task, projectName, onClose, onEd
 
   return (
     <>
-      {/* Backdrop — very subtle, keeps kanban visible */}
+      {/* Backdrop escurecido, consistente com os demais modais */}
       <div
-        style={{ position: 'fixed', inset: 0, zIndex: 299, background: 'rgba(3,78,162,0.06)', backdropFilter: 'blur(0px)' }}
+        style={{ position: 'fixed', inset: 0, zIndex: 299, background: 'rgba(7,22,45,0.32)' }}
         onClick={onClose}
       />
 

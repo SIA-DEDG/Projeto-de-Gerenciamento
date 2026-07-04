@@ -7,18 +7,26 @@ interface Props {
   title: string;
   message?: string;
   confirmLabel?: string;
+  cancelLabel?: string;
   danger?: boolean;
   onConfirm: () => void;
   onClose: () => void;
+  // Ação do botão secundário. Quando ausente, o secundário apenas fecha (comportamento padrão).
+  // Útil quando as duas opções fazem algo (ex.: "Salvar com" vs. "Salvar sem"), mantendo o
+  // clique no backdrop como um simples fechar.
+  onCancel?: () => void;
+  // Sobrepõe o z-index do backdrop (padrão do CSS é 400). Necessário quando este confirm
+  // precisa aparecer acima de um modal com z-index maior (ex.: modais de feedback usam 1000).
+  zIndex?: number;
 }
 
 export default function ConfirmModal({
-  open, title, message, confirmLabel = 'Confirmar', danger = false, onConfirm, onClose,
+  open, title, message, confirmLabel = 'Confirmar', cancelLabel = 'Cancelar', danger = false, onConfirm, onClose, onCancel, zIndex,
 }: Props) {
   if (!open) return null;
 
   return (
-    <div className="modal-backdrop" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+    <div className="modal-backdrop" style={zIndex !== undefined ? { zIndex } : undefined} onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="modal-card" style={{ maxWidth: 400 }}>
         <div className="modal-body" style={{ alignItems: 'center', textAlign: 'center', paddingTop: 24 }}>
           <div style={{
@@ -34,7 +42,7 @@ export default function ConfirmModal({
           {message && <p style={{ fontSize: '0.845rem', color: 'var(--text-2)', lineHeight: 1.6, marginTop: 6 }}>{message}</p>}
         </div>
         <div className="modal-footer">
-          <button className="btn btn-secondary btn-sm" onClick={onClose}>Cancelar</button>
+          <button className="btn btn-secondary btn-sm" onClick={() => { onCancel?.(); onClose(); }}>{cancelLabel}</button>
           <button
             className={`btn btn-sm${danger ? ' btn-danger' : ' btn-primary'}`}
             onClick={() => { onConfirm(); onClose(); }}

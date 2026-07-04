@@ -5,6 +5,7 @@ import { fetchUsers, deleteUser, updateUserRole, adminResetUserPassword } from '
 import { getUser, canResetPasswords } from '@/lib/auth';
 import type { UserPublic } from '@/lib/api';
 import ConfirmModal from '@/components/ConfirmModal';
+import { useUnsavedGuard } from '@/hooks/useUnsavedGuard';
 import { Search, ChevronDown, Lock, Trash2 } from 'lucide-react';
 import PageHeader from '@/components/PageHeader';
 
@@ -40,6 +41,9 @@ function ResetPasswordModal({ user, onClose, onSuccess }: { user: UserPublic; on
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
+  const { requestClose, guard } = useUnsavedGuard(onClose);
+  const dirty = newPassword.trim() !== '' || confirm.trim() !== '';
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
@@ -56,7 +60,7 @@ function ResetPasswordModal({ user, onClose, onSuccess }: { user: UserPublic; on
 
   return (
     <>
-      <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(7,22,45,0.32)', zIndex: 400 }} />
+      <div onClick={() => requestClose(dirty)} style={{ position: 'fixed', inset: 0, background: 'rgba(7,22,45,0.32)', zIndex: 400 }} />
       <div style={{ position: 'fixed', top: 0, right: 0, bottom: 0, width: 440, maxWidth: '94%', background: 'var(--surface)', borderLeft: '1px solid var(--line-1)', zIndex: 401, display: 'flex', flexDirection: 'column', animation: 'drawin .24s cubic-bezier(.4,0,.2,1) both' }}>
 
         {/* Stripe */}
@@ -68,7 +72,7 @@ function ResetPasswordModal({ user, onClose, onSuccess }: { user: UserPublic; on
             <span style={{ width: 7, height: 7, borderRadius: 2, background: 'var(--blue)', flexShrink: 0 }} />
             <span className="mono" style={{ fontSize: '0.7rem', fontWeight: 600, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--text-2)' }}>Redefinir senha</span>
           </div>
-          <button onClick={onClose} style={{ width: 30, height: 30, borderRadius: 3, border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text-3)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          <button onClick={() => requestClose(dirty)} style={{ width: 30, height: 30, borderRadius: 3, border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text-3)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-2)')}
             onMouseLeave={e => (e.currentTarget.style.background = 'var(--surface)')}>
             ×
@@ -119,7 +123,7 @@ function ResetPasswordModal({ user, onClose, onSuccess }: { user: UserPublic; on
               onMouseLeave={e => { if (!saving) (e.currentTarget as HTMLButtonElement).style.background = 'var(--blue)'; }}>
               {saving ? 'Salvando…' : 'Redefinir senha'}
             </button>
-            <button type="button" onClick={onClose}
+            <button type="button" onClick={() => requestClose(dirty)}
               style={{ padding: '12px 18px', border: '1px solid var(--border)', borderRadius: 3, background: 'var(--surface)', color: 'var(--text)', fontSize: '0.84rem', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}
               onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-2)')}
               onMouseLeave={e => (e.currentTarget.style.background = 'var(--surface)')}>
@@ -128,6 +132,8 @@ function ResetPasswordModal({ user, onClose, onSuccess }: { user: UserPublic; on
           </div>
         </form>
       </div>
+
+      {guard}
     </>
   );
 }

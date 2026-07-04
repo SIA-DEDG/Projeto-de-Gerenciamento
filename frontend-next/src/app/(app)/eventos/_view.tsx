@@ -9,6 +9,7 @@ import {
   type CalendarEvent, type UserPublic,
 } from '@/lib/api';
 import ConfirmModal from '@/components/ConfirmModal';
+import { useUnsavedGuard } from '@/hooks/useUnsavedGuard';
 import { useToast } from '@/hooks/useToast';
 import ToastContainer from '@/components/ToastContainer';
 import { openSignedUrl } from '@/lib/download';
@@ -531,6 +532,16 @@ export default function EventosPage() {
   const [respSearch, setRespSearch] = useState('');
   const [respOpen, setRespOpen]     = useState(false);
   const [ataFile, setAtaFile]       = useState<{ name: string; data: string } | null>(null);
+
+  // Guarda de alterações não salvas ao fechar o modal de evento.
+  const { requestClose, guard } = useUnsavedGuard(() => setShowModal(false));
+  const currentFormJson = JSON.stringify({ evName, respList, evEventType, evType, evLocal, attendees, startDate, endDate, useRange, selectedDates, startTime, isPrivate, ata: ataFile?.name ?? null });
+  const formSnapshot = useRef('');
+  useEffect(() => {
+    if (showModal) formSnapshot.current = currentFormJson;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showModal]);
+  const formDirty = currentFormJson !== formSnapshot.current;
 
   const EV_TYPES = ['Reunião', 'Workshop', 'Comitê', 'Visita', 'Assembleia', 'Evento externo', 'Outro'];
   const MODALIDADE_OPTIONS = ['Presencial', 'Online', 'Híbrido'] as const;
@@ -1243,7 +1254,7 @@ export default function EventosPage() {
         return (
           <>
             {/* Backdrop */}
-            <div onClick={() => setShowModal(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(7,22,45,0.32)', zIndex: 200 }} />
+            <div onClick={() => requestClose(formDirty)} style={{ position: 'fixed', inset: 0, background: 'rgba(7,22,45,0.32)', zIndex: 200 }} />
 
             {/* Drawer */}
             <div className="ssel" style={{ position: 'fixed', top: 0, right: 0, bottom: 0, width: 500, maxWidth: '94%', background: 'var(--surface)', overflowY: 'auto', zIndex: 201, borderLeft: '1px solid var(--line-1)', animation: 'drawin .24s cubic-bezier(.4,0,.2,1) both', display: 'flex', flexDirection: 'column' }}>
@@ -1259,7 +1270,7 @@ export default function EventosPage() {
                     {editing ? 'Editar evento' : 'Novo evento'}
                   </span>
                 </div>
-                <button onClick={() => setShowModal(false)} style={{ width: 30, height: 30, borderRadius: 3, border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text-2)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                <button onClick={() => requestClose(formDirty)} style={{ width: 30, height: 30, borderRadius: 3, border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text-2)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                   onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-2)')}
                   onMouseLeave={e => (e.currentTarget.style.background = 'var(--surface)')}>
                   <XIcon size={15} />
@@ -1496,7 +1507,7 @@ export default function EventosPage() {
                     onMouseLeave={e => { if (!saving) (e.currentTarget.style.background = saving ? 'var(--text-3)' : 'var(--blue)'); }}>
                     {saving ? 'Salvando…' : editing ? 'Salvar alterações' : 'Criar evento'}
                   </button>
-                  <button onClick={() => setShowModal(false)}
+                  <button onClick={() => requestClose(formDirty)}
                     style={{ padding: '12px 18px', border: '1px solid var(--border)', borderRadius: 3, background: 'var(--surface)', color: 'var(--text)', fontSize: '0.84rem', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}
                     onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-2)')}
                     onMouseLeave={e => (e.currentTarget.style.background = 'var(--surface)')}>
@@ -1505,6 +1516,8 @@ export default function EventosPage() {
                 </div>
               </div>
             </div>
+
+            {guard}
           </>
         );
       })()}

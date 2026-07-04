@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { Plus, AlertTriangle, X, ChevronDown, Pencil, Trash2 } from 'lucide-react';
 import Calendario, { type CalendarioItem } from '@/components/Calendario';
 import ConfirmModal from '@/components/ConfirmModal';
+import { useUnsavedGuard } from '@/hooks/useUnsavedGuard';
 import { useToast } from '@/hooks/useToast';
 import ToastContainer from '@/components/ToastContainer';
 import {
@@ -70,6 +71,16 @@ function FaltaModal({ users, currentUserId, currentUserName, existing, canApprov
   const [error, setError]             = useState('');
   const isEdit = !!existing;
 
+  const { requestClose, guard } = useUnsavedGuard(onClose);
+  const dirty =
+    JSON.stringify({ reason, justification, startDate, endDate }) !==
+    JSON.stringify({
+      reason: existing?.reason ?? 'Doença',
+      justification: existing?.justification ?? '',
+      startDate: existing?.start_date ?? ymd(new Date()),
+      endDate: existing?.end_date ?? ymd(new Date()),
+    });
+
   // Nome fixo — no create é o usuário logado, no edit é o servidor do registro
   const serverName = isEdit ? existing.employee_name : currentUserName;
 
@@ -119,7 +130,7 @@ function FaltaModal({ users, currentUserId, currentUserName, existing, canApprov
 
   return (
     <>
-      <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(7,22,45,0.32)', zIndex: 300 }} />
+      <div onClick={() => requestClose(dirty)} style={{ position: 'fixed', inset: 0, background: 'rgba(7,22,45,0.32)', zIndex: 300 }} />
       <div style={{ position: 'fixed', top: 0, right: 0, bottom: 0, width: 500, maxWidth: '94%', background: 'var(--surface)', overflowY: 'auto', zIndex: 301, borderLeft: '1px solid var(--line-1)', animation: 'drawin .24s cubic-bezier(.4,0,.2,1) both', display: 'flex', flexDirection: 'column' }}>
 
         <div style={{ height: 4, flexShrink: 0, background: 'linear-gradient(90deg,var(--blue-fixed) 0 40%,#E0A92E 40% 55%,#b42318 55% 75%,#1B8A4B 75%)' }} />
@@ -130,7 +141,7 @@ function FaltaModal({ users, currentUserId, currentUserName, existing, canApprov
             <span style={{ width: 7, height: 7, borderRadius: 2, background: '#A87A00', flexShrink: 0 }} />
             <span className="mono" style={{ fontSize: '0.7rem', fontWeight: 600, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--text-2)' }}>{isEdit ? 'Editar falta' : 'Registrar falta'}</span>
           </div>
-          <button onClick={onClose} style={{ width: 30, height: 30, borderRadius: 3, border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text-2)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          <button onClick={() => requestClose(dirty)} style={{ width: 30, height: 30, borderRadius: 3, border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text-2)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-2)')}
             onMouseLeave={e => (e.currentTarget.style.background = 'var(--surface)')}>
             <X size={14} strokeWidth={2} />
@@ -263,7 +274,7 @@ function FaltaModal({ users, currentUserId, currentUserName, existing, canApprov
                 onMouseLeave={e => { if (!saving) (e.currentTarget as HTMLButtonElement).style.background = 'var(--blue)'; }}>
                 {saving ? 'Salvando…' : isEdit ? 'Salvar alterações' : 'Registrar falta'}
               </button>
-              <button type="button" onClick={onClose} style={{ padding: '12px 18px', border: '1px solid var(--border)', borderRadius: 3, background: 'var(--surface)', color: 'var(--text)', fontSize: '0.84rem', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}
+              <button type="button" onClick={() => requestClose(dirty)} style={{ padding: '12px 18px', border: '1px solid var(--border)', borderRadius: 3, background: 'var(--surface)', color: 'var(--text)', fontSize: '0.84rem', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}
                 onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-2)')}
                 onMouseLeave={e => (e.currentTarget.style.background = 'var(--surface)')}>
                 Cancelar
@@ -272,6 +283,8 @@ function FaltaModal({ users, currentUserId, currentUserName, existing, canApprov
           </div>
         </form>
       </div>
+
+      {guard}
     </>
   );
 }

@@ -4,6 +4,7 @@ import { useState, useRef } from 'react';
 import { Bug, Lightbulb, HelpCircle } from 'lucide-react';
 import { submitFeedback, updateFeedback, type FeedbackItem } from '@/lib/api';
 import { emitTasksChanged } from '@/lib/taskEvents';
+import { useUnsavedGuard } from '@/hooks/useUnsavedGuard';
 import { SEVERITIES, type FeedbackType, type Severity, inp } from './types';
 
 interface Props {
@@ -25,6 +26,18 @@ export default function FormModal({ onClose, onCreated, editItem, onUpdated }: P
   const [dragOver, setDragOver] = useState(false);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState('');
+
+  const { requestClose, guard } = useUnsavedGuard(onClose);
+  // Há algo preenchido/alterado que seria perdido ao fechar?
+  const dirty =
+    JSON.stringify({ tipo, titulo, descricao, severidade, imgs: images.length }) !==
+    JSON.stringify({
+      tipo: initialTipo,
+      titulo: editItem?.titulo ?? '',
+      descricao: editItem?.descricao ?? '',
+      severidade: (editItem?.severidade as Severity) ?? 'Média',
+      imgs: 0,
+    });
 
   function readFiles(files: FileList | File[]) {
     Array.from(files).forEach(file => {
@@ -63,9 +76,10 @@ export default function FormModal({ onClose, onCreated, editItem, onUpdated }: P
   }
 
   return (
+    <>
     <div
-      onClick={e => { if (e.target === e.currentTarget) onClose(); }}
-      style={{ position: 'fixed', inset: 0, background: 'rgba(3,78,162,0.22)', backdropFilter: 'blur(2px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
+      onClick={e => { if (e.target === e.currentTarget) requestClose(dirty); }}
+      style={{ position: 'fixed', inset: 0, background: 'rgba(7,22,45,0.32)', backdropFilter: 'blur(2px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
     >
       <div style={{ background: 'var(--surface)', borderRadius: 3, width: '100%', maxWidth: 560, boxShadow: '0 20px 60px rgba(3,78,162,0.18), 0 4px 16px rgba(0,0,0,0.10)', maxHeight: '90vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', animation: 'modal-pop-in-flex 0.2s cubic-bezier(0.34,1.56,0.64,1) forwards' }}>
         <div style={{ height: 5, flexShrink: 0, background: 'linear-gradient(to right, var(--blue) 40%, #fdb913 40% 55%, #ef4123 55% 75%, #007932 75%)' }} />
@@ -78,7 +92,7 @@ export default function FormModal({ onClose, onCreated, editItem, onUpdated }: P
               {editItem ? editItem.titulo : 'Preencha os dados abaixo'}
             </h2>
           </div>
-          <button onClick={onClose} style={{ flexShrink: 0, width: 28, height: 28, borderRadius: 3, border: '1px solid var(--border)', background: 'var(--surface-2)', color: 'var(--text-3)', cursor: 'pointer', fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'inherit' }}>✕</button>
+          <button onClick={() => requestClose(dirty)} style={{ flexShrink: 0, width: 28, height: 28, borderRadius: 3, border: '1px solid var(--border)', background: 'var(--surface-2)', color: 'var(--text-3)', cursor: 'pointer', fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'inherit' }}>✕</button>
         </div>
 
         <form id="feedback-form" onSubmit={handleSubmit} noValidate style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: 16, overflowY: 'auto', flex: 1 }}>
@@ -178,7 +192,7 @@ export default function FormModal({ onClose, onCreated, editItem, onUpdated }: P
 
         </form>
         <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', padding: '12px 20px', borderTop: '1px solid var(--line-1)', background: 'var(--surface-2)', flexShrink: 0 }}>
-          <button type="button" onClick={onClose}
+          <button type="button" onClick={() => requestClose(dirty)}
             style={{ padding: '6px 14px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 3, fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', color: 'var(--text-2)' }}>
             Cancelar
           </button>
@@ -189,5 +203,8 @@ export default function FormModal({ onClose, onCreated, editItem, onUpdated }: P
         </div>
       </div>
     </div>
+
+    {guard}
+    </>
   );
 }

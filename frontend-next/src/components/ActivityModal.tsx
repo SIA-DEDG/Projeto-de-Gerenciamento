@@ -338,6 +338,10 @@ export default function ActivityModal({
   const [linkInput, setLinkInput] = useState({ name: '', url: '' });
   const [onlyMyProjects, setOnlyMyProjects] = useState(true);
   const [confirmRemoveLink, setConfirmRemoveLink] = useState<{ name: string; idx: number } | null>(null);
+  const [confirmUnaddedLink, setConfirmUnaddedLink] = useState(false);
+  const [confirmClose, setConfirmClose] = useState(false);
+  // Snapshot do form no momento da abertura, para detectar alterações não salvas.
+  const initialSnapshot = useRef('');
 
   useEffect(() => {
     if (!open) return;
@@ -345,24 +349,31 @@ export default function ActivityModal({
     setLinks([]);
     setLinkInput({ name: '', url: '' });
     setRemovedLinkIdxs([]);
+    setConfirmUnaddedLink(false);
+    setConfirmClose(false);
     setExistingLinks(
       (task?.attachments ?? [])
         .map((a, idx) => ({ a, idx }))
         .filter((e): e is { a: { type: 'link'; name: string; url: string }; idx: number } => e.a.type === 'link')
         .map(({ a, idx }) => ({ name: a.name, url: a.url, idx })),
     );
+    let formInit: typeof EMPTY;
+    let noDeadlineInit: boolean;
     if (task) {
       const sg = task.status_group;
       const mapped = sg === 'done' ? 'Concluído' : sg === 'review' ? 'Em Revisão' : sg === 'in_progress' ? 'Em Andamento' : 'Pendente';
       let co: string[] = [];
       try { co = task.co_responsibles ? JSON.parse(task.co_responsibles) : []; } catch { co = []; }
-      setNoDeadline(!task.deadline);
-      setForm({ activity: task.activity, description: task.description ?? '', project_id: task.project_id ?? null, status: mapped, responsible: task.responsible, date: task.date ?? '', priority: task.priority ?? 'Média', co_responsibles: co, external_collaborators: task.external_collaborators ?? '', deadline: task.deadline ?? '' });
+      noDeadlineInit = !task.deadline;
+      formInit = { activity: task.activity, description: task.description ?? '', project_id: task.project_id ?? null, status: mapped, responsible: task.responsible, date: task.date ?? '', priority: task.priority ?? 'Média', co_responsibles: co, external_collaborators: task.external_collaborators ?? '', deadline: task.deadline ?? '' };
     } else {
       const pid = fixedProjectId ?? null;
-      setNoDeadline(false);
-      setForm({ ...EMPTY, status: defaultStatus ?? 'Pendente', project_id: pid, responsible: defaultResponsible ?? '' });
+      noDeadlineInit = false;
+      formInit = { ...EMPTY, status: defaultStatus ?? 'Pendente', project_id: pid, responsible: defaultResponsible ?? '' };
     }
+    setNoDeadline(noDeadlineInit);
+    setForm(formInit);
+    initialSnapshot.current = JSON.stringify({ form: formInit, noDeadline: noDeadlineInit });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, task]);
 
@@ -375,9 +386,7 @@ export default function ActivityModal({
   const project = projects.find(p => p.id === form.project_id);
   const categoryLabel = project?.name ?? form.project_id ?? '';
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!form.activity.trim()) return;
+  function submitWith(finalLinks: ActivityLink[]) {
     onSave({
       ...form,
       category: categoryLabel,
@@ -385,9 +394,37 @@ export default function ActivityModal({
       external_collaborators: form.external_collaborators.trim() || null,
       deadline: noDeadline ? null : (form.deadline.trim() || null),
       attachments: attachments.length > 0 ? attachments : undefined,
-      links: links.length > 0 ? links : undefined,
+      links: finalLinks.length > 0 ? finalLinks : undefined,
       removedAttachmentIndices: removedLinkIdxs.length > 0 ? removedLinkIdxs : undefined,
     });
+  }
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!form.activity.trim()) return;
+    // Digitou um link mas não clicou em "+": pergunta antes de salvar.
+    if (linkInput.url.trim()) {
+      setConfirmUnaddedLink(true);
+      return;
+    }
+    submitWith(links);
+  }
+
+  // Há algo digitado/alterado que seria perdido ao fechar?
+  function isDirty(): boolean {
+    return (
+      JSON.stringify({ form, noDeadline }) !== initialSnapshot.current ||
+      attachments.length > 0 ||
+      links.length > 0 ||
+      removedLinkIdxs.length > 0 ||
+      linkInput.name.trim() !== '' ||
+      linkInput.url.trim() !== ''
+    );
+  }
+
+  function requestClose() {
+    if (isDirty()) setConfirmClose(true);
+    else onClose();
   }
 
   const showProjectSelect = fixedProjectId == null;
@@ -404,7 +441,7 @@ export default function ActivityModal({
   return (
     <>
       {/* Backdrop */}
-      <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(7,22,45,0.32)', zIndex: 60 }} />
+      <div onClick={requestClose} style={{ position: 'fixed', inset: 0, background: 'rgba(7,22,45,0.32)', zIndex: 60 }} />
 
       {/* Drawer */}
       <div style={{ position: 'fixed', top: 0, right: 0, bottom: 0, width: 700, maxWidth: '94%', background: 'var(--surface)', overflowY: 'auto', zIndex: 61, borderLeft: '1px solid var(--line-1)', animation: 'drawin .24s cubic-bezier(.4,0,.2,1) both', display: 'flex', flexDirection: 'column' }}>
@@ -420,7 +457,7 @@ export default function ActivityModal({
               {isEdit ? 'Editar atividade' : 'Nova atividade'}
             </span>
           </div>
-          <button type="button" onClick={onClose}
+          <button type="button" onClick={requestClose}
             style={{ width: 30, height: 30, borderRadius: 3, border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text-2)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-2)')}
             onMouseLeave={e => (e.currentTarget.style.background = 'var(--surface)')}>
@@ -628,7 +665,7 @@ export default function ActivityModal({
                 onMouseLeave={e => (e.currentTarget.style.background = 'var(--blue)')}>
                 {isEdit ? 'Salvar alterações' : 'Criar atividade'}
               </button>
-              <button type="button" onClick={onClose} style={{ padding: '12px 18px', border: '1px solid var(--border)', borderRadius: 3, background: 'var(--surface)', color: 'var(--text)', fontSize: '0.84rem', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}
+              <button type="button" onClick={requestClose} style={{ padding: '12px 18px', border: '1px solid var(--border)', borderRadius: 3, background: 'var(--surface)', color: 'var(--text)', fontSize: '0.84rem', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}
                 onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-2)')}
                 onMouseLeave={e => (e.currentTarget.style.background = 'var(--surface)')}>
                 Cancelar
@@ -646,6 +683,34 @@ export default function ActivityModal({
         danger
         onConfirm={() => { if (confirmRemoveLink) setRemovedLinkIdxs(prev => [...prev, confirmRemoveLink.idx]); }}
         onClose={() => setConfirmRemoveLink(null)}
+      />
+
+      {/* Link digitado mas não adicionado ao clicar em salvar */}
+      <ConfirmModal
+        open={confirmUnaddedLink}
+        title="Opa, faltou adicionar o link"
+        message="Você escreveu um link mas não clicou no +. Quer incluí-lo?"
+        confirmLabel="Sim, adicionar"
+        cancelLabel="Não, salvar assim"
+        onConfirm={() => {
+          const url = linkInput.url.trim();
+          const name = linkInput.name.trim() || url;
+          submitWith(url ? [...links, { name, url }] : links);
+        }}
+        onCancel={() => submitWith(links)}
+        onClose={() => setConfirmUnaddedLink(false)}
+      />
+
+      {/* Alterações não salvas ao tentar sair */}
+      <ConfirmModal
+        open={confirmClose}
+        title="Tem certeza que quer sair?"
+        message="Você vai perder tudo que preencheu até agora."
+        confirmLabel="Sim, sair"
+        cancelLabel="Continuar edição"
+        danger
+        onConfirm={onClose}
+        onClose={() => setConfirmClose(false)}
       />
     </>
   );

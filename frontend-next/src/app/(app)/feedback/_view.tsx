@@ -7,6 +7,7 @@ import { useToast } from '@/hooks/useToast';
 import { Plus, ChevronLeft, ChevronRight, X, Send, Filter } from 'lucide-react';
 import ToastContainer from '@/components/ToastContainer';
 import ConfirmModal from '@/components/ConfirmModal';
+import { useUnsavedGuard } from '@/hooks/useUnsavedGuard';
 import RespostaModal from './_components/RespostaModal';
 import FeedbackCard from './_components/FeedbackCard';
 import FeedbackSidebar from './_components/FeedbackSidebar';
@@ -142,6 +143,14 @@ export default function FeedbackPage() {
     resetForm();
   }
 
+  // Guarda de alterações não salvas ao fechar o painel de feedback.
+  const { requestClose, guard } = useUnsavedGuard(closePanel);
+  const fbPristine = editTarget
+    ? { tipo: editTarget.tipo === 'bug' ? 'bug' : editTarget.tipo === 'duvida' ? 'duvida' : 'sugestao', assunto: editTarget.titulo, desc: editTarget.descricao, sev: (editTarget.severidade as Severity) ?? 'Média' }
+    : { tipo: 'sugestao', assunto: '', desc: '', sev: 'Média' };
+  const fbDirty = JSON.stringify({ tipo: fbTipo, assunto: fbAssunto, desc: fbDesc, sev: fbSeveridade }) !== JSON.stringify(fbPristine);
+  const requestClosePanel = () => requestClose(fbDirty);
+
   async function handleInlineSubmit() {
     if (!fbAssunto.trim()) { addToast('error', 'Campos obrigatórios', 'Informe o assunto.'); return; }
     if (!fbDesc.trim()) { addToast('error', 'Campos obrigatórios', 'Informe a descrição.'); return; }
@@ -195,7 +204,7 @@ export default function FeedbackPage() {
       <PageHeader eyebrow="Sistema · Comunicação" title="Feedback & Sugestões"
         tabBarRight={
           <button
-            onClick={() => (showForm ? closePanel() : openCreate())}
+            onClick={() => (showForm ? requestClosePanel() : openCreate())}
             style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '0 16px', height: 40, border: 'none', borderBottom: '2px solid transparent', background: 'transparent', color: 'var(--blue)', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', flexShrink: 0, fontFamily: 'inherit' }}
             onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--surface-2)')}
             onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
@@ -308,7 +317,7 @@ export default function FeedbackPage() {
           <div className="ssel" style={{ width: 276, flexShrink: 0, borderLeft: '1px solid var(--line-1)', overflowY: 'auto', background: 'var(--surface)', padding: '20px 20px 28px' }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10, marginBottom: 4 }}>
               <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text)' }}>{editTarget ? 'Editar publicação' : 'Enviar feedback'}</div>
-              <button onClick={closePanel}
+              <button onClick={requestClosePanel}
                 style={{ width: 26, height: 26, flexShrink: 0, borderRadius: 3, border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text-2)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                 onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-2)')}
                 onMouseLeave={e => (e.currentTarget.style.background = 'var(--surface)')}>
@@ -376,6 +385,7 @@ export default function FeedbackPage() {
       </div>
 
       {/* Modals */}
+      {guard}
       {respondTarget && (
         <RespostaModal
           item={respondTarget}
