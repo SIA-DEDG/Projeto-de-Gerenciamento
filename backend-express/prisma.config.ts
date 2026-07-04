@@ -10,5 +10,8 @@ export default defineConfig({
   },
   datasource: {
     url: process.env["DATABASE_URL"],
+    // Banco descartável usado APENAS por `prisma migrate dev` para validar migrations.
+    // Aponta para o Postgres local (docker-compose.dev.yml). O Supabase nunca é usado como shadow.
+    shadowDatabaseUrl: process.env["SHADOW_DATABASE_URL"],
   },
 });
