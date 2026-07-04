@@ -12,11 +12,14 @@ export async function listFeedback(_req: Request, res: Response, next: NextFunct
 export async function createFeedback(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const data = feedbackSchema.parse(req.body);
-    // Busca nome da diretoria para gravar junto ao feedback (é global, mas mostra origem)
-    const dirName = req.user.directoriaId
-      ? (await import('../../lib/prisma')).prisma.directoria.findUnique({ where: { id: req.user.directoriaId }, select: { name: true } }).then(d => d?.name ?? null)
-      : Promise.resolve(null);
-    const fb = await svc.createFeedback(req.user.sub, req.user.username, await dirName, data);
+    const { prisma } = await import('../../lib/prisma');
+    const [author, dirName] = await Promise.all([
+      prisma.user.findUnique({ where: { id: req.user.sub }, select: { name: true } }),
+      req.user.directoriaId
+        ? prisma.directoria.findUnique({ where: { id: req.user.directoriaId }, select: { name: true } }).then(d => d?.name ?? null)
+        : Promise.resolve(null),
+    ]);
+    const fb = await svc.createFeedback(req.user.sub, author?.name ?? req.user.username, dirName, data);
     void logAction(req.user.sub, req.user.username, 'CREATE', 'feedback', fb.id, `Feedback "${fb.titulo}" criado`);
     res.status(201).json(fb);
   } catch (err) { next(err); }

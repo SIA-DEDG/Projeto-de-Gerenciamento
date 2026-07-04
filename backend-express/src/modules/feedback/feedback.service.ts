@@ -3,18 +3,22 @@ import type { Feedback, FeedbackUpvote } from '@prisma/client';
 
 type FeedbackWithRelations = Feedback & {
   upvotes: Pick<FeedbackUpvote, 'userId'>[];
+  usuario: { name: string } | null;
   _count: { comments: number };
 };
 
 const include = {
   upvotes: { select: { userId: true } },
+  usuario: { select: { name: true } },
   _count: { select: { comments: true } },
 } as const;
 
 function fmt(f: FeedbackWithRelations) {
-  const { upvotes, _count, imagens, ...rest } = f;
+  const { upvotes, _count, imagens, usuario, ...rest } = f;
   return {
     ...rest,
+    // Prefere o nome real do usuário (relação); cai no valor salvo se o usuário nao existir mais.
+    usuarioNome: usuario?.name ?? rest.usuarioNome,
     imagens: imagens ? (JSON.parse(imagens) as string[]) : [],
     upvotes: upvotes.length,
     upvoted_by: upvotes.map((u) => u.userId),
