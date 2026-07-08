@@ -155,7 +155,7 @@ function CoRespChips({ users, selected, exclude, onChange }: {
         }}
       >
         {selected.length === 0 ? (
-          <span style={{ color: '#adb5bd' }}>— Nenhum —</span>
+          <span style={{ color: '#adb5bd' }}>Selecione o(s) co-responsável(is)</span>
         ) : (
           selected.map(name => (
             <span key={name} style={{
