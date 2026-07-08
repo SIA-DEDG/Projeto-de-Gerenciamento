@@ -147,6 +147,11 @@ export async function updateTask(id: string, data: {
     .then((t) => fmt(t as TaskWithRelations));
 }
 
+// Projeto vinculado atualmente à tarefa (para decidir se um update está de fato
+// REvinculando a outro projeto ou apenas reenviando o mesmo vínculo).
+export const getTaskProjectId = (id: string): Promise<string | null> =>
+  prisma.task.findUnique({ where: { id }, select: { projectId: true } }).then((t) => t?.projectId ?? null);
+
 export const deleteTask = async (id: string) => {
   const task = await prisma.task.findUnique({ where: { id }, select: { directoriaId: true } });
   const result = await prisma.task.delete({ where: { id } });

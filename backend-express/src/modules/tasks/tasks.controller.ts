@@ -63,9 +63,15 @@ export async function updateTask(req: Request, res: Response, next: NextFunction
   try {
     const id = pid(req);
     const data = taskSchema.partial().parse(req.body);
-    if (data.projectId && !(await assertCanUseProject(req, data.projectId))) {
-      res.status(403).json({ error: 'Você não faz parte deste projeto para vincular atividades a ele.' });
-      return;
+    // Só revalida a permissão do projeto quando o vínculo está MUDANDO para um projeto
+    // diferente. Reenviar o mesmo project_id (como o modal faz ao salvar) não deve barrar
+    // um participante (responsável/co-responsável) que não é membro do projeto.
+    if (data.projectId != null) {
+      const currentProjectId = await svc.getTaskProjectId(id);
+      if (data.projectId !== currentProjectId && !(await assertCanUseProject(req, data.projectId))) {
+        res.status(403).json({ error: 'Você não faz parte deste projeto para vincular atividades a ele.' });
+        return;
+      }
     }
     const task = await svc.updateTask(id, data, req.user.sub);
     void logAction(req.user.sub, req.user.username, 'UPDATE', 'task', id, `Tarefa "${task.activity}" atualizada`);
