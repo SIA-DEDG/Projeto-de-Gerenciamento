@@ -13,6 +13,7 @@ export const eventSchema = z.object({
 export const setMinutesSchema = z.object({
   fileName: z.string(),
   fileData: z.string(), // base64 — backend faz upload pro Supabase
+  mimeType: z.string().optional().nullable(), // tipo real do arquivo (a ata pode ser qualquer formato)
 });
 
 export type EventInput = z.infer<typeof eventSchema>;

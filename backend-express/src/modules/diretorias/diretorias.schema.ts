@@ -12,4 +12,8 @@ export const moveMemberSchema = z.object({
   userId: z.string().uuid(),
 });
 
+export const autoArchiveSchema = z.object({
+  autoArchiveDays: z.number().int().min(0).max(365),
+});
+
 export type DirectoriaInput = z.infer<typeof directoriaSchema>;

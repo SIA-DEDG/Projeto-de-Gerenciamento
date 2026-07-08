@@ -61,6 +61,14 @@ export async function setStatus(req: Request, res: Response, next: NextFunction)
   } catch (err) { next(err); }
 }
 
+// Marca os avisos de "feedback respondido" do usuário logado como já vistos (persistente).
+export async function markRepliesSeen(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    await svc.markRepliesSeen(req.user.sub);
+    res.json({ ok: true });
+  } catch (err) { next(err); }
+}
+
 export async function setResposta(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     if (req.user.role !== 'Admin') { res.status(403).json({ error: 'Sem permissão' }); return; }

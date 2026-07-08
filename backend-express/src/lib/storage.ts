@@ -55,3 +55,23 @@ export async function deleteFile(path: string): Promise<void> {
 export function storageEnabled(): boolean {
   return !!(env.SUPABASE_URL && env.SUPABASE_SERVICE_KEY);
 }
+
+// Remove recursivamente todos os arquivos de uma "pasta" (prefixo) no bucket.
+// Usado ao excluir uma diretoria/projeto/atividade/evento (evita arquivos órfãos).
+export async function deleteFolder(folderPath: string): Promise<void> {
+  if (!storageEnabled()) return;
+  try {
+    const supabase = getClient();
+    const { data: entries, error } = await supabase.storage
+      .from(BUCKET)
+      .list(folderPath, { limit: 1000, sortBy: { column: 'name', order: 'asc' } });
+    if (error || !entries || entries.length === 0) return;
+    // No Supabase Storage, arquivos têm `id`; subpastas não.
+    const files = entries.filter((e) => e.id).map((e) => `${folderPath}/${e.name}`);
+    const folders = entries.filter((e) => !e.id).map((e) => `${folderPath}/${e.name}`);
+    if (files.length > 0) await supabase.storage.from(BUCKET).remove(files);
+    for (const sub of folders) await deleteFolder(sub);
+  } catch {
+    /* não bloqueia a exclusão do recurso */
+  }
+}

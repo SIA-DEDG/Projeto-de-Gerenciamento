@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { authenticate, requireAdmin } from '../../middleware/auth.middleware';
+import { authenticate, requireAdmin, requireManager } from '../../middleware/auth.middleware';
 import * as directoriasController from './diretorias.controller';
 
 const router = Router();
@@ -123,6 +123,32 @@ router.get('/:id/members', authenticate, directoriasController.listMembers);
  *         description: Status atualizado
  */
 router.patch('/:id/active', authenticate, requireAdmin, directoriasController.toggleActive);
+
+/**
+ * @swagger
+ * /diretorias/{id}/auto-archive:
+ *   patch:
+ *     tags: [Diretorias]
+ *     summary: Definir prazo de auto-arquivamento (Gerente/Diretor/Admin)
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string, format: uuid }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [autoArchiveDays]
+ *             properties:
+ *               autoArchiveDays: { type: integer, example: 2 }
+ *     responses:
+ *       200:
+ *         description: Prazo atualizado
+ */
+router.patch('/:id/auto-archive', authenticate, requireManager, directoriasController.setAutoArchive);
 
 /**
  * @swagger

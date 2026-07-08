@@ -33,6 +33,11 @@ export const toggleActive = (id: string, active: boolean) =>
   prisma.directoria.update({ where: { id }, data: { active }, include })
     .then(d => fmt(d as typeof d & { _count: { members: number } }));
 
+// Configura o prazo (em dias) de auto-arquivamento de atividades concluídas.
+export const setAutoArchiveDays = (id: string, autoArchiveDays: number) =>
+  prisma.directoria.update({ where: { id }, data: { autoArchiveDays }, include })
+    .then(d => fmt(d as typeof d & { _count: { members: number } }));
+
 // Move um usuário para outra diretoria (Super-Admin only)
 export const moveMember = async (directoriaId: string, userId: string) => {
   const user = await prisma.user.findUniqueOrThrow({ where: { id: userId } });
@@ -51,44 +56,13 @@ export const deleteDirectoria = async (id: string) => {
   }
 
   // Remove todos os arquivos do bucket na pasta da diretoria
-  const { storageEnabled } = await import('../../lib/storage');
+  const { storageEnabled, deleteFolder } = await import('../../lib/storage');
   if (storageEnabled()) {
-    await deleteBucketFolder(`diretorias/${id}`);
+    await deleteFolder(`diretorias/${id}`);
   }
 
   return prisma.directoria.delete({ where: { id } });
 };
-
-// Apaga recursivamente todos os arquivos de uma pasta no bucket
-async function deleteBucketFolder(folderPath: string) {
-  const { createClient } = await import('@supabase/supabase-js');
-  const { env } = await import('../../config/env');
-
-  if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_KEY) return;
-  const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_KEY);
-  const BUCKET = 'sia-files';
-
-  // Lista todos os arquivos na pasta (recursivo via prefix)
-  const { data: files, error } = await supabase.storage
-    .from(BUCKET)
-    .list(folderPath, { limit: 1000, offset: 0, sortBy: { column: 'name', order: 'asc' } });
-
-  if (error || !files || files.length === 0) return;
-
-  // Separa arquivos e subpastas
-  const fileNames = files.filter(f => f.id).map(f => `${folderPath}/${f.name}`);
-  const folders   = files.filter(f => !f.id).map(f => `${folderPath}/${f.name}`);
-
-  // Remove arquivos desta pasta
-  if (fileNames.length > 0) {
-    await supabase.storage.from(BUCKET).remove(fileNames);
-  }
-
-  // Recursão nas subpastas
-  for (const sub of folders) {
-    await deleteBucketFolder(sub);
-  }
-}
 
 // Remove o vínculo de diretoria de um usuário (Super-Admin only)
 export const removeMember = async (userId: string) => {

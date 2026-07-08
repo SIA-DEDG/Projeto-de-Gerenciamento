@@ -138,4 +138,52 @@ router.delete('/:id/minutes', authenticate, eventsController.removeMinutes);
  */
 router.get('/:id/minutes/url', authenticate, eventsController.getMinutesUrl);
 
+/**
+ * @swagger
+ * /events/{id}/attachments:
+ *   post:
+ *     tags: [Events]
+ *     summary: Adicionar anexo (arquivo ou link) ao evento
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string, format: uuid }
+ *     responses:
+ *       200: { description: Anexo adicionado }
+ * /events/{id}/attachments/{idx}:
+ *   delete:
+ *     tags: [Events]
+ *     summary: Remover anexo do evento
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string, format: uuid }
+ *       - in: path
+ *         name: idx
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200: { description: Anexo removido }
+ * /events/{id}/attachments/{idx}/url:
+ *   get:
+ *     tags: [Events]
+ *     summary: URL de download do anexo do evento
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string, format: uuid }
+ *       - in: path
+ *         name: idx
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200: { description: URL pré-assinada }
+ */
+router.post('/:id/attachments',         authenticate, eventsController.addAttachment);
+router.delete('/:id/attachments/:idx',  authenticate, eventsController.removeAttachment);
+router.get('/:id/attachments/:idx/url', authenticate, eventsController.getAttachmentUrl);
+
 export default router;

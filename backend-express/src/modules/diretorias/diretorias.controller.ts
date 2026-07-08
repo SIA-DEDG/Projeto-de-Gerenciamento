@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import * as svc from './diretorias.service';
-import { directoriaSchema, moveMemberSchema } from './diretorias.schema';
+import { directoriaSchema, moveMemberSchema, autoArchiveSchema } from './diretorias.schema';
 import { logAction } from '../../lib/logger';
 
 const pid = (req: Request) => req.params['id'] as string;
@@ -42,6 +42,21 @@ export async function toggleActive(req: Request, res: Response, next: NextFuncti
     const { active } = req.body as { active: boolean };
     const dir = await svc.toggleActive(id, active);
     void logAction(req.user.sub, req.user.username, 'UPDATE', 'directoria', id, `Diretoria ${active ? 'ativada' : 'desativada'}`);
+    res.json(dir);
+  } catch (err) { next(err); }
+}
+
+// Config de auto-arquivamento: Admin em qualquer diretoria; Gerente/Diretor só na sua.
+export async function setAutoArchive(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const id = pid(req);
+    if (req.user.role !== 'Admin' && req.user.directoriaId !== id) {
+      res.status(403).json({ error: 'Você só pode configurar a sua própria diretoria.' });
+      return;
+    }
+    const { autoArchiveDays } = autoArchiveSchema.parse(req.body);
+    const dir = await svc.setAutoArchiveDays(id, autoArchiveDays);
+    void logAction(req.user.sub, req.user.username, 'UPDATE', 'directoria', id, `Auto-arquivamento definido para ${autoArchiveDays} dia(s)`);
     res.json(dir);
   } catch (err) { next(err); }
 }

@@ -42,6 +42,8 @@ const router = Router();
  */
 router.get('/', authenticate, ctrl.listFeedback);
 router.post('/', authenticate, ctrl.createFeedback);
+// Marca como vistos os avisos de resposta do usuário logado (persistente por usuário).
+router.post('/replies-seen', authenticate, ctrl.markRepliesSeen);
 
 /**
  * @swagger

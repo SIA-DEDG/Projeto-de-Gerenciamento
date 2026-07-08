@@ -66,16 +66,30 @@ export async function toggleUpvote(feedbackId: string, userId: string) {
 }
 
 export const setStatus = (id: string, status: string) =>
-  prisma.feedback.update({ where: { id }, data: { status }, include })
+  // Passar para "respondida" reabre o aviso ao autor (replySeen volta a false).
+  prisma.feedback.update({ where: { id }, data: { status, ...(status === 'respondida' ? { replySeen: false } : {}) }, include })
     .then((f) => fmt(f as FeedbackWithRelations));
 
 export const setResposta = (id: string, resposta: string | null) =>
   // Ao salvar uma resposta, marca como "respondida"; se a resposta for limpa, volta a "pendente".
+  // replySeen volta a false para o autor ser avisado desta (nova) resposta.
   prisma.feedback.update({
     where: { id },
-    data: { resposta, status: resposta && resposta.trim() ? 'respondida' : 'pendente' },
+    data: { resposta, status: resposta && resposta.trim() ? 'respondida' : 'pendente', replySeen: false },
     include,
   }).then((f) => fmt(f as FeedbackWithRelations));
+
+// Marca como "aviso visto" todos os feedbacks respondidos do autor — chamado quando o
+// aviso de resposta é exibido, para não reaparecer (persistente, vale em qualquer dispositivo).
+export const markRepliesSeen = (userId: string) =>
+  prisma.feedback.updateMany({
+    where: {
+      usuarioId: userId,
+      replySeen: false,
+      OR: [{ status: 'respondida' }, { resposta: { not: null } }],
+    },
+    data: { replySeen: true },
+  });
 
 export const listComments = (feedbackId: string) =>
   prisma.feedbackComment.findMany({ where: { feedbackId }, orderBy: { createdAt: 'asc' } });
