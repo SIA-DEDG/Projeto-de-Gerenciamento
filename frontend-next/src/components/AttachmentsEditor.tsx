@@ -1,8 +1,9 @@
 'use client';
 
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { Paperclip, Link as LinkIcon, Plus, Trash2 } from 'lucide-react';
 import type { TaskAttachment } from '@/types';
+import ConfirmModal from './ConfirmModal';
 
 // Anexos "staged" (ainda não persistidos) editados dentro de um modal.
 export interface AttachmentDraft {
@@ -64,6 +65,8 @@ function RemoveBtn({ onClick }: { onClick: () => void }) {
  */
 export default function AttachmentsEditor({ existing = [], value, onChange }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
+  // Confirmação ao remover um anexo JÁ SALVO (mesmo estilo do guard "sair sem salvar").
+  const [pendingRemove, setPendingRemove] = useState<{ i: number; name: string } | null>(null);
 
   function addFiles(fileList: FileList | null) {
     if (!fileList) return;
@@ -86,6 +89,7 @@ export default function AttachmentsEditor({ existing = [], value, onChange }: Pr
   const hasList = existing.some((_, i) => !value.removed.includes(i)) || value.files.length > 0 || value.links.length > 0;
 
   return (
+    <>
     <div>
       <input ref={fileRef} type="file" multiple style={{ display: 'none' }}
         onChange={(e) => { addFiles(e.target.files); e.target.value = ''; }} />
@@ -120,7 +124,7 @@ export default function AttachmentsEditor({ existing = [], value, onChange }: Pr
             <div key={`ex${i}`} style={rowStyle}>
               {a.type === 'link' ? <LinkIcon size={13} color="var(--blue)" style={{ flexShrink: 0 }} /> : <Paperclip size={13} color="var(--text-3)" style={{ flexShrink: 0 }} />}
               <span style={nameStyle}>{a.name}</span>
-              <RemoveBtn onClick={() => onChange({ ...value, removed: [...value.removed, i] })} />
+              <RemoveBtn onClick={() => setPendingRemove({ i, name: a.name })} />
             </div>
           ))}
           {value.files.map((f, i) => (
@@ -142,5 +146,17 @@ export default function AttachmentsEditor({ existing = [], value, onChange }: Pr
         </div>
       )}
     </div>
+    <ConfirmModal
+      open={!!pendingRemove}
+      title="Remover anexo?"
+      message={pendingRemove ? `"${pendingRemove.name}" será removido ao salvar as alterações.` : undefined}
+      confirmLabel="Remover"
+      cancelLabel="Cancelar"
+      danger
+      zIndex={2000}
+      onConfirm={() => { if (pendingRemove) onChange({ ...value, removed: [...value.removed, pendingRemove.i] }); setPendingRemove(null); }}
+      onClose={() => setPendingRemove(null)}
+    />
+    </>
   );
 }
