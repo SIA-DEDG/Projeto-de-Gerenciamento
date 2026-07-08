@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Search, Plus, Pencil, Trash2, X, ChevronLeft,
   ChevronRight, FileText, User, Calendar, Check,
-  Paperclip, Link as LinkIcon, Download,
+  Paperclip, Link as LinkIcon, Download, ExternalLink,
 } from 'lucide-react';
 import ActivityModal from '@/components/ActivityModal';
 import ProjectModal from '@/components/ProjectModal';
@@ -432,23 +432,33 @@ export default function ProjetosPage() {
         const emptyMini = <div style={{ fontSize: '0.72rem', color: 'var(--text-3)', padding: '2px 0' }}>—</div>;
 
         // Uma linha de anexo. `showSource` mostra de qual atividade veio.
-        const renderAtt = (a: AttRow, showSource: boolean) => (
-          <div key={`${a.kind}-${a.id}-${a.index}`} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 10px', border: '1px solid var(--line-1)', borderRadius: 3, background: 'var(--surface-2)' }}>
-            {a.att.type === 'link'
-              ? <LinkIcon size={13} color="var(--blue)" style={{ flexShrink: 0 }} />
-              : <Paperclip size={13} color="var(--text-3)" style={{ flexShrink: 0 }} />}
-            <button type="button" onClick={() => void openAttachment(a.kind, a.id, a.index, a.att)}
-              style={{ flex: 1, minWidth: 0, textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit', overflow: 'hidden' }}>
-              <span style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.att.name}</span>
+        const clickableStyle: React.CSSProperties = { flex: 1, minWidth: 0, textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit', overflow: 'hidden', textDecoration: 'none' };
+        const renderAtt = (a: AttRow, showSource: boolean) => {
+          const inner = (
+            <>
+              <span style={{ display: 'block', fontSize: '0.8rem', color: a.att.type === 'link' ? 'var(--blue)' : 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.att.name}</span>
               {showSource && (
                 <span className="mono" style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.6rem', color: 'var(--text-3)', letterSpacing: '0.5px', textTransform: 'uppercase', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   <FileText size={9} style={{ flexShrink: 0 }} />{a.source}
                 </span>
               )}
-            </button>
-            {a.att.type === 'file' && <Download size={12} color="var(--text-3)" style={{ flexShrink: 0 }} />}
+            </>
+          );
+          return (
+          <div key={`${a.kind}-${a.id}-${a.index}`} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 10px', border: '1px solid var(--line-1)', borderRadius: 3, background: 'var(--surface-2)' }}>
+            {a.att.type === 'link'
+              ? <LinkIcon size={13} color="var(--blue)" style={{ flexShrink: 0 }} />
+              : <Paperclip size={13} color="var(--text-3)" style={{ flexShrink: 0 }} />}
+            {/* Link: âncora nativa (igual ao drawer de Atividades). Arquivo: botão que gera URL assinada. */}
+            {a.att.type === 'link'
+              ? <a href={a.att.url} target="_blank" rel="noreferrer" title="Abrir link" style={clickableStyle}>{inner}</a>
+              : <button type="button" onClick={() => void openAttachment(a.kind, a.id, a.index, a.att)} style={clickableStyle}>{inner}</button>}
+            {a.att.type === 'file'
+              ? <Download size={12} color="var(--text-3)" style={{ flexShrink: 0 }} />
+              : <ExternalLink size={12} color="var(--text-3)" style={{ flexShrink: 0 }} />}
           </div>
-        );
+          );
+        };
         return (
           <>
             {/* Backdrop */}

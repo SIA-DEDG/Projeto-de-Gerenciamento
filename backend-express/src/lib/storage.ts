@@ -44,7 +44,7 @@ export async function getSignedUrl(path: string, expiresIn = SIGNED_URL_TTL, dow
   const supabase = getClient();
   const { data, error } = await supabase.storage
     .from(BUCKET)
-    .createSignedUrl(path, expiresIn, downloadName ? { download: downloadName } : undefined);
+    .createSignedUrl(path, expiresIn);
   if (error || !data) {
     // Objeto some do bucket (removido fora do fluxo do app / referência órfã):
     // devolve 404 com mensagem clara em vez de estourar 500 genérico.
@@ -53,7 +53,13 @@ export async function getSignedUrl(path: string, expiresIn = SIGNED_URL_TTL, dow
     }
     throw new Error(`Storage URL falhou: ${error?.message}`);
   }
-  return data.signedUrl;
+  // Força o Content-Disposition com o NOME ORIGINAL. Não usamos a option
+  // `{ download }` do supabase-js porque ela DUPLO-ENCODA acentos/parênteses
+  // (ex.: "í" vira "%25C3%25AD" e o arquivo baixa com o nome escapado). Anexar
+  // `&download=` manualmente com encode simples entrega o nome correto.
+  return downloadName
+    ? `${data.signedUrl}&download=${encodeURIComponent(downloadName)}`
+    : data.signedUrl;
 }
 
 export async function deleteFile(path: string): Promise<void> {
