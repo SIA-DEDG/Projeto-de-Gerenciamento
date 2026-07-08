@@ -24,6 +24,7 @@ import {
   avatarColor, initials, statusGroupLabel, resolveCoResponsibleIds,
   canUseProjectClient, canEditProjectClient, canManageProjectClient,
 } from '@/lib/utils';
+import { openSignedUrl } from '@/lib/download';
 import { useRefetchOnFocus } from '@/lib/useRefetchOnFocus';
 import { onTasksChanged } from '@/lib/taskEvents';
 import type { UserPublic } from '@/lib/api';
@@ -257,13 +258,15 @@ export default function ProjetosPage() {
   }
 
   // Abre um anexo (link direto ou arquivo via URL assinada).
+  // Para arquivos usa openSignedUrl: abre a aba SÍNCRONA (dentro do gesto de clique)
+  // e só redireciona quando a URL assinada chega — evita o bloqueio de pop-up que
+  // ocorre ao chamar window.open depois do await.
   async function openAttachment(kind: 'project' | 'task', id: string, index: number, att: TaskAttachment) {
     if (att.type === 'link') { window.open(att.url, '_blank', 'noopener'); return; }
     try {
-      const url = kind === 'project' ? await getProjectAttachmentUrl(id, index) : await getTaskAttachmentUrl(id, index);
-      window.open(url, '_blank', 'noopener');
-    } catch {
-      addToast('error', 'Não foi possível abrir o anexo', 'Tente novamente.');
+      await openSignedUrl(() => (kind === 'project' ? getProjectAttachmentUrl(id, index) : getTaskAttachmentUrl(id, index)));
+    } catch (e: any) {
+      addToast('error', 'Não foi possível abrir o anexo', e?.message || 'Tente novamente.');
     }
   }
 

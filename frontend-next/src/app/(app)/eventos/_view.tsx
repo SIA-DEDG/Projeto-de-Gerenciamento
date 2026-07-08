@@ -1051,7 +1051,7 @@ export default function EventosPage() {
               </div>
               {/* Baixar */}
               <button
-                onClick={async () => { try { await openSignedUrl(() => getEventMinutesUrl(a.id)); } catch { addToast('error', 'Erro', 'Não foi possível baixar a ata.'); } }}
+                onClick={async () => { try { await openSignedUrl(() => getEventMinutesUrl(a.id)); } catch (e: any) { addToast('error', 'Erro', e?.message || 'Não foi possível baixar a ata.'); } }}
                 title="Baixar ata"
                 style={{ width: 34, height: 34, border: '1px solid var(--border)', borderRadius: 3, background: 'var(--surface)', color: 'var(--blue)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
                 onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--blue)'; (e.currentTarget as HTMLButtonElement).style.background = 'var(--surface-2)'; }}
@@ -1216,7 +1216,7 @@ export default function EventosPage() {
                           <button onClick={async () => {
                             try {
                               await openSignedUrl(() => getEventMinutesUrl(ev.id));
-                            } catch { addToast('error', 'Erro', 'Não foi possível gerar o link de download.'); }
+                            } catch (e: any) { addToast('error', 'Erro', e?.message || 'Não foi possível gerar o link de download.'); }
                           }}
                             title="Baixar ata"
                             style={{ width: 32, height: 32, borderRadius: 3, border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--blue)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}

@@ -78,8 +78,8 @@ function AttachmentsSection({ task }: { task: Task }) {
     setLoading(idx);
     try {
       await openSignedUrl(() => getTaskAttachmentUrl(task.id, idx));
-    } catch {
-      addToast('error', 'Download falhou', 'Não foi possível baixar o anexo. Tente novamente.');
+    } catch (e: any) {
+      addToast('error', 'Download falhou', e?.message || 'Não foi possível baixar o anexo. Tente novamente.');
     } finally { setLoading(null); }
   }
 
