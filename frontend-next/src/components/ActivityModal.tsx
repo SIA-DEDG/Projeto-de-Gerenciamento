@@ -1,13 +1,16 @@
 'use client';
 
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { X, Paperclip, Trash2, Clock, ChevronDown, Link as LinkIcon, Pencil, Plus } from 'lucide-react';
+import { X, Clock, ChevronDown } from 'lucide-react';
 import type { Task, Project } from '@/types';
 import type { UserPublic } from '@/lib/api';
-import { STATUS_COLORS, PRIORITY_COLORS, statusGroup, userProjectIds } from '@/lib/utils';
+import { STATUS_COLORS, PRIORITY_COLORS, statusGroup, isProjectMember, mergeUsersById } from '@/lib/utils';
 import { getUser } from '@/lib/auth';
 import RichTextEditor from './RichTextEditor';
 import ConfirmModal from './ConfirmModal';
+import AttachmentsEditor, { emptyAttachmentDraft, attachmentDraftDirty, attachmentDraftPayload, type AttachmentDraft } from './AttachmentsEditor';
+import CollapsibleGroup from './CollapsibleGroup';
+import OtherDiretoriaPicker from './OtherDiretoriaPicker';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -40,6 +43,10 @@ interface Props {
     project_id: string | null;
     status: string;
     responsible: string;
+    // IDs já resolvidos (inclui membros de outra diretoria envolvida) — o board usa estes
+    // quando presentes, em vez de resolver os nomes só pela própria diretoria.
+    responsible_id?: string | null;
+    co_responsible_ids?: string[];
     date: string;
     priority: string;
     co_responsibles: string | null;
@@ -189,78 +196,6 @@ function CoRespChips({ users, selected, exclude, onChange }: {
   );
 }
 
-// ── File Attachment Field ─────────────────────────────────────────────────────
-
-const ACCEPT = '.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.png,.jpg,.jpeg,.gif,.webp,.mp4,.zip';
-
-function AttachmentField({ attachments, onChange }: {
-  attachments: ActivityAttachment[];
-  onChange: (v: ActivityAttachment[]) => void;
-}) {
-  const fileRef = useRef<HTMLInputElement>(null);
-
-  function handleFiles(files: FileList | null) {
-    if (!files) return;
-    Array.from(files).forEach(file => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const data = (e.target?.result as string).split(',')[1] ?? '';
-        onChange([...attachments, { name: file.name, type: file.type, size: file.size, data }]);
-      };
-      reader.readAsDataURL(file);
-    });
-  }
-
-  function remove(idx: number) {
-    onChange(attachments.filter((_, i) => i !== idx));
-  }
-
-  function formatSize(bytes: number): string {
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
-    return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
-  }
-
-  return (
-    <div>
-      <input ref={fileRef} type="file" multiple accept={ACCEPT} style={{ display: 'none' }}
-        onChange={e => handleFiles(e.target.files)} />
-
-      {/* Drop zone */}
-      <div
-        onClick={() => fileRef.current?.click()}
-        onDragOver={e => { e.preventDefault(); (e.currentTarget as HTMLElement).style.borderColor = 'var(--blue)'; }}
-        onDragLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'; }}
-        onDrop={e => { e.preventDefault(); (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'; handleFiles(e.dataTransfer.files); }}
-        style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, padding: '14px', border: '2px dashed var(--border)', borderRadius: 3, cursor: 'pointer', transition: 'border-color 0.12s', textAlign: 'center' }}>
-        <Paperclip size={18} color="var(--text-3)" />
-        <span style={{ fontSize: '0.78rem', color: 'var(--text-3)' }}>
-          Clique ou arraste arquivos (PDF, Word, Excel, imagens…)
-        </span>
-      </div>
-
-      {/* File list */}
-      {attachments.length > 0 && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 8 }}>
-          {attachments.map((f, i) => (
-            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '7px 10px', border: '1px solid var(--line-1)', borderRadius: 3, background: 'var(--surface-2)' }}>
-              <Paperclip size={13} color="var(--text-3)" style={{ flexShrink: 0 }} />
-              <span style={{ fontSize: '0.78rem', color: 'var(--text)', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.name}</span>
-              <span className="mono" style={{ fontSize: '0.64rem', color: 'var(--text-3)', flexShrink: 0 }}>{formatSize(f.size)}</span>
-              <button type="button" onClick={() => remove(i)}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)', display: 'flex', alignItems: 'center', flexShrink: 0, padding: 2, borderRadius: 2 }}
-                onMouseEnter={e => (e.currentTarget.style.color = '#b42318')}
-                onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-3)')}>
-                <Trash2 size={13} />
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
 // ── Preview card ──────────────────────────────────────────────────────────────
 
 function PreviewCard({ activity, category, priority, status, responsible, deadline, coResps, noDeadline }: {
@@ -327,36 +262,25 @@ function PreviewCard({ activity, category, priority, status, responsible, deadli
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function ActivityModal({
-  open, task, defaultStatus, defaultResponsible, projects, tasks = [], users, fixedProjectId, onClose, onSave,
+  open, task, defaultStatus, defaultResponsible, projects, users, fixedProjectId, onClose, onSave,
 }: Props) {
   const [form, setForm] = useState(EMPTY);
   const [noDeadline, setNoDeadline] = useState(false);
-  const [attachments, setAttachments] = useState<ActivityAttachment[]>([]);
-  const [links, setLinks] = useState<ActivityLink[]>([]);
-  const [existingLinks, setExistingLinks] = useState<{ name: string; url: string; idx: number }[]>([]);
-  const [removedLinkIdxs, setRemovedLinkIdxs] = useState<number[]>([]);
-  const [linkInput, setLinkInput] = useState({ name: '', url: '' });
-  const [onlyMyProjects, setOnlyMyProjects] = useState(true);
-  const [confirmRemoveLink, setConfirmRemoveLink] = useState<{ name: string; idx: number } | null>(null);
-  const [confirmUnaddedLink, setConfirmUnaddedLink] = useState(false);
+  const [attDraft, setAttDraft] = useState<AttachmentDraft>(emptyAttachmentDraft());
   const [confirmClose, setConfirmClose] = useState(false);
+  // Membros de outra diretoria trazidos pelo "Envolver outra diretoria" (compartilhamento).
+  const [extraUsers, setExtraUsers] = useState<UserPublic[]>([]);
   // Snapshot do form no momento da abertura, para detectar alterações não salvas.
   const initialSnapshot = useRef('');
 
+  // Usuários selecionáveis = própria diretoria + os da diretoria envolvida (sem duplicar).
+  const availableUsers = useMemo(() => mergeUsersById(users, extraUsers), [users, extraUsers]);
+
   useEffect(() => {
     if (!open) return;
-    setAttachments([]);
-    setLinks([]);
-    setLinkInput({ name: '', url: '' });
-    setRemovedLinkIdxs([]);
-    setConfirmUnaddedLink(false);
+    setAttDraft(emptyAttachmentDraft());
     setConfirmClose(false);
-    setExistingLinks(
-      (task?.attachments ?? [])
-        .map((a, idx) => ({ a, idx }))
-        .filter((e): e is { a: { type: 'link'; name: string; url: string }; idx: number } => e.a.type === 'link')
-        .map(({ a, idx }) => ({ name: a.name, url: a.url, idx })),
-    );
+    setExtraUsers([]);
     let formInit: typeof EMPTY;
     let noDeadlineInit: boolean;
     if (task) {
@@ -377,49 +301,38 @@ export default function ActivityModal({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, task]);
 
-  const myName = getUser()?.name ?? '';
   const myId = getUser()?.user_id ?? null;
-  const myProjectIds = useMemo(() => userProjectIds(projects, tasks, myName, myId), [projects, tasks, myName, myId]);
 
   if (!open) return null;
 
   const project = projects.find(p => p.id === form.project_id);
   const categoryLabel = project?.name ?? form.project_id ?? '';
 
-  function submitWith(finalLinks: ActivityLink[]) {
-    onSave({
-      ...form,
-      category: categoryLabel,
-      co_responsibles: form.co_responsibles.length > 0 ? JSON.stringify(form.co_responsibles) : null,
-      external_collaborators: form.external_collaborators.trim() || null,
-      deadline: noDeadline ? null : (form.deadline.trim() || null),
-      attachments: attachments.length > 0 ? attachments : undefined,
-      links: finalLinks.length > 0 ? finalLinks : undefined,
-      removedAttachmentIndices: removedLinkIdxs.length > 0 ? removedLinkIdxs : undefined,
-    });
-  }
-
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!form.activity.trim()) return;
-    // Digitou um link mas não clicou em "+": pergunta antes de salvar.
-    if (linkInput.url.trim()) {
-      setConfirmUnaddedLink(true);
-      return;
-    }
-    submitWith(links);
+    const payload = attachmentDraftPayload(attDraft); // dobra link digitado mas não adicionado
+    onSave({
+      ...form,
+      category: categoryLabel,
+      // Resolve nomes -> IDs aqui (com availableUsers, que inclui a outra diretoria envolvida),
+      // pois o board só conhece a própria diretoria.
+      responsible_id: availableUsers.find(u => u.name === form.responsible)?.id ?? null,
+      co_responsible_ids: form.co_responsibles
+        .map(n => availableUsers.find(u => u.name === n)?.id)
+        .filter((id): id is string => !!id),
+      co_responsibles: form.co_responsibles.length > 0 ? JSON.stringify(form.co_responsibles) : null,
+      external_collaborators: form.external_collaborators.trim() || null,
+      deadline: noDeadline ? null : (form.deadline.trim() || null),
+      attachments: payload.attachmentsToAdd,
+      links: payload.linksToAdd,
+      removedAttachmentIndices: payload.removedAttachmentIndices,
+    });
   }
 
   // Há algo digitado/alterado que seria perdido ao fechar?
   function isDirty(): boolean {
-    return (
-      JSON.stringify({ form, noDeadline }) !== initialSnapshot.current ||
-      attachments.length > 0 ||
-      links.length > 0 ||
-      removedLinkIdxs.length > 0 ||
-      linkInput.name.trim() !== '' ||
-      linkInput.url.trim() !== ''
-    );
+    return JSON.stringify({ form, noDeadline }) !== initialSnapshot.current || attachmentDraftDirty(attDraft);
   }
 
   function requestClose() {
@@ -431,10 +344,12 @@ export default function ActivityModal({
   const fixedProject = fixedProjectId != null ? projects.find(p => p.id === fixedProjectId) : null;
   const isEdit = !!task;
 
-  // Filtra o select de projeto para "meus projetos" (mantém sempre o já selecionado visível).
-  const visibleProjects = onlyMyProjects
-    ? projects.filter(p => myProjectIds.has(p.id) || p.id === form.project_id)
-    : projects;
+  // Ao criar/editar, só aparecem os projetos que LHE PERTENCEM (você é responsável ou
+  // colaborador) — mesmo para Admin/Diretor. A visão de todos fica no dashboard geral.
+  // Mantém o já selecionado visível para não sumir ao editar uma atividade existente.
+  const visibleProjects = projects.filter(
+    p => isProjectMember(p, myId) || p.id === form.project_id,
+  );
 
   const inp: React.CSSProperties = { width: '100%', padding: '10px 13px', border: '1px solid var(--border)', borderRadius: 3, fontSize: '0.88rem', background: 'var(--surface)', color: 'var(--text)', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' };
 
@@ -447,7 +362,7 @@ export default function ActivityModal({
       <div style={{ position: 'fixed', top: 0, right: 0, bottom: 0, width: 700, maxWidth: '94%', background: 'var(--surface)', overflowY: 'auto', zIndex: 61, borderLeft: '1px solid var(--line-1)', animation: 'drawin .24s cubic-bezier(.4,0,.2,1) both', display: 'flex', flexDirection: 'column' }}>
 
         {/* Stripe Gov-PI */}
-        <div style={{ height: 4, flexShrink: 0, background: 'linear-gradient(90deg,var(--blue-fixed) 0 40%,#E0A92E 40% 55%,#b42318 55% 75%,#1B8A4B 75%)' }} />
+        {/* Faixa Gov-PI comentada a pedido: <div style={{ height: 4, flexShrink: 0, background: 'linear-gradient(90deg,var(--blue-fixed) 0 40%,#E0A92E 40% 55%,#b42318 55% 75%,#1B8A4B 75%)' }} /> */}
 
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 28px', borderBottom: '1px solid var(--line-1)', flexShrink: 0, position: 'sticky', top: 4, background: 'var(--surface)', zIndex: 2 }}>
@@ -502,17 +417,7 @@ export default function ActivityModal({
             <div style={{ display: 'grid', gridTemplateColumns: showProjectSelect ? '1fr 1fr' : '1fr', gap: 14 }}>
               {showProjectSelect && (
                 <div>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-                    <div className="mono" style={{ fontSize: '0.66rem', fontWeight: 500, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--text-3)' }}>Projeto</div>
-                    <button type="button" onClick={() => setOnlyMyProjects(v => !v)} disabled={!myName}
-                      title="Mostrar apenas projetos em que você é responsável ou participa"
-                      style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', padding: 0, cursor: myName ? 'pointer' : 'default', fontFamily: 'inherit' }}>
-                      <span className="mono" style={{ fontSize: '0.58rem', fontWeight: 600, letterSpacing: '0.5px', textTransform: 'uppercase', color: onlyMyProjects ? 'var(--blue)' : 'var(--text-3)' }}>Meus projetos</span>
-                      <span style={{ position: 'relative', width: 24, height: 14, borderRadius: 7, background: onlyMyProjects ? 'var(--blue)' : 'var(--line-2)', transition: 'background .12s', flexShrink: 0 }}>
-                        <span style={{ position: 'absolute', top: 2, left: onlyMyProjects ? 12 : 2, width: 10, height: 10, borderRadius: '50%', background: '#fff', transition: 'left .14s' }} />
-                      </span>
-                    </button>
-                  </div>
+                  <Label>Projeto</Label>
                   <div style={{ position: 'relative' }}>
                     <select value={form.project_id ?? ''} onChange={e => setForm({ ...form, project_id: e.target.value || null })} style={{ ...inp, padding: '11px 32px 11px 13px', appearance: 'none', cursor: 'pointer' }}>
                       <option value="">— Sem projeto —</option>
@@ -541,13 +446,13 @@ export default function ActivityModal({
                 <div style={{ position: 'relative' }}>
                   <select value={form.responsible} onChange={e => setForm({ ...form, responsible: e.target.value, co_responsibles: form.co_responsibles.filter(n => n !== e.target.value) })} style={{ ...inp, padding: '11px 32px 11px 13px', appearance: 'none', cursor: 'pointer' }}>
                     <option value="">— Sem responsável —</option>
-                    {users.map(u => <option key={u.id} value={u.name}>{u.name}</option>)}
+                    {availableUsers.map(u => <option key={u.id} value={u.name}>{u.name}</option>)}
                   </select>
                   <ChevronDown size={12} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-3)' }} />
                 </div>
               </div>
               <div>
-                <Label>Data</Label>
+                <Label>Criado em</Label>
                 <input type="date" value={form.date} onChange={e => setForm({ ...form, date: e.target.value })} style={inp}
                   onFocus={e => { e.target.style.borderColor = 'var(--blue)'; }}
                   onBlur={e => { e.target.style.borderColor = 'var(--border)'; }} />
@@ -571,7 +476,10 @@ export default function ActivityModal({
             {/* Co-responsáveis */}
             <div>
               <Label>Co-responsáveis</Label>
-              <CoRespChips users={users} selected={form.co_responsibles} exclude={form.responsible} onChange={v => setForm({ ...form, co_responsibles: v })} />
+              <div style={{ marginBottom: 8 }}>
+                <OtherDiretoriaPicker onMembersChange={setExtraUsers} />
+              </div>
+              <CoRespChips users={availableUsers} selected={form.co_responsibles} exclude={form.responsible} onChange={v => setForm({ ...form, co_responsibles: v })} />
             </div>
 
             {/* Colaboração externa */}
@@ -582,81 +490,10 @@ export default function ActivityModal({
                 onBlur={e => { e.target.style.borderColor = 'var(--border)'; e.target.style.boxShadow = 'none'; }} />
             </div>
 
-            {/* Anexos */}
-            <div>
-              <Label>Arquivos anexados</Label>
-              <AttachmentField attachments={attachments} onChange={setAttachments} />
-            </div>
-
-            {/* Links */}
-            <div>
-              <Label>
-                <p>Links</p> <p>Adicionar</p>
-              </Label>
-              <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
-                <input
-                  value={linkInput.name} onChange={e => setLinkInput(v => ({ ...v, name: e.target.value }))}
-                  placeholder="Nome (ex: Relatório no Drive)"
-                  style={{ flex: 1, padding: '9px 12px', border: '1px solid var(--border)', borderRadius: 3, fontSize: '0.84rem', background: 'var(--surface)', color: 'var(--text)', outline: 'none', fontFamily: 'inherit' }} />
-                <input
-                  value={linkInput.url} onChange={e => setLinkInput(v => ({ ...v, url: e.target.value }))}
-                  placeholder="https://..."
-                  style={{ flex: 2, padding: '9px 12px', border: '1px solid var(--border)', borderRadius: 3, fontSize: '0.84rem', background: 'var(--surface)', color: 'var(--text)', outline: 'none', fontFamily: 'inherit' }} />
-                <button type="button"
-                  onClick={() => {
-                    const url = linkInput.url.trim();
-                    if (!url) return;
-                    const name = linkInput.name.trim() || url;
-                    setLinks(prev => [...prev, { name, url }]);
-                    setLinkInput({ name: '', url: '' });
-                  }}
-                  style={{ padding: '9px 14px', border: 'none', borderRadius: 3, background: '#034EA2', color: '#fff', fontSize: '0.82rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}>
-                  <Plus size={14} />
-                </button>
-              </div>
-              {(existingLinks.some(l => !removedLinkIdxs.includes(l.idx)) || links.length > 0) && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  {existingLinks.filter(l => !removedLinkIdxs.includes(l.idx)).map((l) => (
-                    <div key={`e${l.idx}`} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '7px 10px', border: '1px solid var(--line-1)', borderRadius: 3, background: 'var(--surface-2)' }}>
-                      <LinkIcon size={13} color="var(--blue)" style={{ flexShrink: 0 }} />
-                      <a href={l.url} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.78rem', color: 'var(--text)', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textDecoration: 'none' }}>{l.name}</a>
-                      <span style={{ fontSize: '0.7rem', color: 'var(--text-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 180 }}>{l.url}</span>
-                      <button type="button" title="Editar" onClick={() => { setLinkInput({ name: l.name, url: l.url }); setRemovedLinkIdxs(prev => prev.includes(l.idx) ? prev : [...prev, l.idx]); }}
-                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)', display: 'flex', alignItems: 'center', padding: 2, borderRadius: 2 }}
-                        onMouseEnter={e => (e.currentTarget.style.color = 'var(--blue)')}
-                        onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-3)')}>
-                        <Pencil size={13} />
-                      </button>
-                      <button type="button" title="Remover" onClick={() => setConfirmRemoveLink({ name: l.name, idx: l.idx })}
-                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)', display: 'flex', alignItems: 'center', padding: 2, borderRadius: 2 }}
-                        onMouseEnter={e => (e.currentTarget.style.color = '#b42318')}
-                        onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-3)')}>
-                        <Trash2 size={13} />
-                      </button>
-                    </div>
-                  ))}
-                  {links.map((l, i) => (
-                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '7px 10px', border: '1px solid var(--line-1)', borderRadius: 3, background: 'var(--surface-2)' }}>
-                      <LinkIcon size={13} color="var(--blue)" style={{ flexShrink: 0 }} />
-                      <span style={{ fontSize: '0.78rem', color: 'var(--text)', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{l.name}</span>
-                      <span style={{ fontSize: '0.7rem', color: 'var(--text-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 180 }}>{l.url}</span>
-                      <button type="button" title="Editar" onClick={() => { setLinkInput({ name: l.name, url: l.url }); setLinks(prev => prev.filter((_, j) => j !== i)); }}
-                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)', display: 'flex', alignItems: 'center', padding: 2, borderRadius: 2 }}
-                        onMouseEnter={e => (e.currentTarget.style.color = 'var(--blue)')}
-                        onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-3)')}>
-                        <Pencil size={13} />
-                      </button>
-                      <button type="button" title="Remover" onClick={() => setLinks(prev => prev.filter((_, j) => j !== i))}
-                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)', display: 'flex', alignItems: 'center', padding: 2, borderRadius: 2 }}
-                        onMouseEnter={e => (e.currentTarget.style.color = '#b42318')}
-                        onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-3)')}>
-                        <Trash2 size={13} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+            {/* Arquivos e links — componente padronizado (anexar ao criar/editar; remover só aqui) */}
+            <CollapsibleGroup label="Arquivos e links" count={(task?.attachments ?? []).length} defaultOpen={false}>
+              <AttachmentsEditor existing={task?.attachments ?? []} value={attDraft} onChange={setAttDraft} />
+            </CollapsibleGroup>
 
             {/* Actions */}
             <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
@@ -675,39 +512,13 @@ export default function ActivityModal({
         </form>
       </div>
 
-      <ConfirmModal
-        open={confirmRemoveLink !== null}
-        title="Remover link"
-        message={confirmRemoveLink ? `Remover o link "${confirmRemoveLink.name}"?` : undefined}
-        confirmLabel="Remover"
-        danger
-        onConfirm={() => { if (confirmRemoveLink) setRemovedLinkIdxs(prev => [...prev, confirmRemoveLink.idx]); }}
-        onClose={() => setConfirmRemoveLink(null)}
-      />
-
-      {/* Link digitado mas não adicionado ao clicar em salvar */}
-      <ConfirmModal
-        open={confirmUnaddedLink}
-        title="Opa, faltou adicionar o link"
-        message="Você escreveu um link mas não clicou no +. Quer incluí-lo?"
-        confirmLabel="Sim, adicionar"
-        cancelLabel="Não, salvar assim"
-        onConfirm={() => {
-          const url = linkInput.url.trim();
-          const name = linkInput.name.trim() || url;
-          submitWith(url ? [...links, { name, url }] : links);
-        }}
-        onCancel={() => submitWith(links)}
-        onClose={() => setConfirmUnaddedLink(false)}
-      />
-
       {/* Alterações não salvas ao tentar sair */}
       <ConfirmModal
         open={confirmClose}
         title="Tem certeza que quer sair?"
         message="Você vai perder tudo que preencheu até agora."
-        confirmLabel="Sim, sair"
-        cancelLabel="Continuar edição"
+        confirmLabel="Sair"
+        cancelLabel="Continuar"
         danger
         onConfirm={onClose}
         onClose={() => setConfirmClose(false)}

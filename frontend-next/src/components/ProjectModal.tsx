@@ -1,28 +1,42 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { X, ChevronDown } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { X, ChevronDown, ChevronUp } from 'lucide-react';
 import type { UserPublic } from '@/lib/api';
 import type { Project } from '@/types';
+import type { ActivityAttachment, ActivityLink } from './ActivityModal';
+import AttachmentsEditor, { emptyAttachmentDraft, attachmentDraftDirty, attachmentDraftPayload, type AttachmentDraft } from './AttachmentsEditor';
+import CollapsibleGroup from './CollapsibleGroup';
+import OtherDiretoriaPicker from './OtherDiretoriaPicker';
 import { useUnsavedGuard } from '@/hooks/useUnsavedGuard';
+import { getUser } from '@/lib/auth';
+import { mergeUsersById } from '@/lib/utils';
 
 interface Props {
   open: boolean;
   project: Project | null;
   onClose: () => void;
-  onSave: (data: Omit<Project, 'id'>) => void;
+  onSave: (data: Omit<Project, 'id'> & {
+    attachmentsToAdd?: ActivityAttachment[];
+    linksToAdd?: ActivityLink[];
+    removedAttachmentIndices?: number[];
+  }) => void;
   users?: UserPublic[];
+  // Só o dono (ou Admin/Diretor) pode alterar a lista de responsáveis.
+  canManageResponsibles?: boolean;
 }
 
 const EMPTY: Omit<Project, 'id'> = {
   name: '',
   category: '',
   owner: '',
+  owner_id: null,
   deadline: '',
   executive_status: 'planejamento',
   objective: '',
   scope: '',
   summary: '',
+  responsible_ids: [],
 };
 
 // ── Status executivo: rótulo ↔ código ──────────────────────────────────────────
@@ -72,18 +86,35 @@ function Segmented({ options, value, onChange }: {
 }
 
 // ── Main component ───────────────────────────────────────────────────────────────
-export default function ProjectModal({ open, project, onClose, onSave, users = [] }: Props) {
+export default function ProjectModal({ open, project, onClose, onSave, users = [], canManageResponsibles = true }: Props) {
   const [form, setForm] = useState<Omit<Project, 'id'>>(EMPTY);
+  const [showResp, setShowResp] = useState(false); // lista de colaboradores recolhida por padrão
+  const [noDeadline, setNoDeadline] = useState(false);
+  const [attDraft, setAttDraft] = useState<AttachmentDraft>(emptyAttachmentDraft());
+  // Membros de outra diretoria trazidos pelo "Envolver outra diretoria" (compartilhamento).
+  const [extraUsers, setExtraUsers] = useState<UserPublic[]>([]);
+
+  const myId = getUser()?.user_id ?? null;
+
+  // Usuários selecionáveis = própria diretoria + os da diretoria envolvida (sem duplicar).
+  const availableUsers = useMemo(() => mergeUsersById(users, extraUsers), [users, extraUsers]);
 
   useEffect(() => {
     if (!open) return;
+    setAttDraft(emptyAttachmentDraft());
+    setExtraUsers([]);
     if (project) {
       const { id, ...rest } = project;
       void id;
-      setForm({ ...EMPTY, ...rest, deadline: rest.deadline ? rest.deadline.slice(0, 10) : '' });
+      setForm({ ...EMPTY, ...rest, responsible_ids: rest.responsible_ids ?? [], deadline: rest.deadline ? rest.deadline.slice(0, 10) : '' });
+      setNoDeadline(!rest.deadline);
     } else {
-      setForm(EMPTY);
+      // Novo projeto: o responsável padrão é quem está criando; os demais membros da
+      // diretoria entram como colaboradores (o responsável não entra na lista — já é membro).
+      setForm({ ...EMPTY, owner_id: myId, responsible_ids: users.filter(u => u.id !== myId).map(u => u.id) });
+      setNoDeadline(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, project]);
 
   const { requestClose, guard } = useUnsavedGuard(onClose);
@@ -91,20 +122,25 @@ export default function ProjectModal({ open, project, onClose, onSave, users = [
   if (!open) return null;
 
   const isEdit = !!project;
+  const existingAtts = project?.attachments ?? [];
 
   // Compara o form atual com o estado pristino (mesma transformação do init) para saber
   // se há alterações não salvas ao tentar fechar.
   const pristine: Omit<Project, 'id'> = (() => {
-    if (!project) return EMPTY;
+    if (!project) return { ...EMPTY, owner_id: myId, responsible_ids: users.filter(u => u.id !== myId).map(u => u.id) };
     const { id, ...rest } = project; void id;
-    return { ...EMPTY, ...rest, deadline: rest.deadline ? rest.deadline.slice(0, 10) : '' };
+    return { ...EMPTY, ...rest, responsible_ids: rest.responsible_ids ?? [], deadline: rest.deadline ? rest.deadline.slice(0, 10) : '' };
   })();
-  const dirty = JSON.stringify(form) !== JSON.stringify(pristine);
+  const dirty = JSON.stringify(form) !== JSON.stringify(pristine) || attachmentDraftDirty(attDraft);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!form.name.trim()) return;
-    onSave(form);
+    onSave({
+      ...form,
+      deadline: noDeadline ? '' : form.deadline,
+      ...attachmentDraftPayload(attDraft),
+    });
   }
 
   const inp: React.CSSProperties = { width: '100%', padding: '10px 13px', border: '1px solid var(--border)', borderRadius: 3, fontSize: '0.88rem', background: 'var(--surface)', color: 'var(--text)', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' };
@@ -123,7 +159,7 @@ export default function ProjectModal({ open, project, onClose, onSave, users = [
       <div style={{ position: 'fixed', top: 0, right: 0, bottom: 0, width: 700, maxWidth: '94%', background: 'var(--surface)', overflowY: 'auto', zIndex: 61, borderLeft: '1px solid var(--line-1)', animation: 'drawin .24s cubic-bezier(.4,0,.2,1) both', display: 'flex', flexDirection: 'column' }}>
 
         {/* Stripe Gov-PI */}
-        <div style={{ height: 4, flexShrink: 0, background: 'linear-gradient(90deg,var(--blue-fixed) 0 40%,#E0A92E 40% 55%,#b42318 55% 75%,#1B8A4B 75%)' }} />
+        {/* Faixa Gov-PI comentada a pedido: <div style={{ height: 4, flexShrink: 0, background: 'linear-gradient(90deg,var(--blue-fixed) 0 40%,#E0A92E 40% 55%,#b42318 55% 75%,#1B8A4B 75%)' }} /> */}
 
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 28px', borderBottom: '1px solid var(--line-1)', flexShrink: 0, position: 'sticky', top: 4, background: 'var(--surface)', zIndex: 2 }}>
@@ -159,13 +195,69 @@ export default function ProjectModal({ open, project, onClose, onSave, users = [
               <div>
                 <Label>Responsável</Label>
                 <div style={{ position: 'relative' }}>
-                  <select value={form.owner ?? ''} onChange={e => setForm({ ...form, owner: e.target.value })} style={{ ...inp, padding: '11px 32px 11px 13px', appearance: 'none', cursor: 'pointer' }}>
-                    <option value="">— Sem responsável —</option>
-                    {users.map(u => <option key={u.id} value={u.name}>{u.name}</option>)}
+                  <select
+                    value={form.owner_id ?? ''}
+                    disabled={!canManageResponsibles}
+                    onChange={e => {
+                      const newOwner = e.target.value || null;
+                      // O responsável não fica na lista de colaboradores (já é membro por ser o responsável).
+                      setForm(f => ({ ...f, owner_id: newOwner, responsible_ids: (f.responsible_ids ?? []).filter(id => id !== newOwner) }));
+                    }}
+                    style={{ ...inp, padding: '11px 32px 11px 13px', appearance: 'none', cursor: canManageResponsibles ? 'pointer' : 'not-allowed' }}
+                  >
+                    {/* Mantém o responsável atual visível mesmo se não estiver na lista filtrada de usuários */}
+                    {form.owner_id && !availableUsers.some(u => u.id === form.owner_id) && (
+                      <option value={form.owner_id}>{form.owner || '—'}</option>
+                    )}
+                    {availableUsers.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
                   </select>
                   <ChevronDown size={12} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-3)' }} />
                 </div>
               </div>
+            </div>
+
+            {/* Colaboradores — equipe com acesso de edição ao projeto, além do responsável (colapsável) */}
+            <div>
+              <button type="button" onClick={() => setShowResp(v => !v)}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', background: 'var(--blue)', color: '#fff', border: 'none', borderRadius: 3, padding: '10px 13px', cursor: 'pointer', fontFamily: 'inherit', marginBottom: showResp ? 8 : 0 }}>
+                <span className="mono" style={{ fontSize: '0.66rem', fontWeight: 600, letterSpacing: '1px', textTransform: 'uppercase', color: '#fff' }}>
+                  Colaboradores · {form.responsible_ids?.length ?? 0}
+                </span>
+                {showResp ? <ChevronUp size={14} color="#fff" /> : <ChevronDown size={14} color="#fff" />}
+              </button>
+              {showResp && (
+                <>
+                  {!canManageResponsibles && (
+                    <div className="mono" style={{ fontSize: '0.62rem', color: 'var(--text-3)', marginBottom: 6 }}>
+                      Apenas o responsável do projeto pode alterar os colaboradores.
+                    </div>
+                  )}
+                  {canManageResponsibles && (
+                    <div style={{ marginBottom: 8 }}>
+                      <OtherDiretoriaPicker onMembersChange={setExtraUsers} />
+                    </div>
+                  )}
+                  <div style={{ border: '1px solid var(--border)', borderRadius: 3, maxHeight: 200, overflowY: 'auto' }}>
+                    {availableUsers.filter(u => u.id !== form.owner_id).length === 0 ? (
+                      <div style={{ padding: '10px 12px', color: 'var(--text-3)', fontSize: '0.85rem' }}>Nenhum outro usuário na diretoria</div>
+                    ) : availableUsers.filter(u => u.id !== form.owner_id).map(u => {
+                      const checked = form.responsible_ids?.includes(u.id) ?? false;
+                      return (
+                        <label key={u.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', cursor: canManageResponsibles ? 'pointer' : 'default', fontSize: '0.86rem', borderBottom: '1px solid var(--line-2)' }}>
+                          <input type="checkbox" disabled={!canManageResponsibles} checked={checked}
+                            onChange={() => {
+                              const cur = form.responsible_ids ?? [];
+                              setForm({ ...form, responsible_ids: checked ? cur.filter(id => id !== u.id) : [...cur, u.id] });
+                            }}
+                            style={{ accentColor: 'var(--blue)', width: 14, height: 14, cursor: canManageResponsibles ? 'pointer' : 'default' }} />
+                          {u.name}
+                          <span style={{ marginLeft: 'auto', fontSize: '0.72rem', color: 'var(--text-3)' }}>{u.role}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Status executivo */}
@@ -180,8 +272,14 @@ export default function ProjectModal({ open, project, onClose, onSave, users = [
 
             {/* Prazo final */}
             <div>
-              <Label>Prazo final</Label>
-              <input type="date" value={form.deadline ?? ''} onChange={e => setForm({ ...form, deadline: e.target.value })} style={inp} {...focusBlue} />
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Label>Prazo final</Label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.72rem', color: 'var(--text-2)', cursor: 'pointer', marginBottom: 6 }}>
+                  <input type="checkbox" checked={noDeadline} onChange={e => { setNoDeadline(e.target.checked); if (e.target.checked) setForm({ ...form, deadline: '' }); }} style={{ accentColor: 'var(--blue)', cursor: 'pointer', width: 14, height: 14 }} />
+                  Indeterminado
+                </label>
+              </div>
+              <input type="date" value={form.deadline ?? ''} disabled={noDeadline} onChange={e => setForm({ ...form, deadline: e.target.value })} style={{ ...inp, opacity: noDeadline ? 0.4 : 1, cursor: noDeadline ? 'not-allowed' : 'text' }} {...focusBlue} />
             </div>
 
             {/* Objetivo */}
@@ -201,6 +299,11 @@ export default function ProjectModal({ open, project, onClose, onSave, users = [
               <Label>Resumo executivo</Label>
               <textarea rows={3} value={form.summary ?? ''} onChange={e => setForm({ ...form, summary: e.target.value })} placeholder="Contexto geral para leitura da alta gestão..." style={{ ...inp, resize: 'vertical', lineHeight: 1.5 }} {...focusBlue} />
             </div>
+
+            {/* Arquivos e links do projeto — anexar ao criar/editar; remover existentes só aqui */}
+            <CollapsibleGroup label="Arquivos e links do projeto" count={existingAtts.length} defaultOpen={false}>
+              <AttachmentsEditor existing={existingAtts} value={attDraft} onChange={setAttDraft} />
+            </CollapsibleGroup>
 
             {/* Actions */}
             <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>

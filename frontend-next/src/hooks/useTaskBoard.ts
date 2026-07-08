@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect } from 'react';
 import type { DragEndEvent } from '@dnd-kit/core';
 import {
   fetchTasks, createTask, updateTask, deleteTask, archiveTask,
-  fetchProjects, fetchUsers,
+  fetchProjects, fetchUsers, pinTask, unpinTask,
   getCachedTasks, getCachedProjects, getCachedUsers,
   addTaskFile, addTaskLink, removeTaskAttachment, invalidateTasksCache,
 } from '@/lib/api';
@@ -22,6 +22,10 @@ export interface ActivityFormData {
   project_id: string | null;
   status: string;
   responsible: string;
+  // IDs já resolvidos pelo modal (incluem membros de outra diretoria envolvida); quando
+  // presentes, têm prioridade sobre a resolução por nome (limitada à própria diretoria).
+  responsible_id?: string | null;
+  co_responsible_ids?: string[];
   date: string;
   priority: string;
   co_responsibles: string | null;
@@ -135,8 +139,12 @@ export function useTaskBoard() {
     const existingTask = activityModal.task;
     setActivityModal({ open: false, task: null });
 
-    const responsibleId = users.find((u) => u.name === formData.responsible)?.id ?? null;
-    const coIds = resolveCoResponsibleIds(formData.co_responsibles, users);
+    // Prioriza os IDs já resolvidos pelo modal (incluem outra diretoria); só cai na
+    // resolução por nome (própria diretoria) quando o modal não os forneceu.
+    const responsibleId = formData.responsible_id !== undefined
+      ? formData.responsible_id
+      : (users.find((u) => u.name === formData.responsible)?.id ?? null);
+    const coIds = formData.co_responsible_ids ?? resolveCoResponsibleIds(formData.co_responsibles, users);
     const payload = {
       ...formData,
       project_id: formData.project_id ?? undefined,
@@ -168,6 +176,28 @@ export function useTaskBoard() {
       setAllTasks((curr) => [...curr.filter(x => x.id !== created.id), next]);
       invalidateTasksCache();
       return next;
+    }
+  }
+
+  // Fixa/desfixa a atividade (pin é por usuário). UI otimista: reflete na hora e
+  // reverte se a rede falhar. Atualiza também o drawer aberto, se for a mesma tarefa.
+  async function togglePin(taskId: string, pinned: boolean) {
+    // Atualiza o flag e reordena mantendo os fixados no topo (sort estável preserva a
+    // ordem por data dentro de cada grupo) — espelha o `pinnedFirst` do backend.
+    setAllTasks((curr) => {
+      const updated = curr.map((t) => (t.id === taskId ? { ...t, pinned } : t));
+      return [...updated].sort((a, b) => Number(!!b.pinned) - Number(!!a.pinned));
+    });
+    setOpenedTask((curr) => (curr && curr.id === taskId ? { ...curr, pinned } : curr));
+    try {
+      await (pinned ? pinTask(taskId) : unpinTask(taskId));
+      invalidateTasksCache();
+    } catch {
+      setAllTasks((curr) => {
+        const reverted = curr.map((t) => (t.id === taskId ? { ...t, pinned: !pinned } : t));
+        return [...reverted].sort((a, b) => Number(!!b.pinned) - Number(!!a.pinned));
+      });
+      setOpenedTask((curr) => (curr && curr.id === taskId ? { ...curr, pinned: !pinned } : curr));
     }
   }
 
@@ -347,6 +377,7 @@ export function useTaskBoard() {
 
     // Operações
     handleDragEnd,
+    togglePin,
     requestDeleteTask,
     requestArchiveTask,
     advanceOpenedTaskStatus,

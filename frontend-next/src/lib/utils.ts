@@ -1,5 +1,13 @@
 import type { StatusGroup, Project, Task } from '@/types';
 
+// Mescla duas listas de usuários deduplicando por `id` (os de `extra` prevalecem).
+// Usado nos modais para juntar a própria diretoria com a "outra diretoria envolvida".
+export function mergeUsersById<T extends { id: string }>(base: T[], extra: T[]): T[] {
+  const byId = new Map(base.map(u => [u.id, u]));
+  extra.forEach(u => byId.set(u.id, u));
+  return [...byId.values()];
+}
+
 // ── Projetos do usuário ─────────────────────────────────────────────────────────
 
 /**
@@ -19,6 +27,8 @@ export function userProjectIds(
   if (!userName && !userId) return ids;
   for (const p of projects) {
     if ((userId && p.owner_id === userId) || (userName && p.owner === userName)) ids.add(p.id);
+    // Responsável explícito do projeto (delegado).
+    if (userId && p.responsible_ids?.includes(userId)) ids.add(p.id);
   }
   for (const t of tasks) {
     if (!t.project_id || ids.has(t.project_id)) continue;
@@ -30,6 +40,37 @@ export function userProjectIds(
     if (mine) ids.add(t.project_id);
   }
   return ids;
+}
+
+// ── Permissões de projeto (espelham backend projects.perms.ts) ──────────────────
+// Admin, Diretor e Gerente têm poder total sobre qualquer projeto (editar, excluir,
+// trocar responsável, gerenciar colaboradores) — fallback por cargo. Não os torna
+// membros/colaboradores: só conta quem for explicitamente adicionado.
+function isPrivRole(role: string | undefined): boolean {
+  return role === 'Admin' || role === 'Diretor' || role === 'Gerente';
+}
+
+// Dono ou responsável delegado.
+export function isProjectMember(project: Project, userId: string | null | undefined): boolean {
+  if (!userId) return false;
+  return project.owner_id === userId || !!project.responsible_ids?.includes(userId);
+}
+
+// Criar atividades / anexar arquivos e links — SOMENTE membros (inclui Estagiário).
+// Cargo privilegiado não entra aqui: só "usa" o projeto quem faz parte.
+export function canUseProjectClient(project: Project, userId: string | null | undefined, _role?: string | undefined): boolean {
+  return isProjectMember(project, userId);
+}
+
+// Editar os dados do projeto — membros (EXCETO Estagiário) ou cargo privilegiado.
+export function canEditProjectClient(project: Project, userId: string | null | undefined, role: string | undefined): boolean {
+  const memberCanEdit = isProjectMember(project, userId) && role !== 'Estagiario' && role !== 'Estagiário';
+  return memberCanEdit || isPrivRole(role);
+}
+
+// Excluir / gerenciar responsáveis — dono ou cargo privilegiado (Admin/Diretor/Gerente).
+export function canManageProjectClient(project: Project, userId: string | null | undefined, role: string | undefined): boolean {
+  return (!!userId && project.owner_id === userId) || isPrivRole(role);
 }
 
 // ── Status ────────────────────────────────────────────────────────────────────

@@ -81,6 +81,7 @@ export interface Directoria {
   description: string | null;
   color: string | null;
   active: boolean;
+  autoArchiveDays?: number;
   created_at: string;
   member_count?: number;
 }
@@ -122,7 +123,14 @@ async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
 
   if (!response.ok) {
     const text = await response.text().catch(() => '');
-    throw new Error(`Erro ${response.status}: ${text || response.statusText}`);
+    // O backend responde erros como { error: "mensagem amigável" }. Extraímos essa
+    // mensagem para exibir direto ao usuário; se o corpo não for JSON, usamos o texto cru.
+    let message = text || response.statusText;
+    try {
+      const parsed = JSON.parse(text) as { error?: unknown };
+      if (typeof parsed?.error === 'string') message = parsed.error;
+    } catch { /* corpo não-JSON — mantém o texto */ }
+    throw new Error(message);
   }
   if (response.status === 204) return undefined as T;
   return response.json() as Promise<T>;
@@ -261,6 +269,21 @@ export async function unarchiveTask(id: string): Promise<void> {
   emitTasksChanged();
 }
 
+// ── Pin (fixar atividade) — por usuário ─────────────────────────────────────────
+export async function pinTask(id: string): Promise<Task> {
+  const data = await apiFetch<RawTask>(`/api/tasks/${id}/pin`, { method: 'PUT' });
+  cacheInvalidate('tasks');
+  emitTasksChanged();
+  return enrichTask(data);
+}
+
+export async function unpinTask(id: string): Promise<Task> {
+  const data = await apiFetch<RawTask>(`/api/tasks/${id}/pin`, { method: 'DELETE' });
+  cacheInvalidate('tasks');
+  emitTasksChanged();
+  return enrichTask(data);
+}
+
 // ── Anexos de atividades ──────────────────────────────────────────────────────
 import type { TaskAttachment } from '@/types';
 
@@ -317,12 +340,15 @@ export async function fetchProjects(): Promise<Project[]> {
 export interface ProjectWritePayload {
   name: string;
   category?: string | null;
-  ownerId?: string | null;
   deadline?: string | null;
   executiveStatus?: string | null;
   objective?: string | null;
   scope?: string | null;
   summary?: string | null;
+  // Responsável do projeto (owner). No create, padrão é o criador; pode ser reatribuído.
+  ownerId?: string | null;
+  // Só o responsável (ou Admin/Diretor) pode alterar; omitir para não mexer nos colaboradores.
+  responsibleIds?: string[] | null;
 }
 
 export async function createProject(payload: ProjectWritePayload): Promise<Project> {
@@ -349,6 +375,36 @@ export async function updateProject(
 export async function deleteProject(id: string): Promise<void> {
   await apiFetch<void>(`/api/projects/${id}`, { method: 'DELETE' });
   cacheInvalidate('projects', 'tasks');
+}
+
+// ── Anexos de projeto (mesmo padrão de atividades) ──────────────────────────────
+export async function addProjectFile(projectId: string, file: { name: string; data: string; mimeType: string; size: number }): Promise<TaskAttachment[]> {
+  const r = await apiFetch<TaskAttachment[]>(`/api/projects/${projectId}/attachments`, {
+    method: 'POST',
+    body: JSON.stringify({ type: 'file', name: file.name, fileData: file.data, mimeType: file.mimeType, size: file.size }),
+  });
+  cacheInvalidate('projects');
+  return r;
+}
+
+export async function addProjectLink(projectId: string, name: string, url: string): Promise<TaskAttachment[]> {
+  const r = await apiFetch<TaskAttachment[]>(`/api/projects/${projectId}/attachments`, {
+    method: 'POST',
+    body: JSON.stringify({ type: 'link', name, url }),
+  });
+  cacheInvalidate('projects');
+  return r;
+}
+
+export async function removeProjectAttachment(projectId: string, index: number): Promise<TaskAttachment[]> {
+  const r = await apiFetch<TaskAttachment[]>(`/api/projects/${projectId}/attachments/${index}`, { method: 'DELETE' });
+  cacheInvalidate('projects');
+  return r;
+}
+
+export async function getProjectAttachmentUrl(projectId: string, index: number): Promise<string> {
+  const { url } = await apiFetch<{ url: string }>(`/api/projects/${projectId}/attachments/${index}/url`);
+  return url;
 }
 
 
@@ -516,6 +572,7 @@ export interface CalendarEvent {
   is_company_wide: boolean;
   created_at: string;
   created_by_id?: string | null;
+  attachments?: TaskAttachment[]; // arquivos/links do evento
 }
 
 export async function fetchEvents(): Promise<CalendarEvent[]> {
@@ -559,10 +616,10 @@ export async function deleteEvent(id: string): Promise<void> {
   cacheInvalidate('events');
 }
 
-export async function setEventMinutes(id: string, file_name: string, file_data: string): Promise<CalendarEvent> {
+export async function setEventMinutes(id: string, file_name: string, file_data: string, mime_type?: string): Promise<CalendarEvent> {
   const result = await apiFetch<CalendarEvent>(`/api/events/${id}/minutes`, {
     method: 'PUT',
-    body: JSON.stringify({ fileName: file_name, fileData: file_data }),
+    body: JSON.stringify({ fileName: file_name, fileData: file_data, mimeType: mime_type ?? null }),
   });
   cacheInvalidate('events');
   return result;
@@ -577,6 +634,36 @@ export async function removeEventMinutes(id: string): Promise<CalendarEvent> {
 /** Obtém URL assinada (1h) para download da ata de um evento */
 export async function getEventMinutesUrl(id: string): Promise<string> {
   const { url } = await apiFetch<{ url: string }>(`/api/events/${id}/minutes/url`);
+  return url;
+}
+
+// ── Anexos de eventos (arquivos/links) — mesmo padrão de projetos/atividades ─────
+export async function addEventFile(eventId: string, file: { name: string; data: string; mimeType: string; size: number }): Promise<TaskAttachment[]> {
+  const r = await apiFetch<TaskAttachment[]>(`/api/events/${eventId}/attachments`, {
+    method: 'POST',
+    body: JSON.stringify({ type: 'file', name: file.name, fileData: file.data, mimeType: file.mimeType, size: file.size }),
+  });
+  cacheInvalidate('events');
+  return r;
+}
+
+export async function addEventLink(eventId: string, name: string, url: string): Promise<TaskAttachment[]> {
+  const r = await apiFetch<TaskAttachment[]>(`/api/events/${eventId}/attachments`, {
+    method: 'POST',
+    body: JSON.stringify({ type: 'link', name, url }),
+  });
+  cacheInvalidate('events');
+  return r;
+}
+
+export async function removeEventAttachment(eventId: string, index: number): Promise<TaskAttachment[]> {
+  const r = await apiFetch<TaskAttachment[]>(`/api/events/${eventId}/attachments/${index}`, { method: 'DELETE' });
+  cacheInvalidate('events');
+  return r;
+}
+
+export async function getEventAttachmentUrl(eventId: string, index: number): Promise<string> {
+  const { url } = await apiFetch<{ url: string }>(`/api/events/${eventId}/attachments/${index}/url`);
   return url;
 }
 
@@ -613,6 +700,7 @@ export interface FeedbackItem {
   imagens: string[];
   resposta: string | null;
   status: 'pendente' | 'respondida';
+  reply_seen: boolean; // autor já viu o aviso "sua sugestão foi respondida" (por usuário, no banco)
   upvotes: number;
   upvoted_by: string[];
   comment_count: number;
@@ -631,6 +719,13 @@ export interface FeedbackComment {
 
 export async function fetchFeedbacks(): Promise<FeedbackItem[]> {
   return fetchCached('feedback', () => apiFetch<FeedbackItem[]>('/api/feedback'));
+}
+
+// Marca (no backend, por usuário) que o autor já viu os avisos de resposta. Assim o
+// aviso não reaparece — inclusive em outro dispositivo.
+export async function markFeedbackRepliesSeen(): Promise<void> {
+  await apiFetch('/api/feedback/replies-seen', { method: 'POST' });
+  cacheInvalidate('feedback');
 }
 
 export async function submitFeedback(payload: {
@@ -740,6 +835,12 @@ export async function deleteDirectoria(id: string): Promise<void> {
 
 export async function toggleDirectoriaActive(id: string, active: boolean): Promise<Directoria> {
   const result = await apiFetch<Directoria>(`/api/diretorias/${id}/active`, { method: 'PATCH', body: JSON.stringify({ active }) });
+  cacheInvalidate('diretorias');
+  return result;
+}
+
+export async function setDirectoriaAutoArchive(id: string, autoArchiveDays: number): Promise<Directoria> {
+  const result = await apiFetch<Directoria>(`/api/diretorias/${id}/auto-archive`, { method: 'PATCH', body: JSON.stringify({ autoArchiveDays }) });
   cacheInvalidate('diretorias');
   return result;
 }

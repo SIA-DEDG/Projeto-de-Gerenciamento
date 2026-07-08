@@ -21,6 +21,7 @@ export interface Task {
   external_collaborators?: string | null;
   deadline?: string | null;
   attachments?: TaskAttachment[];
+  pinned?: boolean;           // fixada pelo usuário logado (pin é por usuário)
   // enriched client-side
   status_group: StatusGroup;
   badge_color: string;
@@ -38,6 +39,9 @@ export interface Project {
   objective?: string;
   scope?: string;
   summary?: string;
+  responsible_ids?: string[]; // IDs dos responsáveis (acesso/edição)
+  responsibles?: string[];    // nomes dos responsáveis (exibição)
+  attachments?: TaskAttachment[]; // anexos próprios do projeto (arquivos/links)
 }
 
 export interface Category {
