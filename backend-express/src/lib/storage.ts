@@ -45,7 +45,14 @@ export async function getSignedUrl(path: string, expiresIn = SIGNED_URL_TTL, dow
   const { data, error } = await supabase.storage
     .from(BUCKET)
     .createSignedUrl(path, expiresIn, downloadName ? { download: downloadName } : undefined);
-  if (error || !data) throw new Error(`Storage URL falhou: ${error?.message}`);
+  if (error || !data) {
+    // Objeto some do bucket (removido fora do fluxo do app / referência órfã):
+    // devolve 404 com mensagem clara em vez de estourar 500 genérico.
+    if (/not.?found/i.test(error?.message ?? '')) {
+      throw Object.assign(new Error('Arquivo indisponível (removido do armazenamento).'), { status: 404 });
+    }
+    throw new Error(`Storage URL falhou: ${error?.message}`);
+  }
   return data.signedUrl;
 }
 

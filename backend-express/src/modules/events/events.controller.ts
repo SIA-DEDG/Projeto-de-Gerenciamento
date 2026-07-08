@@ -81,7 +81,10 @@ export async function getMinutesUrl(req: Request, res: Response, next: NextFunct
     if (!storageEnabled()) { res.status(503).json({ error: 'Storage não configurado' }); return; }
     const url = await getSignedUrl(event.minutesFilePath, undefined, event.minutesFileName ?? undefined);
     res.json({ url });
-  } catch (err) { next(err); }
+  } catch (err: any) {
+    if (err.status) { res.status(err.status).json({ error: err.message }); return; }
+    next(err);
+  }
 }
 
 // ── Anexos (arquivos/links) ─────────────────────────────────────────────────────

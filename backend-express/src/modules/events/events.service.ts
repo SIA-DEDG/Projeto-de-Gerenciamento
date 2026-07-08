@@ -117,12 +117,14 @@ export const addAttachment = async (id: string, attachment: EventAttachment): Pr
 export const removeAttachment = async (id: string, index: number): Promise<EventAttachment[]> => {
   const current = await getEventAttachments(id);
   const removing = current[index];
+  const updated = current.filter((_, i) => i !== index);
+  // Remove a referência no banco PRIMEIRO; só então apaga o arquivo do storage
+  // (ver justificativa em tasks.service.removeAttachment).
+  await prisma.event.update({ where: { id }, data: { attachments: JSON.stringify(updated) } });
   if (removing?.type === 'file' && removing.path) {
     const { deleteFile } = await import('../../lib/storage');
     await deleteFile(removing.path).catch(() => null);
   }
-  const updated = current.filter((_, i) => i !== index);
-  await prisma.event.update({ where: { id }, data: { attachments: JSON.stringify(updated) } });
   return updated;
 };
 

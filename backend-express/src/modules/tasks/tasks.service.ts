@@ -184,14 +184,16 @@ export const addAttachment = async (id: string, attachment: TaskAttachment): Pro
 
 export const removeAttachment = async (id: string, index: number): Promise<TaskAttachment[]> => {
   const current = await getTaskAttachments(id);
-  // Se for arquivo no Supabase, deletar do storage
   const removing = current[index];
+  const updated = current.filter((_, i) => i !== index);
+  // Remove a referência no banco PRIMEIRO; só então apaga o arquivo do storage.
+  // Assim, se o storage falhar, no pior caso sobra um arquivo órfão (espaço),
+  // nunca um anexo listado apontando para objeto inexistente ("download quebrado").
+  await prisma.task.update({ where: { id }, data: { attachments: JSON.stringify(updated) } });
   if (removing?.type === 'file' && removing.path) {
     const { deleteFile } = await import('../../lib/storage');
     await deleteFile(removing.path).catch(() => null);
   }
-  const updated = current.filter((_, i) => i !== index);
-  await prisma.task.update({ where: { id }, data: { attachments: JSON.stringify(updated) } });
   return updated;
 };
 
