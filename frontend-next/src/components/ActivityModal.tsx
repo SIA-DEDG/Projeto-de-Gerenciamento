@@ -272,6 +272,10 @@ export default function ActivityModal({
   const [extraUsers, setExtraUsers] = useState<UserPublic[]>([]);
   // Snapshot do form no momento da abertura, para detectar alterações não salvas.
   const initialSnapshot = useRef('');
+  // Mapa nome->id dos envolvidos JÁ salvos na task (inclui os de OUTRA diretoria, que
+  // podem não estar em `availableUsers`). Usado como fallback ao resolver nomes no save,
+  // para não descartar responsável/co-responsável de outra diretoria ao atualizar.
+  const existingIdByName = useRef<Map<string, string>>(new Map());
 
   // Usuários selecionáveis = própria diretoria + os da diretoria envolvida (sem duplicar).
   const availableUsers = useMemo(() => mergeUsersById(users, extraUsers), [users, extraUsers]);
@@ -281,6 +285,7 @@ export default function ActivityModal({
     setAttDraft(emptyAttachmentDraft());
     setConfirmClose(false);
     setExtraUsers([]);
+    existingIdByName.current = new Map();
     let formInit: typeof EMPTY;
     let noDeadlineInit: boolean;
     if (task) {
@@ -288,6 +293,12 @@ export default function ActivityModal({
       const mapped = sg === 'done' ? 'Concluído' : sg === 'review' ? 'Em Revisão' : sg === 'in_progress' ? 'Em Andamento' : 'Pendente';
       let co: string[] = [];
       try { co = task.co_responsibles ? JSON.parse(task.co_responsibles) : []; } catch { co = []; }
+      // Preserva os ids dos envolvidos já salvos (inclusive de outra diretoria).
+      if (task.responsible && task.responsible_id) existingIdByName.current.set(task.responsible, task.responsible_id);
+      try {
+        const coIds: string[] = task.co_responsible_ids ? JSON.parse(task.co_responsible_ids) : [];
+        co.forEach((n, i) => { if (coIds[i]) existingIdByName.current.set(n, coIds[i]); });
+      } catch { /* ids ausentes: resolve por nome no save */ }
       noDeadlineInit = !task.deadline;
       formInit = { activity: task.activity, description: task.description ?? '', project_id: task.project_id ?? null, status: mapped, responsible: task.responsible, date: task.date ?? '', priority: task.priority ?? 'Média', co_responsibles: co, external_collaborators: task.external_collaborators ?? '', deadline: task.deadline ?? '' };
     } else {
@@ -312,14 +323,17 @@ export default function ActivityModal({
     e.preventDefault();
     if (!form.activity.trim()) return;
     const payload = attachmentDraftPayload(attDraft); // dobra link digitado mas não adicionado
+    // Resolve nome -> id usando availableUsers (própria diretoria + outra diretoria envolvida)
+    // e, como fallback, os ids já salvos na task — assim envolvidos de outra diretoria não
+    // são descartados ao atualizar mesmo que não estejam na lista carregada pelo board.
+    const resolveId = (name: string) =>
+      availableUsers.find(u => u.name === name)?.id ?? existingIdByName.current.get(name);
     onSave({
       ...form,
       category: categoryLabel,
-      // Resolve nomes -> IDs aqui (com availableUsers, que inclui a outra diretoria envolvida),
-      // pois o board só conhece a própria diretoria.
-      responsible_id: availableUsers.find(u => u.name === form.responsible)?.id ?? null,
+      responsible_id: resolveId(form.responsible) ?? null,
       co_responsible_ids: form.co_responsibles
-        .map(n => availableUsers.find(u => u.name === n)?.id)
+        .map(resolveId)
         .filter((id): id is string => !!id),
       co_responsibles: form.co_responsibles.length > 0 ? JSON.stringify(form.co_responsibles) : null,
       external_collaborators: form.external_collaborators.trim() || null,
