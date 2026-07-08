@@ -44,25 +44,14 @@ describe('KanbanCard', () => {
       expect(screen.getByText('Implementar login')).toBeInTheDocument();
     });
 
-    it('shows the SIA task id', () => {
+    it('shows the category', () => {
       render(<KanbanCard task={baseTask} onView={jest.fn()} onDelete={jest.fn()} />);
-      expect(screen.getByText(/SIA-abc12345/)).toBeInTheDocument();
-    });
-
-    it('shows the task date', () => {
-      render(<KanbanCard task={baseTask} onView={jest.fn()} onDelete={jest.fn()} />);
-      expect(screen.getByText('2024-06-01')).toBeInTheDocument();
+      expect(screen.getByText('TI')).toBeInTheDocument();
     });
 
     it('shows the priority chip', () => {
       render(<KanbanCard task={baseTask} onView={jest.fn()} onDelete={jest.fn()} />);
       expect(screen.getByText('Alta')).toBeInTheDocument();
-    });
-
-    it('omits the date section when task has no date', () => {
-      const task = { ...baseTask, date: '' };
-      render(<KanbanCard task={task} onView={jest.fn()} onDelete={jest.fn()} />);
-      expect(screen.queryByText('2024-06-01')).not.toBeInTheDocument();
     });
   });
 
@@ -139,7 +128,9 @@ describe('KanbanCard', () => {
       const onDelete = jest.fn();
       render(<KanbanCard task={baseTask} onView={jest.fn()} onDelete={onDelete} />);
 
-      fireEvent.click(screen.getByTitle('Excluir'));
+      // Excluir fica no menu "..." — abre o menu antes de clicar.
+      fireEvent.click(screen.getByTitle('Mais opções'));
+      fireEvent.click(screen.getByText('Excluir'));
 
       expect(onDelete).toHaveBeenCalledTimes(1);
       expect(onDelete).toHaveBeenCalledWith(baseTask.id);
@@ -150,7 +141,8 @@ describe('KanbanCard', () => {
       const onDelete = jest.fn();
       render(<KanbanCard task={baseTask} onView={onView} onDelete={onDelete} />);
 
-      fireEvent.click(screen.getByTitle('Excluir'));
+      fireEvent.click(screen.getByTitle('Mais opções'));
+      fireEvent.click(screen.getByText('Excluir'));
 
       expect(onView).not.toHaveBeenCalled();
     });

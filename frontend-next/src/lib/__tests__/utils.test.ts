@@ -108,14 +108,18 @@ describe('categoryColor', () => {
 
 describe('statusClass', () => {
   it('returns done class for done', () => {
-    expect(statusClass('done')).toContain('status-done');
+    expect(statusClass('done')).toBe('status-chip done');
+  });
+
+  it('returns review class for review', () => {
+    expect(statusClass('review')).toBe('status-chip review');
   });
 
   it('returns progress class for in_progress', () => {
-    expect(statusClass('in_progress')).toContain('status-progress');
+    expect(statusClass('in_progress')).toBe('status-chip progress');
   });
 
-  it('returns todo class for pending', () => {
-    expect(statusClass('pending')).toContain('status-todo');
+  it('returns pending class for pending', () => {
+    expect(statusClass('pending')).toBe('status-chip pending');
   });
 });

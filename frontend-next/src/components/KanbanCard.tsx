@@ -182,6 +182,8 @@ function KanbanCard({
         >
           <button
             type="button"
+            title="Mais opções"
+            aria-label="Mais opções"
             onClick={() => setMenuOpen((v) => !v)}
             style={{ width: 24, height: 24, borderRadius: 3, border: 'none', background: 'transparent', color: 'var(--text-3)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0 }}
             onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--line-1)')}
@@ -261,7 +263,7 @@ function KanbanCard({
               </div>
             ))}
             {allAvatars.length > MAX_AVATARS && (
-              <div style={{ width: 24, height: 24, borderRadius: '50%', background: 'var(--text-3)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.58rem', fontWeight: 600, marginLeft: -7, border: '2px solid var(--surface)', flexShrink: 0 }}>
+              <div title={allAvatars.slice(MAX_AVATARS).join(', ')} style={{ width: 24, height: 24, borderRadius: '50%', background: 'var(--text-3)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.58rem', fontWeight: 600, marginLeft: -7, border: '2px solid var(--surface)', flexShrink: 0 }}>
                 +{allAvatars.length - MAX_AVATARS}
               </div>
             )}
