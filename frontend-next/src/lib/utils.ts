@@ -1,5 +1,11 @@
 import type { StatusGroup, Project, Task } from '@/types';
 
+// Normaliza texto para busca: minúsculas, sem acentos e sem espaços nas pontas.
+// Usado para filtrar listas por digitação ignorando acentuação/caixa.
+export function normalizeSearch(text: string): string {
+  return text.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+}
+
 // Mescla duas listas de usuários deduplicando por `id` (os de `extra` prevalecem).
 // Usado nos modais para juntar a própria diretoria com a "outra diretoria envolvida".
 export function mergeUsersById<T extends { id: string }>(base: T[], extra: T[]): T[] {

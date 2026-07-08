@@ -10,7 +10,7 @@ import CollapsibleGroup from './CollapsibleGroup';
 import OtherDiretoriaPicker from './OtherDiretoriaPicker';
 import { useUnsavedGuard } from '@/hooks/useUnsavedGuard';
 import { getUser } from '@/lib/auth';
-import { mergeUsersById } from '@/lib/utils';
+import { mergeUsersById, normalizeSearch } from '@/lib/utils';
 
 interface Props {
   open: boolean;
@@ -89,6 +89,7 @@ function Segmented({ options, value, onChange }: {
 export default function ProjectModal({ open, project, onClose, onSave, users = [], canManageResponsibles = true }: Props) {
   const [form, setForm] = useState<Omit<Project, 'id'>>(EMPTY);
   const [showResp, setShowResp] = useState(false); // lista de colaboradores recolhida por padrão
+  const [collabQuery, setCollabQuery] = useState(''); // busca por digitação na lista de colaboradores
   const [noDeadline, setNoDeadline] = useState(false);
   const [attDraft, setAttDraft] = useState<AttachmentDraft>(emptyAttachmentDraft());
   // Membros de outra diretoria trazidos pelo "Envolver outra diretoria" (compartilhamento).
@@ -266,10 +267,20 @@ export default function ProjectModal({ open, project, onClose, onSave, users = [
                       <OtherDiretoriaPicker onMembersChange={setExtraUsers} initialSelectedIds={involvedDiretoriaIds} />
                     </div>
                   )}
+                  {/* Busca por digitação — filtra a lista pelo nome (ignora acentos/maiúsculas). */}
+                  <input
+                    value={collabQuery}
+                    onChange={e => setCollabQuery(e.target.value)}
+                    placeholder="Buscar por nome…"
+                    style={{ width: '100%', padding: '7px 10px', border: '1px solid var(--border)', borderRadius: 3, fontSize: '0.84rem', outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box', marginBottom: 8, background: 'var(--surface)', color: 'var(--text)' }}
+                  />
                   <div style={{ border: '1px solid var(--border)', borderRadius: 3, maxHeight: 200, overflowY: 'auto' }}>
-                    {availableUsers.filter(u => u.id !== form.owner_id).length === 0 ? (
-                      <div style={{ padding: '10px 12px', color: 'var(--text-3)', fontSize: '0.85rem' }}>Nenhum outro usuário na diretoria</div>
-                    ) : availableUsers.filter(u => u.id !== form.owner_id).map(u => {
+                    {(() => {
+                      const collaborators = availableUsers.filter(u => u.id !== form.owner_id);
+                      const shown = collaborators.filter(u => normalizeSearch(u.name).includes(normalizeSearch(collabQuery)));
+                      if (collaborators.length === 0) return <div style={{ padding: '10px 12px', color: 'var(--text-3)', fontSize: '0.85rem' }}>Nenhum outro usuário na diretoria</div>;
+                      if (shown.length === 0) return <div style={{ padding: '10px 12px', color: 'var(--text-3)', fontSize: '0.85rem' }}>Nenhum resultado para “{collabQuery}”</div>;
+                      return shown.map(u => {
                       const checked = form.responsible_ids?.includes(u.id) ?? false;
                       return (
                         <label key={u.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', cursor: canManageResponsibles ? 'pointer' : 'default', fontSize: '0.86rem', borderBottom: '1px solid var(--line-2)' }}>
@@ -283,7 +294,8 @@ export default function ProjectModal({ open, project, onClose, onSave, users = [
                           <span style={{ marginLeft: 'auto', fontSize: '0.72rem', color: 'var(--text-3)' }}>{u.role}</span>
                         </label>
                       );
-                    })}
+                      });
+                    })()}
                   </div>
                 </>
               )}

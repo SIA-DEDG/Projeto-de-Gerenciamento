@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { X, Clock, ChevronDown } from 'lucide-react';
 import type { Task, Project } from '@/types';
 import type { UserPublic } from '@/lib/api';
-import { STATUS_COLORS, PRIORITY_COLORS, statusGroup, isProjectMember, mergeUsersById } from '@/lib/utils';
+import { STATUS_COLORS, PRIORITY_COLORS, statusGroup, isProjectMember, mergeUsersById, normalizeSearch } from '@/lib/utils';
 import { getUser } from '@/lib/auth';
 import RichTextEditor from './RichTextEditor';
 import ConfirmModal from './ConfirmModal';
@@ -121,8 +121,10 @@ function CoRespChips({ users, selected, exclude, onChange }: {
   onChange: (v: string[]) => void;
 }) {
   const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState('');
   const ref = useRef<HTMLDivElement>(null);
   const available = users.filter(u => u.name !== exclude);
+  const filtered = available.filter(u => normalizeSearch(u.name).includes(normalizeSearch(query)));
 
   useEffect(() => {
     function handler(e: MouseEvent) {
@@ -131,6 +133,9 @@ function CoRespChips({ users, selected, exclude, onChange }: {
     if (open) document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, [open]);
+
+  // Limpa a busca ao fechar, para reabrir sempre com a lista completa.
+  useEffect(() => { if (!open) setQuery(''); }, [open]);
 
   function toggle(name: string) {
     onChange(selected.includes(name) ? selected.filter(n => n !== name) : [...selected, name]);
@@ -170,11 +175,23 @@ function CoRespChips({ users, selected, exclude, onChange }: {
         <div style={{
           position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 200,
           background: '#fff', border: '1px solid #dfe1e6', borderRadius: 4,
-          boxShadow: '0 4px 12px rgba(0,0,0,0.12)', maxHeight: 180, overflowY: 'auto', marginTop: 2,
+          boxShadow: '0 4px 12px rgba(0,0,0,0.12)', maxHeight: 220, overflowY: 'auto', marginTop: 2,
         }}>
+          {/* Busca por digitação — filtra a lista pelo nome (ignora acentos/maiúsculas). */}
+          <div style={{ position: 'sticky', top: 0, background: '#fff', padding: 8, borderBottom: '1px solid #f0f1f3' }}>
+            <input
+              autoFocus
+              value={query}
+              onChange={e => setQuery(e.target.value)}
+              placeholder="Buscar por nome…"
+              style={{ width: '100%', padding: '6px 9px', border: '1px solid #dfe1e6', borderRadius: 4, fontSize: '0.84rem', outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }}
+            />
+          </div>
           {available.length === 0 ? (
             <div style={{ padding: '10px 12px', color: '#a5adba', fontSize: '0.85rem' }}>Nenhum usuário disponível</div>
-          ) : available.map(user => (
+          ) : filtered.length === 0 ? (
+            <div style={{ padding: '10px 12px', color: '#a5adba', fontSize: '0.85rem' }}>Nenhum resultado para “{query}”</div>
+          ) : filtered.map(user => (
             <label key={user.id} style={{
               display: 'flex', alignItems: 'center', gap: 8,
               padding: '8px 12px', cursor: 'pointer', fontSize: '0.88rem',
