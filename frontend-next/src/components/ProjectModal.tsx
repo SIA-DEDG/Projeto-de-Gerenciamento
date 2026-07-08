@@ -96,8 +96,26 @@ export default function ProjectModal({ open, project, onClose, onSave, users = [
 
   const myId = getUser()?.user_id ?? null;
 
-  // Usuários selecionáveis = própria diretoria + os da diretoria envolvida (sem duplicar).
-  const availableUsers = useMemo(() => mergeUsersById(users, extraUsers), [users, extraUsers]);
+  // Semeia com owner + colaboradores JÁ salvos (o projeto carrega nomes + ids), para que
+  // membros de OUTRA diretoria apareçam (marcados) ao reabrir, mesmo sem re-"envolver" a
+  // diretoria deles — senão parecem ter sumido embora continuem salvos.
+  const seededMembers = useMemo<UserPublic[]>(() => {
+    if (!project) return [];
+    const seed = (id?: string | null, name?: string | null): UserPublic | null =>
+      id ? { id, name: name ?? '(usuário)', username: '', role: '', must_change_password: false, created_at: '', directoria_id: null, directoria_name: null, directoria_color: null } : null;
+    const ids = project.responsible_ids ?? [];
+    const names = project.responsibles ?? [];
+    const list = ids.map((id, i) => seed(id, names[i])).filter((u): u is UserPublic => !!u);
+    const owner = seed(project.owner_id, project.owner);
+    return owner ? [owner, ...list] : list;
+  }, [project]);
+
+  // Usuários selecionáveis = envolvidos já salvos + própria diretoria + diretoria envolvida.
+  // Os reais (com role/diretoria) prevalecem sobre os "seed" (só id+nome).
+  const availableUsers = useMemo(
+    () => mergeUsersById(mergeUsersById(seededMembers, users), extraUsers),
+    [seededMembers, users, extraUsers],
+  );
 
   useEffect(() => {
     if (!open) return;

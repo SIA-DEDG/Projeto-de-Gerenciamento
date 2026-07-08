@@ -73,4 +73,52 @@ describe('useRefetchOnFocus', () => {
     expect(visibilityCalls.length).toBe(1);
     spy.mockRestore();
   });
+
+  it('polls in the background at the given interval while visible', () => {
+    jest.useFakeTimers();
+    try {
+      triggerVisibility('visible');
+      const refetch = jest.fn();
+      renderHook(() => useRefetchOnFocus(refetch, 30_000));
+
+      jest.advanceTimersByTime(90_000);
+      expect(refetch).toHaveBeenCalledTimes(3);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('pauses polling while hidden and resumes when visible again', () => {
+    jest.useFakeTimers();
+    try {
+      triggerVisibility('visible');
+      const refetch = jest.fn();
+      renderHook(() => useRefetchOnFocus(refetch, 30_000));
+
+      triggerVisibility('hidden'); // becoming visible again below counts these calls
+      refetch.mockClear();
+      jest.advanceTimersByTime(60_000);
+      expect(refetch).not.toHaveBeenCalled(); // paused while hidden
+
+      triggerVisibility('visible'); // fires once immediately + restarts interval
+      jest.advanceTimersByTime(30_000);
+      expect(refetch).toHaveBeenCalledTimes(2);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('does not poll when interval is disabled (<= 0)', () => {
+    jest.useFakeTimers();
+    try {
+      triggerVisibility('visible');
+      const refetch = jest.fn();
+      renderHook(() => useRefetchOnFocus(refetch, 0));
+
+      jest.advanceTimersByTime(120_000);
+      expect(refetch).not.toHaveBeenCalled();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
 });

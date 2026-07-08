@@ -9,8 +9,9 @@ import {
   addTaskFile, addTaskLink, removeTaskAttachment, invalidateTasksCache,
 } from '@/lib/api';
 import type { UserPublic } from '@/lib/api';
-import { resolveCoResponsibleIds, STATUS_NEXT } from '@/lib/utils';
+import { resolveCoResponsibleIds, taskCoResponsibleIds, STATUS_NEXT } from '@/lib/utils';
 import { useRefetchOnFocus } from '@/lib/useRefetchOnFocus';
+import { onTasksChanged } from '@/lib/taskEvents';
 import type { Task, StatusGroup, Project, TaskAttachment } from '@/types';
 
 // ── Tipos exportados ──────────────────────────────────────────────────────────
@@ -96,6 +97,9 @@ export function useTaskBoard() {
 
   useEffect(() => { loadBoardData(); }, [loadBoardData]);
   useRefetchOnFocus(loadBoardData);
+  // Reflete na hora (mesma aba) qualquer criar/editar/mover/excluir feito em outra
+  // tela — igual Projetos e Sidebar já fazem. Entre usuários/navegadores é o polling.
+  useEffect(() => onTasksChanged(loadBoardData), [loadBoardData]);
 
   // ── Drag & drop ───────────────────────────────────────────────────────────
 
@@ -111,7 +115,7 @@ export function useTaskBoard() {
     const previousTasks = allTasks;
     setAllTasks((curr) => curr.map((x) => x.id === taskId ? { ...x, status_group: newGroup } : x));
 
-    const coIds = resolveCoResponsibleIds(task.co_responsibles, users);
+    const coIds = taskCoResponsibleIds(task, users);
     updateTask(task, { status_group: newGroup, co_responsible_ids: coIds })
       .then((updated) => setAllTasks((curr) => curr.map((x) => x.id === taskId ? updated : x)))
       .catch(() => setAllTasks(previousTasks));
@@ -257,7 +261,7 @@ export function useTaskBoard() {
     const nextGroup = STATUS_NEXT[openedTask.status_group];
     if (!nextGroup) return;
 
-    const coIds = resolveCoResponsibleIds(openedTask.co_responsibles, users);
+    const coIds = taskCoResponsibleIds(openedTask, users);
     const optimistic = { ...openedTask, status_group: nextGroup };
     setOpenedTask(optimistic);
     setAllTasks((curr) => curr.map((x) => x.id === openedTask.id ? optimistic : x));
@@ -312,7 +316,7 @@ export function useTaskBoard() {
     try {
       await Promise.all(ids.map((id) => {
         const task = previousTasks.find((x) => x.id === id)!;
-        const coIds = resolveCoResponsibleIds(task.co_responsibles, users);
+        const coIds = taskCoResponsibleIds(task, users);
         return updateTask(task, { status_group: targetGroup, co_responsible_ids: coIds });
       }));
       return ids.length;

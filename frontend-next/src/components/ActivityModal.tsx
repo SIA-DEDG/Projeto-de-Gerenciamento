@@ -277,8 +277,29 @@ export default function ActivityModal({
   // para não descartar responsável/co-responsável de outra diretoria ao atualizar.
   const existingIdByName = useRef<Map<string, string>>(new Map());
 
-  // Usuários selecionáveis = própria diretoria + os da diretoria envolvida (sem duplicar).
-  const availableUsers = useMemo(() => mergeUsersById(users, extraUsers), [users, extraUsers]);
+  // Semeia com os envolvidos JÁ salvos (responsável + co-responsáveis: nomes + ids que a
+  // task carrega), para que quem é de OUTRA diretoria apareça no select/lista ao reabrir,
+  // mesmo sem re-"envolver" a diretoria dele — senão parece que sumiu.
+  const seededUsers = useMemo<UserPublic[]>(() => {
+    if (!task) return [];
+    const seed = (id?: string | null, name?: string | null): UserPublic | null =>
+      id ? { id, name: name ?? '(usuário)', username: '', role: '', must_change_password: false, created_at: '', directoria_id: null, directoria_name: null, directoria_color: null } : null;
+    const out: UserPublic[] = [];
+    const r = seed(task.responsible_id, task.responsible); if (r) out.push(r);
+    try {
+      const names: string[] = task.co_responsibles ? JSON.parse(task.co_responsibles) : [];
+      const ids: string[] = task.co_responsible_ids ? JSON.parse(task.co_responsible_ids) : [];
+      names.forEach((n, i) => { const s = seed(ids[i], n); if (s) out.push(s); });
+    } catch { /* ids ausentes */ }
+    return out;
+  }, [task]);
+
+  // Usuários selecionáveis = envolvidos já salvos + própria diretoria + diretoria envolvida.
+  // Os reais (com role/diretoria) prevalecem sobre os "seed" (só id+nome).
+  const availableUsers = useMemo(
+    () => mergeUsersById(mergeUsersById(seededUsers, users), extraUsers),
+    [seededUsers, users, extraUsers],
+  );
 
   useEffect(() => {
     if (!open) return;

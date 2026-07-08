@@ -130,6 +130,26 @@ export function resolveCoResponsibleIds(
   }
 }
 
+/**
+ * IDs dos co-responsáveis a enviar numa atualização RÁPIDA (mudar status, arrastar card,
+ * mover em lote), onde o formulário não é reaberto. Prefere os ids que a própria task já
+ * carrega (`co_responsible_ids`, devolvidos pelo backend, incluindo membros de OUTRA
+ * diretoria) — assim eles não são descartados só porque não estão em `users` (limitado à
+ * própria diretoria). Só cai na resolução por nome quando a task ainda não tem ids.
+ */
+export function taskCoResponsibleIds(
+  task: { co_responsible_ids?: string | null; co_responsibles?: string | null },
+  users: { id: string; name: string }[],
+): string[] | null {
+  if (task.co_responsible_ids) {
+    try {
+      const ids = JSON.parse(task.co_responsible_ids) as string[];
+      if (Array.isArray(ids)) return ids.length > 0 ? ids : null;
+    } catch { /* json inválido: cai no fallback por nome */ }
+  }
+  return resolveCoResponsibleIds(task.co_responsibles, users);
+}
+
 // ── Deadline display ──────────────────────────────────────────────────────────
 
 /**
