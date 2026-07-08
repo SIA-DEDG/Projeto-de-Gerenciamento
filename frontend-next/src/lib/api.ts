@@ -184,7 +184,10 @@ export async function createTask(payload: {
       project_id: payload.project_id ?? null,
       co_responsible_ids: payload.co_responsible_ids ?? null,
       external_collaborators: payload.external_collaborators ?? null,
-      deadline: payload.deadline ?? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      // Respeita "sem prazo" (Indeterminado / campo opcional vazio) enviando null — antes
+      // um `?? hoje+7dias` transformava o null num prazo de 7 dias no primeiro salvamento,
+      // e só depois de reeditar é que o Indeterminado "pegava" (o update já respeita null).
+      deadline: payload.deadline ?? null,
     }),
   });
   cacheInvalidate('tasks');
