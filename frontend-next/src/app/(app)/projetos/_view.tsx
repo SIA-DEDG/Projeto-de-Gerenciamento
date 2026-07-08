@@ -194,12 +194,17 @@ export default function ProjetosPage() {
     activity: string; description: string; category: string; project_id: string | null;
     status: string; responsible: string; date: string; priority: string;
     co_responsibles: string | null; external_collaborators: string | null; deadline: string | null;
+    responsible_id?: string | null; co_responsible_ids?: string[];
     attachments?: ActivityAttachment[]; links?: ActivityLink[]; removedAttachmentIndices?: number[];
   }) {
     const { task } = activityModal;
     setActivityModal({ open: false, task: null, projectId: null });
-    const responsible_id = users.find((u) => u.name === data.responsible)?.id ?? null;
-    const coIds = resolveCoResponsibleIds(data.co_responsibles, users);
+    // Prefere os ids que o modal já resolveu (incluem envolvidos de OUTRA diretoria);
+    // só cai no resolve por nome (própria diretoria) se o modal não os forneceu.
+    const responsible_id = data.responsible_id !== undefined
+      ? data.responsible_id
+      : (users.find((u) => u.name === data.responsible)?.id ?? null);
+    const coIds = data.co_responsible_ids ?? resolveCoResponsibleIds(data.co_responsibles, users);
     const payload = { ...data, project_id: data.project_id ?? undefined, responsible_id, co_responsible_ids: coIds };
     if (task) {
       // UI otimista: reflete a mudança de anexos na hora; a rede roda em 2º plano.
