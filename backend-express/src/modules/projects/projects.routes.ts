@@ -87,7 +87,59 @@ router.post('/', authenticate, requireFuncionario, ctrl.createProject);
  *         description: Deletado
  */
 router.get('/:id', authenticate, ctrl.getProject);
-router.put('/:id', authenticate, requireFuncionario, ctrl.updateProject);
-router.delete('/:id', authenticate, requireFuncionario, ctrl.deleteProject);
+// Permissão fina (dono/responsável/estagiário/Admin/Diretor) é resolvida no controller.
+router.put('/:id', authenticate, ctrl.updateProject);
+router.delete('/:id', authenticate, ctrl.deleteProject);
+
+/**
+ * @swagger
+ * /projects/{id}/attachments:
+ *   post:
+ *     tags: [Projects]
+ *     summary: Adicionar anexo (arquivo ou link) ao projeto
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string, format: uuid }
+ *     responses:
+ *       200:
+ *         description: Anexo adicionado
+ * /projects/{id}/attachments/{idx}:
+ *   delete:
+ *     tags: [Projects]
+ *     summary: Remover anexo do projeto
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string, format: uuid }
+ *       - in: path
+ *         name: idx
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: Anexo removido
+ * /projects/{id}/attachments/{idx}/url:
+ *   get:
+ *     tags: [Projects]
+ *     summary: Obter URL de download do anexo do projeto
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string, format: uuid }
+ *       - in: path
+ *         name: idx
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: URL pré-assinada do anexo
+ */
+router.post('/:id/attachments',         authenticate, ctrl.addAttachment);
+router.delete('/:id/attachments/:idx',  authenticate, ctrl.removeAttachment);
+router.get('/:id/attachments/:idx/url', authenticate, ctrl.getAttachmentUrl);
 
 export default router;

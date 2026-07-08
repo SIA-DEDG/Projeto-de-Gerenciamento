@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { authenticate } from '../../middleware/auth.middleware';
+import { authenticate, requireManager } from '../../middleware/auth.middleware';
 import * as ctrl from './auth.controller';
 
 const router = Router();
@@ -70,7 +70,7 @@ router.post('/login', ctrl.login);
  *       409:
  *         description: Username já existe
  */
-router.post('/register', authenticate, ctrl.register);
+router.post('/register', authenticate, requireManager, ctrl.register);
 
 /**
  * @swagger
