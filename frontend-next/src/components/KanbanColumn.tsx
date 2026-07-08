@@ -20,6 +20,7 @@ interface KanbanColumnProps {
   onViewCard: (task: Task) => void;
   onDeleteCard: (taskId: string) => void;
   onArchiveCard?: (taskId: string) => void;
+  onTogglePinCard?: (taskId: string, pinned: boolean) => void;
   isSelecting: boolean;
   selectedTaskIds: Set<string>;
   onToggleSelect: (taskId: string) => void;
@@ -48,6 +49,7 @@ export default function KanbanColumn({
   onViewCard,
   onDeleteCard,
   onArchiveCard,
+  onTogglePinCard,
   isSelecting,
   selectedTaskIds,
   onToggleSelect,
@@ -165,6 +167,7 @@ export default function KanbanColumn({
             onView={onViewCard}
             onDelete={onDeleteCard}
             onArchive={onArchiveCard}
+            onTogglePin={onTogglePinCard}
             selectionMode={isSelecting}
             isSelected={selectedTaskIds.has(task.id)}
             onToggleSelect={onToggleSelect}

@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useMemo, memo } from 'react';
 import { useDraggable } from '@dnd-kit/core';
-import { Check, Folder, Clock, Ellipsis, Archive, Trash2 } from 'lucide-react';
+import { Check, Folder, Clock, Ellipsis, Archive, Trash2, Pin } from 'lucide-react';
 import { initials, STATUS_COLORS } from '@/lib/utils';
 import type { Task } from '@/types';
 
@@ -43,6 +43,7 @@ function KanbanCard({
   onView,
   onDelete,
   onArchive,
+  onTogglePin,
   selectionMode = false,
   isSelected = false,
   onToggleSelect,
@@ -52,6 +53,7 @@ function KanbanCard({
   onView: (t: Task) => void;
   onDelete: (id: string) => void;
   onArchive?: (id: string) => void;
+  onTogglePin?: (id: string, pinned: boolean) => void;
   selectionMode?: boolean;
   isSelected?: boolean;
   onToggleSelect?: (id: string) => void;
@@ -135,6 +137,34 @@ function KanbanCard({
     >
       {/* Spine lateral */}
       <span style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, background: spineColor }} />
+
+      {/* Pin de fixar — símbolo sempre visível no canto superior esquerdo; fica dourado quando fixada.
+          Fixar leva a atividade para o topo da coluna. */}
+      {!selectionMode && onTogglePin && (
+        <button
+          type="button"
+          title={task.pinned ? 'Desafixar atividade' : 'Fixar atividade no topo'}
+          aria-pressed={!!task.pinned}
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={(e) => { e.stopPropagation(); onTogglePin(task.id, !task.pinned); }}
+          style={{
+            position: 'absolute', top: 8, left: 2, width: 20, height: 20,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            border: 'none', borderRadius: 5, padding: 0, cursor: 'pointer', zIndex: 3,
+            background: 'transparent',
+            transition: 'background 0.12s',
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--line-1)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+        >
+          <Pin
+            size={17}
+            strokeWidth={2.25}
+            fill={task.pinned ? '#E0A92E' : 'none'}
+            color={task.pinned ? '#E0A92E' : 'var(--text-3)'}
+          />
+        </button>
+      )}
 
       {/* Checkbox de seleção */}
       {selectionMode && (

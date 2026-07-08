@@ -1,13 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, Archive, Trash2, Pencil, Folder, Calendar, Clock, Paperclip, Link as LinkIcon, Download, ExternalLink } from 'lucide-react';
+import { X, Archive, Trash2, Pencil, Folder, Calendar, Clock, Paperclip, Link as LinkIcon, Download, ExternalLink, Pin } from 'lucide-react';
 import type { Task, TaskAttachment } from '@/types';
 import { avatarColor, initials, statusGroupLabel } from '@/lib/utils';
-import { getTaskAttachmentUrl, removeTaskAttachment } from '@/lib/api';
+import { getTaskAttachmentUrl, pinTask, unpinTask } from '@/lib/api';
 import { openSignedUrl } from '@/lib/download';
 import { useToast } from '@/hooks/useToast';
 import ToastContainer from './ToastContainer';
+import CollapsibleGroup from './CollapsibleGroup';
 
 interface Props {
   task: Task;
@@ -82,28 +83,19 @@ function AttachmentsSection({ task }: { task: Task }) {
     } finally { setLoading(null); }
   }
 
-  async function handleRemove(idx: number) {
-    const prev = attachments;
-    setAttachments((curr) => curr.filter((_, i) => i !== idx)); // some da tela na hora
-    try {
-      await removeTaskAttachment(task.id, idx); // confirma no servidor em 2º plano
-    } catch {
-      setAttachments(prev); // falhou: reverte
-      addToast('error', 'Erro', 'Não foi possível remover o anexo.');
-    }
-  }
-
   const files = attachments.filter((a): a is TaskAttachment & { type: 'file' } => a.type === 'file');
   const links = attachments.filter((a): a is TaskAttachment & { type: 'link' } => a.type === 'link');
 
-  if (attachments.length === 0) return null;
+  // Sempre mostra os grupos Arquivos e Links (mesmo vazios, com contagem 0).
+  const emptyHint = (label: string) => (
+    <div style={{ fontSize: '0.75rem', color: 'var(--text-3)', padding: '2px 0' }}>{label}</div>
+  );
 
   return (
-    <div>
-      <div className="mono" style={{ fontSize: '0.62rem', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--text-3)', marginBottom: 10 }}>
-        Anexos ({attachments.length})
-      </div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <CollapsibleGroup label="Arquivos" count={files.length} defaultOpen={false}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        {files.length === 0 && emptyHint('Nenhum arquivo.')}
         {files.map((f, i) => {
           const idx = attachments.indexOf(f);
           return (
@@ -118,13 +110,15 @@ function AttachmentsSection({ task }: { task: Task }) {
                 style={{ width: 28, height: 28, border: '1px solid var(--border)', borderRadius: 3, background: 'var(--surface)', color: loading === idx ? 'var(--text-3)' : 'var(--blue)', cursor: loading === idx ? 'wait' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                 <Download size={13} />
               </button>
-              <button onClick={() => handleRemove(idx)} title="Remover"
-                style={{ width: 28, height: 28, border: '1px solid rgba(180,35,24,0.2)', borderRadius: 3, background: 'rgba(180,35,24,0.05)', color: '#b42318', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <Trash2 size={12} />
-              </button>
             </div>
           );
         })}
+      </div>
+      </CollapsibleGroup>
+      <div style={{ height: 1, background: 'var(--line-2)' }} />
+      <CollapsibleGroup label="Links" count={links.length} defaultOpen={false}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        {links.length === 0 && emptyHint('Nenhum link.')}
         {links.map((l) => {
           const idx = attachments.indexOf(l);
           return (
@@ -143,6 +137,7 @@ function AttachmentsSection({ task }: { task: Task }) {
           );
         })}
       </div>
+      </CollapsibleGroup>
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />
     </div>
   );
@@ -155,6 +150,16 @@ export default function DrawerDetalhe({ task, onClose, onEdit, onDelete, onAdvan
   const nextLabel    = NEXT_LABEL[task.status_group];
   const badge        = deadlineBadge(task.deadline, task.status_group === 'done');
   const isArchived   = (task as { archived?: boolean }).archived === true;
+
+  // Pin é por usuário — estado local otimista sincronizado com a task.
+  const [pinned, setPinned] = useState(!!task.pinned);
+  useEffect(() => { setPinned(!!task.pinned); }, [task.pinned]);
+  async function togglePin() {
+    const next = !pinned;
+    setPinned(next);
+    try { await (next ? pinTask(task.id) : unpinTask(task.id)); }
+    catch { setPinned(!next); }
+  }
 
   return (
     <>
@@ -174,7 +179,7 @@ export default function DrawerDetalhe({ task, onClose, onEdit, onDelete, onAdvan
       }}>
 
         {/* Stripe Gov-PI */}
-        <div style={{ height: 4, flexShrink: 0, background: 'linear-gradient(90deg,var(--blue-fixed) 0 40%,#E0A92E 40% 55%,#b42318 55% 75%,#1B8A4B 75%)' }} />
+        {/* Faixa Gov-PI comentada a pedido: <div style={{ height: 4, flexShrink: 0, background: 'linear-gradient(90deg,var(--blue-fixed) 0 40%,#E0A92E 40% 55%,#b42318 55% 75%,#1B8A4B 75%)' }} /> */}
 
         {/* Header */}
         <div style={{ padding: '20px 24px 16px', borderBottom: '1px solid var(--line-1)', flexShrink: 0 }}>
@@ -187,14 +192,23 @@ export default function DrawerDetalhe({ task, onClose, onEdit, onDelete, onAdvan
                 {task.activity}
               </h2>
             </div>
-            <button
-              onClick={onClose}
-              style={{ flexShrink: 0, width: 30, height: 30, borderRadius: 3, border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text-3)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-              onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'var(--surface-2)'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--text)'; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'var(--surface)'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-3)'; }}
-            >
-              <X size={14} />
-            </button>
+            <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+              <button
+                onClick={togglePin}
+                title={pinned ? 'Desafixar atividade' : 'Fixar atividade no topo'}
+                style={{ width: 30, height: 30, borderRadius: 3, border: `1px solid ${pinned ? 'var(--blue)' : 'var(--border)'}`, background: pinned ? 'var(--blue)' : 'var(--surface)', color: pinned ? '#fff' : 'var(--text-3)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              >
+                <Pin size={14} fill={pinned ? '#fff' : 'none'} />
+              </button>
+              <button
+                onClick={onClose}
+                style={{ width: 30, height: 30, borderRadius: 3, border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text-3)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'var(--surface-2)'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--text)'; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'var(--surface)'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-3)'; }}
+              >
+                <X size={14} />
+              </button>
+            </div>
           </div>
 
           {/* Chips: status · prioridade · categoria */}

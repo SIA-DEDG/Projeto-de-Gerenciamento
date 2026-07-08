@@ -50,7 +50,7 @@ export default function MinhasAtividadesPage() {
     selectionColumn, selectedTaskIds,
     toggleTaskSelection, beginColumnSelection, cancelSelection,
     moveSelectedTasks,
-    handleDragEnd, requestDeleteTask, requestArchiveTask, advanceOpenedTaskStatus,
+    handleDragEnd, togglePin, requestDeleteTask, requestArchiveTask, advanceOpenedTaskStatus,
   } = useTaskBoard();
 
   // Limpa seleção ao trocar de aba
@@ -125,8 +125,12 @@ export default function MinhasAtividadesPage() {
   // ── Handlers ──────────────────────────────────────────────────────────────
 
   async function handleSaveActivity(formData: ActivityFormData) {
-    const created = await saveActivity(formData);
-    if (created) addToast('success', 'Atividade criada', `"${created.activity}" criada.`);
+    try {
+      const created = await saveActivity(formData);
+      if (created) addToast('success', 'Atividade criada', `"${created.activity}" criada.`);
+    } catch (err) {
+      addToast('error', 'Não foi possível salvar a atividade', err instanceof Error ? err.message : 'Tente novamente.');
+    }
   }
 
   async function handleMoveSelected(targetGroup: StatusGroup) {
@@ -277,6 +281,7 @@ export default function MinhasAtividadesPage() {
                 onViewCard={setOpenedTask}
                 onDeleteCard={requestDeleteTask}
                 onArchiveCard={requestArchiveTask}
+                onTogglePinCard={togglePin}
                 isSelecting={selectionColumn === col.id}
                 selectedTaskIds={selectedTaskIds}
                 onToggleSelect={toggleTaskSelection}

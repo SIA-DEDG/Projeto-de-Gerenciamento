@@ -4,20 +4,26 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Search, Plus, Pencil, Trash2, X, ChevronLeft,
   ChevronRight, FileText, User, Calendar, Check,
+  Paperclip, Link as LinkIcon, Download,
 } from 'lucide-react';
 import ActivityModal from '@/components/ActivityModal';
 import ProjectModal from '@/components/ProjectModal';
 import DrawerDetalhe from '@/components/DrawerDetalhe';
 import ConfirmModal from '@/components/ConfirmModal';
+import CollapsibleGroup from '@/components/CollapsibleGroup';
 import { useToast } from '@/hooks/useToast';
 import ToastContainer from '@/components/ToastContainer';
 import {
-  fetchTasks, createTask, updateTask, deleteTask,
+  fetchTasks, fetchArchivedTasks, createTask, updateTask, deleteTask,
   fetchProjects, createProject, updateProject, deleteProject,
   fetchUsers, addTaskFile, addTaskLink, removeTaskAttachment, invalidateTasksCache,
+  addProjectFile, addProjectLink, removeProjectAttachment, getProjectAttachmentUrl, getTaskAttachmentUrl,
 } from '@/lib/api';
 import type { ActivityAttachment, ActivityLink } from '@/components/ActivityModal';
-import { avatarColor, initials, statusGroupLabel, resolveCoResponsibleIds } from '@/lib/utils';
+import {
+  avatarColor, initials, statusGroupLabel, resolveCoResponsibleIds,
+  canUseProjectClient, canEditProjectClient, canManageProjectClient,
+} from '@/lib/utils';
 import { useRefetchOnFocus } from '@/lib/useRefetchOnFocus';
 import { onTasksChanged } from '@/lib/taskEvents';
 import type { UserPublic } from '@/lib/api';
@@ -66,6 +72,7 @@ export default function ProjetosPage() {
 
   const myName = getUser()?.name ?? '';
   const myId = getUser()?.user_id ?? null;
+  const myRole = getUser()?.role;
 
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [projectModal, setProjectModal] = useState<{ open: boolean; project: Project | null }>({ open: false, project: null });
@@ -74,8 +81,11 @@ export default function ProjetosPage() {
   const [confirm, setConfirm] = useState<{ title: string; message?: string; onConfirm: () => void } | null>(null);
 
   const load = useCallback(() => {
-    Promise.all([fetchTasks(), fetchProjects(), fetchUsers()])
-      .then(([t, p, u]) => { setTasks(t); setProjects(p); setUsers(u.filter((x) => x.role !== 'Admin')); })
+    // Inclui as arquivadas: o progresso e a contagem de atividades de um projeto
+    // consideram TODAS as tarefas vinculadas — uma tarefa concluída continua contando
+    // mesmo depois de arquivada (não é preciso desarquivar para ela contar).
+    Promise.all([fetchTasks(), fetchArchivedTasks(), fetchProjects(), fetchUsers()])
+      .then(([active, archived, p, u]) => { setTasks([...active, ...archived]); setProjects(p); setUsers(u.filter((x) => x.role !== 'Admin')); })
       .finally(() => setLoading(false));
   }, []);
 
@@ -107,33 +117,62 @@ export default function ProjetosPage() {
   const pagedProjects = filteredProjects.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
   useEffect(() => { setPage(1); }, [search, onlyMine]);
 
-  async function handleSaveProject(data: Omit<Project, 'id'>) {
+  async function handleSaveProject(data: Omit<Project, 'id'> & {
+    attachmentsToAdd?: ActivityAttachment[]; linksToAdd?: ActivityLink[]; removedAttachmentIndices?: number[];
+  }) {
     const { project } = projectModal;
     setProjectModal({ open: false, project: null });
+    // Só envia responsibleIds quando o usuário pode gerenciar (dono/Admin/Diretor) ou ao criar
+    // (onde ele vira o dono). Caso contrário o backend rejeitaria a alteração de responsáveis.
+    const canManageResp = project ? canManageProjectClient(project, myId, myRole) : true;
     const payload = {
       name: data.name,
       category: data.category?.trim() || null,
-      ownerId: users.find((u) => u.name === data.owner)?.id ?? null,
       deadline: data.deadline?.trim() || null,
       executiveStatus: data.executive_status || null,
       objective: data.objective?.trim() || null,
       scope: data.scope?.trim() || null,
       summary: data.summary?.trim() || null,
+      // O responsável (owner) não entra na lista de colaboradores — já é membro por ser o responsável.
+      ...(canManageResp ? { ownerId: data.owner_id ?? null, responsibleIds: (data.responsible_ids ?? []).filter(id => id !== data.owner_id) } : {}),
     };
     try {
       if (project) {
         const updated = await updateProject(project, payload);
-        setProjects((curr) => curr.map((p) => (p.id === updated.id ? updated : p)));
-        if (selectedProject?.id === updated.id) setSelectedProject(updated);
-        addToast('success', 'Projeto atualizado', `"${updated.name}" salvo.`);
+        const finalAtts = await persistProjectAttachmentsFromModal(updated.id, data);
+        const next = finalAtts ? { ...updated, attachments: finalAtts } : updated;
+        setProjects((curr) => curr.map((p) => (p.id === next.id ? next : p)));
+        if (selectedProject?.id === next.id) setSelectedProject(next);
+        addToast('success', 'Projeto atualizado', `"${next.name}" salvo.`);
       } else {
         const created = await createProject(payload);
-        setProjects((curr) => [...curr, created]);
-        addToast('success', 'Projeto criado', `"${created.name}" criado.`);
+        const finalAtts = await persistProjectAttachmentsFromModal(created.id, data);
+        const next = finalAtts ? { ...created, attachments: finalAtts } : created;
+        setProjects((curr) => [...curr, next]);
+        addToast('success', 'Projeto criado', `"${next.name}" criado.`);
       }
     } catch (err) {
       addToast('error', 'Não foi possível salvar', err instanceof Error ? err.message : 'Tente novamente.');
     }
+  }
+
+  // Aplica remoções (índices em ordem decrescente) e uploads de arquivos/links do modal
+  // de projeto, em sequência, e retorna a lista final de anexos.
+  async function persistProjectAttachmentsFromModal(
+    projectId: string,
+    data: { attachmentsToAdd?: ActivityAttachment[]; linksToAdd?: ActivityLink[]; removedAttachmentIndices?: number[] },
+  ): Promise<TaskAttachment[] | null> {
+    let latest: TaskAttachment[] | null = null;
+    for (const idx of [...(data.removedAttachmentIndices ?? [])].sort((a, b) => b - a)) {
+      latest = await removeProjectAttachment(projectId, idx);
+    }
+    for (const f of data.attachmentsToAdd ?? []) {
+      latest = await addProjectFile(projectId, { name: f.name, data: f.data, mimeType: f.type, size: f.size });
+    }
+    for (const l of data.linksToAdd ?? []) {
+      latest = await addProjectLink(projectId, l.name, l.url);
+    }
+    return latest;
   }
 
   function handleDeleteProject(id: string, e?: React.MouseEvent) {
@@ -185,8 +224,8 @@ export default function ProjetosPage() {
         const next = finalAtts ? { ...created, attachments: finalAtts } : created;
         setTasks((curr) => [...curr.filter((t) => t.id !== created.id), next]);
         invalidateTasksCache();
-      } catch {
-        addToast('error', 'Não foi possível criar a atividade', 'Tente novamente.');
+      } catch (err) {
+        addToast('error', 'Não foi possível criar a atividade', err instanceof Error ? err.message : 'Tente novamente.');
       }
     }
   }
@@ -215,6 +254,17 @@ export default function ProjetosPage() {
     setConfirm({ title: 'Excluir atividade', message: 'Esta ação não pode ser desfeita.', onConfirm: async () => {
       await deleteTask(id); setTasks((curr) => curr.filter((t) => t.id !== id)); setTaskDrawer(null);
     }});
+  }
+
+  // Abre um anexo (link direto ou arquivo via URL assinada).
+  async function openAttachment(kind: 'project' | 'task', id: string, index: number, att: TaskAttachment) {
+    if (att.type === 'link') { window.open(att.url, '_blank', 'noopener'); return; }
+    try {
+      const url = kind === 'project' ? await getProjectAttachmentUrl(id, index) : await getTaskAttachmentUrl(id, index);
+      window.open(url, '_blank', 'noopener');
+    } catch {
+      addToast('error', 'Não foi possível abrir o anexo', 'Tente novamente.');
+    }
   }
 
   const linkedTasks = selectedProject ? tasks.filter((t) => t.project_id === selectedProject.id) : [];
@@ -364,6 +414,38 @@ export default function ProjetosPage() {
         )) as string[];
         const nameInitials = selectedProject.name.split(' ').filter(Boolean).slice(0, 2).map((w: string) => w[0]).join('').toUpperCase();
         const statusColors2: Record<string, string> = { pending: '#9aa1ac', in_progress: '#034ea2', review: '#E0A92E', done: '#1B8A4B' };
+        const canUse = canUseProjectClient(selectedProject, myId, myRole);
+        const canEdit = canEditProjectClient(selectedProject, myId, myRole);
+        const canManage = canManageProjectClient(selectedProject, myId, myRole);
+        // Anexos: os próprios do projeto + os de todas as atividades vinculadas.
+        const projectAtts = (selectedProject.attachments ?? []).map((att, i) => ({ att, kind: 'project' as const, id: selectedProject.id, index: i, source: 'Projeto' }));
+        const taskAtts = pTasks2.flatMap((t) => (t.attachments ?? []).map((att, i) => ({ att, kind: 'task' as const, id: t.id, index: i, source: t.activity })));
+        const taskFiles = taskAtts.filter((a) => a.att.type === 'file');
+        const taskLinks = taskAtts.filter((a) => a.att.type === 'link');
+        const projFiles = projectAtts.filter((a) => a.att.type === 'file');
+        const projLinks = projectAtts.filter((a) => a.att.type === 'link');
+
+        type AttRow = { att: TaskAttachment; kind: 'project' | 'task'; id: string; index: number; source: string };
+        const emptyMini = <div style={{ fontSize: '0.72rem', color: 'var(--text-3)', padding: '2px 0' }}>—</div>;
+
+        // Uma linha de anexo. `showSource` mostra de qual atividade veio.
+        const renderAtt = (a: AttRow, showSource: boolean) => (
+          <div key={`${a.kind}-${a.id}-${a.index}`} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 10px', border: '1px solid var(--line-1)', borderRadius: 3, background: 'var(--surface-2)' }}>
+            {a.att.type === 'link'
+              ? <LinkIcon size={13} color="var(--blue)" style={{ flexShrink: 0 }} />
+              : <Paperclip size={13} color="var(--text-3)" style={{ flexShrink: 0 }} />}
+            <button type="button" onClick={() => void openAttachment(a.kind, a.id, a.index, a.att)}
+              style={{ flex: 1, minWidth: 0, textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit', overflow: 'hidden' }}>
+              <span style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.att.name}</span>
+              {showSource && (
+                <span className="mono" style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.6rem', color: 'var(--text-3)', letterSpacing: '0.5px', textTransform: 'uppercase', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <FileText size={9} style={{ flexShrink: 0 }} />{a.source}
+                </span>
+              )}
+            </button>
+            {a.att.type === 'file' && <Download size={12} color="var(--text-3)" style={{ flexShrink: 0 }} />}
+          </div>
+        );
         return (
           <>
             {/* Backdrop */}
@@ -374,7 +456,7 @@ export default function ProjetosPage() {
               style={{ position: 'fixed', top: 0, right: 0, bottom: 0, width: 560, maxWidth: '96%', background: 'var(--surface)', overflowY: 'auto', zIndex: 51, borderLeft: '1px solid var(--line-1)', animation: 'drawin .26s cubic-bezier(.4,0,.2,1) both' }}>
 
               {/* 4px stripe — 4 cores Gov-PI */}
-              <div style={{ height: 4, background: 'linear-gradient(90deg,var(--blue-fixed) 0 40%,#E0A92E 40% 55%,#b42318 55% 75%,#1B8A4B 75%)', flexShrink: 0 }} />
+              {/* Faixa Gov-PI comentada a pedido: <div style={{ height: 4, background: 'linear-gradient(90deg,var(--blue-fixed) 0 40%,#E0A92E 40% 55%,#b42318 55% 75%,#1B8A4B 75%)', flexShrink: 0 }} /> */}
 
               {/* Header: icon box + name + status + close */}
               <div style={{ padding: '22px 28px', borderBottom: '1px solid var(--line-1)', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 14 }}>
@@ -463,12 +545,14 @@ export default function ProjetosPage() {
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
                     <div className="mono" style={{ fontSize: '0.62rem', fontWeight: 500, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--text-3)' }}>Atividades vinculadas</div>
-                    <button onClick={() => setActivityModal({ open: true, task: null, projectId: selectedProject.id })}
-                      style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 11px', border: 'none', borderRadius: 3, background: 'var(--blue)', color: '#fff', fontSize: '0.74rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
-                      onMouseEnter={e => (e.currentTarget.style.background = 'var(--blue-h)')}
-                      onMouseLeave={e => (e.currentTarget.style.background = 'var(--blue)')}>
-                      <Plus size={12} />Nova atividade
-                    </button>
+                    {canUse && (
+                      <button onClick={() => setActivityModal({ open: true, task: null, projectId: selectedProject.id })}
+                        style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 11px', border: 'none', borderRadius: 3, background: 'var(--blue)', color: '#fff', fontSize: '0.74rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
+                        onMouseEnter={e => (e.currentTarget.style.background = 'var(--blue-h)')}
+                        onMouseLeave={e => (e.currentTarget.style.background = 'var(--blue)')}>
+                        <Plus size={12} />Nova atividade
+                      </button>
+                    )}
                   </div>
                   {pTasks2.length === 0
                     ? <div className="empty-state" style={{ padding: '20px 0' }}><p>Nenhuma atividade vinculada.</p></div>
@@ -488,11 +572,60 @@ export default function ProjetosPage() {
                   }
                 </div>
 
-                {/* Edit/Delete actions */}
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <button className="btn btn-secondary btn-sm" style={{ flex: 1 }} onClick={() => setProjectModal({ open: true, project: selectedProject })}><Pencil size={12} />Editar</button>
-                  <button className="btn btn-danger btn-sm" onClick={(e) => handleDeleteProject(selectedProject.id, e)}><Trash2 size={12} /></button>
-                </div>
+                <div style={{ height: 1, background: 'var(--line-2)' }} />
+
+                {/* ── Atividades — arquivos e links de TODAS as atividades do projeto (grupos colapsáveis) ── */}
+                <CollapsibleGroup label="Atividades" count={taskAtts.length} defaultOpen={false}>
+                  <div style={{ marginLeft: 8, paddingLeft: 10, borderLeft: '2px solid var(--line-2)', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <CollapsibleGroup variant="sub" label="Arquivos" count={taskFiles.length} defaultOpen={false}>
+                      {taskFiles.length === 0 ? emptyMini : <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>{taskFiles.map(a => renderAtt(a, true))}</div>}
+                    </CollapsibleGroup>
+                    <CollapsibleGroup variant="sub" label="Links" count={taskLinks.length} defaultOpen={false}>
+                      {taskLinks.length === 0 ? emptyMini : <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>{taskLinks.map(a => renderAtt(a, true))}</div>}
+                    </CollapsibleGroup>
+                  </div>
+                </CollapsibleGroup>
+
+                <div style={{ height: 1, background: 'var(--line-2)' }} />
+
+                {/* ── Projeto — arquivos e links do próprio projeto (grupos colapsáveis) ── */}
+                <CollapsibleGroup label="Projeto" count={projectAtts.length} defaultOpen={false}>
+                  <div style={{ marginLeft: 8, paddingLeft: 10, borderLeft: '2px solid var(--line-2)', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <CollapsibleGroup variant="sub" label="Arquivos" count={projFiles.length} defaultOpen={false}>
+                      {projFiles.length === 0 ? emptyMini : <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>{projFiles.map(a => renderAtt(a, false))}</div>}
+                    </CollapsibleGroup>
+                    <CollapsibleGroup variant="sub" label="Links" count={projLinks.length} defaultOpen={false}>
+                      {projLinks.length === 0 ? emptyMini : <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>{projLinks.map(a => renderAtt(a, false))}</div>}
+                    </CollapsibleGroup>
+                  </div>
+                </CollapsibleGroup>
+
+                {/* Edit/Delete actions — mesmo estilo dos botões do detalhe de atividade */}
+                {(canEdit || canManage) && (
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    {canEdit && (
+                      <button
+                        onClick={() => setProjectModal({ open: true, project: selectedProject })}
+                        style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '10px 14px', borderRadius: 3, border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text-2)', fontSize: '0.82rem', fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer' }}
+                        onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-2)')}
+                        onMouseLeave={e => (e.currentTarget.style.background = 'var(--surface)')}
+                      >
+                        <Pencil size={13} />Editar
+                      </button>
+                    )}
+                    {canManage && (
+                      <button
+                        onClick={(e) => handleDeleteProject(selectedProject.id, e)}
+                        title="Excluir"
+                        style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 12px', borderRadius: 3, border: '1px solid rgba(180,35,24,0.2)', background: 'rgba(180,35,24,0.05)', color: '#b42318', fontSize: '0.82rem', fontFamily: 'inherit', cursor: 'pointer' }}
+                        onMouseEnter={e => (e.currentTarget.style.background = 'rgba(180,35,24,0.10)')}
+                        onMouseLeave={e => (e.currentTarget.style.background = 'rgba(180,35,24,0.05)')}
+                      >
+                        <Trash2 size={13} />Excluir
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           </>
@@ -509,7 +642,7 @@ export default function ProjetosPage() {
         />
       )}
 
-      <ProjectModal open={projectModal.open} project={projectModal.project} onClose={() => setProjectModal({ open: false, project: null })} onSave={handleSaveProject} users={users} />
+      <ProjectModal open={projectModal.open} project={projectModal.project} onClose={() => setProjectModal({ open: false, project: null })} onSave={handleSaveProject} users={users} canManageResponsibles={projectModal.project ? canManageProjectClient(projectModal.project, myId, myRole) : true} />
       <ActivityModal open={activityModal.open} task={activityModal.task} projects={projects} tasks={tasks} users={users} fixedProjectId={activityModal.projectId} onClose={() => setActivityModal({ open: false, task: null, projectId: null })} onSave={handleSaveActivity} />
       <ConfirmModal open={!!confirm} title={confirm?.title ?? ''} message={confirm?.message} confirmLabel="Excluir" danger onConfirm={() => confirm?.onConfirm()} onClose={() => setConfirm(null)} />
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />
