@@ -11,11 +11,17 @@ function getClient() {
   return createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_KEY);
 }
 
+// Gera uma CHAVE de storage ASCII-safe. O Supabase Storage rejeita chaves com
+// caracteres não-ASCII (acentos: á, ç, ã, í...) com "Invalid key". O nome original
+// (com acentos) continua salvo em `attachment.name` para exibição e download —
+// aqui só sanitizamos a chave do objeto no bucket.
 export function sanitizeStorageName(name: string): string {
   const cleaned = name
-    .replace(/[/\\]/g, '_') 
-    .replace(/[\x00-\x1f\x7f]/g, '') 
+    .normalize('NFD').replace(/[̀-ͯ]/g, '') // remove acentos (á -> a, ç -> c)
+    .replace(/[/\\]/g, '_')
+    .replace(/[\x00-\x1f\x7f]/g, '')
     .replace(/[<>:"|?*]/g, '_')
+    .replace(/[^\x20-\x7e]/g, '_') // qualquer não-ASCII restante -> _
     .trim();
   return cleaned || 'arquivo';
 }
