@@ -31,13 +31,18 @@ function fmt(t: TaskWithRelations) {
   const coNames = coResponsibles.map((c) => c.user.name);
   const coIds   = coResponsibles.map((c) => c.userId);
   const coDiretorias = coResponsibles.map((c) => c.user.directoria?.name ?? null);
+  // Diretoria (id) de cada envolvido — o front usa para pré-selecionar, ao reabrir a
+  // edição, as diretorias externas já envolvidas no seletor "Envolver outra diretoria".
+  const coDiretoriaIds = coResponsibles.map((c) => c.user.directoriaId ?? null);
   return {
     ...rest,
     responsible: responsible?.name ?? null,
+    responsible_diretoria_id: responsible?.directoriaId ?? null,
     project_name: project?.name ?? null,
     co_responsibles:    coNames.length > 0 ? JSON.stringify(coNames) : null,
     co_responsible_ids: coIds.length  > 0 ? JSON.stringify(coIds)  : null,
     co_responsible_diretorias: coDiretorias.length > 0 ? JSON.stringify(coDiretorias) : null,
+    co_responsible_diretoria_ids: coDiretoriaIds.length > 0 ? JSON.stringify(coDiretoriaIds) : null,
     attachments: attachments ? (JSON.parse(attachments) as TaskAttachment[]) : [],
     pinned: (pins?.length ?? 0) > 0,
   };

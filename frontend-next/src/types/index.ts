@@ -11,6 +11,7 @@ export interface Task {
   description?: string;
   responsible_id?: string | null;
   responsible: string;
+  responsible_diretoria_id?: string | null; // diretoria do responsável (pré-seleção no seletor)
   status: string;
   priority: string;
   created_at: string;
@@ -18,6 +19,7 @@ export interface Task {
   project_id?: string | null;
   co_responsibles?: string | null;
   co_responsible_ids?: string | null;
+  co_responsible_diretoria_ids?: string | null; // JSON de ids de diretoria, alinhado aos co_responsible_ids
   external_collaborators?: string | null;
   deadline?: string | null;
   attachments?: TaskAttachment[];
@@ -41,6 +43,8 @@ export interface Project {
   summary?: string;
   responsible_ids?: string[]; // IDs dos responsáveis (acesso/edição)
   responsibles?: string[];    // nomes dos responsáveis (exibição)
+  owner_diretoria_id?: string | null;          // diretoria do dono (pré-seleção no seletor)
+  responsible_diretoria_ids?: (string | null)[]; // diretoria de cada colaborador, alinhado a responsible_ids
   attachments?: TaskAttachment[]; // anexos próprios do projeto (arquivos/links)
 }
 

@@ -1,22 +1,35 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { ChevronDown } from 'lucide-react';
 import { fetchDiretorias, fetchDirectoriaMembers, type Directoria, type UserPublic } from '@/lib/api';
 import { getUser } from '@/lib/auth';
+import { mergeUsersById } from '@/lib/utils';
 
 /**
  * "Envolver outra diretoria": por padrão os seletores mostram só a própria diretoria.
- * Ao marcar e escolher uma diretoria, seus membros ficam disponíveis para seleção como
- * responsável/colaborador — é assim que se compartilha um projeto/atividade entre diretorias.
- * Devolve os membros da diretoria escolhida via `onMembersChange` (ou [] quando desligado).
+ * Ao marcar e escolher UMA OU MAIS diretorias, os membros de TODAS elas ficam
+ * disponíveis (somados, sem duplicar) para seleção como responsável/co-responsável —
+ * é assim que se compartilha um projeto/atividade entre diretorias.
+ * Devolve a união dos membros das diretorias escolhidas via `onMembersChange`
+ * (ou [] quando desligado / nenhuma escolhida).
+ *
+ * `initialSelectedIds`: diretorias externas JÁ envolvidas no item em edição — ao abrir,
+ * o seletor inicia ligado e com elas marcadas, refletindo o estado salvo (senão parece
+ * que a opção está desativada e que é preciso reativar/reescolher).
  */
-export default function OtherDiretoriaPicker({ onMembersChange }: {
+export default function OtherDiretoriaPicker({ onMembersChange, initialSelectedIds = [] }: {
   onMembersChange: (users: UserPublic[]) => void;
+  initialSelectedIds?: string[];
 }) {
   const ownDiretoriaId = getUser()?.directoria_id ?? null;
-  const [enabled, setEnabled] = useState(false);
+  const [enabled, setEnabled] = useState(initialSelectedIds.length > 0);
   const [diretorias, setDiretorias] = useState<Directoria[]>([]);
-  const [selectedId, setSelectedId] = useState('');
+  const [selectedIds, setSelectedIds] = useState<string[]>(initialSelectedIds);
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  // Cache diretoriaId -> membros, para não refazer o fetch ao remarcar a mesma diretoria.
+  const membersCache = useRef<Map<string, UserPublic[]>>(new Map());
 
   // Carrega a lista de diretorias (menos a própria) só quando o usuário liga a opção.
   useEffect(() => {
@@ -27,16 +40,40 @@ export default function OtherDiretoriaPicker({ onMembersChange }: {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enabled]);
 
-  // Busca os membros da diretoria escolhida (ou limpa).
+  // Fecha o dropdown ao clicar fora.
   useEffect(() => {
-    if (!enabled || !selectedId) { onMembersChange([]); return; }
+    function handler(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    if (open) document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open]);
+
+  // Busca (com cache) os membros de todas as diretorias escolhidas, soma sem duplicar
+  // e propaga. Vazio quando desligado ou sem seleção.
+  useEffect(() => {
+    if (!enabled || selectedIds.length === 0) { onMembersChange([]); return; }
     let cancelled = false;
-    fetchDirectoriaMembers(selectedId)
-      .then((members) => { if (!cancelled) onMembersChange(members); })
-      .catch(() => onMembersChange([]));
+    Promise.all(selectedIds.map(async (id) => {
+      const cached = membersCache.current.get(id);
+      if (cached) return cached;
+      const members = await fetchDirectoriaMembers(id).catch(() => [] as UserPublic[]);
+      membersCache.current.set(id, members);
+      return members;
+    })).then((lists) => {
+      if (cancelled) return;
+      const combined = lists.reduce<UserPublic[]>((acc, l) => mergeUsersById(acc, l), []);
+      onMembersChange(combined);
+    });
     return () => { cancelled = true; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [enabled, selectedId]);
+  }, [enabled, selectedIds]);
+
+  function toggle(id: string) {
+    setSelectedIds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
+  }
+
+  const selectedDiretorias = diretorias.filter((d) => selectedIds.includes(d.id));
 
   return (
     <div>
@@ -44,20 +81,68 @@ export default function OtherDiretoriaPicker({ onMembersChange }: {
         <input
           type="checkbox"
           checked={enabled}
-          onChange={(e) => { setEnabled(e.target.checked); if (!e.target.checked) { setSelectedId(''); onMembersChange([]); } }}
+          onChange={(e) => { setEnabled(e.target.checked); if (!e.target.checked) { setSelectedIds([]); setOpen(false); onMembersChange([]); } }}
           style={{ accentColor: 'var(--blue)', width: 14, height: 14, cursor: 'pointer' }}
         />
         Envolver outra diretoria
       </label>
+
       {enabled && (
-        <select
-          value={selectedId}
-          onChange={(e) => setSelectedId(e.target.value)}
-          style={{ marginTop: 8, width: '100%', padding: '9px 11px', border: '1px solid var(--border)', borderRadius: 3, background: 'var(--surface)', color: 'var(--text)', fontSize: '0.85rem', fontFamily: 'inherit', cursor: 'pointer' }}
-        >
-          <option value="">— Selecione a diretoria —</option>
-          {diretorias.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
-        </select>
+        <div ref={ref} style={{ position: 'relative', marginTop: 8 }}>
+          <button
+            type="button"
+            onClick={() => setOpen((v) => !v)}
+            style={{
+              width: '100%', textAlign: 'left', padding: '8px 10px',
+              border: '1px solid var(--border)', borderRadius: 3,
+              background: 'var(--surface)', color: 'var(--text)', fontSize: '0.85rem',
+              cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
+              flexWrap: 'wrap', minHeight: 36, fontFamily: 'inherit',
+            }}
+          >
+            {selectedDiretorias.length === 0 ? (
+              <span style={{ color: 'var(--text-3)' }}>Selecione a(s) diretoria(s)</span>
+            ) : (
+              selectedDiretorias.map((d) => (
+                <span key={d.id} style={{
+                  background: '#e8f0fe', color: '#0052cc', borderRadius: 4,
+                  padding: '2px 6px', fontSize: '0.78rem', fontWeight: 600,
+                  display: 'flex', alignItems: 'center', gap: 4,
+                }}>
+                  {d.name}
+                  <span onClick={(e) => { e.stopPropagation(); toggle(d.id); }} style={{ cursor: 'pointer', lineHeight: 1 }}>×</span>
+                </span>
+              ))
+            )}
+            <ChevronDown size={12} style={{ marginLeft: 'auto', flexShrink: 0, color: 'var(--text-3)', transform: open ? 'rotate(180deg)' : undefined }} />
+          </button>
+
+          {open && (
+            <div style={{
+              position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 200,
+              background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 3,
+              boxShadow: '0 4px 12px rgba(0,0,0,0.12)', maxHeight: 180, overflowY: 'auto', marginTop: 2,
+            }}>
+              {diretorias.length === 0 ? (
+                <div style={{ padding: '10px 12px', color: 'var(--text-3)', fontSize: '0.85rem' }}>Nenhuma outra diretoria</div>
+              ) : diretorias.map((d) => (
+                <label key={d.id} style={{
+                  display: 'flex', alignItems: 'center', gap: 8,
+                  padding: '8px 12px', cursor: 'pointer', fontSize: '0.85rem',
+                  background: selectedIds.includes(d.id) ? '#f0f4ff' : 'transparent',
+                }}>
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.includes(d.id)}
+                    onChange={() => toggle(d.id)}
+                    style={{ accentColor: '#0052cc', width: 14, height: 14, cursor: 'pointer' }}
+                  />
+                  {d.name}
+                </label>
+              ))}
+            </div>
+          )}
+        </div>
       )}
     </div>
   );

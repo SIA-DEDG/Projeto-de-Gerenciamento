@@ -117,6 +117,17 @@ export default function ProjectModal({ open, project, onClose, onSave, users = [
     [seededMembers, users, extraUsers],
   );
 
+  // Diretorias EXTERNAS já envolvidas no projeto (dono + colaboradores de fora da minha
+  // diretoria) — para o seletor abrir já ligado e marcado ao editar.
+  const involvedDiretoriaIds = useMemo<string[]>(() => {
+    if (!project) return [];
+    const own = getUser()?.directoria_id ?? null;
+    const ids = new Set<string>();
+    if (project.owner_diretoria_id && project.owner_diretoria_id !== own) ids.add(project.owner_diretoria_id);
+    (project.responsible_diretoria_ids ?? []).forEach((d) => { if (d && d !== own) ids.add(d); });
+    return [...ids];
+  }, [project]);
+
   useEffect(() => {
     if (!open) return;
     setAttDraft(emptyAttachmentDraft());
@@ -252,7 +263,7 @@ export default function ProjectModal({ open, project, onClose, onSave, users = [
                   )}
                   {canManageResponsibles && (
                     <div style={{ marginBottom: 8 }}>
-                      <OtherDiretoriaPicker onMembersChange={setExtraUsers} />
+                      <OtherDiretoriaPicker onMembersChange={setExtraUsers} initialSelectedIds={involvedDiretoriaIds} />
                     </div>
                   )}
                   <div style={{ border: '1px solid var(--border)', borderRadius: 3, maxHeight: 200, overflowY: 'auto' }}>

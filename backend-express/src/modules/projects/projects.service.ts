@@ -2,8 +2,8 @@ import { prisma } from '../../lib/prisma';
 import type { Project, User, ProjectResponsible } from '@prisma/client';
 
 type ProjectWithRelations = Project & {
-  owner: Pick<User, 'name'> | null;
-  responsibles: (ProjectResponsible & { user: Pick<User, 'name'> })[];
+  owner: Pick<User, 'name' | 'directoriaId'> | null;
+  responsibles: (ProjectResponsible & { user: Pick<User, 'name' | 'directoriaId'> })[];
 };
 
 // Mesmo formato de anexo usado nas tarefas (arquivo no Supabase Storage ou link).
@@ -12,8 +12,8 @@ export type ProjectAttachment =
   | { type: 'link'; name: string; url: string };
 
 const include = {
-  owner: { select: { name: true } },
-  responsibles: { include: { user: { select: { name: true } } } },
+  owner: { select: { name: true, directoriaId: true } },
+  responsibles: { include: { user: { select: { name: true, directoriaId: true } } } },
 } as const;
 
 function fmt(p: ProjectWithRelations) {
@@ -30,6 +30,10 @@ function fmt(p: ProjectWithRelations) {
     summary: p.summary,
     responsible_ids: p.responsibles.map((r) => r.userId),
     responsibles: p.responsibles.map((r) => r.user.name),
+    // Diretoria (id) do dono e de cada colaborador — o front usa para pré-selecionar, ao
+    // reabrir a edição, as diretorias externas já envolvidas no seletor.
+    owner_diretoria_id: p.owner?.directoriaId ?? null,
+    responsible_diretoria_ids: p.responsibles.map((r) => r.user.directoriaId ?? null),
     attachments: p.attachments ? (JSON.parse(p.attachments) as ProjectAttachment[]) : [],
   };
 }

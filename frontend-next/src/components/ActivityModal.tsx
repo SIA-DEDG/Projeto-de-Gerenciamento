@@ -301,6 +301,20 @@ export default function ActivityModal({
     [seededUsers, users, extraUsers],
   );
 
+  // Diretorias EXTERNAS já envolvidas na atividade (responsável + co-responsáveis de fora
+  // da minha diretoria) — para o seletor abrir já ligado e marcado ao editar.
+  const involvedDiretoriaIds = useMemo<string[]>(() => {
+    if (!task) return [];
+    const own = getUser()?.directoria_id ?? null;
+    const ids = new Set<string>();
+    if (task.responsible_diretoria_id && task.responsible_diretoria_id !== own) ids.add(task.responsible_diretoria_id);
+    try {
+      const coDirs: (string | null)[] = task.co_responsible_diretoria_ids ? JSON.parse(task.co_responsible_diretoria_ids) : [];
+      coDirs.forEach((d) => { if (d && d !== own) ids.add(d); });
+    } catch { /* ids ausentes */ }
+    return [...ids];
+  }, [task]);
+
   useEffect(() => {
     if (!open) return;
     setAttDraft(emptyAttachmentDraft());
@@ -332,6 +346,14 @@ export default function ActivityModal({
     initialSnapshot.current = JSON.stringify({ form: formInit, noDeadline: noDeadlineInit });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, task]);
+
+  // Acumula nome->id de TODO usuário que já apareceu como selecionável (própria diretoria
+  // + diretorias envolvidas). Assim, se o usuário escolher alguém de uma diretoria externa
+  // e depois DESMARCAR essa diretoria, o co-responsável já escolhido continua resolvível no
+  // save (não perde o id) — só somem da lista os membros que ainda não foram escolhidos.
+  useEffect(() => {
+    availableUsers.forEach((u) => existingIdByName.current.set(u.name, u.id));
+  }, [availableUsers]);
 
   const myId = getUser()?.user_id ?? null;
 
@@ -512,7 +534,7 @@ export default function ActivityModal({
             <div>
               <Label>Co-responsáveis</Label>
               <div style={{ marginBottom: 8 }}>
-                <OtherDiretoriaPicker onMembersChange={setExtraUsers} />
+                <OtherDiretoriaPicker onMembersChange={setExtraUsers} initialSelectedIds={involvedDiretoriaIds} />
               </div>
               <CoRespChips users={availableUsers} selected={form.co_responsibles} exclude={form.responsible} onChange={v => setForm({ ...form, co_responsibles: v })} />
             </div>
