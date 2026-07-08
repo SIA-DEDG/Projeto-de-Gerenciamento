@@ -153,6 +153,35 @@ router.put('/:id/unarchive', authenticate, tasksController.unarchiveTask);
 
 /**
  * @swagger
+ * /tasks/{id}/pin:
+ *   put:
+ *     tags: [Tasks]
+ *     summary: Fixar atividade (pin do usuário logado)
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string, format: uuid }
+ *     responses:
+ *       200:
+ *         description: Atividade fixada
+ *   delete:
+ *     tags: [Tasks]
+ *     summary: Desafixar atividade (pin do usuário logado)
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string, format: uuid }
+ *     responses:
+ *       200:
+ *         description: Atividade desafixada
+ */
+router.put('/:id/pin',    authenticate, tasksController.pinTask);
+router.delete('/:id/pin', authenticate, tasksController.unpinTask);
+
+/**
+ * @swagger
  * /tasks/{id}/attachments:
  *   post:
  *     tags: [Tasks]

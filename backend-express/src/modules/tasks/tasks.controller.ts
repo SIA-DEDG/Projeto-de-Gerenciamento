@@ -1,27 +1,46 @@
 import { Request, Response, NextFunction } from 'express';
 import * as svc from './tasks.service';
 import { taskSchema, taskBatchSchema } from './tasks.schema';
+import * as projectsSvc from '../projects/projects.service';
+import { canUseProject } from '../projects/projects.perms';
 import { logAction } from '../../lib/logger';
 
 // Helper: Express v5 types params como string | string[]; em rotas com :id é sempre string
 const pid = (req: Request) => req.params['id'] as string;
 
+// Só membros do projeto (dono/responsável) — inclui Estagiário — ou Admin/Diretor
+// podem vincular/criar atividades num projeto.
+async function assertCanUseProject(req: Request, projectId: string): Promise<boolean> {
+  const membership = await projectsSvc.getProjectMembership(projectId);
+  return canUseProject(membership, req.user);
+}
+
 export async function listTasks(req: Request, res: Response, next: NextFunction): Promise<void> {
-  try { res.json(await svc.listTasks(req.user.directoriaId)); } catch (err) { next(err); }
+  try { res.json(await svc.listTasks(req.user.directoriaId, req.user.sub)); } catch (err) { next(err); }
 }
 
 export async function listArchived(req: Request, res: Response, next: NextFunction): Promise<void> {
-  try { res.json(await svc.listArchivedTasks(req.user.directoriaId)); } catch (err) { next(err); }
+  try { res.json(await svc.listArchivedTasks(req.user.directoriaId, req.user.sub)); } catch (err) { next(err); }
 }
 
 export async function getTask(req: Request, res: Response, next: NextFunction): Promise<void> {
-  try { res.json(await svc.getTask(pid(req))); } catch (err) { next(err); }
+  try { res.json(await svc.getTask(pid(req), req.user.sub)); } catch (err) { next(err); }
 }
 
 export async function createTask(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const data = taskSchema.parse(req.body);
-    const task = await svc.createTask({ ...data, directoriaId: req.user.directoriaId! });
+    // Toda atividade pertence a uma diretoria. Contas globais (super-admin sem
+    // diretoria) não têm onde alocá-la — respondemos com um aviso claro em vez de 500.
+    if (!req.user.directoriaId) {
+      res.status(400).json({ error: 'Sua conta não está vinculada a uma diretoria, então não é possível criar atividades. Entre com uma conta de diretoria.' });
+      return;
+    }
+    if (data.projectId && !(await assertCanUseProject(req, data.projectId))) {
+      res.status(403).json({ error: 'Você não faz parte deste projeto para criar atividades nele.' });
+      return;
+    }
+    const task = await svc.createTask({ ...data, directoriaId: req.user.directoriaId });
     void logAction(req.user.sub, req.user.username, 'CREATE', 'task', task.id, `Tarefa "${task.activity}" criada`, req.user.directoriaId ?? undefined);
     res.status(201).json(task);
   } catch (err) { next(err); }
@@ -30,7 +49,11 @@ export async function createTask(req: Request, res: Response, next: NextFunction
 export async function createBatch(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const items = taskBatchSchema.parse(req.body);
-    const tasks = await svc.createBatch(items, req.user.directoriaId!);
+    if (!req.user.directoriaId) {
+      res.status(400).json({ error: 'Sua conta não está vinculada a uma diretoria, então não é possível importar atividades. Entre com uma conta de diretoria.' });
+      return;
+    }
+    const tasks = await svc.createBatch(items, req.user.directoriaId);
     void logAction(req.user.sub, req.user.username, 'CREATE', 'task', 'batch', `${tasks.length} tarefas criadas`, req.user.directoriaId ?? undefined);
     res.status(201).json(tasks);
   } catch (err) { next(err); }
@@ -40,10 +63,24 @@ export async function updateTask(req: Request, res: Response, next: NextFunction
   try {
     const id = pid(req);
     const data = taskSchema.partial().parse(req.body);
-    const task = await svc.updateTask(id, data);
+    if (data.projectId && !(await assertCanUseProject(req, data.projectId))) {
+      res.status(403).json({ error: 'Você não faz parte deste projeto para vincular atividades a ele.' });
+      return;
+    }
+    const task = await svc.updateTask(id, data, req.user.sub);
     void logAction(req.user.sub, req.user.username, 'UPDATE', 'task', id, `Tarefa "${task.activity}" atualizada`);
     res.json(task);
   } catch (err) { next(err); }
+}
+
+// ── Pin (por usuário) ───────────────────────────────────────────────────────────
+
+export async function pinTask(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try { res.json(await svc.pinTask(pid(req), req.user.sub)); } catch (err) { next(err); }
+}
+
+export async function unpinTask(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try { res.json(await svc.unpinTask(pid(req), req.user.sub)); } catch (err) { next(err); }
 }
 
 export async function deleteTask(req: Request, res: Response, next: NextFunction): Promise<void> {

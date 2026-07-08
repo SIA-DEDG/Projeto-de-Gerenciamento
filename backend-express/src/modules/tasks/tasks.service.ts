@@ -6,20 +6,28 @@ type TaskWithRelations = Task & {
   responsible: UserWithDir | null;
   project: Pick<Project, 'name'> | null;
   coResponsibles: (TaskCoResponsible & { user: UserWithDir })[];
+  pins?: { userId: string }[];
 };
 
 export type TaskAttachment =
   | { type: 'file'; name: string; path: string; size: number; mimeType: string }
   | { type: 'link'; name: string; url: string };
 
-const include = {
-  responsible: { select: { name: true, directoriaId: true, directoria: { select: { name: true } } } },
-  project: { select: { name: true } },
-  coResponsibles: { include: { user: { select: { name: true, directoriaId: true, directoria: { select: { name: true } } } } } },
-} as const;
+// Inclui as relações da tarefa. Quando `userId` é passado, traz os pins DAQUELE usuário
+// (pin é por usuário), permitindo marcar `pinned` no resultado.
+function includeFor(userId?: string) {
+  return {
+    responsible: { select: { name: true, directoriaId: true, directoria: { select: { name: true } } } },
+    project: { select: { name: true } },
+    coResponsibles: { include: { user: { select: { name: true, directoriaId: true, directoria: { select: { name: true } } } } } },
+    ...(userId ? { pins: { where: { userId }, select: { userId: true } } } : {}),
+  } as const;
+}
+
+const include = includeFor();
 
 function fmt(t: TaskWithRelations) {
-  const { coResponsibles, project, responsible, attachments, ...rest } = t;
+  const { coResponsibles, project, responsible, attachments, pins, ...rest } = t;
   const coNames = coResponsibles.map((c) => c.user.name);
   const coIds   = coResponsibles.map((c) => c.userId);
   const coDiretorias = coResponsibles.map((c) => c.user.directoria?.name ?? null);
@@ -31,34 +39,64 @@ function fmt(t: TaskWithRelations) {
     co_responsible_ids: coIds.length  > 0 ? JSON.stringify(coIds)  : null,
     co_responsible_diretorias: coDiretorias.length > 0 ? JSON.stringify(coDiretorias) : null,
     attachments: attachments ? (JSON.parse(attachments) as TaskAttachment[]) : [],
+    pinned: (pins?.length ?? 0) > 0,
   };
 }
 
-// Auto-arquivamento: tarefas "Concluído" há mais de 2 dias
+// Auto-arquivamento: tarefas "Concluído" há mais de N dias, onde N é configurável
+// por diretoria (diretorias.auto_archive_days, padrão 2).
 async function autoArchiveDoneTasks(directoriaId: string) {
-  const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
+  const dir = await prisma.directoria.findUnique({ where: { id: directoriaId }, select: { autoArchiveDays: true } });
+  const days = dir?.autoArchiveDays ?? 2;
+  const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
   await prisma.task.updateMany({
-    where: { archived: false, status: 'Concluído', updatedAt: { lt: twoDaysAgo }, directoriaId },
+    where: { archived: false, status: 'Concluído', updatedAt: { lt: cutoff }, directoriaId },
     data: { archived: true },
   });
 }
 
-export const listTasks = async (directoriaId: string | null) => {
+// Ordena mantendo as fixadas (pin do usuário) no topo, preservando a ordem por data.
+function pinnedFirst<T extends { pinned: boolean }>(tasks: T[]): T[] {
+  return [...tasks].sort((a, b) => Number(b.pinned) - Number(a.pinned));
+}
+
+// Além das tarefas da própria diretoria, inclui as COMPARTILHADAS com o usuário em
+// outras diretorias (onde ele é responsável ou co-responsável).
+const sharedWith = (directoriaId: string, userId: string) => ({
+  OR: [
+    { directoriaId },
+    { responsibleId: userId },
+    { coResponsibles: { some: { userId } } },
+    // Atividades de projetos compartilhados comigo (sou responsável/owner ou colaborador
+    // do projeto) — mesmo que o projeto seja de outra diretoria.
+    { project: { OR: [{ ownerId: userId }, { responsibles: { some: { userId } } }] } },
+  ],
+});
+
+export const listTasks = async (directoriaId: string | null, userId: string) => {
   if (!directoriaId) return [];
   await autoArchiveDoneTasks(directoriaId);
-  return prisma.task.findMany({ where: { archived: false, directoriaId }, include, orderBy: { createdAt: 'desc' } })
-    .then((ts) => ts.map((t) => fmt(t as TaskWithRelations)));
+  return prisma.task.findMany({ where: { archived: false, ...sharedWith(directoriaId, userId) }, include: includeFor(userId), orderBy: { createdAt: 'desc' } })
+    .then((ts) => pinnedFirst(ts.map((t) => fmt(t as TaskWithRelations))));
 };
 
-export const listArchivedTasks = async (directoriaId: string | null) => {
+export const listArchivedTasks = async (directoriaId: string | null, userId: string) => {
   if (!directoriaId) return [];
-  return prisma.task.findMany({ where: { archived: true, directoriaId }, include, orderBy: { createdAt: 'desc' } })
+  return prisma.task.findMany({ where: { archived: true, ...sharedWith(directoriaId, userId) }, include: includeFor(userId), orderBy: { createdAt: 'desc' } })
     .then((ts) => ts.map((t) => fmt(t as TaskWithRelations)));
 };
 
-export const getTask = (id: string) =>
-  prisma.task.findUniqueOrThrow({ where: { id }, include })
+export const getTask = (id: string, userId?: string) =>
+  prisma.task.findUniqueOrThrow({ where: { id }, include: includeFor(userId) })
     .then((t) => fmt(t as TaskWithRelations));
+
+// ── Pin por usuário ─────────────────────────────────────────────────────────
+export const pinTask = (taskId: string, userId: string) =>
+  prisma.taskPin.upsert({ where: { taskId_userId: { taskId, userId } }, create: { taskId, userId }, update: {} })
+    .then(() => getTask(taskId, userId));
+
+export const unpinTask = (taskId: string, userId: string) =>
+  prisma.taskPin.deleteMany({ where: { taskId, userId } }).then(() => getTask(taskId, userId));
 
 export async function createTask(data: {
   category: string; activity: string; status: string; priority?: string;
@@ -83,7 +121,7 @@ export async function updateTask(id: string, data: {
   category?: string; activity?: string; status?: string; priority?: string;
   responsibleId?: string | null; projectId?: string | null; description?: string | null;
   externalCollaborators?: string | null; deadline?: string | null; coResponsibleIds?: string[] | null;
-}) {
+}, userId?: string) {
   const { coResponsibleIds, ...rest } = data;
   await prisma.$transaction(async (tx) => {
     await tx.task.update({
@@ -104,11 +142,19 @@ export async function updateTask(id: string, data: {
       }
     }
   });
-  return prisma.task.findUniqueOrThrow({ where: { id }, include })
+  // Reinclui os pins DAQUELE usuário para não zerar o `pinned` no retorno do update.
+  return prisma.task.findUniqueOrThrow({ where: { id }, include: includeFor(userId) })
     .then((t) => fmt(t as TaskWithRelations));
 }
 
-export const deleteTask = (id: string) => prisma.task.delete({ where: { id } });
+export const deleteTask = async (id: string) => {
+  const task = await prisma.task.findUnique({ where: { id }, select: { directoriaId: true } });
+  const result = await prisma.task.delete({ where: { id } });
+  // Limpa os anexos do storage (evita órfãos).
+  const { deleteFolder } = await import('../../lib/storage');
+  if (task) await deleteFolder(`diretorias/${task.directoriaId}/tasks/${id}`);
+  return result;
+};
 
 export const setArchived = (id: string, archived: boolean) =>
   prisma.task.update({ where: { id }, data: { archived }, include })
