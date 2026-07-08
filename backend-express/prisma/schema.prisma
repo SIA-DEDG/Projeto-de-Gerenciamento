@@ -7,65 +7,81 @@ datasource db {
 }
 
 model Directoria {
-  id           String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name         String
-  slug         String        @unique
-  description  String?
-  color        String?
-  active       Boolean       @default(true)
-  createdAt    DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
-  absences     Absence[]
-  activityLogs ActivityLog[]
-  events       Event[]
-  projects     Project[]
-  tasks        Task[]
-  members      User[]
+  id              String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name            String
+  slug            String        @unique
+  description     String?
+  color           String?
+  active          Boolean       @default(true)
+  autoArchiveDays Int           @default(2) @map("auto_archive_days")
+  createdAt       DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  absences        Absence[]
+  activityLogs    ActivityLog[]
+  events          Event[]
+  projects        Project[]
+  tasks           Task[]
+  members         User[]
 
   @@map("diretorias")
 }
 
 model User {
-  id                 String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name               String
-  username           String              @unique
-  passwordHash       String              @map("password_hash")
-  role               String              @default("Funcionario")
-  mustChangePassword Boolean             @default(true) @map("must_change_password")
-  createdAt          DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
-  directoriaId       String?             @map("directoria_id") @db.Uuid
-  absences           Absence[]
-  activityLogs       ActivityLog[]
-  eventResponsibles  EventResponsible[]
-  feedbackUpvotes    FeedbackUpvote[]
-  feedbacks          Feedback[]
-  ownedProjects      Project[]
-  coResponsibilities TaskCoResponsible[]
-  tasks              Task[]              @relation("responsible")
-  directoria         Directoria?         @relation(fields: [directoriaId], references: [id], onUpdate: NoAction)
+  id                      String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name                    String
+  username                String               @unique
+  passwordHash            String               @map("password_hash")
+  role                    String               @default("Funcionario")
+  mustChangePassword      Boolean              @default(true) @map("must_change_password")
+  createdAt               DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+  directoriaId            String?              @map("directoria_id") @db.Uuid
+  absences                Absence[]
+  activityLogs            ActivityLog[]
+  eventResponsibles       EventResponsible[]
+  feedbackUpvotes         FeedbackUpvote[]
+  feedbacks               Feedback[]
+  ownedProjects           Project[]
+  projectResponsibilities ProjectResponsible[]
+  taskPins                TaskPin[]
+  coResponsibilities      TaskCoResponsible[]
+  tasks                   Task[]               @relation("responsible")
+  directoria              Directoria?          @relation(fields: [directoriaId], references: [id], onUpdate: NoAction)
 
   @@index([directoriaId])
   @@map("users")
 }
 
 model Project {
-  id              String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id              String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name            String
   category        String?
-  deadline        DateTime?  @db.Date
-  executiveStatus String?    @map("executive_status")
+  deadline        DateTime?            @db.Date
+  executiveStatus String?              @map("executive_status")
   objective       String?
   scope           String?
   summary         String?
-  createdAt       DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt       DateTime   @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  ownerId         String?    @map("owner_id") @db.Uuid
-  directoriaId    String     @map("directoria_id") @db.Uuid
-  directoria      Directoria @relation(fields: [directoriaId], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  owner           User?      @relation(fields: [ownerId], references: [id], onUpdate: NoAction)
+  createdAt       DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime             @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  ownerId         String?              @map("owner_id") @db.Uuid
+  directoriaId    String               @map("directoria_id") @db.Uuid
+  attachments     String?
+  directoria      Directoria           @relation(fields: [directoriaId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  owner           User?                @relation(fields: [ownerId], references: [id], onUpdate: NoAction)
+  responsibles    ProjectResponsible[]
   tasks           Task[]
 
   @@index([directoriaId])
   @@map("projects")
+}
+
+model ProjectResponsible {
+  projectId String  @map("project_id") @db.Uuid
+  userId    String  @map("user_id") @db.Uuid
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([projectId, userId])
+  @@index([userId], map: "idx_project_responsibles_user_id")
+  @@map("project_responsibles")
 }
 
 model Task {
@@ -85,6 +101,7 @@ model Task {
   attachments           String?
   updatedAt             DateTime            @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   evidences             evidences[]
+  pins                  TaskPin[]
   coResponsibles        TaskCoResponsible[]
   directoria            Directoria          @relation(fields: [directoriaId], references: [id], onDelete: Cascade, onUpdate: NoAction)
   project               Project?            @relation(fields: [projectId], references: [id], onDelete: Cascade, onUpdate: NoAction)
@@ -107,6 +124,18 @@ model TaskCoResponsible {
   @@id([taskId, userId])
   @@index([taskId], map: "idx_tcr_task_id")
   @@map("task_co_responsibles")
+}
+
+model TaskPin {
+  taskId    String   @map("task_id") @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([taskId, userId])
+  @@index([userId], map: "idx_task_pins_user_id")
+  @@map("task_pins")
 }
 
 model Absence {
@@ -143,6 +172,7 @@ model Event {
   archived        Boolean            @default(false)
   minutesFileName String?            @map("minutes_file_name")
   minutesFilePath String?            @map("minutes_file_path")
+  attachments     String?
   directoriaId    String             @map("directoria_id") @db.Uuid
   responsibles    EventResponsible[]
   directoria      Directoria         @relation(fields: [directoriaId], references: [id], onDelete: Cascade, onUpdate: NoAction)
@@ -176,6 +206,9 @@ model Feedback {
   imagens          String?
   resposta         String?
   status           String            @default("pendente")
+  // Aviso "sua sugestão foi respondida" já mostrado ao autor (por usuário, no banco —
+  // some de vez em qualquer dispositivo, diferente do antigo controle por localStorage).
+  replySeen        Boolean           @default(false) @map("reply_seen")
   createdAt        DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
   comments         FeedbackComment[]
   upvotes          FeedbackUpvote[]
