@@ -31,6 +31,23 @@ export default function OtherDiretoriaPicker({ onMembersChange, initialSelectedI
   // Cache diretoriaId -> membros, para não refazer o fetch ao remarcar a mesma diretoria.
   const membersCache = useRef<Map<string, UserPublic[]>>(new Map());
 
+  // As diretorias externas requeridas pelo item (ex.: as do projeto da atividade) podem
+  // chegar/mudar DEPOIS da montagem (o project_id é definido no efeito de abertura, ou o
+  // usuário troca o projeto). Ao surgir uma nova, liga o seletor e a acrescenta — sem
+  // apagar o que o usuário marcou manualmente.
+  const initialKey = initialSelectedIds.join(',');
+  useEffect(() => {
+    if (initialSelectedIds.length === 0) return;
+    setEnabled(true);
+    setSelectedIds((prev) => {
+      const merged = [...prev];
+      let changed = false;
+      for (const id of initialSelectedIds) if (!merged.includes(id)) { merged.push(id); changed = true; }
+      return changed ? merged : prev;
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialKey]);
+
   // Carrega a lista de diretorias (menos a própria) só quando o usuário liga a opção.
   useEffect(() => {
     if (!enabled || diretorias.length > 0) return;

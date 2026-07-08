@@ -294,26 +294,51 @@ export default function ActivityModal({
     return out;
   }, [task]);
 
-  // Usuários selecionáveis = envolvidos já salvos + própria diretoria + diretoria envolvida.
-  // Os reais (com role/diretoria) prevalecem sobre os "seed" (só id+nome).
+  // Projeto atual da atividade (fixo ou escolhido no select).
+  const currentProjectId = fixedProjectId ?? form.project_id;
+
+  // Semeia com os membros do PROJETO (dono + colaboradores, inclusive de outra diretoria),
+  // para que possam ser responsável/co-responsável de QUALQUER atividade daquele projeto —
+  // mesmo antes de o seletor de diretoria carregar a lista completa.
+  const projectSeed = useMemo<UserPublic[]>(() => {
+    const p = projects.find((x) => x.id === currentProjectId);
+    if (!p) return [];
+    const seed = (id?: string | null, name?: string | null, dirId?: string | null): UserPublic | null =>
+      id ? { id, name: name ?? '(usuário)', username: '', role: '', must_change_password: false, created_at: '', directoria_id: dirId ?? null, directoria_name: null, directoria_color: null } : null;
+    const out: UserPublic[] = [];
+    const owner = seed(p.owner_id, p.owner, p.owner_diretoria_id); if (owner) out.push(owner);
+    const ids = p.responsible_ids ?? [];
+    const names = p.responsibles ?? [];
+    const dirs = p.responsible_diretoria_ids ?? [];
+    ids.forEach((id, i) => { const s = seed(id, names[i], dirs[i]); if (s) out.push(s); });
+    return out;
+  }, [projects, currentProjectId]);
+
+  // Usuários selecionáveis = envolvidos já salvos + membros do projeto + própria diretoria
+  // + diretoria envolvida. Os reais (com role/diretoria) prevalecem sobre os "seed".
   const availableUsers = useMemo(
-    () => mergeUsersById(mergeUsersById(seededUsers, users), extraUsers),
-    [seededUsers, users, extraUsers],
+    () => mergeUsersById(mergeUsersById(mergeUsersById(seededUsers, projectSeed), users), extraUsers),
+    [seededUsers, projectSeed, users, extraUsers],
   );
 
-  // Diretorias EXTERNAS já envolvidas na atividade (responsável + co-responsáveis de fora
-  // da minha diretoria) — para o seletor abrir já ligado e marcado ao editar.
+  // Diretorias EXTERNAS já envolvidas — na própria atividade (responsável + co-responsáveis)
+  // E no projeto ao qual ela pertence (dono + colaboradores de fora da minha diretoria) —
+  // para o seletor abrir já ligado e marcado, e o membro do projeto poder ser responsável.
   const involvedDiretoriaIds = useMemo<string[]>(() => {
-    if (!task) return [];
     const own = getUser()?.directoria_id ?? null;
     const ids = new Set<string>();
-    if (task.responsible_diretoria_id && task.responsible_diretoria_id !== own) ids.add(task.responsible_diretoria_id);
+    if (task?.responsible_diretoria_id && task.responsible_diretoria_id !== own) ids.add(task.responsible_diretoria_id);
     try {
-      const coDirs: (string | null)[] = task.co_responsible_diretoria_ids ? JSON.parse(task.co_responsible_diretoria_ids) : [];
+      const coDirs: (string | null)[] = task?.co_responsible_diretoria_ids ? JSON.parse(task.co_responsible_diretoria_ids) : [];
       coDirs.forEach((d) => { if (d && d !== own) ids.add(d); });
     } catch { /* ids ausentes */ }
+    const p = projects.find((x) => x.id === currentProjectId);
+    if (p) {
+      if (p.owner_diretoria_id && p.owner_diretoria_id !== own) ids.add(p.owner_diretoria_id);
+      (p.responsible_diretoria_ids ?? []).forEach((d) => { if (d && d !== own) ids.add(d); });
+    }
     return [...ids];
-  }, [task]);
+  }, [task, projects, currentProjectId]);
 
   useEffect(() => {
     if (!open) return;
