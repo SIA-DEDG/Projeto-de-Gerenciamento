@@ -3,33 +3,16 @@
 import { useEffect } from 'react';
 import { Check, X } from 'lucide-react';
 import { getUser } from '@/lib/auth';
-import { fetchFeedbacks } from '@/lib/api';
+import { fetchFeedbacks, markFeedbackRepliesSeen } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 
 const NOTICE_DURATION = 10_000; // ~10s, depois some com fade
-const SEEN_KEY = (userId: string) => `sia_feedback_seen_answered_${userId}`;
-
-function readSeen(userId: string): Set<string> {
-  try {
-    const raw = localStorage.getItem(SEEN_KEY(userId));
-    return new Set(raw ? (JSON.parse(raw) as string[]) : []);
-  } catch {
-    return new Set();
-  }
-}
-
-function writeSeen(userId: string, ids: Set<string>): void {
-  try {
-    localStorage.setItem(SEEN_KEY(userId), JSON.stringify([...ids]));
-  } catch {
-    /* localStorage indisponível — aviso é acessório, ignora */
-  }
-}
 
 /**
  * Aviso acessório exibido ao entrar no sistema: se algum feedback enviado pelo
  * usuário foi respondido, mostra um toast curto (~10s). Cada feedback respondido
- * é avisado apenas uma vez (rastreado em localStorage por usuário).
+ * é avisado apenas uma vez — o "visto" é gravado no backend por usuário, então o
+ * aviso some de vez (vale em qualquer dispositivo, não só neste navegador).
  */
 export default function FeedbackReplyNotice() {
   const { toasts, addToast, dismissToast } = useToast();
@@ -43,15 +26,10 @@ export default function FeedbackReplyNotice() {
       .then((feedbacks) => {
         if (cancelled) return;
 
-        // "Respondido" = tem resposta oficial (texto) OU status marcado como respondida.
-        // As duas ações são independentes no sistema, então basta uma delas.
-        const answered = feedbacks.filter(
-          (f) => f.usuario_id === user.user_id && (!!f.resposta || f.status === 'respondida'),
+        // Respondido (resposta oficial OU status "respondida") e ainda não avisado (reply_seen).
+        const fresh = feedbacks.filter(
+          (f) => f.usuario_id === user.user_id && !f.reply_seen && (!!f.resposta || f.status === 'respondida'),
         );
-        if (answered.length === 0) return;
-
-        const seen = readSeen(user.user_id);
-        const fresh = answered.filter((f) => !seen.has(f.id));
         if (fresh.length === 0) return;
 
         if (fresh.length > 3) {
@@ -62,9 +40,8 @@ export default function FeedbackReplyNotice() {
           );
         }
 
-        // Marca todos os respondidos atuais como vistos (não repete no próximo login).
-        answered.forEach((f) => seen.add(f.id));
-        writeSeen(user.user_id, seen);
+        // Grava no backend que os avisos foram vistos — não reaparece (em nenhum dispositivo).
+        void markFeedbackRepliesSeen();
       })
       .catch(() => {
         /* silencioso */

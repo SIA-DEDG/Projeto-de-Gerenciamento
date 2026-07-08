@@ -6,9 +6,13 @@ import Calendario, { type CalendarioItem } from '@/components/Calendario';
 import {
   fetchEvents, createEvent, updateEvent, deleteEvent, fetchUsers,
   setEventMinutes, removeEventMinutes, getEventMinutesUrl,
+  addEventFile, addEventLink, removeEventAttachment, getEventAttachmentUrl,
   type CalendarEvent, type UserPublic,
 } from '@/lib/api';
+import type { TaskAttachment } from '@/types';
+import AttachmentsEditor, { emptyAttachmentDraft, attachmentDraftDirty, attachmentDraftPayload, type AttachmentDraft } from '@/components/AttachmentsEditor';
 import ConfirmModal from '@/components/ConfirmModal';
+import CollapsibleGroup from '@/components/CollapsibleGroup';
 import { useUnsavedGuard } from '@/hooks/useUnsavedGuard';
 import { useToast } from '@/hooks/useToast';
 import ToastContainer from '@/components/ToastContainer';
@@ -192,7 +196,7 @@ function EventPreview({
       border: '1px solid var(--line-1)',
     }}>
       {/* Stripe Gov-PI */}
-      <div style={{ height: 4, background: 'linear-gradient(90deg,var(--blue-fixed) 0 40%,#E0A92E 40% 55%,#b42318 55% 75%,#1B8A4B 75%)', flexShrink: 0 }} />
+      {/* Faixa Gov-PI comentada a pedido: <div style={{ height: 4, background: 'linear-gradient(90deg,var(--blue-fixed) 0 40%,#E0A92E 40% 55%,#b42318 55% 75%,#1B8A4B 75%)', flexShrink: 0 }} /> */}
 
       {/* Header: nome + chips + fechar */}
       <div style={{ padding: '14px 16px 12px', borderBottom: '1px solid var(--line-1)' }}>
@@ -274,13 +278,13 @@ function EventPreview({
                 <span style={{ fontSize: '0.78rem', color: '#A87A00', fontWeight: 600 }}>Ata pendente</span>
               </div>
               <>
-                <input type="file" accept=".pdf" id={`ata-${calEvent.id}`} style={{ display: 'none' }}
+                <input type="file" id={`ata-${calEvent.id}`} style={{ display: 'none' }}
                   onChange={async (e) => {
                     const f = e.target.files?.[0]; if (!f) return;
                     const reader = new FileReader();
                     reader.onload = async (ev) => {
                       const b64 = (ev.target?.result as string).split(',')[1] ?? '';
-                      const u = await setEventMinutes(calEvent.id, f.name, b64);
+                      const u = await setEventMinutes(calEvent.id, f.name, b64, f.type);
                       onClose();
                       window.dispatchEvent(new CustomEvent('event-ata-updated', { detail: u }));
                     };
@@ -294,6 +298,40 @@ function EventPreview({
             </div>
           )}
         </div>
+
+        {/* Arquivos e Links (só leitura aqui; edite o evento para remover) — grupos separados */}
+        {calEvent.attachments && calEvent.attachments.length > 0 && (() => {
+          const atts = calEvent.attachments;
+          const fileCount = atts.filter(a => a.type === 'file').length;
+          const linkCount = atts.filter(a => a.type === 'link').length;
+          const renderItem = (a: (typeof atts)[number], i: number) => (
+            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+              {a.type === 'link' ? <LinkIcon size={12} color="var(--blue)" style={{ flexShrink: 0 }} /> : <Paperclip size={12} color="var(--text-3)" style={{ flexShrink: 0 }} />}
+              <button type="button" onClick={() => {
+                if (a.type === 'link') window.open(a.url, '_blank', 'noopener');
+                else void openSignedUrl(() => getEventAttachmentUrl(calEvent.id, i));
+              }} style={{ flex: 1, minWidth: 0, textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit', fontSize: '0.78rem', color: 'var(--text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {a.name}
+              </button>
+              {a.type === 'file' && <Download size={11} color="var(--text-3)" style={{ flexShrink: 0 }} />}
+            </div>
+          );
+          return (
+            <div style={{ borderTop: '1px solid var(--line-2)', paddingTop: 9, marginTop: 2 }}>
+              <CollapsibleGroup label="Arquivos" count={fileCount} defaultOpen={false}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                  {atts.map((a, i) => (a.type === 'file' ? renderItem(a, i) : null))}
+                </div>
+              </CollapsibleGroup>
+              <div style={{ height: 1, background: 'var(--line-2)' }} />
+              <CollapsibleGroup label="Links" count={linkCount} defaultOpen={false}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                  {atts.map((a, i) => (a.type === 'link' ? renderItem(a, i) : null))}
+                </div>
+              </CollapsibleGroup>
+            </div>
+          );
+        })()}
       </div>
 
       {/* Ações */}
@@ -531,7 +569,10 @@ export default function EventosPage() {
   const [formErr, setFormErr]       = useState('');
   const [respSearch, setRespSearch] = useState('');
   const [respOpen, setRespOpen]     = useState(false);
-  const [ataFile, setAtaFile]       = useState<{ name: string; data: string } | null>(null);
+  const [ataFile, setAtaFile]       = useState<{ name: string; data: string; mimeType: string } | null>(null);
+  // Anexos (arquivos/links) do evento — durante criação e edição; remover só na edição.
+  const [evAttDraft, setEvAttDraft] = useState<AttachmentDraft>(emptyAttachmentDraft());
+  const evExistingAtts: TaskAttachment[] = editing?.attachments ?? [];
 
   // Guarda de alterações não salvas ao fechar o modal de evento.
   const { requestClose, guard } = useUnsavedGuard(() => setShowModal(false));
@@ -541,7 +582,7 @@ export default function EventosPage() {
     if (showModal) formSnapshot.current = currentFormJson;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showModal]);
-  const formDirty = currentFormJson !== formSnapshot.current;
+  const formDirty = currentFormJson !== formSnapshot.current || attachmentDraftDirty(evAttDraft);
 
   const EV_TYPES = ['Reunião', 'Workshop', 'Comitê', 'Visita', 'Assembleia', 'Evento externo', 'Outro'];
   const MODALIDADE_OPTIONS = ['Presencial', 'Online', 'Híbrido'] as const;
@@ -571,6 +612,7 @@ export default function EventosPage() {
     setStartTime(''); setIsPrivate(false); setFormErr('');
     setRespSearch(''); setRespOpen(false);
     setAtaFile(null);
+    setEvAttDraft(emptyAttachmentDraft());
     setShowModal(true);
   }
 
@@ -586,7 +628,18 @@ export default function EventosPage() {
     setUseRange(ev.start_date !== ev.end_date);
     setStartDate(ev.start_date); setEndDate(ev.end_date);
     setStartTime(ev.start_time ?? ''); setIsPrivate(ev.is_private ?? false); setFormErr(''); setRespSearch(''); setRespOpen(false);
+    setEvAttDraft(emptyAttachmentDraft());
     setShowModal(true);
+  }
+
+  // Aplica remoções (índices desc) e uploads de arquivos/links do modal de evento.
+  async function persistEventAtts(eventId: string): Promise<TaskAttachment[] | null> {
+    const { attachmentsToAdd = [], linksToAdd = [], removedAttachmentIndices = [] } = attachmentDraftPayload(evAttDraft);
+    let latest: TaskAttachment[] | null = null;
+    for (const idx of [...removedAttachmentIndices].sort((a, b) => b - a)) latest = await removeEventAttachment(eventId, idx);
+    for (const f of attachmentsToAdd) latest = await addEventFile(eventId, { name: f.name, data: f.data, mimeType: f.type, size: f.size });
+    for (const l of linksToAdd) latest = await addEventLink(eventId, l.name, l.url);
+    return latest;
   }
 
   async function handleSave() {
@@ -613,7 +666,9 @@ export default function EventosPage() {
       if (editing) {
         const payload = { ...basePayload, start_date: computedStart, end_date: computedEnd };
         const updated = await updateEvent(editing.id, payload);
-        setEvents((currentEvents) => currentEvents.map((calEvent) => calEvent.id === updated.id ? updated : calEvent));
+        const atts = await persistEventAtts(updated.id);
+        const next = atts ? { ...updated, attachments: atts } : updated;
+        setEvents((currentEvents) => currentEvents.map((calEvent) => calEvent.id === next.id ? next : calEvent));
       } else if (!useRange && selectedDates.length > 1) {
         const created = await Promise.all(
           selectedDates.map(date => createEvent({ ...basePayload, start_date: date, end_date: date }))
@@ -624,10 +679,12 @@ export default function EventosPage() {
         const payload = { ...basePayload, start_date: computedStart, end_date: computedEnd };
         let created = await createEvent(payload);
         if (ataFile) {
-          try { created = await setEventMinutes(created.id, ataFile.name, ataFile.data); } catch { /* não bloqueia */ }
+          try { created = await setEventMinutes(created.id, ataFile.name, ataFile.data, ataFile.mimeType); } catch { /* não bloqueia */ }
         }
-        setEvents((currentEvents) => [created, ...currentEvents]);
-        addToast('success', 'Evento criado', `"${created.name}" criado${ataFile ? ' com ata anexada' : ''}.`);
+        const atts = await persistEventAtts(created.id);
+        const next = atts ? { ...created, attachments: atts } : created;
+        setEvents((currentEvents) => [next, ...currentEvents]);
+        addToast('success', 'Evento criado', `"${next.name}" criado${ataFile ? ' com ata anexada' : ''}.`);
       }
       setShowModal(false);
     } catch (err: unknown) {
@@ -1069,7 +1126,7 @@ export default function EventosPage() {
             }} onClick={e => e.stopPropagation()}>
 
               {/* Stripe Gov-PI */}
-              <div style={{ height: 4, background: 'linear-gradient(90deg,var(--blue-fixed) 0 40%,#E0A92E 40% 55%,#b42318 55% 75%,#1B8A4B 75%)', flexShrink: 0 }} />
+              {/* Faixa Gov-PI comentada a pedido: <div style={{ height: 4, background: 'linear-gradient(90deg,var(--blue-fixed) 0 40%,#E0A92E 40% 55%,#b42318 55% 75%,#1B8A4B 75%)', flexShrink: 0 }} /> */}
 
               {/* Header */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 24px', borderBottom: '1px solid var(--line-1)', flexShrink: 0 }}>
@@ -1188,13 +1245,13 @@ export default function EventosPage() {
                     </div>
                   ) : (
                     <div>
-                      <input type="file" accept=".pdf" id={`ata-${ev.id}`} style={{ display: 'none' }}
+                      <input type="file" id={`ata-${ev.id}`} style={{ display: 'none' }}
                         onChange={async e => {
                           const f = e.target.files?.[0]; if (!f) return;
                           const reader = new FileReader();
                           reader.onload = async ev2 => {
                             const b64 = (ev2.target?.result as string).split(',')[1] ?? '';
-                            const updated = await setEventMinutes(ev.id, f.name, b64);
+                            const updated = await setEventMinutes(ev.id, f.name, b64, f.type);
                             setEvents(curr => curr.map(x => x.id === ev.id ? updated : x));
                             closePreview();
                             addToast('success', 'Ata anexada', f.name);
@@ -1202,7 +1259,7 @@ export default function EventosPage() {
                           reader.readAsDataURL(f);
                         }} />
                       <label htmlFor={`ata-${ev.id}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '9px 14px', border: '1px solid var(--border)', borderRadius: 3, background: 'var(--surface)', color: 'var(--text-2)', fontSize: '0.8rem', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
-                        <Paperclip size={14} />Anexar ata (.pdf)
+                        <Paperclip size={14} />Anexar ata
                       </label>
                     </div>
                   )}
@@ -1260,7 +1317,7 @@ export default function EventosPage() {
             <div className="ssel" style={{ position: 'fixed', top: 0, right: 0, bottom: 0, width: 500, maxWidth: '94%', background: 'var(--surface)', overflowY: 'auto', zIndex: 201, borderLeft: '1px solid var(--line-1)', animation: 'drawin .24s cubic-bezier(.4,0,.2,1) both', display: 'flex', flexDirection: 'column' }}>
 
               {/* Stripe Gov-PI */}
-              <div style={{ height: 4, flexShrink: 0, background: 'linear-gradient(90deg,var(--blue-fixed) 0 40%,#E0A92E 40% 55%,#b42318 55% 75%,#1B8A4B 75%)' }} />
+              {/* Faixa Gov-PI comentada a pedido: <div style={{ height: 4, flexShrink: 0, background: 'linear-gradient(90deg,var(--blue-fixed) 0 40%,#E0A92E 40% 55%,#b42318 55% 75%,#1B8A4B 75%)' }} /> */}
 
               {/* ── Header ── */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 28px', borderBottom: '1px solid var(--line-1)', flexShrink: 0, position: 'sticky', top: 4, background: 'var(--surface)', zIndex: 2 }}>
@@ -1476,13 +1533,13 @@ export default function EventosPage() {
                       </div>
                     ) : (
                       <>
-                        <input type="file" accept=".pdf" id="ata-new-event" style={{ display: 'none' }}
+                        <input type="file" id="ata-new-event" style={{ display: 'none' }}
                           onChange={e => {
                             const f = e.target.files?.[0]; if (!f) return;
                             const reader = new FileReader();
                             reader.onload = (ev) => {
                               const b64 = (ev.target?.result as string).split(',')[1] ?? '';
-                              setAtaFile({ name: f.name, data: b64 });
+                              setAtaFile({ name: f.name, data: b64, mimeType: f.type });
                             };
                             reader.readAsDataURL(f);
                             e.target.value = '';
@@ -1490,12 +1547,18 @@ export default function EventosPage() {
                         <label htmlFor="ata-new-event" style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '10px 13px', border: '2px dashed var(--border)', borderRadius: 3, background: 'var(--surface)', color: 'var(--text-3)', fontSize: '0.82rem', cursor: 'pointer', fontFamily: 'inherit', width: '100%', boxSizing: 'border-box', justifyContent: 'center' }}
                           onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--blue)'; (e.currentTarget as HTMLElement).style.color = 'var(--blue)'; }}
                           onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'; (e.currentTarget as HTMLElement).style.color = 'var(--text-3)'; }}>
-                          <Paperclip size={15} />Anexar ata (.pdf)
+                          <Paperclip size={15} />Anexar ata
                         </label>
                       </>
                     )}
                   </div>
                 )}
+
+                {/* ── Arquivos e links (durante a criação e na edição; remover só aqui) ── */}
+                <div>
+                  <label style={lbl}>Arquivos e links <span style={{ color: 'var(--text-3)', fontWeight: 400 }}>(opcional)</span></label>
+                  <AttachmentsEditor existing={evExistingAtts} value={evAttDraft} onChange={setEvAttDraft} />
+                </div>
 
                 {formErr && <p style={{ color: '#b42318', fontSize: '0.82rem', margin: 0 }}>{formErr}</p>}
 

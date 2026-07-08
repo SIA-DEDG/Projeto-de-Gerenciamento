@@ -51,7 +51,7 @@ export default function BoardPage() {
     selectionColumn, selectedTaskIds,
     toggleTaskSelection, selectAllTasksInColumn, beginColumnSelection, cancelSelection,
     moveSelectedTasks, requestDeleteSelectedTasks,
-    handleDragEnd, requestDeleteTask, requestArchiveTask, advanceOpenedTaskStatus,
+    handleDragEnd, togglePin, requestDeleteTask, requestArchiveTask, advanceOpenedTaskStatus,
   } = useTaskBoard();
 
   // Limpa seleção ao trocar de aba
@@ -111,8 +111,12 @@ export default function BoardPage() {
   const hasActiveFilters = filterUser || filterPriority || filterProject || filterDateFrom || filterDateTo;
 
   async function handleSaveActivity(formData: ActivityFormData) {
-    const created = await saveActivity(formData);
-    if (created) addToast('success', 'Atividade criada', `"${created.activity}" foi adicionada.`);
+    try {
+      const created = await saveActivity(formData);
+      if (created) addToast('success', 'Atividade criada', `"${created.activity}" foi adicionada.`);
+    } catch (err) {
+      addToast('error', 'Não foi possível salvar a atividade', err instanceof Error ? err.message : 'Tente novamente.');
+    }
   }
 
   async function handleMoveSelected(targetGroup: StatusGroup) {
@@ -318,6 +322,7 @@ export default function BoardPage() {
                 onViewCard={setOpenedTask}
                 onDeleteCard={requestDeleteTask}
                 onArchiveCard={requestArchiveTask}
+                onTogglePinCard={togglePin}
                 isSelecting={selectionColumn === col.id}
                 selectedTaskIds={selectedTaskIds}
                 onToggleSelect={toggleTaskSelection}

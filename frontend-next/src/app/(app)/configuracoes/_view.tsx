@@ -2,11 +2,11 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { getUser, setAuth, getToken, isRemembered, clearAuth } from '@/lib/auth';
-import { changePassword, updateUserProfile } from '@/lib/api';
+import { getUser, setAuth, getToken, isRemembered, clearAuth, hasMinRole } from '@/lib/auth';
+import { changePassword, updateUserProfile, fetchDiretorias, setDirectoriaAutoArchive } from '@/lib/api';
 import {
   User, Lock, Shield, LogOut, Check, RefreshCw, Save,
-  Mail, AlertTriangle, Bell,
+  Mail, AlertTriangle, Bell, Archive,
 } from 'lucide-react';
 import PageHeader from '@/components/PageHeader';
 import { applyAccentColor } from '@/components/AppShell';
@@ -400,7 +400,6 @@ function SegurancaSection() {
         icon={<Shield size={15} strokeWidth={2} />}
         title="Segurança"
         subtitle="Mantenha sua conta segura"
-        tint="rgba(224,169,46,0.12)"
       />
       <div style={{ borderTop: '1px solid var(--line-1)', marginBottom: 20 }} />
 
@@ -670,6 +669,81 @@ function AparenciaSection() {
   );
 }
 
+// ── Seção Diretoria (auto-arquivamento) ───────────────────────────────────────
+
+function DiretoriaSection() {
+  const user = getUser();
+  // Gerente, Diretor e Admin podem configurar; precisa estar vinculado a uma diretoria.
+  const canConfig = !!user?.directoria_id && hasMinRole(user?.role, 'Gerente');
+  const [days, setDays] = useState('2');
+  const [loaded, setLoaded] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
+
+  useEffect(() => {
+    if (!canConfig) return;
+    fetchDiretorias()
+      .then((list) => {
+        const mine = list.find((d) => d.id === user!.directoria_id);
+        if (mine?.autoArchiveDays != null) setDays(String(mine.autoArchiveDays));
+      })
+      .catch(() => null)
+      .finally(() => setLoaded(true));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  if (!canConfig) return null;
+
+  async function handleSave(e: React.FormEvent) {
+    e.preventDefault();
+    setFeedback(null);
+    const n = parseInt(days, 10);
+    if (isNaN(n) || n < 0 || n > 365) { setFeedback({ type: 'error', msg: 'Informe um número entre 0 e 365.' }); return; }
+    setLoading(true);
+    try {
+      await setDirectoriaAutoArchive(user!.directoria_id!, n);
+      setFeedback({ type: 'success', msg: 'Configuração salva.' });
+    } catch (err: unknown) {
+      setFeedback({ type: 'error', msg: err instanceof Error ? err.message : 'Erro ao salvar.' });
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <section style={{ marginTop: 40 }}>
+      <SectionHeader
+        icon={<Archive size={15} strokeWidth={2} />}
+        title="Diretoria"
+        subtitle="Configurações da sua diretoria"
+      />
+      <div style={{ borderTop: '1px solid var(--line-1)', marginBottom: 20 }} />
+
+      <form onSubmit={handleSave} style={{ maxWidth: 380 }}>
+        <label htmlFor="auto-archive" style={labelStyle}>Auto-arquivar concluídas após (dias)</label>
+        <input id="auto-archive" type="number" min={0} max={365} value={days} onChange={(e) => setDays(e.target.value)} style={inputStyle} />
+        <p style={{ fontSize: '0.73rem', color: 'var(--text-3)', marginTop: 6, lineHeight: 1.5 }}>
+          Atividades com status &ldquo;Concluído&rdquo; são arquivadas automaticamente após esse número de dias. Use 0 para arquivar já no mesmo dia.
+        </p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 12, flexWrap: 'wrap' }}>
+          <button type="submit" disabled={loading || !loaded}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 20px', background: 'var(--blue)', color: '#fff', border: 'none', borderRadius: 3, fontSize: '0.82rem', fontWeight: 600, fontFamily: 'inherit', cursor: loading || !loaded ? 'not-allowed' : 'pointer', opacity: loading || !loaded ? 0.7 : 1 }}>
+            {loading
+              ? <><RefreshCw size={13} style={{ animation: 'spin 1s linear infinite' }} /> Salvando…</>
+              : <><Save size={13} /> Salvar</>}
+          </button>
+          {feedback && (
+            <span style={{ fontSize: '0.78rem', color: feedback.type === 'success' ? '#1B8A4B' : '#b42318', display: 'flex', alignItems: 'center', gap: 5 }}>
+              {feedback.type === 'success' && <Check size={12} strokeWidth={2.5} />}
+              {feedback.msg}
+            </span>
+          )}
+        </div>
+      </form>
+    </section>
+  );
+}
+
 // ── Seção Conta (logout) ──────────────────────────────────────────────────────
 
 function ContaSection() {
@@ -860,6 +934,7 @@ export default function ConfiguracoesPage() {
           <AvatarHeroCard />
           <PerfilSection />
           <SegurancaSection />
+          <DiretoriaSection />
           <AparenciaSection />
           {/* <SistemaSection /> */}
           <ContaSection />

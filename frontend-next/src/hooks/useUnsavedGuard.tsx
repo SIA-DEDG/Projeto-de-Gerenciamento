@@ -28,8 +28,8 @@ export function useUnsavedGuard(onClose: () => void) {
       open={confirmOpen}
       title="Tem certeza que quer sair?"
       message="Você vai perder tudo que preencheu até agora."
-      confirmLabel="Sim, sair"
-      cancelLabel="Continuar edição"
+      confirmLabel="Sair"
+      cancelLabel="Continuar"
       danger
       zIndex={2000}
       onConfirm={onClose}
