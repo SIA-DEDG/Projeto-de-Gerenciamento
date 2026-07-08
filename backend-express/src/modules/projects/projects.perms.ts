@@ -20,11 +20,12 @@ export const isProjectMember = (m: Membership, u: JwtPayload): boolean =>
 export const canUseProject = (m: Membership, u: JwtPayload): boolean =>
   isProjectMember(m, u);
 
-// Editar os dados do projeto — membros (EXCETO Estagiário) ou cargo privilegiado.
+// Editar os dados do projeto — cargo privilegiado, o dono/responsável (inclusive
+// Estagiário quando é o responsável do projeto) ou colaborador não-Estagiário.
 // Aceita as duas grafias ('Estagiario' sem acento é a usada no banco; 'Estagiário' legado).
 const isEstagiario = (role: string) => role === 'Estagiario' || role === 'Estagiário';
 export const canEditProject = (m: Membership, u: JwtPayload): boolean =>
-  (isProjectMember(m, u) && !isEstagiario(u.role)) || isPriv(u.role);
+  isPriv(u.role) || isProjectOwner(m, u) || (isProjectMember(m, u) && !isEstagiario(u.role));
 
 // Excluir o projeto e adicionar/remover responsáveis — dono ou cargo privilegiado.
 export const canManageProject = (m: Membership, u: JwtPayload): boolean =>

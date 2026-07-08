@@ -62,10 +62,12 @@ export function canUseProjectClient(project: Project, userId: string | null | un
   return isProjectMember(project, userId);
 }
 
-// Editar os dados do projeto — membros (EXCETO Estagiário) ou cargo privilegiado.
+// Editar os dados do projeto — cargo privilegiado, o dono/responsável (inclusive
+// Estagiário quando é o responsável) ou colaborador não-Estagiário.
 export function canEditProjectClient(project: Project, userId: string | null | undefined, role: string | undefined): boolean {
+  const isOwner = !!userId && project.owner_id === userId;
   const memberCanEdit = isProjectMember(project, userId) && role !== 'Estagiario' && role !== 'Estagiário';
-  return memberCanEdit || isPrivRole(role);
+  return isPrivRole(role) || isOwner || memberCanEdit;
 }
 
 // Excluir / gerenciar responsáveis — dono ou cargo privilegiado (Admin/Diretor/Gerente).
