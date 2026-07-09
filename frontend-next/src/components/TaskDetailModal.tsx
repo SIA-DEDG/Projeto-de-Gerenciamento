@@ -3,6 +3,7 @@
 import type { Task } from '@/types';
 import { avatarColor, initials } from '@/lib/utils';
 import { Folder, Calendar, Clock, Trash2, Pencil } from 'lucide-react';
+import BrandStripe from './BrandStripe';
 
 interface Props {
   open: boolean;
@@ -83,11 +84,8 @@ export default function TaskDetailModal({ open, task, projectName, onClose, onEd
         animation: 'panel-slide-in 0.22s cubic-bezier(0.4,0,0.2,1) forwards',
       }}>
 
-        {/* Piauí flag stripe */}
-        <div style={{
-          height: 5, flexShrink: 0,
-          background: 'linear-gradient(to right, var(--blue) 40%, #fdb913 40% 55%, #ef4123 55% 75%, #007932 75%)',
-        }} />
+        {/* Faixa institucional (listras da bandeira do PI) — cor via --brand-stripe */}
+        <BrandStripe height={5} />
 
         {/* ── Panel header ──────────────────────── */}
         <div style={{ padding: '18px 20px 14px', borderBottom: '1px solid var(--border-light)', flexShrink: 0 }}>
