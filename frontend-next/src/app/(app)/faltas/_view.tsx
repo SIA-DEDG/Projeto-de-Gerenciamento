@@ -518,9 +518,9 @@ export default function FaltasPage() {
             <div className="empty-state"><p>Nenhuma falta registrada.</p></div>
           ) : absencesByMonth.map(({ monthKey, label: monthLabel2, rows }) => (
             <div key={monthKey}>
-              {/* Separador de mês */}
-              <div style={{ padding: '8px 32px', background: 'var(--surface-2)', borderBottom: '1px solid var(--line-1)', borderTop: '1px solid var(--line-1)' }}>
-                <span className="mono" style={{ fontSize: '0.62rem', fontWeight: 600, letterSpacing: '1.2px', textTransform: 'uppercase', color: 'var(--text-3)' }}>{monthLabel2}</span>
+              {/* Separador de mês — mesmo estilo da tela de Eventos (sem fundo). */}
+              <div style={{ padding: '10px 32px 8px', borderBottom: '1px solid var(--line-2)', marginTop: 12 }}>
+                <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text)', letterSpacing: '-0.2px' }}>{monthLabel2}</span>
               </div>
               {rows.map(row => {
             const isPending   = !row.approval_status || row.approval_status === 'pendente';
