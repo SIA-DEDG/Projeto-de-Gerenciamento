@@ -158,7 +158,7 @@ function KanbanCard({
           onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
         >
           <Pin
-            size={17}
+            size={14}
             strokeWidth={2.25}
             fill={task.pinned ? '#E0A92E' : 'none'}
             color={task.pinned ? '#E0A92E' : 'var(--text-3)'}
