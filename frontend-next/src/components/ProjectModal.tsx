@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { X, ChevronDown, ChevronUp } from 'lucide-react';
 import type { UserPublic } from '@/lib/api';
 import type { Project } from '@/types';
@@ -9,6 +9,8 @@ import AttachmentsEditor, { emptyAttachmentDraft, attachmentDraftDirty, attachme
 import CollapsibleGroup from './CollapsibleGroup';
 import OtherDiretoriaPicker from './OtherDiretoriaPicker';
 import BrandStripe from './BrandStripe';
+import FieldError from './FieldError';
+import { focusInvalidField } from '@/lib/formShake';
 import { useUnsavedGuard } from '@/hooks/useUnsavedGuard';
 import { getUser } from '@/lib/auth';
 import { mergeUsersById, normalizeSearch } from '@/lib/utils';
@@ -93,6 +95,10 @@ export default function ProjectModal({ open, project, onClose, onSave, users = [
   const [collabQuery, setCollabQuery] = useState(''); // busca por digitação na lista de colaboradores
   const [noDeadline, setNoDeadline] = useState(false);
   const [attDraft, setAttDraft] = useState<AttachmentDraft>(emptyAttachmentDraft());
+  // Nome (obrigatório) não preenchido ao tentar salvar.
+  const [nameError, setNameError] = useState(false);
+  const nameFieldRef = useRef<HTMLDivElement>(null);
+  const nameInputRef = useRef<HTMLInputElement>(null);
   // Membros de outra diretoria trazidos pelo "Envolver outra diretoria" (compartilhamento).
   const [extraUsers, setExtraUsers] = useState<UserPublic[]>([]);
 
@@ -133,6 +139,7 @@ export default function ProjectModal({ open, project, onClose, onSave, users = [
   useEffect(() => {
     if (!open) return;
     setAttDraft(emptyAttachmentDraft());
+    setNameError(false);
     setExtraUsers([]);
     if (project) {
       const { id, ...rest } = project;
@@ -166,7 +173,13 @@ export default function ProjectModal({ open, project, onClose, onSave, users = [
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.name.trim()) return;
+    if (!form.name.trim()) {
+      setNameError(true);
+      focusInvalidField(nameFieldRef.current);
+      setTimeout(() => nameInputRef.current?.focus(), 300);
+      return;
+    }
+    setNameError(false);
     onSave({
       ...form,
       deadline: noDeadline ? '' : form.deadline,
@@ -212,9 +225,13 @@ export default function ProjectModal({ open, project, onClose, onSave, users = [
           <div style={{ padding: '24px 28px 40px', display: 'flex', flexDirection: 'column', gap: 18 }}>
 
             {/* Nome */}
-            <div>
+            <div ref={nameFieldRef}>
               <Label>Nome do projeto <span style={{ color: 'rgb(255, 0, 0)' }}>*</span></Label>
-              <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Ex: Modernização do Portal SIA" required style={inp} {...focusBlue} />
+              <input ref={nameInputRef} value={form.name} onChange={e => { setForm({ ...form, name: e.target.value }); if (nameError) setNameError(false); }} placeholder="Ex: Modernização do Portal SIA" required
+                style={{ ...inp, ...(nameError ? { borderColor: '#b42318', boxShadow: 'inset 0 0 0 1px #b42318' } : {}) }}
+                onFocus={e => { if (!nameError) { e.target.style.borderColor = 'var(--blue)'; e.target.style.boxShadow = 'inset 0 0 0 1px var(--blue)'; } }}
+                onBlur={e => { if (!nameError) { e.target.style.borderColor = 'var(--border)'; e.target.style.boxShadow = 'none'; } }} />
+              <FieldError show={nameError} />
             </div>
 
             {/* Grid: Categoria | Responsável */}

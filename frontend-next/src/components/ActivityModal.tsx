@@ -12,6 +12,8 @@ import AttachmentsEditor, { emptyAttachmentDraft, attachmentDraftDirty, attachme
 import CollapsibleGroup from './CollapsibleGroup';
 import OtherDiretoriaPicker from './OtherDiretoriaPicker';
 import BrandStripe from './BrandStripe';
+import FieldError from './FieldError';
+import { focusInvalidField, shakeField, isHtmlEmpty } from '@/lib/formShake';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -286,6 +288,11 @@ export default function ActivityModal({
   const [noDeadline, setNoDeadline] = useState(false);
   const [attDraft, setAttDraft] = useState<AttachmentDraft>(emptyAttachmentDraft());
   const [confirmClose, setConfirmClose] = useState(false);
+  // Campos obrigatórios não preenchidos ao tentar salvar (borda vermelha + mensagem + shake).
+  const [errors, setErrors] = useState<{ activity?: boolean; description?: boolean }>({});
+  const activityFieldRef = useRef<HTMLDivElement>(null);
+  const activityInputRef = useRef<HTMLInputElement>(null);
+  const descriptionFieldRef = useRef<HTMLDivElement>(null);
   // Membros de outra diretoria trazidos pelo "Envolver outra diretoria" (compartilhamento).
   const [extraUsers, setExtraUsers] = useState<UserPublic[]>([]);
   // Snapshot do form no momento da abertura, para detectar alterações não salvas.
@@ -362,6 +369,7 @@ export default function ActivityModal({
     if (!open) return;
     setAttDraft(emptyAttachmentDraft());
     setConfirmClose(false);
+    setErrors({});
     setExtraUsers([]);
     existingIdByName.current = new Map();
     let formInit: typeof EMPTY;
@@ -407,7 +415,21 @@ export default function ActivityModal({
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.activity.trim()) return;
+    // Valida os obrigatórios: leva ao primeiro campo em falta, borda vermelha + tremida.
+    const nextErrors = {
+      activity: !form.activity.trim(),
+      description: isHtmlEmpty(form.description),
+    };
+    if (nextErrors.activity || nextErrors.description) {
+      setErrors(nextErrors);
+      const firstRef = nextErrors.activity ? activityFieldRef : descriptionFieldRef;
+      focusInvalidField(firstRef.current);
+      if (nextErrors.activity) shakeField(activityFieldRef.current);
+      if (nextErrors.description) shakeField(descriptionFieldRef.current);
+      if (nextErrors.activity) setTimeout(() => activityInputRef.current?.focus(), 300);
+      return;
+    }
+    setErrors({});
     const payload = attachmentDraftPayload(attDraft); // dobra link digitado mas não adicionado
     // Resolve nome -> id usando availableUsers (própria diretoria + outra diretoria envolvida)
     // e, como fallback, os ids já salvos na task — assim envolvidos de outra diretoria não
@@ -494,17 +516,22 @@ export default function ActivityModal({
             </div> */}
 
             {/* Atividade */}
-            <div>
+            <div ref={activityFieldRef}>
               <Label>Atividade <span style={{color: 'rgb(255, 0, 0)'}}>*</span></Label>
-              <input value={form.activity} onChange={e => setForm({ ...form, activity: e.target.value })} placeholder="Ex: Revisar roteiro do evento" required style={inp}
-                onFocus={e => { e.target.style.borderColor = 'var(--blue)'; e.target.style.boxShadow = 'inset 0 0 0 1px var(--blue)'; }}
-                onBlur={e => { e.target.style.borderColor = 'var(--border)'; e.target.style.boxShadow = 'none'; }} />
+              <input ref={activityInputRef} value={form.activity} onChange={e => { setForm({ ...form, activity: e.target.value }); if (errors.activity) setErrors(x => ({ ...x, activity: false })); }} placeholder="Ex: Revisar roteiro do evento" required
+                style={{ ...inp, ...(errors.activity ? { borderColor: '#b42318', boxShadow: 'inset 0 0 0 1px #b42318' } : {}) }}
+                onFocus={e => { if (!errors.activity) { e.target.style.borderColor = 'var(--blue)'; e.target.style.boxShadow = 'inset 0 0 0 1px var(--blue)'; } }}
+                onBlur={e => { if (!errors.activity) { e.target.style.borderColor = 'var(--border)'; e.target.style.boxShadow = 'none'; } }} />
+              <FieldError show={!!errors.activity} />
             </div>
 
             {/* Descrição */}
-            <div>
+            <div ref={descriptionFieldRef}>
               <Label>Descrição <span style={{color: 'rgb(255, 0, 0)'}}>*</span></Label>
-              <RichTextEditor value={form.description} onChange={html => setForm(f => ({ ...f, description: html }))} />
+              <div style={errors.description ? { borderRadius: 3, boxShadow: '0 0 0 1.5px #b42318' } : undefined}>
+                <RichTextEditor value={form.description} onChange={html => { setForm(f => ({ ...f, description: html })); if (errors.description && !isHtmlEmpty(html)) setErrors(x => ({ ...x, description: false })); }} />
+              </div>
+              <FieldError show={!!errors.description} />
             </div>
 
             {/* Prioridade */}
