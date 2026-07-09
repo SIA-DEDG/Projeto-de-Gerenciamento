@@ -5,6 +5,7 @@ import { fetchUsers, deleteUser, updateUserRole, adminResetUserPassword } from '
 import { getUser, canResetPasswords } from '@/lib/auth';
 import type { UserPublic } from '@/lib/api';
 import ConfirmModal from '@/components/ConfirmModal';
+import BrandStripe from '@/components/BrandStripe';
 import { useUnsavedGuard } from '@/hooks/useUnsavedGuard';
 import { Search, ChevronDown, Lock, Trash2 } from 'lucide-react';
 import PageHeader from '@/components/PageHeader';
@@ -63,8 +64,8 @@ function ResetPasswordModal({ user, onClose, onSuccess }: { user: UserPublic; on
       <div onClick={() => requestClose(dirty)} style={{ position: 'fixed', inset: 0, background: 'rgba(7,22,45,0.32)', zIndex: 400 }} />
       <div style={{ position: 'fixed', top: 0, right: 0, bottom: 0, width: 440, maxWidth: '94%', background: 'var(--surface)', borderLeft: '1px solid var(--line-1)', zIndex: 401, display: 'flex', flexDirection: 'column', animation: 'drawin .24s cubic-bezier(.4,0,.2,1) both' }}>
 
-        {/* Stripe */}
-        {/* Faixa Gov-PI comentada a pedido: <div style={{ height: 4, flexShrink: 0, background: 'linear-gradient(90deg,var(--blue-fixed) 0 40%,#E0A92E 40% 55%,#b42318 55% 75%,#1B8A4B 75%)' }} /> */}
+        {/* Faixa institucional (listras da bandeira do PI) — cor via --brand-stripe */}
+        <BrandStripe />
 
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 28px', borderBottom: '1px solid var(--line-1)', flexShrink: 0 }}>

@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { Trash2, Pencil, ChevronLeft, ChevronRight, Clock, ChevronDown, Check, Plus, FileText, Paperclip, X as XIcon, Calendar, Users, User, MapPin, Download, Search, Link as LinkIcon } from 'lucide-react';
 import Calendario, { type CalendarioItem } from '@/components/Calendario';
+import BrandStripe from '@/components/BrandStripe';
 import {
   fetchEvents, createEvent, updateEvent, deleteEvent, fetchUsers,
   setEventMinutes, removeEventMinutes, getEventMinutesUrl,
@@ -195,8 +196,8 @@ function EventPreview({
       width: 320, overflow: 'hidden',
       border: '1px solid var(--line-1)',
     }}>
-      {/* Stripe Gov-PI */}
-      {/* Faixa Gov-PI comentada a pedido: <div style={{ height: 4, background: 'linear-gradient(90deg,var(--blue-fixed) 0 40%,#E0A92E 40% 55%,#b42318 55% 75%,#1B8A4B 75%)', flexShrink: 0 }} /> */}
+      {/* Faixa institucional (listras da bandeira do PI) — cor via --brand-stripe */}
+      <BrandStripe />
 
       {/* Header: nome + chips + fechar */}
       <div style={{ padding: '14px 16px 12px', borderBottom: '1px solid var(--line-1)' }}>
@@ -1125,8 +1126,8 @@ export default function EventosPage() {
               overflow: 'hidden',
             }} onClick={e => e.stopPropagation()}>
 
-              {/* Stripe Gov-PI */}
-              {/* Faixa Gov-PI comentada a pedido: <div style={{ height: 4, background: 'linear-gradient(90deg,var(--blue-fixed) 0 40%,#E0A92E 40% 55%,#b42318 55% 75%,#1B8A4B 75%)', flexShrink: 0 }} /> */}
+              {/* Faixa institucional (listras da bandeira do PI) — cor via --brand-stripe */}
+              <BrandStripe />
 
               {/* Header */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 24px', borderBottom: '1px solid var(--line-1)', flexShrink: 0 }}>
@@ -1316,8 +1317,8 @@ export default function EventosPage() {
             {/* Drawer */}
             <div className="ssel" style={{ position: 'fixed', top: 0, right: 0, bottom: 0, width: 500, maxWidth: '94%', background: 'var(--surface)', overflowY: 'auto', zIndex: 201, borderLeft: '1px solid var(--line-1)', animation: 'drawin .24s cubic-bezier(.4,0,.2,1) both', display: 'flex', flexDirection: 'column' }}>
 
-              {/* Stripe Gov-PI */}
-              {/* Faixa Gov-PI comentada a pedido: <div style={{ height: 4, flexShrink: 0, background: 'linear-gradient(90deg,var(--blue-fixed) 0 40%,#E0A92E 40% 55%,#b42318 55% 75%,#1B8A4B 75%)' }} /> */}
+              {/* Faixa institucional (listras da bandeira do PI) — cor via --brand-stripe */}
+              <BrandStripe />
 
               {/* ── Header ── */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 28px', borderBottom: '1px solid var(--line-1)', flexShrink: 0, position: 'sticky', top: 4, background: 'var(--surface)', zIndex: 2 }}>

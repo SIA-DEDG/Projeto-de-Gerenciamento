@@ -8,6 +8,7 @@ import type { ActivityAttachment, ActivityLink } from './ActivityModal';
 import AttachmentsEditor, { emptyAttachmentDraft, attachmentDraftDirty, attachmentDraftPayload, type AttachmentDraft } from './AttachmentsEditor';
 import CollapsibleGroup from './CollapsibleGroup';
 import OtherDiretoriaPicker from './OtherDiretoriaPicker';
+import BrandStripe from './BrandStripe';
 import { useUnsavedGuard } from '@/hooks/useUnsavedGuard';
 import { getUser } from '@/lib/auth';
 import { mergeUsersById, normalizeSearch } from '@/lib/utils';
@@ -188,8 +189,8 @@ export default function ProjectModal({ open, project, onClose, onSave, users = [
       {/* Drawer */}
       <div style={{ position: 'fixed', top: 0, right: 0, bottom: 0, width: 700, maxWidth: '94%', background: 'var(--surface)', overflowY: 'auto', zIndex: 61, borderLeft: '1px solid var(--line-1)', animation: 'drawin .24s cubic-bezier(.4,0,.2,1) both', display: 'flex', flexDirection: 'column' }}>
 
-        {/* Stripe Gov-PI */}
-        {/* Faixa Gov-PI comentada a pedido: <div style={{ height: 4, flexShrink: 0, background: 'linear-gradient(90deg,var(--blue-fixed) 0 40%,#E0A92E 40% 55%,#b42318 55% 75%,#1B8A4B 75%)' }} /> */}
+        {/* Faixa institucional (listras da bandeira do PI) — cor via --brand-stripe */}
+        <BrandStripe />
 
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 28px', borderBottom: '1px solid var(--line-1)', flexShrink: 0, position: 'sticky', top: 4, background: 'var(--surface)', zIndex: 2 }}>

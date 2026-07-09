@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import PageHeader from '@/components/PageHeader';
 import { applyAccentColor } from '@/components/AppShell';
+import BrandStripe from '@/components/BrandStripe';
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -36,15 +37,8 @@ function AvatarHeroCard() {
       overflow: 'hidden',
       marginBottom: 34,
     }}>
-      {/* Stripe colorida à esquerda */}
-      <div style={{
-        position: 'absolute',
-        left: 0,
-        top: 0,
-        bottom: 0,
-        width: 6,
-        background: 'linear-gradient(var(--blue-fixed) 0 38%, #E0A92E 38% 62%, #1B8A4B 62% 100%)',
-      }} />
+      {/* Faixa institucional à esquerda (listras da bandeira do PI) — cor via --brand-stripe */}
+      <BrandStripe orientation="vertical" height={6} style={{ position: 'absolute', left: 0, top: 0, bottom: 0 }} />
 
       {/* Avatar */}
       <div className="mono" style={{

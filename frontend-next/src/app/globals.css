@@ -42,6 +42,16 @@
   --gold-t: #a87a00;
   --red:    #b42318;
 
+  /* ── Faixa institucional (topo de menu/formulários) ───────────────────────
+     PERÍODO ELEITORAL: usamos as listras da bandeira do Piauí (amarelo/verde),
+     pois a antiga faixa (azul/dourado/vermelho/verde) remetia à gestão atual.
+     FONTE ÚNICA de cor — trocar aqui reverte em TODO o app (menu + <BrandStripe/>).
+     Para reverter depois das eleições, restaurar a faixa Gov-PI:
+       --brand-stripe:          linear-gradient(90deg, #034EA2 0 40%, #E0A92E 40% 55%, #b42318 55% 75%, #1B8A4B 75%);
+       --brand-stripe-vertical: linear-gradient(#034EA2 0 40%, #E0A92E 40% 55%, #b42318 55% 75%, #1B8A4B 75%); */
+  --brand-stripe:          linear-gradient(90deg, #F2C200 0 25%, #1B8A4B 25% 50%, #F2C200 50% 75%, #1B8A4B 75%);
+  --brand-stripe-vertical: linear-gradient(#F2C200 0 25%, #1B8A4B 25% 50%, #F2C200 50% 75%, #1B8A4B 75%);
+
   /* Status — cor dos fios/chips (fixos — não seguem o accent) */
   --s-pending:  #9aa1ac;
   --s-progress: #034ea2;
@@ -194,12 +204,12 @@ input::placeholder, textarea::placeholder { color: var(--text-3); opacity: 1; }
   box-shadow: 6px 0 28px rgba(4,20,45,0.28);
 }
 
-/* Faixa de 4 cores do Gov-PI no topo */
+/* Faixa institucional no topo do menu — cor via --brand-stripe (ver :root) */
 .sidebar::before {
   content: '';
   display: block;
   height: 3px;
-  background: linear-gradient(90deg, #034EA2 0 40%, #E0A92E 40% 55%, #b42318 55% 75%, #1B8A4B 75%);
+  background: var(--brand-stripe);
   flex-shrink: 0;
 }
 

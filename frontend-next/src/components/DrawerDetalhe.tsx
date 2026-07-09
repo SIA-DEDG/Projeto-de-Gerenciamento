@@ -9,6 +9,7 @@ import { openSignedUrl } from '@/lib/download';
 import { useToast } from '@/hooks/useToast';
 import ToastContainer from './ToastContainer';
 import CollapsibleGroup from './CollapsibleGroup';
+import BrandStripe from './BrandStripe';
 
 interface Props {
   task: Task;
@@ -178,8 +179,8 @@ export default function DrawerDetalhe({ task, onClose, onEdit, onDelete, onAdvan
         overflow: 'hidden',
       }}>
 
-        {/* Stripe Gov-PI */}
-        {/* Faixa Gov-PI comentada a pedido: <div style={{ height: 4, flexShrink: 0, background: 'linear-gradient(90deg,var(--blue-fixed) 0 40%,#E0A92E 40% 55%,#b42318 55% 75%,#1B8A4B 75%)' }} /> */}
+        {/* Faixa institucional (listras da bandeira do PI) — cor via --brand-stripe */}
+        <BrandStripe />
 
         {/* Header */}
         <div style={{ padding: '20px 24px 16px', borderBottom: '1px solid var(--line-1)', flexShrink: 0 }}>

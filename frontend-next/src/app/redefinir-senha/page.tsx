@@ -5,6 +5,7 @@ import { Eye, EyeOff, ArrowRight, Lock } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { changePassword } from '@/lib/api';
 import { getUser, isAuthenticated, isRemembered } from '@/lib/auth';
+import BrandStripe from '@/components/BrandStripe';
 
 const USER_KEY = 'sia_user';
 
@@ -68,8 +69,8 @@ export default function RedefinirSenhaPage() {
 
       {/* ── Direita: formulário ── */}
       <div style={{ width: 600, maxWidth: '100%', flexShrink: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '48px 56px', background: '#fff', position: 'relative', overflow: 'hidden' }}>
-        {/* Faixa Gov-PI */}
-        <div style={{ position: 'absolute', left: 0, right: 0, top: 0, height: 4, background: 'linear-gradient(90deg, var(--blue-fixed) 0 40%, #E0A92E 40% 55%, #b42318 55% 75%, #1B8A4B 75%)' }} />
+        {/* Faixa institucional (listras da bandeira do PI) — cor via --brand-stripe */}
+        <BrandStripe style={{ position: 'absolute', left: 0, right: 0, top: 0 }} />
 
         {/* Ícone + título */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 32 }}>

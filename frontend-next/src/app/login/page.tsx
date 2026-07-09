@@ -5,6 +5,7 @@ import { Eye, EyeOff, ArrowRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { login, clearAllCache } from '@/lib/api';
 import { setAuth, isAuthenticated } from '@/lib/auth';
+import BrandStripe from '@/components/BrandStripe';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -51,8 +52,8 @@ export default function LoginPage() {
 
       {/* ── Direita: formulário ── */}
       <div style={{ width: 600, maxWidth: '100%', flexShrink: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '48px 56px', background: '#fff', position: 'relative', overflow: 'hidden' }}>
-        {/* Faixa de cores do Gov-PI no topo */}
-        <div style={{ position: 'absolute', left: 0, right: 0, top: 0, height: 4, background: 'linear-gradient(90deg, var(--blue-fixed) 0 40%, #E0A92E 40% 55%, #b42318 55% 75%, #1B8A4B 75%)' }} />
+        {/* Faixa institucional (listras da bandeira do PI) — cor via --brand-stripe */}
+        <BrandStripe style={{ position: 'absolute', left: 0, right: 0, top: 0 }} />
 
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 32 }}>
           <div style={{ width: 48, height: 48, borderRadius: 3, background: '#072f63', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#E0A92E', fontSize: 26, lineHeight: 1, boxShadow: '0 0 0 6px rgba(7,47,99,0.08)' }}>

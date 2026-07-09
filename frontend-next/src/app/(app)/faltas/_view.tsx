@@ -14,6 +14,7 @@ import {
 } from '@/lib/api';
 import { getUser, canSeeAllAbsences, canApproveFaltas, isSuperAdmin } from '@/lib/auth';
 import PageHeader from '@/components/PageHeader';
+import BrandStripe from '@/components/BrandStripe';
 
 const REASON_COLORS: Record<string, string> = {
   Doença:  '#b42318',
@@ -133,7 +134,8 @@ function FaltaModal({ users, currentUserId, currentUserName, existing, canApprov
       <div onClick={() => requestClose(dirty)} style={{ position: 'fixed', inset: 0, background: 'rgba(7,22,45,0.32)', zIndex: 300 }} />
       <div style={{ position: 'fixed', top: 0, right: 0, bottom: 0, width: 500, maxWidth: '94%', background: 'var(--surface)', overflowY: 'auto', zIndex: 301, borderLeft: '1px solid var(--line-1)', animation: 'drawin .24s cubic-bezier(.4,0,.2,1) both', display: 'flex', flexDirection: 'column' }}>
 
-        {/* Faixa Gov-PI comentada a pedido: <div style={{ height: 4, flexShrink: 0, background: 'linear-gradient(90deg,var(--blue-fixed) 0 40%,#E0A92E 40% 55%,#b42318 55% 75%,#1B8A4B 75%)' }} /> */}
+        {/* Faixa institucional (listras da bandeira do PI) — cor via --brand-stripe */}
+        <BrandStripe />
 
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 28px', borderBottom: '1px solid var(--line-1)', flexShrink: 0, position: 'sticky', top: 4, background: 'var(--surface)', zIndex: 2 }}>
