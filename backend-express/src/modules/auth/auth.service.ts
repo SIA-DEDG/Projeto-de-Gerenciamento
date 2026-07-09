@@ -15,7 +15,10 @@ function makeToken(user: { id: string; username: string; role: string; directori
 }
 
 function tempPassword(): string {
-  return crypto.randomBytes(8).toString('hex');
+  // Mesmo padrão do backend original (Rust): "Sia" + 8 primeiros hex de um UUID + "!".
+  // Ex.: Sia1a2b3c4d! — legível de ditar e com maiúscula, minúsculas, dígitos e símbolo.
+  const uid = crypto.randomUUID().replace(/-/g, '');
+  return `Sia${uid.slice(0, 8)}!`;
 }
 
 export async function login(username: string, password: string) {
