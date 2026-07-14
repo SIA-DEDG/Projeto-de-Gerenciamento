@@ -70,6 +70,24 @@ router.post('/batch', authenticate, tasksController.createBatch);
 
 /**
  * @swagger
+ * /tasks/import-template:
+ *   get:
+ *     tags: [Tasks]
+ *     summary: URL de download do modelo padrão de planilha de importação
+ *     responses:
+ *       200:
+ *         description: URL pré-assinada do modelo
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 url: { type: string }
+ */
+router.get('/import-template', authenticate, tasksController.getImportTemplateUrl);
+
+/**
+ * @swagger
  * /tasks/archived:
  *   get:
  *     tags: [Tasks]

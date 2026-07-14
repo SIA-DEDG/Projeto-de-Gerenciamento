@@ -334,6 +334,11 @@ export async function importTasks(rows: {
   return data.map(enrichTask);
 }
 
+export async function getImportTemplateUrl(): Promise<string> {
+  const { url } = await apiFetch<{ url: string }>('/api/tasks/import-template');
+  return url;
+}
+
 
 export async function fetchProjects(): Promise<Project[]> {
   return fetchCached('projects', () => apiFetch<Project[]>('/api/projects'));

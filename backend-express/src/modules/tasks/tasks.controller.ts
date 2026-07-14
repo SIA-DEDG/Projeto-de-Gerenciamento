@@ -173,3 +173,17 @@ export async function getAttachmentUrl(req: Request, res: Response, next: NextFu
     next(err);
   }
 }
+
+// Modelo padrão (.xlsx) usado para importar atividades em lote — guardado no bucket
+// de storage para ficar disponível a partir de qualquer instância do front.
+export async function getImportTemplateUrl(_req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const { getSignedUrl, storageEnabled } = await import('../../lib/storage');
+    if (!storageEnabled()) { res.status(503).json({ error: 'Storage não configurado' }); return; }
+    const url = await getSignedUrl('templates/modelo-padrao-atividades.xlsx', undefined, 'Modelo Padrão Atividades.xlsx');
+    res.json({ url });
+  } catch (err: any) {
+    if (err.status) { res.status(err.status).json({ error: err.message }); return; }
+    next(err);
+  }
+}
