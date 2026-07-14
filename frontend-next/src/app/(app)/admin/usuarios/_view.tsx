@@ -11,26 +11,26 @@ import { Search, ChevronDown, Lock, Trash2 } from 'lucide-react';
 import PageHeader from '@/components/PageHeader';
 
 const ALL_ROLES = [
-  { value: 'Estagiario',  label: 'Estagiário(a)'   },
-  { value: 'Funcionario', label: 'Funcionário(a)'   },
-  { value: 'Tecnico',     label: 'Técnico(a)'       },
-  { value: 'Coordenador', label: 'Coordenador(a)'   },
-  { value: 'Gerente',     label: 'Gerente'           },
-  { value: 'Diretor',     label: 'Diretor(a)'       },
-  { value: 'Admin',       label: 'Administrador(a)' },
+  { value: 'Estagiario', label: 'Estagiário(a)' },
+  { value: 'Funcionario', label: 'Funcionário(a)' },
+  { value: 'Tecnico', label: 'Técnico(a)' },
+  { value: 'Coordenador', label: 'Coordenador(a)' },
+  { value: 'Gerente', label: 'Gerente' },
+  { value: 'Diretor', label: 'Diretor(a)' },
+  { value: 'Admin', label: 'Administrador(a)' },
 ];
 
 function roleBadgeStyle(role: string): React.CSSProperties {
-  if (role === 'Admin')       return { background: '#FFF0ED', color: '#ef4123' };
-  if (role === 'Diretor')     return { background: '#f3e8ff', color: '#7c3aed' };
+  if (role === 'Admin') return { background: '#FFF0ED', color: '#ef4123' };
+  if (role === 'Diretor') return { background: '#f3e8ff', color: '#7c3aed' };
   if (role === 'Coordenador') return { background: '#fef3c7', color: '#b45309' };
-  if (role === 'Gerente')     return { background: '#dbeafe', color: '#1d4ed8' };
-  if (role === 'Tecnico')     return { background: '#e0f2fe', color: '#0369a1' };
-  if (role === 'Estagiario')  return { background: '#fdf4ff', color: '#a21caf' };
+  if (role === 'Gerente') return { background: '#dbeafe', color: '#1d4ed8' };
+  if (role === 'Tecnico') return { background: '#e0f2fe', color: '#0369a1' };
+  if (role === 'Estagiario') return { background: '#fdf4ff', color: '#a21caf' };
   return { background: '#f0fdf4', color: '#16a34a' };
 }
 
-const AVATAR_COLORS = ['var(--blue)','#15803d','#9333ea','#b91c1c','#0369a1','#be185d','#b45309','#0f766e'];
+const AVATAR_COLORS = ['var(--blue)', '#15803d', '#9333ea', '#b91c1c', '#0369a1', '#be185d', '#b45309', '#0f766e'];
 function avatarColor(name: string) {
   let h = 0; for (const c of name) h = (h * 31 + c.charCodeAt(0)) | 0;
   return AVATAR_COLORS[Math.abs(h) % AVATAR_COLORS.length];
@@ -141,16 +141,16 @@ function ResetPasswordModal({ user, onClose, onSuccess }: { user: UserPublic; on
 
 export default function UsuariosPage() {
   const currentUser = getUser();
-  const myId     = currentUser?.user_id ?? '';
-  const myRole   = currentUser?.role ?? '';
+  const myId = currentUser?.user_id ?? '';
+  const myRole = currentUser?.role ?? '';
   const iAmAdmin = myRole === 'Admin'; // Super-Admin — vê todos os usuários de todas as diretorias
 
-  const [users, setUsers]         = useState<UserPublic[]>([]);
-  const [loading, setLoading]     = useState(true);
-  const [error, setError]         = useState('');
+  const [users, setUsers] = useState<UserPublic[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [roleUpdating, setRoleUpdating] = useState<string | null>(null);
-  const [deleting, setDeleting]   = useState<string | null>(null);
-  const [search, setSearch]       = useState('');
+  const [deleting, setDeleting] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
   const [resetModal, setResetModal] = useState<UserPublic | null>(null);
   const [successMsg, setSuccessMsg] = useState('');
   const [confirmDialog, setConfirmDialog] = useState<{ title: string; message?: string; confirmLabel?: string; onConfirm: () => void } | null>(null);
@@ -164,7 +164,7 @@ export default function UsuariosPage() {
 
   function allowedRoles(targetUser: UserPublic) {
     return ALL_ROLES.filter(r => {
-      if (r.value === 'Admin')   return iAmAdmin;
+      if (r.value === 'Admin') return iAmAdmin;
       if (r.value === 'Diretor') return iAmAdmin;
       return true;
     });
@@ -275,14 +275,17 @@ export default function UsuariosPage() {
 
             {/* Lista flat — não-admin OU admin com busca ativa */}
             {(!iAmAdmin || !dirGroups) && filtered.map((user) => {
-              const isSelf        = user.id === myId;
-              const targetIsAdmin = user.role === 'Admin';
-              const canAct        = iAmAdmin || !targetIsAdmin;
-              const canReset      = canResetPasswords(myRole) && !isSelf && canAct;
-              const roles         = allowedRoles(user);
-              const color         = avatarColor(user.name);
-              const inits         = user.name.split(' ').map((w: string) => w[0]).slice(0, 2).join('').toUpperCase();
-              const { color: roleColor, background: roleBg } = roleBadgeStyle(user.role);
+              const isSelf = user.id === myId;
+              // Alvo com perfil que o próprio viewer não pode atribuir (Diretor/Admin fora
+              // do Admin) fica fora das <option> do select — trocar por chip somente-leitura
+              // evita que o <select value={user.role}> caia na 1ª opção quando não acha o
+              // valor atual (ex.: Gerente vendo um Diretor aparecia como "Estagiário").
+              const targetOutOfReach = !iAmAdmin && (user.role === 'Admin' || user.role === 'Diretor');
+              const canAct = iAmAdmin || !targetOutOfReach;
+              const canReset = canResetPasswords(myRole) && !isSelf && canAct;
+              const roles = allowedRoles(user);
+              const color = avatarColor(user.name);
+              const inits = user.name.split(' ').map((w: string) => w[0]).slice(0, 2).join('').toUpperCase();
               const roleLabel = ALL_ROLES.find(r => r.value === user.role)?.label ?? user.role;
 
               return (
@@ -328,16 +331,14 @@ export default function UsuariosPage() {
                         onChange={e => handleRoleChange(user, e.target.value)}
                         style={{
                           appearance: 'none',
-                          padding: '5px 26px 5px 10px',
-                          borderRadius: 4,
-                          border: `1.5px solid ${roleColor}40`,
-                          background: roleBg,
-                          color: roleColor,
-                          fontSize: '0.72rem',
-                          fontFamily: "'Montserrat', sans-serif",
-                          fontWeight: 700,
-                          letterSpacing: '0.4px',
-                          textTransform: 'uppercase',
+                          padding: '7px 28px 7px 11px',
+                          borderRadius: 3,
+                          border: '1px solid var(--border)',
+                          background: 'var(--surface)',
+                          color: 'var(--text)',
+                          fontSize: '0.82rem',
+                          fontFamily: 'inherit',
+                          fontWeight: 500,
                           cursor: roleUpdating === user.id ? 'wait' : 'pointer',
                           outline: 'none',
                           opacity: roleUpdating === user.id ? 0.6 : 1,
@@ -346,10 +347,10 @@ export default function UsuariosPage() {
                       >
                         {roles.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
                       </select>
-                      <ChevronDown size={11} style={{ position: 'absolute', right: 7, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: roleColor, opacity: 0.7 }} />
+                      <ChevronDown size={12} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-3)' }} />
                     </div>
                   ) : (
-                    <span className="mono" style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.4px', textTransform: 'uppercase', color: roleColor, background: roleBg, padding: '5px 10px', borderRadius: 4, width: 'fit-content' }}>
+                    <span style={{ padding: '7px 11px', border: '1px solid var(--border)', borderRadius: 3, background: 'var(--surface-2)', fontSize: '0.82rem', fontWeight: 500, color: 'var(--text-2)', width: 'fit-content' }}>
                       {roleLabel}
                     </span>
                   )}
@@ -397,15 +398,14 @@ export default function UsuariosPage() {
                 </div>
 
                 {group.users.map((user) => {
-                  const isSelf        = user.id === myId;
+                  const isSelf = user.id === myId;
                   const targetIsAdmin = user.role === 'Admin';
-                  const canAct        = !targetIsAdmin;
-                  const canReset      = canResetPasswords(myRole) && !isSelf && canAct;
-                  const roles         = allowedRoles(user);
-                  const color         = avatarColor(user.name);
-                  const inits         = user.name.split(' ').map((w: string) => w[0]).slice(0, 2).join('').toUpperCase();
-                  const { color: roleColor, background: roleBg } = roleBadgeStyle(user.role);
-                  const roleLabel     = ALL_ROLES.find(r => r.value === user.role)?.label ?? user.role;
+                  const canAct = !targetIsAdmin;
+                  const canReset = canResetPasswords(myRole) && !isSelf && canAct;
+                  const roles = allowedRoles(user);
+                  const color = avatarColor(user.name);
+                  const inits = user.name.split(' ').map((w: string) => w[0]).slice(0, 2).join('').toUpperCase();
+                  const roleLabel = ALL_ROLES.find(r => r.value === user.role)?.label ?? user.role;
                   return (
                     <div key={user.id}
                       style={{ display: 'grid', gridTemplateColumns: '1fr 180px 110px 72px', padding: '14px 32px', alignItems: 'center', borderBottom: '1px solid var(--line-2)', transition: 'background 0.1s' }}
@@ -428,13 +428,13 @@ export default function UsuariosPage() {
                       {canAct && !isSelf ? (
                         <div style={{ position: 'relative', width: 'fit-content' }}>
                           <select value={user.role} disabled={roleUpdating === user.id} onChange={e => handleRoleChange(user, e.target.value)}
-                            style={{ appearance: 'none', padding: '5px 26px 5px 10px', borderRadius: 4, border: `1.5px solid ${roleColor}40`, background: roleBg, color: roleColor, fontSize: '0.72rem', fontFamily: "'Montserrat', sans-serif", fontWeight: 700, letterSpacing: '0.4px', textTransform: 'uppercase', cursor: roleUpdating === user.id ? 'wait' : 'pointer', outline: 'none', opacity: roleUpdating === user.id ? 0.6 : 1, transition: 'opacity 0.15s' }}>
+                            style={{ appearance: 'none', padding: '7px 28px 7px 11px', borderRadius: 3, border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text)', fontSize: '0.82rem', fontFamily: 'inherit', fontWeight: 500, cursor: roleUpdating === user.id ? 'wait' : 'pointer', outline: 'none', opacity: roleUpdating === user.id ? 0.6 : 1, transition: 'opacity 0.15s' }}>
                             {roles.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
                           </select>
-                          <ChevronDown size={11} style={{ position: 'absolute', right: 7, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: roleColor, opacity: 0.7 }} />
+                          <ChevronDown size={12} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-3)' }} />
                         </div>
                       ) : (
-                        <span className="mono" style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.4px', textTransform: 'uppercase', color: roleColor, background: roleBg, padding: '5px 10px', borderRadius: 4, width: 'fit-content' }}>
+                        <span style={{ padding: '7px 11px', border: '1px solid var(--border)', borderRadius: 3, background: 'var(--surface-2)', fontSize: '0.82rem', fontWeight: 500, color: 'var(--text-2)', width: 'fit-content' }}>
                           {roleLabel}
                         </span>
                       )}
