@@ -39,10 +39,15 @@ export async function updateRole(req: Request, res: Response, next: NextFunction
   try {
     const { id } = req.params as { id: string };
     const { role } = updateRoleSchema.parse(req.body);
-    const user = await svc.updateRole(id, role);
-    void logAction(req.user.sub, req.user.username, 'UPDATE', 'user', id, `Role → ${role}`);
+    const user = await svc.updateRole(id, role, {
+      id: req.user.sub, role: req.user.role, directoriaId: req.user.directoriaId,
+    });
+    void logAction(req.user.sub, req.user.username, 'UPDATE', 'user', id, `Role → ${role}`, req.user.directoriaId ?? undefined);
     res.json(user);
-  } catch (err) { next(err); }
+  } catch (err: any) {
+    if (err.status) { res.status(err.status).json({ error: err.message }); return; }
+    next(err);
+  }
 }
 
 export async function adminResetPassword(req: Request, res: Response, next: NextFunction): Promise<void> {

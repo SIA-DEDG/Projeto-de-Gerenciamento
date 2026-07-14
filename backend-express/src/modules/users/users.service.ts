@@ -1,6 +1,7 @@
 ﻿import argon2 from 'argon2';
 import { prisma } from '../../lib/prisma';
 import { safeUser } from '../auth/auth.service';
+import { isValidRole, canAssignRole } from '../../lib/roles';
 
 const userInclude = { directoria: { select: { id: true, name: true, color: true } } } as const;
 
@@ -34,8 +35,30 @@ export async function deleteUser(id: string, requesterId: string, requesterDirId
   await prisma.user.delete({ where: { id } });
 }
 
-export const updateRole = (id: string, role: string) =>
-  prisma.user.update({ where: { id }, data: { role }, include: userInclude }).then((u) => safeUser(u));
+export async function updateRole(
+  id: string,
+  role: string,
+  requester: { id: string; role: string; directoriaId: string | null },
+) {
+  if (!isValidRole(role)) {
+    throw Object.assign(new Error('Role inválida'), { status: 400 });
+  }
+  if (id === requester.id) {
+    throw Object.assign(new Error('Não pode alterar a própria role'), { status: 400 });
+  }
+  if (!canAssignRole(requester.role, role)) {
+    throw Object.assign(new Error('Sem permissão para atribuir esse perfil'), { status: 403 });
+  }
+  // Gerente/Diretor só alteram role de usuários da própria diretoria; Super-Admin (sem
+  // diretoria) pode alterar de qualquer diretoria — mesmo padrão de deleteUser/adminResetPassword.
+  if (requester.directoriaId) {
+    const target = await prisma.user.findUnique({ where: { id }, select: { directoriaId: true } });
+    if (target?.directoriaId !== requester.directoriaId) {
+      throw Object.assign(new Error('Sem permissão para alterar role de usuários de outra diretoria'), { status: 403 });
+    }
+  }
+  return prisma.user.update({ where: { id }, data: { role }, include: userInclude }).then((u) => safeUser(u));
+}
 
 export async function adminResetPassword(id: string, newPassword: string, requesterDirId: string | null) {
   // Gerente/Diretor só pode redefinir senha de usuários da sua diretoria
