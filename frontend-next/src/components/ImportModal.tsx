@@ -1,26 +1,32 @@
-﻿'use client';
+'use client';
 
 import { useRef, useState } from 'react';
-import { FileUp, CheckCircle } from 'lucide-react';
+import { FileUp, Download, X, Plus } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import type { Project, Task } from '@/types';
-import { importTasks, createProject } from '@/lib/api';
+import { importTasks, createProject, addTaskLink, getImportTemplateUrl } from '@/lib/api';
 import type { UserPublic } from '@/lib/api';
+import { getUser } from '@/lib/auth';
+
+const SEM_PROJETO_NAME = 'Sem Projeto';
 
 interface ParsedRow {
   category: string;
   activity: string;
   description: string;
   responsible_id: string | null;
-  responsible_name: string;         // só para exibição no preview
+  responsible_name: string;         // texto bruto da célula, só para exibição no preview
+  responsible_recognized: boolean;  // bateu com um usuário cadastrado no sistema
   co_responsible_ids: string[];
-  co_responsible_names: string[];   // só para exibição no preview
+  co_responsible_names: string[];   // só os reconhecidos, só para exibição no preview
   status: string;
   priority: string;
-  created_at: string;
+  created_at: string;               // Início da Atividade
   project_id: string | null;
   external_collaborators: string | null;
   deadline: string | null;
+  link_name: string | null;
+  link_url: string | null;
 }
 
 interface Props {
@@ -30,11 +36,49 @@ interface Props {
   onClose: () => void;
   onImported: (tasks: Task[]) => void;
   onProjectsCreated?: (projects: Project[]) => void;
+  onToast?: (type: 'success' | 'error', title: string, message: string) => void;
 }
 
 // Remove acentos e normaliza para comparação sem distinção de case/acento
 function normalizeStr(s: string): string {
   return s.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().trim();
+}
+
+// Normaliza um cabeçalho de coluna para comparação (maiúsculas, sem acento/espaço/símbolo)
+function normalizeHeader(s: unknown): string {
+  return String(s ?? '')
+    .normalize('NFD').replace(/\p{M}/gu, '')
+    .toUpperCase()
+    .replace(/[^A-Z]/g, '');
+}
+
+// Mapeia o texto normalizado do cabeçalho para a chave lógica da coluna. Cobre o
+// "Modelo Padrão Atividades.xlsx": PROJETO | ATIVIDADE | DESCRIÇÃO DA ATIVIDADE |
+// RESPONSÁVEL | CO-RESPONSÁVEL | COLABORAÇÃO EXTERNA | PRIORIDADE | DATA | PRAZO |
+// LINKS (NOME) | LINKS (LINK) | STATUS
+const HEADER_MAP: Record<string, string> = {
+  PROJETO: 'project',
+  ATIVIDADE: 'activity',
+  DESCRICAODAATIVIDADE: 'description',
+  DESCRICAO: 'description',
+  RESPONSAVEL: 'responsible',
+  CORESPONSAVEL: 'coResponsible',
+  COLABORACAOEXTERNA: 'externalCollab',
+  PRIORIDADE: 'priority',
+  DATA: 'startDate',
+  PRAZO: 'deadline',
+  LINKSNOME: 'linkName',
+  LINKSLINK: 'linkUrl',
+  STATUS: 'status',
+};
+
+function buildColumnMap(headerRow: unknown[]): Record<string, number> {
+  const map: Record<string, number> = {};
+  headerRow.forEach((cell, idx) => {
+    const key = HEADER_MAP[normalizeHeader(cell)];
+    if (key && map[key] === undefined) map[key] = idx;
+  });
+  return map;
 }
 
 // Converte data do Excel: pode vir como string "22/05/2026" ou número serial
@@ -57,6 +101,12 @@ function parseDate(value: unknown): string {
   return new Date().toISOString().split('T')[0];
 }
 
+function addDays(dateStr: string, days: number): string {
+  const d = new Date(`${dateStr}T00:00:00`);
+  d.setDate(d.getDate() + days);
+  return d.toISOString().split('T')[0];
+}
+
 // Normaliza o valor de status vindo da planilha para os valores canônicos do sistema
 function parseStatus(value: unknown): string {
   const raw = String(value ?? '').trim();
@@ -71,7 +121,8 @@ function parseStatus(value: unknown): string {
   return raw; // mantém o valor original para statuses customizados
 }
 
-// Encontra a linha de cabeçalho real comparando células exatas (evita match em títulos como "PLANILHA DE ATIVIDADES")
+// Encontra a linha de cabeçalho real comparando células exatas (evita match em títulos como "PLANILHA DE ATIVIDADES").
+// Retorna -1 quando a aba não tem cabeçalho reconhecível (ex.: aba "Avisos e Instruções").
 function findHeaderRow(rows: unknown[][]): number {
   const EXACT_HEADERS = ['ATIVIDADE', 'PROJETO', 'RESPONSAVEL', 'RESPONSÁVEL', 'STATUS', 'PRAZO', 'PRIORIDADE'];
   for (let i = 0; i < Math.min(rows.length, 5); i++) {
@@ -81,7 +132,21 @@ function findHeaderRow(rows: unknown[][]): number {
     const matches = EXACT_HEADERS.filter((h) => cells.includes(h));
     if (matches.length >= 2) return i;
   }
-  return 1;
+  return -1;
+}
+
+// O modelo padrão tem uma aba de instruções antes da aba de dados ("Gestão de
+// Atividades"). Procura, entre todas as abas, a primeira com cabeçalho reconhecível;
+// se nenhuma tiver, cai para a 2ª aba (ou a 1ª, se só houver uma).
+function findDataSheet(wb: XLSX.WorkBook): { raw: unknown[][]; headerIdx: number } {
+  for (const name of wb.SheetNames) {
+    const raw: unknown[][] = XLSX.utils.sheet_to_json(wb.Sheets[name], { header: 1, defval: '' });
+    const headerIdx = findHeaderRow(raw);
+    if (headerIdx !== -1) return { raw, headerIdx };
+  }
+  const fallbackName = wb.SheetNames[1] ?? wb.SheetNames[0];
+  const raw: unknown[][] = XLSX.utils.sheet_to_json(wb.Sheets[fallbackName], { header: 1, defval: '' });
+  return { raw, headerIdx: 1 };
 }
 
 function parseSheet(file: File, projects: Project[], users: UserPublic[]): Promise<ParsedRow[]> {
@@ -91,10 +156,8 @@ function parseSheet(file: File, projects: Project[], users: UserPublic[]): Promi
       try {
         const data = new Uint8Array(e.target!.result as ArrayBuffer);
         const wb = XLSX.read(data, { type: 'array', cellDates: false });
-        const ws = wb.Sheets[wb.SheetNames[0]];
-        const raw: unknown[][] = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
-
-        const headerIdx = findHeaderRow(raw);
+        const { raw, headerIdx } = findDataSheet(wb);
+        const columnMap = buildColumnMap(raw[headerIdx] ?? []);
         const dataRows = raw.slice(headerIdx + 1).filter((r) =>
           r.some((c) => String(c ?? '').trim() !== '')
         );
@@ -102,68 +165,80 @@ function parseSheet(file: File, projects: Project[], users: UserPublic[]): Promi
         const projectByNorm = new Map(projects.map((p) => [normalizeStr(p.name), p.id]));
         const userByNorm = new Map(users.map((u) => [normalizeStr(u.name), { id: u.id, name: u.name }]));
 
+        const get = (row: unknown[], key: string): string => {
+          const idx = columnMap[key];
+          return idx === undefined ? '' : String(row[idx] ?? '').trim();
+        };
+        const getRaw = (row: unknown[], key: string): unknown => {
+          const idx = columnMap[key];
+          return idx === undefined ? undefined : row[idx];
+        };
+
+        const today = new Date().toISOString().split('T')[0];
+
         const parsed: ParsedRow[] = dataRows.map((row) => {
-          // Colunas: A=Projeto B=Atividade C=Descrição D=Responsável E=Colab.externa F=Prioridade G=Prazo H=Status
-          const projectName = String(row[0] ?? '').trim();
-          const activity = String(row[1] ?? '').trim();
-          const description = String(row[2] ?? '').trim();
-          const responsavelRaw = String(row[3] ?? '').trim();
-          const extraCollab = String(row[4] ?? '').trim() || null; // col E: Colaboração externa
-          const deadlineRaw = row[6];                              // col G: Prazo
+          const projectName = get(row, 'project');
+          const activity = get(row, 'activity');
+          const description = get(row, 'description');
+          const responsavelRaw = get(row, 'responsible');
+          const coResponsavelRaw = get(row, 'coResponsible');
+          const extraCollab = get(row, 'externalCollab') || null;
+          const linkName = get(row, 'linkName') || null;
+          const linkUrl = get(row, 'linkUrl') || null;
 
           const project_id = projectByNorm.get(normalizeStr(projectName)) ?? null;
 
-          const responsavelParts = responsavelRaw.split(',').map((s) => s.trim()).filter(Boolean);
-          const mainResponsavel = responsavelParts[0] ?? '';
-          const coNames = responsavelParts.slice(1);
-
-          const systemUser = mainResponsavel ? userByNorm.get(normalizeStr(mainResponsavel)) : undefined;
+          // RESPONSÁVEL agora é dropdown de seleção única: o nome deve bater EXATAMENTE
+          // com um usuário cadastrado, senão não é reconhecido na importação (regra 1/5
+          // da aba "Avisos e Instruções").
+          const systemUser = responsavelRaw ? userByNorm.get(normalizeStr(responsavelRaw)) : undefined;
           const responsible_id = systemUser?.id ?? null;
-          const responsible_name = systemUser?.name ?? '';
-          const external_collaborators = (!systemUser && mainResponsavel) ? mainResponsavel : null;
+          const responsible_recognized = !!systemUser;
 
+          // CO-RESPONSÁVEL: múltiplos nomes separados por vírgula (regra 6/7); nomes que
+          // não batem com nenhum usuário cadastrado são ignorados.
           const co_responsible_ids: string[] = [];
           const co_responsible_names: string[] = [];
-          for (const name of coNames) {
+          for (const name of coResponsavelRaw.split(',').map((s) => s.trim()).filter(Boolean)) {
             const su = userByNorm.get(normalizeStr(name));
             if (su) {
               co_responsible_ids.push(su.id);
               co_responsible_names.push(su.name);
-            } else {
-              co_responsible_names.push(name);
             }
           }
 
-          const defaultDeadline = (() => {
-            const d = new Date(); d.setDate(d.getDate() + 7);
-            return d.toISOString().split('T')[0];
-          })();
-          const deadlineParsed = deadlineRaw ? parseDate(deadlineRaw) : defaultDeadline;
+          // DATA (início da atividade): se vazia, usa a data da importação (regra 2).
+          const startDateRaw = getRaw(row, 'startDate');
+          const startDate = startDateRaw ? parseDate(startDateRaw) : today;
 
-          const prioRaw = String(row[5] ?? '').trim().toLowerCase(); // col F: Prioridade
-          const priority = prioRaw.includes('alta') ? 'Alta'
-            : prioRaw.includes('baixa') ? 'Baixa'
-              : 'Média';
+          // PRAZO: se vazio, até 7 dias após a data de início (regra 2).
+          const deadlineRaw = getRaw(row, 'deadline');
+          const deadline = deadlineRaw ? parseDate(deadlineRaw) : addDays(startDate, 7);
 
-          const external_collaborators_final = [external_collaborators, extraCollab]
-            .filter(Boolean).join(', ') || null;
+          // PRIORIDADE: padrão Média (regra 3).
+          const prioRaw = get(row, 'priority').toLowerCase();
+          const priority = prioRaw.includes('alta') ? 'Alta' : prioRaw.includes('baixa') ? 'Baixa' : 'Média';
 
-          const status = parseStatus(row[7]); // col H: Status
+          // STATUS: padrão Pendente (regra 3).
+          const status = parseStatus(getRaw(row, 'status'));
 
           return {
             category: projectName || 'Sem categoria',
             activity: activity || '(sem título)',
             description,
             responsible_id,
-            responsible_name,
+            responsible_name: responsavelRaw,
+            responsible_recognized,
             co_responsible_ids,
             co_responsible_names,
             status,
             priority,
-            created_at: new Date().toISOString().split('T')[0],
+            created_at: startDate,
             project_id,
-            external_collaborators: external_collaborators_final,
-            deadline: deadlineParsed,
+            external_collaborators: extraCollab,
+            deadline,
+            link_name: linkName,
+            link_url: linkUrl,
           };
         }).filter((r) => r.activity !== '(sem título)' || r.responsible_id || r.external_collaborators);
 
@@ -177,15 +252,78 @@ function parseSheet(file: File, projects: Project[], users: UserPublic[]): Promi
   });
 }
 
-export default function ImportModal({ open, projects, users, onClose, onImported, onProjectsCreated }: Props) {
+export default function ImportModal({ open, projects, users, onClose, onImported, onProjectsCreated, onToast }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [rows, setRows] = useState<ParsedRow[]>([]);
   const [fileName, setFileName] = useState('');
-  const [step, setStep] = useState<'upload' | 'preview' | 'importing' | 'done'>('upload');
-  const [imported, setImported] = useState(0);
+  const [step, setStep] = useState<'upload' | 'preview'>('upload');
   const [error, setError] = useState('');
+  const [downloadingTemplate, setDownloadingTemplate] = useState(false);
+
+  // Projetos que o usuário optou por criar de verdade durante o preview (em vez de
+  // deixar cair no "Sem Projeto" compartilhado) — chave = nome normalizado.
+  const [resolvedProjects, setResolvedProjects] = useState<Map<string, Project>>(new Map());
+  const [creatingNorm, setCreatingNorm] = useState<string | null>(null);
+  const [newProjectName, setNewProjectName] = useState('');
+  const [newProjectCollabIds, setNewProjectCollabIds] = useState<string[]>([]);
+  const [creatingBusy, setCreatingBusy] = useState(false);
+
+  const myId = getUser()?.user_id ?? null;
 
   if (!open) return null;
+
+  // Nomes de projeto da planilha que não existem no sistema e ainda não foram
+  // criados manualmente nesta sessão de import — cairão no "Sem Projeto" se o
+  // usuário não clicar em "Criar projeto" para cada um.
+  const pendingProjectNames = (() => {
+    const seen = new Map<string, string>(); // norm → nome original
+    for (const r of rows) {
+      if (r.project_id || !r.category || r.category === 'Sem categoria') continue;
+      const norm = normalizeStr(r.category);
+      if (!resolvedProjects.has(norm) && !seen.has(norm)) seen.set(norm, r.category);
+    }
+    return [...seen.entries()];
+  })();
+
+  function openCreator(norm: string, name: string) {
+    setCreatingNorm(norm);
+    setNewProjectName(name);
+    setNewProjectCollabIds(users.filter((u) => u.id !== myId).map((u) => u.id));
+  }
+
+  function closeCreator() {
+    setCreatingNorm(null);
+    setNewProjectName('');
+    setNewProjectCollabIds([]);
+  }
+
+  async function submitCreator(norm: string) {
+    const name = newProjectName.trim();
+    if (!name) return;
+    setCreatingBusy(true);
+    try {
+      const created = await createProject({ name, responsibleIds: newProjectCollabIds });
+      setResolvedProjects((prev) => new Map(prev).set(norm, created));
+      onProjectsCreated?.([created]);
+      closeCreator();
+    } catch (e: unknown) {
+      onToast?.('error', 'Erro ao criar projeto', e instanceof Error ? e.message : String(e));
+    } finally {
+      setCreatingBusy(false);
+    }
+  }
+
+  async function handleDownloadTemplate() {
+    setDownloadingTemplate(true);
+    try {
+      const url = await getImportTemplateUrl();
+      window.open(url, '_blank');
+    } catch (e: unknown) {
+      onToast?.('error', 'Erro ao baixar modelo', e instanceof Error ? e.message : String(e));
+    } finally {
+      setDownloadingTemplate(false);
+    }
+  }
 
   async function handleFile(file: File) {
     setError('');
@@ -194,64 +332,77 @@ export default function ImportModal({ open, projects, users, onClose, onImported
       setRows(parsed);
       setFileName(file.name);
       setStep('preview');
+      setResolvedProjects(new Map());
+      closeCreator();
     } catch (e: unknown) {
       setError(`Erro ao ler a planilha: ${e instanceof Error ? e.message : e}`);
     }
   }
 
-  async function handleImport() {
-    setStep('importing');
-    setError('');
+  // Roda a importação em segundo plano — o modal já foi fechado e o usuário pode
+  // continuar navegando; o resultado chega via toast quando terminar.
+  async function runImport(importRows: ParsedRow[], importedFileName: string, resolved: Map<string, Project>) {
     try {
-      // 1. Descobre nomes únicos de projetos que ainda não existem
-      const allProjects = [...projects];
-      const projectByNorm = new Map(allProjects.map((p) => [normalizeStr(p.name), p.id]));
+      const projectByNorm = new Map(projects.map((p) => [normalizeStr(p.name), p.id]));
+      for (const [norm, proj] of resolved) projectByNorm.set(norm, proj.id);
 
-      const namesToCreate = new Map<string, string>(); // norm → nome original
-      for (const row of rows) {
-        if (!row.project_id) {
-          const name = row.category.trim();
-          const norm = normalizeStr(name);
-          if (name && name !== 'Sem categoria' && !projectByNorm.has(norm) && !namesToCreate.has(norm)) {
-            namesToCreate.set(norm, name);
-          }
-        }
+      // Linhas cujo projeto não existe e não foi criado manualmente no preview caem
+      // todas no mesmo projeto "Sem Projeto" (criado uma única vez, sob demanda),
+      // com quem está importando como responsável (padrão do backend ao omitir ownerId).
+      let semProjetoId: string | null = null;
+      async function resolveSemProjeto(): Promise<string> {
+        if (semProjetoId) return semProjetoId;
+        const existing = projects.find((p) => normalizeStr(p.name) === normalizeStr(SEM_PROJETO_NAME));
+        if (existing) { semProjetoId = existing.id; return semProjetoId; }
+        const created = await createProject({ name: SEM_PROJETO_NAME });
+        onProjectsCreated?.([created]);
+        semProjetoId = created.id;
+        return semProjetoId;
       }
 
-      // 2. Cria os projetos ausentes em paralelo
-      const newProjects: Project[] = [];
-      const createEntries = [...namesToCreate.entries()];
-      if (createEntries.length > 0) {
-        const created = await Promise.all(createEntries.map(([, name]) => createProject({ name })));
-        for (let i = 0; i < createEntries.length; i++) {
-          const [norm] = createEntries[i];
-          newProjects.push(created[i]);
-          allProjects.push(created[i]);
-          projectByNorm.set(norm, created[i].id);
+      const linkedRows: ParsedRow[] = [];
+      for (const row of importRows) {
+        let projectId = row.project_id;
+        if (!projectId && row.category && row.category !== 'Sem categoria') {
+          projectId = projectByNorm.get(normalizeStr(row.category)) ?? null;
+          if (!projectId) projectId = await resolveSemProjeto();
         }
+        linkedRows.push({ ...row, project_id: projectId });
       }
 
-      // 3. Vincula project_id para as linhas que ainda não têm
-      const linkedRows = rows.map((row) => ({
-        ...row,
-        project_id: row.project_id ?? projectByNorm.get(normalizeStr(row.category)) ?? null,
-      }));
-
-      // 4. Importa as atividades (omite campos só usados no preview)
+      // Importa as atividades (omite campos só usados no preview)
       const created = await importTasks(
-        linkedRows.map(({ responsible_name: _n, co_responsible_names: _cn, ...rest }) => ({
+        linkedRows.map(({ responsible_name: _n, responsible_recognized: _r, co_responsible_names: _cn, link_name: _ln, link_url: _lu, ...rest }) => ({
           ...rest,
           co_responsible_ids: rest.co_responsible_ids.length > 0 ? rest.co_responsible_ids : null,
         })),
       );
-      setImported(created.length);
-      setStep('done');
+
+      // Cria os links (LINKS NOME/LINK) das atividades que trouxeram um
+      await Promise.all(
+        linkedRows.map((row, i) => {
+          const task = created[i];
+          if (task && row.link_name && row.link_url) {
+            return addTaskLink(task.id, row.link_name, row.link_url).catch(() => null);
+          }
+          return null;
+        }),
+      );
+
       onImported(created);
-      if (newProjects.length > 0) onProjectsCreated?.(newProjects);
+      onToast?.('success', 'Importação concluída', `${created.length} atividade${created.length !== 1 ? 's' : ''} de "${importedFileName}" importada${created.length !== 1 ? 's' : ''} com sucesso.`);
     } catch (e: unknown) {
-      setError(`Erro ao importar: ${e instanceof Error ? e.message : e}`);
-      setStep('preview');
+      onToast?.('error', 'Erro ao importar planilha', e instanceof Error ? e.message : String(e));
     }
+  }
+
+  function handleImport() {
+    const importRows = rows;
+    const importedFileName = fileName;
+    const resolved = resolvedProjects;
+    onToast?.('success', 'Importação iniciada', `Importando ${importRows.length} atividade${importRows.length !== 1 ? 's' : ''} em segundo plano...`);
+    void runImport(importRows, importedFileName, resolved);
+    handleClose();
   }
 
   function handleClose() {
@@ -259,6 +410,8 @@ export default function ImportModal({ open, projects, users, onClose, onImported
     setFileName('');
     setStep('upload');
     setError('');
+    setResolvedProjects(new Map());
+    closeCreator();
     onClose();
   }
 
@@ -267,141 +420,214 @@ export default function ImportModal({ open, projects, users, onClose, onImported
       className="modal-backdrop"
       onClick={(e) => { if (e.target === e.currentTarget) handleClose(); }}
     >
-      <div className="modal-card" style={{ maxWidth: 760, width: '95vw' }}>
+      <div className="modal-card modal-card-lg" style={{ width: 'min(920px, 100%)' }}>
         {/* Header */}
-        <div className="modal-head">
-          <h3>Importar Planilha</h3>
-          <button type="button" className="modal-close-btn" onClick={handleClose}>&times;</button>
+        <div className="modal-header">
+          <span className="modal-title">Importar Planilha</span>
+          <button type="button" className="modal-close" onClick={handleClose}><X size={18} /></button>
         </div>
 
-        {error && (
-          <div style={{ marginBottom: 12, padding: '8px 12px', background: '#ffebe6', borderRadius: 3, color: '#de350b', fontSize: '0.85rem' }}>
-            {error}
-          </div>
-        )}
-
-        {/* STEP: upload */}
-        {step === 'upload' && (
-          <div
-            style={{ border: '2px dashed #dfe1e6', borderRadius: 3, padding: '40px 24px', textAlign: 'center', cursor: 'pointer', background: '#fafbfc' }}
-            onClick={() => inputRef.current?.click()}
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={(e) => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) handleFile(f); }}
-          >
-            <FileUp size={40} color="#6b778c" strokeWidth={1.5} style={{ marginBottom: 12 }} />
-            <p style={{ color: '#344563', fontWeight: 600, marginBottom: 4 }}>Clique ou arraste o arquivo aqui</p>
-            <p style={{ color: '#6b778c', fontSize: '0.82rem' }}>.xlsx, .xls ou .csv</p>
-            <input
-              ref={inputRef}
-              type="file"
-              accept=".xlsx,.xls,.csv"
-              style={{ display: 'none' }}
-              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }}
-            />
-          </div>
-        )}
-
-        {/* STEP: preview */}
-        {step === 'preview' && (
-          <>
-            <div style={{ marginBottom: 12, fontSize: '0.85rem', color: '#6b778c' }}>
-              <strong style={{ color: '#172b4d' }}>{fileName}</strong> — {rows.length} atividade{rows.length !== 1 ? 's' : ''} encontrada{rows.length !== 1 ? 's' : ''}
+        <div className="modal-body">
+          {error && (
+            <div style={{ padding: '9px 12px', background: 'rgba(180,35,24,0.08)', border: '1px solid rgba(180,35,24,0.18)', borderRadius: 'var(--radius)', color: 'var(--red)', fontSize: '0.82rem' }}>
+              {error}
             </div>
+          )}
 
-            <div style={{ overflowX: 'auto', maxHeight: 360, overflowY: 'auto', border: '1px solid #dfe1e6', borderRadius: 3 }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem' }}>
-                <thead>
-                  <tr style={{ background: '#f4f5f7', position: 'sticky', top: 0 }}>
-                    {['Projeto/Categoria', 'Atividade', 'Descrição', 'Responsável / Ext.', 'Prazo', 'Status', 'Prioridade', 'Colab. externa', 'Projeto vinculado'].map((h) => (
-                      <th key={h} style={{ padding: '8px 10px', textAlign: 'left', fontWeight: 700, color: '#42526e', borderBottom: '1px solid #dfe1e6', whiteSpace: 'nowrap' }}>{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.map((r, i) => (
-                    <tr key={i} style={{ borderBottom: '1px solid #f4f5f7' }}>
-                      <td style={{ padding: '7px 10px', color: '#172b4d', fontWeight: 600 }}>{r.category}</td>
-                      <td style={{ padding: '7px 10px' }}>{r.activity}</td>
-                      <td style={{ padding: '7px 10px', color: '#6b778c', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={r.description}>{r.description || '—'}</td>
-                      <td style={{ padding: '7px 10px' }}>
-                        <div>
-                          {r.responsible_id
-                            ? <span style={{ color: '#0052cc', fontWeight: 600 }}>{r.responsible_name}</span>
-                            : r.external_collaborators
-                              ? <span style={{ color: '#ff991f', fontWeight: 600 }} title="Colaboração externa">⚠ {r.external_collaborators}</span>
-                              : <span style={{ color: '#a5adba' }}>—</span>
-                          }
-                          {r.co_responsible_names.length > 0 && (
-                            <div style={{ fontSize: '0.75rem', color: '#6b778c', marginTop: 2 }}>
-                              + {r.co_responsible_names.join(', ')}
-                            </div>
-                          )}
-                        </div>
-                      </td>
-                      <td style={{ padding: '7px 10px', whiteSpace: 'nowrap' }}>{r.deadline ?? '—'}</td>
-                      <td style={{ padding: '7px 10px', whiteSpace: 'nowrap' }}>
-                        <span style={{ fontSize: '0.78rem', color: '#42526e' }}>{r.status}</span>
-                      </td>
-                      <td style={{ padding: '7px 10px', whiteSpace: 'nowrap' }}>
-                        <span style={{
-                          fontWeight: 600, fontSize: '0.78rem',
-                          color: r.priority === 'Alta' ? '#ef4123' : r.priority === 'Baixa' ? '#007932' : '#c07800',
-                        }}>
-                          {r.priority}
-                        </span>
-                      </td>
-                      <td style={{ padding: '7px 10px' }}>
-                        {r.external_collaborators
-                          ? <span style={{ color: '#ff991f', fontWeight: 600 }}>{r.external_collaborators}</span>
-                          : <span style={{ color: '#a5adba' }}>—</span>
-                        }
-                      </td>
-                      <td style={{ padding: '7px 10px' }}>
-                        {r.project_id
-                          ? <span style={{ color: '#0052cc', fontWeight: 600 }}>{projects.find((p) => p.id === r.project_id)?.name}</span>
-                          : r.category && r.category !== 'Sem categoria'
-                            ? <span style={{ color: '#ff991f', fontWeight: 600 }}>+ será criado</span>
-                            : <span style={{ color: '#a5adba', fontStyle: 'italic' }}>sem projeto</span>
-                        }
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            <p style={{ fontSize: '0.78rem', color: '#6b778c', marginTop: 8 }}>
-              Responsáveis em <strong style={{ color: '#0052cc' }}>azul</strong> foram identificados como usuários do sistema.
-              Em <strong style={{ color: '#ff991f' }}>laranja</strong> serão salvos como colaboração externa.
-              Projetos marcados como <strong style={{ color: '#ff991f' }}>+ será criado</strong> serão criados na importação.
-            </p>
-
-            <div className="modal-actions" style={{ marginTop: 16 }}>
-              <button type="button" className="btn-secondary" onClick={() => setStep('upload')}>← Trocar arquivo</button>
-              <button type="button" className="btn-primary" onClick={handleImport}>
-                Importar {rows.length} atividade{rows.length !== 1 ? 's' : ''}
+          {/* STEP: upload */}
+          {step === 'upload' && (
+            <>
+              <div
+                style={{ border: '2px dashed var(--border)', borderRadius: 'var(--radius)', padding: '40px 24px', textAlign: 'center', cursor: 'pointer', background: 'var(--surface-2)', transition: 'border-color 0.12s' }}
+                onClick={() => inputRef.current?.click()}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) handleFile(f); }}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--blue)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; }}
+              >
+                <FileUp size={36} color="var(--text-3)" strokeWidth={1.5} style={{ marginBottom: 12 }} />
+                <p style={{ color: 'var(--text)', fontWeight: 600, marginBottom: 4, fontSize: '0.9rem' }}>Clique ou arraste o arquivo aqui</p>
+                <p style={{ color: 'var(--text-3)', fontSize: '0.8rem' }}>.xlsx, .xls ou .csv</p>
+                <input
+                  ref={inputRef}
+                  type="file"
+                  accept=".xlsx,.xls,.csv"
+                  style={{ display: 'none' }}
+                  onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }}
+                />
+              </div>
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                onClick={handleDownloadTemplate}
+                disabled={downloadingTemplate}
+                style={{ alignSelf: 'flex-start', color: 'var(--blue)', padding: '4px 2px' }}
+              >
+                <Download size={14} strokeWidth={2} />
+                {downloadingTemplate ? 'Baixando...' : 'Baixar modelo padrão da planilha'}
               </button>
-            </div>
-          </>
-        )}
+            </>
+          )}
 
-        {/* STEP: importing */}
-        {step === 'importing' && (
-          <div style={{ textAlign: 'center', padding: '40px 0', color: '#6b778c' }}>
-            <div style={{ fontSize: '0.95rem', marginBottom: 8 }}>Importando atividades...</div>
-            <div style={{ fontSize: '0.8rem' }}>Aguarde um momento.</div>
-          </div>
-        )}
+          {/* STEP: preview */}
+          {step === 'preview' && (
+            <>
+              <div style={{ fontSize: '0.84rem', color: 'var(--text-2)' }}>
+                <strong style={{ color: 'var(--text)' }}>{fileName}</strong> — {rows.length} atividade{rows.length !== 1 ? 's' : ''} encontrada{rows.length !== 1 ? 's' : ''}
+              </div>
 
-        {/* STEP: done */}
-        {step === 'done' && (
-          <div style={{ textAlign: 'center', padding: '32px 0' }}>
-            <CheckCircle size={48} color="#36B37E" style={{ marginBottom: 12 }} />
-            <p style={{ fontWeight: 700, color: '#172b4d', fontSize: '1rem', marginBottom: 4 }}>
-              {imported} atividade{imported !== 1 ? 's' : ''} importada{imported !== 1 ? 's' : ''}!
-            </p>
-            <p style={{ color: '#6b778c', fontSize: '0.85rem', marginBottom: 20 }}>As atividades já aparecem no board.</p>
-            <button type="button" className="btn-primary" onClick={handleClose}>Fechar</button>
+              {pendingProjectNames.length > 0 && (
+                <div style={{ border: '1px solid var(--line-1)', borderRadius: 'var(--radius)', background: 'var(--surface-2)', padding: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <div style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text)' }}>
+                    Projetos não encontrados no sistema ({pendingProjectNames.length})
+                  </div>
+                  <p style={{ fontSize: '0.76rem', color: 'var(--text-2)', lineHeight: 1.5, margin: 0 }}>
+                    Por padrão, as atividades desses projetos serão importadas em um projeto único chamado
+                    {' '}<strong>&ldquo;{SEM_PROJETO_NAME}&rdquo;</strong> (com quem está importando como responsável).
+                    Se quiser, crie o projeto de verdade agora — outros detalhes (objetivo, prazo, escopo...) você completa depois na aba Projetos.
+                  </p>
+                  {pendingProjectNames.map(([norm, name]) => (
+                    <div key={norm} style={{ border: '1px solid var(--line-1)', borderRadius: 'var(--radius)', background: 'var(--surface)', padding: '8px 10px' }}>
+                      {creatingNorm === norm ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                          <input
+                            value={newProjectName}
+                            onChange={(e) => setNewProjectName(e.target.value)}
+                            placeholder="Nome do projeto"
+                            style={{ width: '100%', padding: '7px 10px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', background: 'var(--surface)', color: 'var(--text)', fontSize: '0.82rem', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }}
+                          />
+                          <div>
+                            <div className="mono" style={{ fontSize: '0.62rem', fontWeight: 600, letterSpacing: '0.5px', textTransform: 'uppercase', color: 'var(--text-3)', marginBottom: 4 }}>
+                              Colaboradores
+                            </div>
+                            <div style={{ border: '1px solid var(--border)', borderRadius: 'var(--radius)', maxHeight: 140, overflowY: 'auto' }}>
+                              {users.filter((u) => u.id !== myId).length === 0 && (
+                                <div style={{ padding: '8px 10px', fontSize: '0.8rem', color: 'var(--text-3)' }}>Nenhum outro usuário na diretoria</div>
+                              )}
+                              {users.filter((u) => u.id !== myId).map((u) => {
+                                const checked = newProjectCollabIds.includes(u.id);
+                                return (
+                                  <label key={u.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px', cursor: 'pointer', fontSize: '0.82rem', borderBottom: '1px solid var(--line-2)' }}>
+                                    <input
+                                      type="checkbox"
+                                      checked={checked}
+                                      onChange={() => setNewProjectCollabIds((cur) => checked ? cur.filter((id) => id !== u.id) : [...cur, u.id])}
+                                      style={{ accentColor: 'var(--blue)', width: 13, height: 13, cursor: 'pointer' }}
+                                    />
+                                    {u.name}
+                                  </label>
+                                );
+                              })}
+                            </div>
+                          </div>
+                          <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                            <button type="button" className="btn btn-secondary btn-xs" onClick={closeCreator} disabled={creatingBusy}>Cancelar</button>
+                            <button type="button" className="btn btn-primary btn-xs" onClick={() => submitCreator(norm)} disabled={creatingBusy || !newProjectName.trim()}>
+                              {creatingBusy ? 'Criando…' : 'Criar projeto'}
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+                          <span style={{ fontSize: '0.84rem', color: 'var(--text)', fontWeight: 600 }}>{name}</span>
+                          <button type="button" className="btn btn-ghost btn-xs" onClick={() => openCreator(norm, name)} style={{ color: 'var(--blue)', flexShrink: 0 }}>
+                            <Plus size={12} /> Criar projeto
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div style={{ overflowX: 'auto', maxHeight: 360, overflowY: 'auto', border: '1px solid var(--line-1)', borderRadius: 'var(--radius)' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem' }}>
+                  <thead>
+                    <tr style={{ background: 'var(--surface-2)', position: 'sticky', top: 0 }}>
+                      {['Projeto/Categoria', 'Atividade', 'Descrição', 'Responsável', 'Co-responsáveis', 'Colab. externa', 'Início', 'Prazo', 'Status', 'Prioridade', 'Link', 'Projeto vinculado'].map((h) => (
+                        <th key={h} style={{ padding: '8px 10px', textAlign: 'left', fontWeight: 700, color: 'var(--text-2)', borderBottom: '1px solid var(--line-1)', whiteSpace: 'nowrap' }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {rows.map((r, i) => (
+                      <tr key={i} style={{ borderBottom: '1px solid var(--line-2)' }}>
+                        <td style={{ padding: '7px 10px', color: 'var(--text)', fontWeight: 600 }}>{r.category}</td>
+                        <td style={{ padding: '7px 10px', color: 'var(--text)' }}>{r.activity}</td>
+                        <td style={{ padding: '7px 10px', color: 'var(--text-2)', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={r.description}>{r.description || '—'}</td>
+                        <td style={{ padding: '7px 10px', whiteSpace: 'nowrap' }}>
+                          {r.responsible_name
+                            ? (r.responsible_recognized
+                              ? <span style={{ color: 'var(--blue)', fontWeight: 600 }}>{r.responsible_name}</span>
+                              : <span style={{ color: 'var(--red)', fontWeight: 600 }} title="Nome não encontrado no cadastro de usuários">⚠ {r.responsible_name}</span>)
+                            : <span style={{ color: 'var(--text-3)' }}>—</span>
+                          }
+                        </td>
+                        <td style={{ padding: '7px 10px' }}>
+                          {r.co_responsible_names.length > 0
+                            ? <span style={{ fontSize: '0.78rem', color: 'var(--text-2)' }}>{r.co_responsible_names.join(', ')}</span>
+                            : <span style={{ color: 'var(--text-3)' }}>—</span>}
+                        </td>
+                        <td style={{ padding: '7px 10px' }}>
+                          {r.external_collaborators
+                            ? <span style={{ color: 'var(--gold-t)', fontWeight: 600 }}>{r.external_collaborators}</span>
+                            : <span style={{ color: 'var(--text-3)' }}>—</span>
+                          }
+                        </td>
+                        <td className="mono" style={{ padding: '7px 10px', whiteSpace: 'nowrap', color: 'var(--text-2)' }}>{r.created_at}</td>
+                        <td className="mono" style={{ padding: '7px 10px', whiteSpace: 'nowrap', color: 'var(--text-2)' }}>{r.deadline ?? '—'}</td>
+                        <td style={{ padding: '7px 10px', whiteSpace: 'nowrap' }}>
+                          <span style={{ fontSize: '0.78rem', color: 'var(--text-2)' }}>{r.status}</span>
+                        </td>
+                        <td style={{ padding: '7px 10px', whiteSpace: 'nowrap' }}>
+                          <span style={{
+                            fontWeight: 600, fontSize: '0.78rem',
+                            color: r.priority === 'Alta' ? 'var(--red)' : r.priority === 'Baixa' ? 'var(--green-t)' : 'var(--gold-t)',
+                          }}>
+                            {r.priority}
+                          </span>
+                        </td>
+                        <td style={{ padding: '7px 10px', maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {r.link_name && r.link_url
+                            ? <span title={r.link_url} style={{ color: 'var(--blue)' }}>{r.link_name}</span>
+                            : <span style={{ color: 'var(--text-3)' }}>—</span>}
+                        </td>
+                        <td style={{ padding: '7px 10px' }}>
+                          {(() => {
+                            if (r.project_id) {
+                              return <span style={{ color: 'var(--blue)', fontWeight: 600 }}>{projects.find((p) => p.id === r.project_id)?.name}</span>;
+                            }
+                            if (!r.category || r.category === 'Sem categoria') {
+                              return <span style={{ color: 'var(--text-3)', fontStyle: 'italic' }}>sem projeto</span>;
+                            }
+                            const resolved = resolvedProjects.get(normalizeStr(r.category));
+                            if (resolved) {
+                              return <span style={{ color: 'var(--blue)', fontWeight: 600 }}>{resolved.name}</span>;
+                            }
+                            return <span style={{ color: 'var(--gold-t)', fontWeight: 600 }} title={`Será importado em "${SEM_PROJETO_NAME}"`}>{SEM_PROJETO_NAME}</span>;
+                          })()}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <p style={{ fontSize: '0.78rem', color: 'var(--text-2)', lineHeight: 1.6 }}>
+                Responsáveis em <strong style={{ color: 'var(--blue)' }}>azul</strong> foram identificados como usuários do sistema.
+                Em <strong style={{ color: 'var(--red)' }}>vermelho</strong>, o nome não bateu com nenhum usuário cadastrado e a atividade será importada sem responsável.
+                Projetos em <strong style={{ color: 'var(--gold-t)' }}>{SEM_PROJETO_NAME}</strong> não existem no sistema e cairão nesse projeto único — use o painel acima para criar algum de verdade antes de importar.
+              </p>
+            </>
+          )}
+        </div>
+
+        {step === 'preview' && (
+          <div className="modal-footer">
+            <button type="button" className="btn btn-secondary" onClick={() => setStep('upload')}>← Trocar arquivo</button>
+            <button type="button" className="btn btn-primary" onClick={handleImport}>
+              Importar {rows.length} atividade{rows.length !== 1 ? 's' : ''}
+            </button>
           </div>
         )}
       </div>

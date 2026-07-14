@@ -15,7 +15,7 @@ import { useToast } from '@/hooks/useToast';
 import { useTaskBoard, type ActivityFormData } from '@/hooks/useTaskBoard';
 import { KANBAN_COLUMNS } from '@/lib/utils';
 import { useTabs, useActiveTab } from '@/context/TabsContext';
-import { Search, Plus, Download, FileUp } from 'lucide-react';
+import { Search, Plus, FileUp } from 'lucide-react';
 import type { StatusGroup } from '@/types';
 
 const STATUS_LABELS: Record<StatusGroup, string> = {
@@ -124,29 +124,6 @@ export default function BoardPage() {
     if (count > 0) {
       addToast('success', 'Atividades movidas', `${count} atividade(s) movida(s) para ${STATUS_LABELS[targetGroup]}.`);
     }
-  }
-
-  function exportCSV() {
-    const header = ['Atividade', 'Categoria', 'Responsável', 'Status', 'Prioridade', 'Prazo', 'Criado em', 'Projeto', 'Co-responsáveis', 'Colaboradores externos'];
-    const rows = filteredTasks.map((t) => {
-      const projectName = projects.find((p) => p.id === t.project_id)?.name ?? '';
-      const coResponsibles = t.co_responsibles
-        ? (() => { try { return (JSON.parse(t.co_responsibles!) as string[]).join('; '); } catch { return ''; } })()
-        : '';
-      return [t.activity, t.category, t.responsible, t.status, t.priority, t.deadline ?? '', t.date, projectName, coResponsibles, t.external_collaborators ?? ''];
-    });
-    const csv = [header, ...rows]
-      .map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(','))
-      .join('\n');
-    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `atividades_${new Date().toISOString().split('T')[0]}.csv`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
   }
 
   // ── Render ────────────────────────────────────────────────────────────────
@@ -260,25 +237,16 @@ export default function BoardPage() {
 
         <div style={{ flex: 1 }} />
 
-        {/* Ações: importar e exportar */}
-        {/* <button
+        {/* Ações: importar */}
+        <button
           onClick={() => setImportModalOpen(true)}
-          title="Importar atividades via CSV"
+          title="Importar atividades via planilha"
           style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 11px', border: '1px solid var(--border)', borderRadius: 3, background: 'var(--surface)', color: 'var(--text-2)', fontSize: '0.78rem', cursor: 'pointer', fontFamily: 'inherit' }}
           onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'var(--blue)')}
           onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'var(--border)')}
         >
           <FileUp size={13} />Importar
         </button>
-        <button
-          onClick={exportCSV}
-          title="Exportar atividades visíveis como CSV"
-          style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 11px', border: '1px solid var(--border)', borderRadius: 3, background: 'var(--surface)', color: 'var(--text-2)', fontSize: '0.78rem', cursor: 'pointer', fontFamily: 'inherit' }}
-          onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'var(--blue)')}
-          onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'var(--border)')}
-        >
-          <Download size={13} />Exportar
-        </button> */}
 
         <span className="mono" style={{ fontSize: '0.72rem', color: 'var(--text-3)', letterSpacing: '0.5px' }}>
           {filteredTasks.length} ATIVIDADES
@@ -393,6 +361,7 @@ export default function BoardPage() {
         onClose={() => setImportModalOpen(false)}
         onImported={(newTasks) => setAllTasks((curr) => [...curr, ...newTasks])}
         onProjectsCreated={(newProjects) => setProjects((curr) => [...curr, ...newProjects])}
+        onToast={addToast}
       />
       <ConfirmModal
         open={!!pendingConfirm}
