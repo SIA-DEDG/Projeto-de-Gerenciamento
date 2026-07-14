@@ -11,6 +11,7 @@ export const taskSchema = z.object({
   externalCollaborators: z.string().optional().nullable(),
   deadline: z.string().optional().nullable(),
   coResponsibleIds: z.array(z.string().uuid()).optional().nullable(),
+  createdAt: z.string().optional(),
 });
 
 export const taskBatchSchema = z.array(taskSchema);

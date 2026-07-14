@@ -107,13 +107,15 @@ export async function createTask(data: {
   category: string; activity: string; status: string; priority?: string;
   responsibleId?: string | null; projectId?: string | null; description?: string | null;
   externalCollaborators?: string | null; deadline?: string | null; coResponsibleIds?: string[] | null;
+  createdAt?: string;
   directoriaId: string;
 }) {
-  const { coResponsibleIds, ...rest } = data;
+  const { coResponsibleIds, createdAt, ...rest } = data;
   const ids = coResponsibleIds ?? [];
   const task = await prisma.task.create({
     data: {
       ...rest,
+      ...(createdAt ? { createdAt: new Date(createdAt) } : {}),
       deadline: rest.deadline ? new Date(rest.deadline) : undefined,
       coResponsibles: { create: ids.map((uid) => ({ userId: uid })) },
     },
@@ -126,13 +128,15 @@ export async function updateTask(id: string, data: {
   category?: string; activity?: string; status?: string; priority?: string;
   responsibleId?: string | null; projectId?: string | null; description?: string | null;
   externalCollaborators?: string | null; deadline?: string | null; coResponsibleIds?: string[] | null;
+  createdAt?: string;
 }, userId?: string) {
-  const { coResponsibleIds, ...rest } = data;
+  const { coResponsibleIds, createdAt, ...rest } = data;
   await prisma.$transaction(async (tx) => {
     await tx.task.update({
       where: { id },
       data: {
         ...rest,
+        ...(createdAt ? { createdAt: new Date(createdAt) } : {}),
         deadline: rest.deadline !== undefined
           ? (rest.deadline ? new Date(rest.deadline) : null)
           : undefined,
