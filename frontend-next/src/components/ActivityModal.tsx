@@ -579,7 +579,7 @@ export default function ActivityModal({
                 </div>
               </div>
               <div>
-                <Label>Criado em</Label>
+                <Label>Início da Atividade</Label>
                 <input type="date" value={form.date} onChange={e => setForm({ ...form, date: e.target.value })} style={inp}
                   onFocus={e => { e.target.style.borderColor = 'var(--blue)'; }}
                   onBlur={e => { e.target.style.borderColor = 'var(--border)'; }} />

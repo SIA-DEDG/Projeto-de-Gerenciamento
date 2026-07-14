@@ -307,10 +307,10 @@ export default function DrawerDetalhe({ task, onClose, onEdit, onDelete, onAdvan
               ) : <span style={{ fontSize: '0.84rem', color: 'var(--text-3)' }}>—</span>}
             </div>
 
-            {/* Criado em */}
+            {/* Início da Atividade */}
             <div>
               <div className="mono" style={{ fontSize: '0.62rem', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--text-3)', marginBottom: 8 }}>
-                Criado em
+                Início da Atividade
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
                 <Calendar size={13} strokeWidth={1.8} style={{ color: 'var(--text-3)', flexShrink: 0 }} />
