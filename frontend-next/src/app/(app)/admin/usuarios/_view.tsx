@@ -334,7 +334,7 @@ export default function UsuariosPage() {
                           background: roleBg,
                           color: roleColor,
                           fontSize: '0.72rem',
-                          fontFamily: 'var(--mono)',
+                          fontFamily: "'Montserrat', sans-serif",
                           fontWeight: 700,
                           letterSpacing: '0.4px',
                           textTransform: 'uppercase',
@@ -428,7 +428,7 @@ export default function UsuariosPage() {
                       {canAct && !isSelf ? (
                         <div style={{ position: 'relative', width: 'fit-content' }}>
                           <select value={user.role} disabled={roleUpdating === user.id} onChange={e => handleRoleChange(user, e.target.value)}
-                            style={{ appearance: 'none', padding: '5px 26px 5px 10px', borderRadius: 4, border: `1.5px solid ${roleColor}40`, background: roleBg, color: roleColor, fontSize: '0.72rem', fontFamily: 'var(--mono)', fontWeight: 700, letterSpacing: '0.4px', textTransform: 'uppercase', cursor: roleUpdating === user.id ? 'wait' : 'pointer', outline: 'none', opacity: roleUpdating === user.id ? 0.6 : 1, transition: 'opacity 0.15s' }}>
+                            style={{ appearance: 'none', padding: '5px 26px 5px 10px', borderRadius: 4, border: `1.5px solid ${roleColor}40`, background: roleBg, color: roleColor, fontSize: '0.72rem', fontFamily: "'Montserrat', sans-serif", fontWeight: 700, letterSpacing: '0.4px', textTransform: 'uppercase', cursor: roleUpdating === user.id ? 'wait' : 'pointer', outline: 'none', opacity: roleUpdating === user.id ? 0.6 : 1, transition: 'opacity 0.15s' }}>
                             {roles.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
                           </select>
                           <ChevronDown size={11} style={{ position: 'absolute', right: 7, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: roleColor, opacity: 0.7 }} />
@@ -506,7 +506,7 @@ export default function UsuariosPage() {
                               <div style={{ position: 'relative' }}>
                                 <select value={user.role} disabled={roleUpdating === user.id}
                                   onChange={(e) => handleRoleChange(user, e.target.value)}
-                                  style={{ appearance: 'none', padding: '4px 24px 4px 8px', borderRadius: 3, border: '1px solid var(--border-light)', fontSize: '0.75rem', fontFamily: 'inherit', cursor: 'pointer', background: '#fff', color: 'var(--text-secondary)', outline: 'none' }}>
+                                  style={{ appearance: 'none', padding: '4px 24px 4px 8px', borderRadius: 3, border: '1px solid var(--border-light)', fontSize: '0.75rem', fontFamily: "'Montserrat', sans-serif", cursor: 'pointer', background: '#fff', color: 'var(--text-secondary)', outline: 'none' }}>
                                   {roles.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
                                 </select>
                                 <ChevronDown size={10} style={{ position: 'absolute', right: 7, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-muted)' }} />
