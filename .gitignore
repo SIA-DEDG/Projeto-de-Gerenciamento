@@ -48,3 +48,6 @@ desktop.ini
 
 # Claude Code
 .claude/
+
+# Modelos de planilha (ficam no Supabase Storage, nao versionados)
+/*.xlsx

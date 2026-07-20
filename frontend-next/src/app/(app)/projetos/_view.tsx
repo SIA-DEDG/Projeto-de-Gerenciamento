@@ -4,11 +4,12 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Search, Plus, Pencil, Trash2, X, ChevronLeft,
   ChevronRight, FileText, User, Calendar, Check,
-  Paperclip, Link as LinkIcon, Download, ExternalLink,
+  Paperclip, Link as LinkIcon, Download, ExternalLink, FileUp,
 } from 'lucide-react';
 import ActivityModal from '@/components/ActivityModal';
 import BrandStripe from '@/components/BrandStripe';
 import ProjectModal from '@/components/ProjectModal';
+import ProjectImportModal from '@/components/ProjectImportModal';
 import DrawerDetalhe from '@/components/DrawerDetalhe';
 import ConfirmModal from '@/components/ConfirmModal';
 import CollapsibleGroup from '@/components/CollapsibleGroup';
@@ -78,6 +79,7 @@ export default function ProjetosPage() {
 
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [projectModal, setProjectModal] = useState<{ open: boolean; project: Project | null }>({ open: false, project: null });
+  const [importOpen, setImportOpen] = useState(false);
   const [activityModal, setActivityModal] = useState<{ open: boolean; task: Task | null; projectId: string | null }>({ open: false, task: null, projectId: null });
   const [taskDrawer, setTaskDrawer] = useState<Task | null>(null);
   const [confirm, setConfirm] = useState<{ title: string; message?: string; onConfirm: () => void } | null>(null);
@@ -322,6 +324,19 @@ export default function ProjetosPage() {
             <span style={{ position: 'absolute', top: 2, left: onlyMine ? 13 : 2, width: 11, height: 11, borderRadius: '50%', background: '#fff', transition: 'left 0.14s', boxShadow: '0 1px 2px rgba(0,0,0,0.2)' }} />
           </span>
         </button>
+
+        {canManageProjects(getUser()?.role) && (
+          <button
+            type="button"
+            onClick={() => setImportOpen(true)}
+            title="Importar projetos via planilha"
+            style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 12px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', background: 'var(--surface)', color: 'var(--text-2)', fontSize: '0.78rem', cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0, marginLeft: 'auto' }}
+            onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'var(--blue)')}
+            onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'var(--border)')}
+          >
+            <FileUp size={13} />Importar
+          </button>
+        )}
       </div>
 
       {loading ? (
@@ -662,6 +677,13 @@ export default function ProjetosPage() {
       )}
 
       <ProjectModal open={projectModal.open} project={projectModal.project} onClose={() => setProjectModal({ open: false, project: null })} onSave={handleSaveProject} users={users} canManageResponsibles={projectModal.project ? canManageProjectClient(projectModal.project, myId, myRole) : true} />
+      <ProjectImportModal
+        open={importOpen}
+        users={users}
+        onClose={() => setImportOpen(false)}
+        onImported={(created) => { setProjects((curr) => [...curr, ...created]); }}
+        onToast={addToast}
+      />
       <ActivityModal open={activityModal.open} task={activityModal.task} projects={projects} tasks={tasks} users={users} fixedProjectId={activityModal.projectId} onClose={() => setActivityModal({ open: false, task: null, projectId: null })} onSave={handleSaveActivity} />
       <ConfirmModal open={!!confirm} title={confirm?.title ?? ''} message={confirm?.message} confirmLabel="Excluir" danger onConfirm={() => confirm?.onConfirm()} onClose={() => setConfirm(null)} />
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />

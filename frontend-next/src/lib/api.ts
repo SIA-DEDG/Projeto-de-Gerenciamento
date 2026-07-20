@@ -326,6 +326,7 @@ export async function importTasks(rows: {
   external_collaborators?: string | null;
   co_responsible_ids?: string[] | null;
 }[]): Promise<Task[]> {
+  // Envia snake_case; o middleware camelCaseRequest do backend converte as chaves antes do Zod.
   const data = await apiFetch<RawTask[]>('/api/tasks/batch', {
     method: 'POST',
     body: JSON.stringify(rows),
@@ -383,6 +384,22 @@ export async function updateProject(
 export async function deleteProject(id: string): Promise<void> {
   await apiFetch<void>(`/api/projects/${id}`, { method: 'DELETE' });
   cacheInvalidate('projects', 'tasks');
+}
+
+// Importação de projetos em lote (espelha importTasks). Cada item usa o mesmo payload
+// camelCase do createProject; ownerId/responsibleIds já resolvidos para UUID no front.
+export async function importProjects(rows: ProjectWritePayload[]): Promise<Project[]> {
+  const result = await apiFetch<Project[]>('/api/projects/batch', {
+    method: 'POST',
+    body: JSON.stringify(rows),
+  });
+  cacheInvalidate('projects');
+  return result;
+}
+
+export async function getProjectImportTemplateUrl(): Promise<string> {
+  const { url } = await apiFetch<{ url: string }>('/api/projects/import-template');
+  return url;
 }
 
 // ── Anexos de projeto (mesmo padrão de atividades) ──────────────────────────────
