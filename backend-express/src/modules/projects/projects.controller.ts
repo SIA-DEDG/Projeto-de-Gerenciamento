@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import * as svc from './projects.service';
-import { projectSchema as schema } from './projects.schema';
+import { projectSchema as schema, projectBatchSchema } from './projects.schema';
 import { canEditProject, canManageProject, canUseProject } from './projects.perms';
 import { logAction } from '../../lib/logger';
 
@@ -26,6 +26,33 @@ export async function createProject(req: Request, res: Response, next: NextFunct
     void logAction(req.user.sub, req.user.username, 'CREATE', 'project', project.id, `Projeto "${project.name}" criado`, req.user.directoriaId ?? undefined);
     res.status(201).json(project);
   } catch (err) { next(err); }
+}
+
+// Importação em lote de projetos (espelha tasks.createBatch).
+export async function createBatch(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const items = projectBatchSchema.parse(req.body);
+    if (!req.user.directoriaId) {
+      res.status(400).json({ error: 'Sua conta não está vinculada a uma diretoria, então não é possível importar projetos. Entre com uma conta de diretoria.' });
+      return;
+    }
+    const projects = await svc.createBatch(items, req.user.directoriaId, req.user.sub);
+    void logAction(req.user.sub, req.user.username, 'CREATE', 'project', 'batch', `${projects.length} projetos criados`, req.user.directoriaId ?? undefined);
+    res.status(201).json(projects);
+  } catch (err) { next(err); }
+}
+
+// Modelo padrão (.xlsx) para importar projetos em lote — guardado no bucket de storage.
+export async function getImportTemplateUrl(_req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const { getSignedUrl, storageEnabled } = await import('../../lib/storage');
+    if (!storageEnabled()) { res.status(503).json({ error: 'Storage não configurado' }); return; }
+    const url = await getSignedUrl('templates/modelo-padrao-projetos.xlsx', undefined, 'Modelo Padrão Projetos.xlsx');
+    res.json({ url });
+  } catch (err: any) {
+    if (err.status) { res.status(err.status).json({ error: err.message }); return; }
+    next(err);
+  }
 }
 
 export async function updateProject(req: Request, res: Response, next: NextFunction): Promise<void> {

@@ -16,4 +16,6 @@ export const projectSchema = z.object({
   responsibleIds: z.array(z.string().uuid()).optional().nullable(),
 });
 
+export const projectBatchSchema = z.array(projectSchema);
+
 export type ProjectInput = z.infer<typeof projectSchema>;

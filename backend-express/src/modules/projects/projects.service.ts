@@ -1,5 +1,6 @@
 import { prisma } from '../../lib/prisma';
 import type { Project, User, ProjectResponsible } from '@prisma/client';
+import type { ProjectInput } from './projects.schema';
 
 type ProjectWithRelations = Project & {
   owner: Pick<User, 'name' | 'directoriaId'> | null;
@@ -93,6 +94,16 @@ export async function createProject(
     include,
   });
   return fmt(project as ProjectWithRelations);
+}
+
+// Importação em lote (espelha tasks.createBatch). Cada item que omitir o owner cai
+// no importador; quem omitir colaboradores herda o padrão do createProject (todos os
+// membros da diretoria).
+export async function createBatch(items: ProjectInput[], directoriaId: string, defaultOwnerId: string) {
+  return Promise.all(items.map((item) => {
+    const { ownerId, responsibleIds, ...data } = item;
+    return createProject(directoriaId, ownerId ?? defaultOwnerId, data, responsibleIds ?? undefined);
+  }));
 }
 
 // Atualiza os campos do projeto. Se `responsibleIds` for passado (somente o dono pode),

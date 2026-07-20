@@ -51,6 +51,27 @@ router.post('/', authenticate, requireFuncionario, ctrl.createProject);
 
 /**
  * @swagger
+ * /projects/import-template:
+ *   get:
+ *     tags: [Projects]
+ *     summary: URL de download do modelo padrão de planilha de importação de projetos
+ *     responses:
+ *       200:
+ *         description: URL pré-assinada do modelo
+ * /projects/batch:
+ *   post:
+ *     tags: [Projects]
+ *     summary: Importar projetos em lote
+ *     responses:
+ *       201:
+ *         description: Projetos criados
+ */
+// IMPORTANTE: rotas estáticas ANTES de "/:id" (senão o Express casa "batch"/"import-template" como id).
+router.get('/import-template', authenticate, ctrl.getImportTemplateUrl);
+router.post('/batch', authenticate, requireFuncionario, ctrl.createBatch);
+
+/**
+ * @swagger
  * /projects/{id}:
  *   get:
  *     tags: [Projects]
