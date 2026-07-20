@@ -317,7 +317,15 @@ export default function ImportModal({ open, projects, users, onClose, onImported
     setDownloadingTemplate(true);
     try {
       const url = await getImportTemplateUrl();
-      window.open(url, '_blank');
+      // A URL já vem com Content-Disposition: attachment. Um <a download> sintético
+      // evita o bloqueio de popup que window.open sofre por ser chamado após o await
+      // (fora do gesto do usuário).
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'Modelo Padrão Atividades.xlsx';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
     } catch (e: unknown) {
       onToast?.('error', 'Erro ao baixar modelo', e instanceof Error ? e.message : String(e));
     } finally {
