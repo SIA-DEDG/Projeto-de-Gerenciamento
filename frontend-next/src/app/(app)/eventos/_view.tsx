@@ -18,7 +18,7 @@ import { useUnsavedGuard } from '@/hooks/useUnsavedGuard';
 import { useToast } from '@/hooks/useToast';
 import ToastContainer from '@/components/ToastContainer';
 import { openSignedUrl } from '@/lib/download';
-import { getUser, canManageProjects } from '@/lib/auth';
+import { getUser, canManageProjects, isSuperAdmin } from '@/lib/auth';
 import PageHeader from '@/components/PageHeader';
 
 const WEEKDAYS_SHORT = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
@@ -592,7 +592,7 @@ export default function EventosPage() {
     setLoading(true);
     try {
       const [fetchedEvents, allUsers] = await Promise.all([fetchEvents(), fetchUsers()]);
-      setEvents(fetchedEvents); setUsers(allUsers.filter((user) => user.role !== 'Admin'));
+      setEvents(fetchedEvents); setUsers(allUsers.filter((user) => !isSuperAdmin(user)));
     } finally { setLoading(false); }
   }
   useEffect(() => { load(); }, []);

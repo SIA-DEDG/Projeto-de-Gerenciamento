@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { fetchUsers, deleteUser, updateUserRole, adminResetUserPassword } from '@/lib/api';
-import { getUser, canResetPasswords } from '@/lib/auth';
+import { getUser, canResetPasswords, isSuperAdmin } from '@/lib/auth';
 import type { UserPublic } from '@/lib/api';
 import ConfirmModal from '@/components/ConfirmModal';
 import BrandStripe from '@/components/BrandStripe';
@@ -400,7 +400,9 @@ export default function UsuariosPage() {
                 {group.users.map((user) => {
                   const isSelf = user.id === myId;
                   const targetIsAdmin = user.role === 'Admin';
-                  const canAct = !targetIsAdmin;
+                  // Super-Admin pode agir sobre Admins que pertencem a uma diretoria
+                  // (mudar role, resetar senha, excluir); só outro Super-Admin fica fora.
+                  const canAct = !targetIsAdmin || (isSuperAdmin(currentUser) && !!user.directoria_id);
                   const canReset = canResetPasswords(myRole) && !isSelf && canAct;
                   const roles = allowedRoles(user);
                   const color = avatarColor(user.name);

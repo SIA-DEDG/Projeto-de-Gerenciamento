@@ -32,7 +32,7 @@ import { onTasksChanged } from '@/lib/taskEvents';
 import type { UserPublic } from '@/lib/api';
 import type { Task, Project, TaskAttachment } from '@/types';
 import PageHeader from '@/components/PageHeader';
-import { getUser, canManageProjects } from '@/lib/auth';
+import { getUser, canManageProjects, isSuperAdmin } from '@/lib/auth';
 
 const PAGE_SIZE = 12;
 
@@ -89,7 +89,7 @@ export default function ProjetosPage() {
     // consideram TODAS as tarefas vinculadas — uma tarefa concluída continua contando
     // mesmo depois de arquivada (não é preciso desarquivar para ela contar).
     Promise.all([fetchTasks(), fetchArchivedTasks(), fetchProjects(), fetchUsers()])
-      .then(([active, archived, p, u]) => { setTasks([...active, ...archived]); setProjects(p); setUsers(u.filter((x) => x.role !== 'Admin')); })
+      .then(([active, archived, p, u]) => { setTasks([...active, ...archived]); setProjects(p); setUsers(u.filter((x) => !isSuperAdmin(x))); })
       .finally(() => setLoading(false));
   }, []);
 

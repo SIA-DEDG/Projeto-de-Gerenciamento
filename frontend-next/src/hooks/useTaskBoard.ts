@@ -9,6 +9,7 @@ import {
   addTaskFile, addTaskLink, removeTaskAttachment, invalidateTasksCache,
 } from '@/lib/api';
 import type { UserPublic } from '@/lib/api';
+import { isSuperAdmin } from '@/lib/auth';
 import { resolveCoResponsibleIds, taskCoResponsibleIds, STATUS_NEXT } from '@/lib/utils';
 import { useRefetchOnFocus } from '@/lib/useRefetchOnFocus';
 import { onTasksChanged } from '@/lib/taskEvents';
@@ -67,8 +68,10 @@ export function useTaskBoard() {
   const [isLoading, setIsLoading] = useState(() => getCachedTasks() === null);
   const [loadError, setLoadError] = useState('');
   const [projects, setProjects] = useState<Project[]>(() => getCachedProjects() ?? []);
+  // Admin dentro de uma diretoria conta como usuário normal; só o Super-Admin
+  // (Admin sem diretoria) fica fora dos seletores de responsável.
   const [users, setUsers] = useState<UserPublic[]>(
-    () => (getCachedUsers() ?? []).filter((u) => u.role !== 'Admin'),
+    () => (getCachedUsers() ?? []).filter((u) => !isSuperAdmin(u)),
   );
 
   const [activityModal, setActivityModal] = useState<{
@@ -89,7 +92,7 @@ export function useTaskBoard() {
       .then(([tasks, loadedProjects, loadedUsers]) => {
         setAllTasks(tasks);
         setProjects(loadedProjects);
-        setUsers(loadedUsers.filter((u) => u.role !== 'Admin'));
+        setUsers(loadedUsers.filter((u) => !isSuperAdmin(u)));
       })
       .catch((e) => setLoadError(`Erro: ${e?.message ?? e}`))
       .finally(() => setIsLoading(false));

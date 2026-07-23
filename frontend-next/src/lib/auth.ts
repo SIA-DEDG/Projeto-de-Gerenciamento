@@ -50,8 +50,9 @@ export function canApproveFaltas(user: StoredUser | undefined | null): boolean {
   return hasMinRole(user?.role, 'Gerente') || isGabinete(user?.directoria_name);
 }
 
-// Super-Admin é role='Admin' sem diretoria vinculada
-export function isSuperAdmin(user: StoredUser | null): boolean {
+// Super-Admin é role='Admin' sem diretoria vinculada. Aceita tanto o StoredUser
+// da sessão quanto um UserPublic da API (ambos têm role + directoria_id).
+export function isSuperAdmin(user: { role: string; directoria_id: string | null } | null): boolean {
   return user?.role === 'Admin' && !user?.directoria_id;
 }
 

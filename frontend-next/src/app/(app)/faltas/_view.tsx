@@ -332,7 +332,7 @@ export default function FaltasPage() {
       }
       const [fetchedAbsences, allUsers, dirs] = await Promise.all(fetches) as [Absence[], UserPublic[], Directoria[]?];
       setAbsences(fetchedAbsences);
-      setUsers((allUsers ?? []).filter((u: UserPublic) => u.role !== 'Admin'));
+      setUsers((allUsers ?? []).filter((u: UserPublic) => !isSuperAdmin(u)));
       if (dirs) setDiretorias(dirs);
     } finally { setLoading(false); }
   }, [isGabinete]);
