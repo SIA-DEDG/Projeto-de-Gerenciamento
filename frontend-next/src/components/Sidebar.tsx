@@ -7,7 +7,7 @@ import {
   UserRoundPlus, UsersRound, Archive, LogOut, Moon, Sun,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { getUser, clearAuth, canManageUsers, isSuperAdmin } from '@/lib/auth';
+import { getUser, clearAuth, canManageUsers, isSuperAdmin, hasPermission } from '@/lib/auth';
 import { fetchTasks, fetchFeedbacks } from '@/lib/api';
 import { onTasksChanged } from '@/lib/taskEvents';
 import { useTabs, useActiveTab, PAGE_INFO, type PageType } from '@/context/TabsContext';
@@ -99,7 +99,10 @@ export default function Sidebar({ onToggleTheme, isDark }: Props) {
     );
   }
 
-  const isAdmin = canManageUsers(user?.role);
+  const canCreateUsers = canManageUsers(user?.role) && hasPermission(user, 'users.create');
+  const canViewUsers = canManageUsers(user?.role) && hasPermission(user, 'users.view');
+  const canViewDiretorias = isSuperAdmin(user) && hasPermission(user, 'diretorias.view');
+  const isAdmin = canCreateUsers || canViewUsers || canViewDiretorias;
   const isSuperAdminUser = isSuperAdmin(user);
 
   return (
@@ -229,19 +232,23 @@ export default function Sidebar({ onToggleTheme, isDark }: Props) {
             <div className="sidebar-group">
               <span className="sidebar-group-label">Admin</span>
               <ul className="sidebar-nav">
-                <li>
-                  <NavLink type="admin-registro">
-                    <span className="nav-icon"><UserRoundPlus size={17} /></span>
-                    <span className="rail-label">Cadastrar usuário</span>
-                  </NavLink>
-                </li>
-                <li>
-                  <NavLink type="admin-usuarios">
-                    <span className="nav-icon"><UsersRound size={17} /></span>
-                    <span className="rail-label">Gerenciar usuários</span>
-                  </NavLink>
-                </li>
-                {isSuperAdminUser && (
+                {canCreateUsers && (
+                  <li>
+                    <NavLink type="admin-registro">
+                      <span className="nav-icon"><UserRoundPlus size={17} /></span>
+                      <span className="rail-label">Cadastrar usuário</span>
+                    </NavLink>
+                  </li>
+                )}
+                {canViewUsers && (
+                  <li>
+                    <NavLink type="admin-usuarios">
+                      <span className="nav-icon"><UsersRound size={17} /></span>
+                      <span className="rail-label">Gerenciar usuários</span>
+                    </NavLink>
+                  </li>
+                )}
+                {canViewDiretorias && (
                   <li>
                     <NavLink type="admin-diretorias">
                       <span className="nav-icon"><Folder size={17} /></span>

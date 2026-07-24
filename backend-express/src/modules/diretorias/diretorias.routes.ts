@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { authenticate, requireAdmin, requireManager } from '../../middleware/auth.middleware';
+import { authenticate, requireAdmin, requireManager, requirePermission } from '../../middleware/auth.middleware';
 import * as directoriasController from './diretorias.controller';
 
 const router = Router();
@@ -37,8 +37,8 @@ const router = Router();
  *       201:
  *         description: Diretoria criada
  */
-router.get('/', authenticate, directoriasController.listDiretorias);
-router.post('/', authenticate, requireAdmin, directoriasController.createDirectoria);
+router.get('/', authenticate, requirePermission('diretorias.view'), directoriasController.listDiretorias);
+router.post('/', authenticate, requirePermission('diretorias.manage'), requireAdmin, directoriasController.createDirectoria);
 
 /**
  * @swagger
@@ -86,9 +86,9 @@ router.post('/', authenticate, requireAdmin, directoriasController.createDirecto
  *       204:
  *         description: Deletada
  */
-router.get('/:id', authenticate, directoriasController.getDirectoria);
-router.put('/:id', authenticate, requireAdmin, directoriasController.updateDirectoria);
-router.delete('/:id', authenticate, requireAdmin, directoriasController.deleteDirectoria);
+router.get('/:id', authenticate, requirePermission('diretorias.view'), directoriasController.getDirectoria);
+router.put('/:id', authenticate, requirePermission('diretorias.manage'), requireAdmin, directoriasController.updateDirectoria);
+router.delete('/:id', authenticate, requirePermission('diretorias.manage'), requireAdmin, directoriasController.deleteDirectoria);
 
 /**
  * @swagger
@@ -105,7 +105,7 @@ router.delete('/:id', authenticate, requireAdmin, directoriasController.deleteDi
  *       200:
  *         description: Lista de membros
  */
-router.get('/:id/members', authenticate, directoriasController.listMembers);
+router.get('/:id/members', authenticate, requirePermission('diretorias.view'), directoriasController.listMembers);
 
 /**
  * @swagger
@@ -122,7 +122,7 @@ router.get('/:id/members', authenticate, directoriasController.listMembers);
  *       200:
  *         description: Status atualizado
  */
-router.patch('/:id/active', authenticate, requireAdmin, directoriasController.toggleActive);
+router.patch('/:id/active', authenticate, requirePermission('diretorias.manage'), requireAdmin, directoriasController.toggleActive);
 
 /**
  * @swagger
@@ -148,7 +148,7 @@ router.patch('/:id/active', authenticate, requireAdmin, directoriasController.to
  *       200:
  *         description: Prazo atualizado
  */
-router.patch('/:id/auto-archive', authenticate, requireManager, directoriasController.setAutoArchive);
+router.patch('/:id/auto-archive', authenticate, requirePermission('settings.manage_directoria'), requireManager, directoriasController.setAutoArchive);
 
 /**
  * @swagger
@@ -174,7 +174,7 @@ router.patch('/:id/auto-archive', authenticate, requireManager, directoriasContr
  *       200:
  *         description: Membro movido
  */
-router.put('/:id/member', authenticate, requireAdmin, directoriasController.moveMember);
+router.put('/:id/member', authenticate, requirePermission('diretorias.manage'), requireAdmin, directoriasController.moveMember);
 
 /**
  * @swagger
@@ -191,6 +191,6 @@ router.put('/:id/member', authenticate, requireAdmin, directoriasController.move
  *       204:
  *         description: Membro removido
  */
-router.delete('/member/:userId', authenticate, requireAdmin, directoriasController.removeMember);
+router.delete('/member/:userId', authenticate, requirePermission('diretorias.manage'), requireAdmin, directoriasController.removeMember);
 
 export default router;

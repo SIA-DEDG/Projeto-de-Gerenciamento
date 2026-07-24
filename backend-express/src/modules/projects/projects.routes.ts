@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { authenticate, requireRole } from '../../middleware/auth.middleware';
+import { authenticate, requireRole, requirePermission } from '../../middleware/auth.middleware';
 
 // Estagiário pode visualizar mas não criar/editar/excluir projetos
 const requireFuncionario = requireRole('Admin', 'Diretor', 'Gerente', 'Coordenador', 'Tecnico', 'Funcionario');
@@ -46,8 +46,8 @@ const router = Router();
  *       201:
  *         description: Projeto criado
  */
-router.get('/', authenticate, ctrl.listProjects);
-router.post('/', authenticate, requireFuncionario, ctrl.createProject);
+router.get('/', authenticate, requirePermission('projects.view'), ctrl.listProjects);
+router.post('/', authenticate, requirePermission('projects.create'), requireFuncionario, ctrl.createProject);
 
 /**
  * @swagger
@@ -67,8 +67,8 @@ router.post('/', authenticate, requireFuncionario, ctrl.createProject);
  *         description: Projetos criados
  */
 // IMPORTANTE: rotas estáticas ANTES de "/:id" (senão o Express casa "batch"/"import-template" como id).
-router.get('/import-template', authenticate, ctrl.getImportTemplateUrl);
-router.post('/batch', authenticate, requireFuncionario, ctrl.createBatch);
+router.get('/import-template', authenticate, requirePermission('projects.import'), ctrl.getImportTemplateUrl);
+router.post('/batch', authenticate, requirePermission('projects.import'), requireFuncionario, ctrl.createBatch);
 
 /**
  * @swagger
@@ -107,10 +107,10 @@ router.post('/batch', authenticate, requireFuncionario, ctrl.createBatch);
  *       204:
  *         description: Deletado
  */
-router.get('/:id', authenticate, ctrl.getProject);
+router.get('/:id', authenticate, requirePermission('projects.view'), ctrl.getProject);
 // Permissão fina (dono/responsável/estagiário/Admin/Diretor) é resolvida no controller.
-router.put('/:id', authenticate, ctrl.updateProject);
-router.delete('/:id', authenticate, ctrl.deleteProject);
+router.put('/:id', authenticate, requirePermission('projects.edit'), ctrl.updateProject);
+router.delete('/:id', authenticate, requirePermission('projects.delete'), ctrl.deleteProject);
 
 /**
  * @swagger
@@ -159,8 +159,8 @@ router.delete('/:id', authenticate, ctrl.deleteProject);
  *       200:
  *         description: URL pré-assinada do anexo
  */
-router.post('/:id/attachments',         authenticate, ctrl.addAttachment);
-router.delete('/:id/attachments/:idx',  authenticate, ctrl.removeAttachment);
-router.get('/:id/attachments/:idx/url', authenticate, ctrl.getAttachmentUrl);
+router.post('/:id/attachments',         authenticate, requirePermission('projects.edit'), ctrl.addAttachment);
+router.delete('/:id/attachments/:idx',  authenticate, requirePermission('projects.edit'), ctrl.removeAttachment);
+router.get('/:id/attachments/:idx/url', authenticate, requirePermission('projects.view'), ctrl.getAttachmentUrl);
 
 export default router;

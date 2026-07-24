@@ -30,7 +30,11 @@ export default function LoginPage() {
       clearAllCache();
       setAuth(data.token, {
         user_id: data.user_id, name: data.name, role: data.role,
-        username: data.username, must_change_password: data.must_change_password,
+        username: data.username,
+        email: data.email ?? null,
+        job_title: data.job_title ?? null,
+        permissions: data.permissions ?? {},
+        must_change_password: data.must_change_password,
         directoria_id: data.directoria_id ?? null,
         directoria_name: data.directoria_name ?? null,
         directoria_color: data.directoria_color ?? null,

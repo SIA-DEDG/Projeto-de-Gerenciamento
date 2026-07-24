@@ -14,6 +14,7 @@ import eventsRoutes from './modules/events/events.routes';
 import feedbackRoutes from './modules/feedback/feedback.routes';
 import logsRoutes from './modules/logs/logs.routes';
 import diretoriasRoutes from './modules/diretorias/diretorias.routes';
+import permissionsRoutes from './modules/permissions/permissions.routes';
 
 const app = express();
 
@@ -36,6 +37,7 @@ app.use('/api/events', eventsRoutes);
 app.use('/api/feedback', feedbackRoutes);
 app.use('/api/logs', logsRoutes);
 app.use('/api/diretorias', diretoriasRoutes);
+app.use('/api/permissions', permissionsRoutes);
 
 app.use(errorHandler);
 

@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { authenticate } from '../../middleware/auth.middleware';
+import { authenticate, requirePermission } from '../../middleware/auth.middleware';
 import * as tasksController from './tasks.controller';
 
 const router = Router();
@@ -45,8 +45,8 @@ const router = Router();
  *       201:
  *         description: Tarefa criada
  */
-router.get('/', authenticate, tasksController.listTasks);
-router.post('/', authenticate, tasksController.createTask);
+router.get('/', authenticate, requirePermission('tasks.view'), tasksController.listTasks);
+router.post('/', authenticate, requirePermission('tasks.create'), tasksController.createTask);
 
 /**
  * @swagger
@@ -66,7 +66,7 @@ router.post('/', authenticate, tasksController.createTask);
  *       201:
  *         description: Tarefas criadas
  */
-router.post('/batch', authenticate, tasksController.createBatch);
+router.post('/batch', authenticate, requirePermission('tasks.import'), tasksController.createBatch);
 
 /**
  * @swagger
@@ -84,7 +84,7 @@ router.post('/batch', authenticate, tasksController.createBatch);
  *               properties:
  *                 url: { type: string }
  */
-router.get('/import-template', authenticate, tasksController.getImportTemplateUrl);
+router.get('/import-template', authenticate, requirePermission('tasks.import'), tasksController.getImportTemplateUrl);
 
 /**
  * @swagger
@@ -96,7 +96,7 @@ router.get('/import-template', authenticate, tasksController.getImportTemplateUr
  *       200:
  *         description: Lista de tarefas arquivadas
  */
-router.get('/archived', authenticate, tasksController.listArchived);
+router.get('/archived', authenticate, requirePermission('tasks.view'), tasksController.listArchived);
 
 /**
  * @swagger
@@ -135,9 +135,9 @@ router.get('/archived', authenticate, tasksController.listArchived);
  *       204:
  *         description: Deletada
  */
-router.get('/:id', authenticate, tasksController.getTask);
-router.put('/:id', authenticate, tasksController.updateTask);
-router.delete('/:id', authenticate, tasksController.deleteTask);
+router.get('/:id', authenticate, requirePermission('tasks.view'), tasksController.getTask);
+router.put('/:id', authenticate, requirePermission('tasks.edit'), tasksController.updateTask);
+router.delete('/:id', authenticate, requirePermission('tasks.delete'), tasksController.deleteTask);
 
 /**
  * @swagger
@@ -166,8 +166,8 @@ router.delete('/:id', authenticate, tasksController.deleteTask);
  *       200:
  *         description: Tarefa desarquivada
  */
-router.put('/:id/archive',   authenticate, tasksController.archiveTask);
-router.put('/:id/unarchive', authenticate, tasksController.unarchiveTask);
+router.put('/:id/archive',   authenticate, requirePermission('tasks.archive'), tasksController.archiveTask);
+router.put('/:id/unarchive', authenticate, requirePermission('tasks.archive'), tasksController.unarchiveTask);
 
 /**
  * @swagger
@@ -195,8 +195,8 @@ router.put('/:id/unarchive', authenticate, tasksController.unarchiveTask);
  *       200:
  *         description: Atividade desafixada
  */
-router.put('/:id/pin',    authenticate, tasksController.pinTask);
-router.delete('/:id/pin', authenticate, tasksController.unpinTask);
+router.put('/:id/pin',    authenticate, requirePermission('tasks.view'), tasksController.pinTask);
+router.delete('/:id/pin', authenticate, requirePermission('tasks.view'), tasksController.unpinTask);
 
 /**
  * @swagger
@@ -261,8 +261,8 @@ router.delete('/:id/pin', authenticate, tasksController.unpinTask);
  *               properties:
  *                 url: { type: string }
  */
-router.post('/:id/attachments',              authenticate, tasksController.addAttachment);
-router.delete('/:id/attachments/:idx',       authenticate, tasksController.removeAttachment);
-router.get('/:id/attachments/:idx/url',      authenticate, tasksController.getAttachmentUrl);
+router.post('/:id/attachments',              authenticate, requirePermission('tasks.edit'), tasksController.addAttachment);
+router.delete('/:id/attachments/:idx',       authenticate, requirePermission('tasks.edit'), tasksController.removeAttachment);
+router.get('/:id/attachments/:idx/url',      authenticate, requirePermission('tasks.view'), tasksController.getAttachmentUrl);
 
 export default router;

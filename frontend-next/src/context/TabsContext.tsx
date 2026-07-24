@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { usePathname } from 'next/navigation';
-import { getUser, canManageUsers, isAdmin } from '@/lib/auth';
+import { getUser, canManageUsers, hasPermission, isSuperAdmin } from '@/lib/auth';
 
 // ── Page types & paths ────────────────────────────────────────────────────────
 
@@ -115,9 +115,13 @@ function getActiveTabStorageKey() { return `sia-active-tab-${getUserId()}`; }
 
 function filterTabsForUser(tabs: Tab[]): Tab[] {
   const user = typeof window !== 'undefined' ? getUser() : null;
-  const userCanAdmin = isAdmin(user?.role) || canManageUsers(user?.role);
-  if (userCanAdmin) return tabs;
-  return tabs.filter(t => !ADMIN_TAB_TYPES.has(t.type));
+  return tabs.filter((tab) => {
+    if (!ADMIN_TAB_TYPES.has(tab.type)) return true;
+    if (tab.type === 'admin-registro') return canManageUsers(user?.role) && hasPermission(user, 'users.create');
+    if (tab.type === 'admin-usuarios') return canManageUsers(user?.role) && hasPermission(user, 'users.view');
+    if (tab.type === 'admin-diretorias') return isSuperAdmin(user) && hasPermission(user, 'diretorias.view');
+    return false;
+  });
 }
 
 function loadTabs(): Tab[] {

@@ -6,7 +6,10 @@ import { logAction } from '../../lib/logger';
 const pid = (req: Request) => req.params['id'] as string;
 
 export async function listAbsences(req: Request, res: Response, next: NextFunction): Promise<void> {
-  try { res.json(await svc.listAbsences(req.user.sub, req.user.role, req.user.directoriaId)); } catch (err) { next(err); }
+  try {
+    const canSeeAll = req.user.role === 'Admin' || req.user.permissions?.['absences.view_all'] === true;
+    res.json(await svc.listAbsences(req.user.sub, req.user.directoriaId, canSeeAll));
+  } catch (err) { next(err); }
 }
 
 export async function createAbsence(req: Request, res: Response, next: NextFunction): Promise<void> {

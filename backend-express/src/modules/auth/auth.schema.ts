@@ -11,7 +11,10 @@ export const loginSchema = z.object({
 export const registerSchema = z.object({
   username: z.string(),
   name: z.string(),
+  email: z.string().email().optional().nullable(),
+  jobTitle: z.string().optional().nullable(),
   role: z.string().optional(),
+  permissions: z.record(z.string(), z.boolean()).optional(),
   directoriaId: z.string().optional().nullable(), // UUID validado pelo banco
 });
 

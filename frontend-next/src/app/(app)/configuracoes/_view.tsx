@@ -1,9 +1,18 @@
-﻿﻿'use client';
+'use client';
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { getUser, setAuth, getToken, isRemembered, clearAuth, hasMinRole } from '@/lib/auth';
-import { changePassword, updateUserProfile, fetchDiretorias, setDirectoriaAutoArchive } from '@/lib/api';
+import { getUser, setAuth, getToken, isRemembered, clearAuth, hasMinRole, isSuperAdmin } from '@/lib/auth';
+import {
+  changePassword,
+  updateUserProfile,
+  fetchDiretorias,
+  setDirectoriaAutoArchive,
+  fetchPermissionConfig,
+  updatePermissionPreset,
+  type PermissionConfig,
+  type PermissionState,
+} from '@/lib/api';
 import {
   User, Lock, Shield, LogOut, Check, RefreshCw, Save,
   Mail, AlertTriangle, Bell, Archive,
@@ -11,6 +20,7 @@ import {
 import PageHeader from '@/components/PageHeader';
 import { applyAccentColor } from '@/components/AppShell';
 import BrandStripe from '@/components/BrandStripe';
+import PermissionMatrix from '@/components/PermissionMatrix';
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -738,6 +748,176 @@ function DiretoriaSection() {
   );
 }
 
+// ── Seção Acesso e permissões ────────────────────────────────────────────────
+
+function MinhasPermissoesSection() {
+  const user = getUser();
+  const [config, setConfig] = useState<PermissionConfig | null>(null);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    fetchPermissionConfig()
+      .then(setConfig)
+      .catch((err: unknown) => setError(err instanceof Error ? err.message : 'Erro ao carregar permissões.'));
+  }, []);
+
+  if (!user) return null;
+
+  return (
+    <section className="mt-10">
+      <SectionHeader
+        icon={<Shield size={15} strokeWidth={2} />}
+        title="Meu acesso"
+        subtitle="Permissões definidas pelo seu superior"
+      />
+      <div className="mb-5 border-t border-line" />
+
+      <div className="mb-5 grid gap-3 sm:grid-cols-2">
+        <div className="rounded border border-border bg-surface-2 px-4 py-3">
+          <div className="font-mono text-[10px] font-semibold uppercase tracking-[1px] text-text-3">Perfil de acesso</div>
+          <div className="mt-1 text-sm font-semibold text-text">{user.role}</div>
+        </div>
+        <div className="rounded border border-border bg-surface-2 px-4 py-3">
+          <div className="font-mono text-[10px] font-semibold uppercase tracking-[1px] text-text-3">Cargo / função</div>
+          <div className="mt-1 text-sm font-semibold text-text">{user.job_title || 'Não informado'}</div>
+        </div>
+      </div>
+
+      <div className="mb-4 rounded border border-border bg-surface-2 px-4 py-3 text-xs leading-5 text-text-2">
+        Esta área é somente para consulta. Alterações de autorização são feitas por um superior dentro da hierarquia da organização.
+      </div>
+
+      {error && <div className="rounded border border-red bg-surface px-4 py-3 text-sm text-red">{error}</div>}
+      {!config && !error && <div className="py-6 text-sm text-text-3">Carregando permissões…</div>}
+      {config && (
+        <PermissionMatrix
+          catalog={config.catalog}
+          value={user.role === 'Admin' ? (config.presets.Admin ?? user.permissions ?? {}) : (user.permissions ?? {})}
+          readOnly
+          title="Permissões atribuídas"
+        />
+      )}
+    </section>
+  );
+}
+
+function ModelosPermissaoSection() {
+  const user = getUser();
+  const canManage = isSuperAdmin(user);
+  const [config, setConfig] = useState<PermissionConfig | null>(null);
+  const [selectedRole, setSelectedRole] = useState('Gerente');
+  const [draft, setDraft] = useState<PermissionState>({});
+  const [loading, setLoading] = useState(false);
+  const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
+
+  useEffect(() => {
+    if (!canManage) return;
+    fetchPermissionConfig()
+      .then((next) => {
+        setConfig(next);
+        const initialRole = next.roles.includes('Gerente')
+          ? 'Gerente'
+          : next.roles.find((role) => role !== 'Admin') ?? '';
+        setSelectedRole(initialRole);
+        setDraft({ ...(next.presets[initialRole] ?? {}) });
+      })
+      .catch((err: unknown) => setFeedback({ type: 'error', msg: err instanceof Error ? err.message : 'Erro ao carregar modelos.' }));
+  }, [canManage]);
+
+  if (!canManage) return null;
+
+  function chooseRole(role: string) {
+    setSelectedRole(role);
+    setDraft({ ...(config?.presets[role] ?? {}) });
+    setFeedback(null);
+  }
+
+  async function handleSave() {
+    if (!config || !selectedRole) return;
+    setLoading(true);
+    setFeedback(null);
+    try {
+      const saved = await updatePermissionPreset(selectedRole, draft);
+      setConfig({
+        ...config,
+        presets: { ...config.presets, [selectedRole]: saved.permissions },
+      });
+      setDraft({ ...saved.permissions });
+      setFeedback({ type: 'success', msg: `Modelo de ${selectedRole} atualizado.` });
+    } catch (err: unknown) {
+      setFeedback({ type: 'error', msg: err instanceof Error ? err.message : 'Erro ao salvar modelo.' });
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const editableRoles = config?.roles.filter((role) => role !== 'Admin') ?? [];
+
+  return (
+    <section className="mt-10">
+      <SectionHeader
+        icon={<Shield size={15} strokeWidth={2} />}
+        title="Modelos de permissão"
+        subtitle="Padrões aplicados ao escolher um perfil na criação do usuário"
+      />
+      <div className="mb-5 border-t border-line" />
+
+      {!config && !feedback && <div className="py-6 text-sm text-text-3">Carregando modelos…</div>}
+      {config && (
+        <>
+          <div className="mb-5 flex flex-wrap gap-2">
+            {editableRoles.map((role) => (
+              <button
+                key={role}
+                type="button"
+                onClick={() => chooseRole(role)}
+                className={`rounded border px-3 py-2 text-sm font-semibold transition ${
+                  selectedRole === role
+                    ? 'border-primary bg-primary text-white'
+                    : 'border-border bg-surface text-text-2 hover:bg-surface-2'
+                }`}
+              >
+                {role}
+              </button>
+            ))}
+            <span className="inline-flex items-center gap-2 rounded border border-border bg-surface-2 px-3 py-2 text-xs font-semibold text-text-3">
+              <Lock size={13} /> Admin: acesso total
+            </span>
+          </div>
+
+          <PermissionMatrix
+            catalog={config.catalog}
+            value={draft}
+            onChange={setDraft}
+            title={`Modelo padrão · ${selectedRole}`}
+          />
+
+          <div className="mt-5 flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={loading}
+              className="inline-flex items-center gap-2 rounded bg-primary px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {loading ? <RefreshCw size={14} className="animate-spin" /> : <Save size={14} />}
+              {loading ? 'Salvando…' : 'Salvar modelo'}
+            </button>
+            {feedback && (
+              <span className={`inline-flex items-center gap-2 text-sm ${feedback.type === 'success' ? 'text-green' : 'text-red'}`}>
+                {feedback.type === 'success' && <Check size={14} />}
+                {feedback.msg}
+              </span>
+            )}
+          </div>
+        </>
+      )}
+
+      {!config && feedback && (
+        <div className="rounded border border-red bg-surface px-4 py-3 text-sm text-red">{feedback.msg}</div>
+      )}
+    </section>
+  );
+}
 // ── Seção Conta (logout) ──────────────────────────────────────────────────────
 
 function ContaSection() {
@@ -928,6 +1108,8 @@ export default function ConfiguracoesPage() {
           <AvatarHeroCard />
           <PerfilSection />
           <SegurancaSection />
+          <MinhasPermissoesSection />
+          <ModelosPermissaoSection />
           <DiretoriaSection />
           <AparenciaSection />
           {/* <SistemaSection /> */}

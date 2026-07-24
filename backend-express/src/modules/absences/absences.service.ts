@@ -20,15 +20,14 @@ function fmt(a: AbsenceWithRelations) {
   };
 }
 
-export const listAbsences = async (userId: string, role: string, directoriaId: string | null) => {
-  const canSeeAll = ['Admin', 'Diretor', 'Gerente'].includes(role);
+export const listAbsences = async (userId: string, directoriaId: string | null, canSeeAll: boolean) => {
 
   // Super-Admin (directoriaId = null) ou Gabinete: visão global de todas as diretorias
   let isGlobalViewer = !directoriaId;
   if (directoriaId) {
     // Qualquer membro do Gabinete (independente do role) vê todas as faltas
     const dir = await prisma.directoria.findUnique({ where: { id: directoriaId }, select: { slug: true, name: true } });
-    if (dir?.slug === 'gabinete' || dir?.name?.toLowerCase() === 'gabinete') isGlobalViewer = true;
+    if (canSeeAll && (dir?.slug === 'gabinete' || dir?.name?.toLowerCase() === 'gabinete')) isGlobalViewer = true;
   }
 
   const where = isGlobalViewer

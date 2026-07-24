@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { authenticate } from '../../middleware/auth.middleware';
+import { authenticate, requirePermission } from '../../middleware/auth.middleware';
 import * as ctrl from './feedback.controller';
 
 const router = Router();
@@ -115,7 +115,7 @@ router.post('/:id/upvote', authenticate, ctrl.toggleUpvote);
  *       200:
  *         description: Status atualizado
  */
-router.put('/:id/status', authenticate, ctrl.setStatus);
+router.put('/:id/status', authenticate, requirePermission('feedback.manage'), ctrl.setStatus);
 
 /**
  * @swagger
@@ -141,7 +141,7 @@ router.put('/:id/status', authenticate, ctrl.setStatus);
  *       200:
  *         description: Resposta salva
  */
-router.put('/:id/resposta', authenticate, ctrl.setResposta);
+router.put('/:id/resposta', authenticate, requirePermission('feedback.manage'), ctrl.setResposta);
 
 /**
  * @swagger

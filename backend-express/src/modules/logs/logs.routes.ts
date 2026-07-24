@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { authenticate } from '../../middleware/auth.middleware';
+import { authenticate, requirePermission } from '../../middleware/auth.middleware';
 import * as ctrl from './logs.controller';
 
 const router = Router();
@@ -27,7 +27,7 @@ const router = Router();
  *       204:
  *         description: Logs apagados
  */
-router.get('/', authenticate, ctrl.listLogs);
-router.delete('/', authenticate, ctrl.clearLogs);
+router.get('/', authenticate, requirePermission('logs.view'), ctrl.listLogs);
+router.delete('/', authenticate, requirePermission('logs.clear'), ctrl.clearLogs);
 
 export default router;

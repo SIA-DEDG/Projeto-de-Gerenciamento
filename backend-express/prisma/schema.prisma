@@ -29,8 +29,12 @@ model User {
   id                      String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name                    String
   username                String               @unique
+  email                   String?              @unique
+  jobTitle                String?              @map("job_title")
   passwordHash            String               @map("password_hash")
   role                    String               @default("Funcionario")
+  permissions             Json                 @default("{}")
+  tokenVersion            Int                  @default(0) @map("token_version")
   mustChangePassword      Boolean              @default(true) @map("must_change_password")
   createdAt               DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
   directoriaId            String?              @map("directoria_id") @db.Uuid
@@ -48,6 +52,14 @@ model User {
 
   @@index([directoriaId])
   @@map("users")
+}
+
+model PermissionPreset {
+  role        String   @id
+  permissions Json     @default("{}")
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("permission_presets")
 }
 
 model Project {

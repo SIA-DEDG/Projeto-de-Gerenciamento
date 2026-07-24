@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { authenticate, requireAdmin, requireManager } from '../../middleware/auth.middleware';
+import { authenticate, requireAdmin, requireManager, requirePermission } from '../../middleware/auth.middleware';
 import * as usersController from './users.controller';
 
 const router = Router();
@@ -21,7 +21,7 @@ const router = Router();
  *       200:
  *         description: Lista de usuários
  */
-router.get('/', authenticate, usersController.listUsers);
+router.get('/', authenticate, requirePermission('users.view'), usersController.listUsers);
 
 /**
  * @swagger
@@ -33,7 +33,7 @@ router.get('/', authenticate, usersController.listUsers);
  *       200:
  *         description: Lista completa de usuários
  */
-router.get('/all', authenticate, usersController.listAllUsers);
+router.get('/all', authenticate, requirePermission('users.view'), usersController.listAllUsers);
 
 /**
  * @swagger
@@ -73,7 +73,7 @@ router.put('/me', authenticate, usersController.updateMe);
  *       400:
  *         description: Não pode deletar a si mesmo
  */
-router.delete('/:id', authenticate, requireManager, usersController.deleteUser);
+router.delete('/:id', authenticate, requirePermission('users.delete'), requireManager, usersController.deleteUser);
 
 /**
  * @swagger
@@ -99,7 +99,8 @@ router.delete('/:id', authenticate, requireManager, usersController.deleteUser);
  *       200:
  *         description: Role atualizado
  */
-router.put('/:id/role', authenticate, requireManager, usersController.updateRole);
+router.put('/:id/access', authenticate, requirePermission('users.manage_access'), requireManager, usersController.updateAccess);
+router.put('/:id/role', authenticate, requirePermission('users.manage_access'), requireManager, usersController.updateRole);
 
 /**
  * @swagger
@@ -125,6 +126,6 @@ router.put('/:id/role', authenticate, requireManager, usersController.updateRole
  *       200:
  *         description: Senha redefinida
  */
-router.put('/:id/password', authenticate, requireManager, usersController.adminResetPassword);
+router.put('/:id/password', authenticate, requirePermission('users.reset_password'), requireManager, usersController.adminResetPassword);
 
 export default router;

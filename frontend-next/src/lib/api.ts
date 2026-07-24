@@ -62,11 +62,34 @@ async function fetchCached<T>(key: string, fetcher: () => Promise<T>): Promise<T
 }
 type RawTask = Omit<Task, 'status_group' | 'badge_color' | 'date'>;
 
+export type PermissionState = Record<string, boolean>;
+
+export interface PermissionItem {
+  key: string;
+  label: string;
+  description: string;
+}
+
+export interface PermissionModule {
+  key: string;
+  label: string;
+  permissions: PermissionItem[];
+}
+
+export interface PermissionConfig {
+  catalog: PermissionModule[];
+  roles: string[];
+  presets: Record<string, PermissionState>;
+}
+
 export interface UserPublic {
   id: string;
   name: string;
   username: string;
+  email?: string | null;
+  job_title?: string | null;
   role: string;
+  permissions?: PermissionState;
   must_change_password: boolean;
   created_at: string;
   directoria_id: string | null;
@@ -464,6 +487,7 @@ export async function deleteTeamMember(name: string): Promise<void> {
 
 export async function login(username: string, password: string): Promise<{
   token: string; user_id: string; name: string; role: string; username: string;
+  email?: string | null; job_title: string | null; permissions: PermissionState;
   must_change_password: boolean; directoria_id: string | null;
   directoria_name: string | null; directoria_color: string | null;
 }> {
@@ -494,9 +518,9 @@ export async function setInitialPassword(newPassword: string): Promise<void> {
 }
 
 export async function registerUser(payload: {
-  name: string; username: string; role: string;
-}): Promise<{ user_id: string; name: string; role: string; temp_password: string }> {
-  const result = await apiFetch<{ user_id: string; name: string; role: string; temp_password: string }>('/api/auth/register', {
+  name: string; username: string; email?: string | null; job_title?: string | null; directoria_id?: string | null; role: string; permissions?: PermissionState;
+}): Promise<{ user_id: string; name: string; username: string; email: string | null; job_title: string | null; role: string; permissions: PermissionState; temp_password: string }> {
+  const result = await apiFetch<{ user_id: string; name: string; username: string; email: string | null; job_title: string | null; role: string; permissions: PermissionState; temp_password: string }>('/api/auth/register', {
     method: 'POST',
     body: JSON.stringify(payload),
   });
@@ -504,7 +528,18 @@ export async function registerUser(payload: {
   return result;
 }
 
+export async function fetchPermissionConfig(): Promise<PermissionConfig> {
+  return fetchCached('permissions_config', () => apiFetch<PermissionConfig>('/api/permissions'));
+}
 
+export async function updatePermissionPreset(role: string, permissions: PermissionState): Promise<{ role: string; permissions: PermissionState }> {
+  const result = await apiFetch<{ role: string; permissions: PermissionState }>(`/api/permissions/presets/${role}`, {
+    method: 'PUT',
+    body: JSON.stringify({ permissions }),
+  });
+  cacheInvalidate('permissions_config');
+  return result;
+}
 export async function fetchUsers(): Promise<UserPublic[]> {
   return fetchCached('users', () => apiFetch<UserPublic[]>('/api/users'));
 }
@@ -705,6 +740,16 @@ export async function updateUserRole(id: string, role: string): Promise<void> {
   cacheInvalidate('users');
 }
 
+export async function updateUserAccess(id: string, payload: {
+  name?: string; email?: string | null; job_title?: string | null; directoria_id?: string | null; role: string; permissions: PermissionState;
+}): Promise<UserPublic> {
+  const result = await apiFetch<UserPublic>(`/api/users/${id}/access`, {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  });
+  cacheInvalidate('users', 'users_all');
+  return result;
+}
 export async function adminResetUserPassword(id: string, newPassword: string): Promise<void> {
   await apiFetch<void>(`/api/users/${id}/password`, {
     method: 'PUT',

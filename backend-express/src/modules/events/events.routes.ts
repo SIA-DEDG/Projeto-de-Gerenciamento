@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { authenticate, requireRole } from '../../middleware/auth.middleware';
+import { authenticate, requireRole, requirePermission } from '../../middleware/auth.middleware';
 
 const requireFuncionario = requireRole('Admin', 'Diretor', 'Gerente', 'Coordenador', 'Tecnico', 'Funcionario');
 import * as eventsController from './events.controller';
@@ -44,8 +44,8 @@ const router = Router();
  *       201:
  *         description: Evento criado
  */
-router.get('/', authenticate, eventsController.listEvents);
-router.post('/', authenticate, requireFuncionario, eventsController.createEvent);
+router.get('/', authenticate, requirePermission('events.view'), eventsController.listEvents);
+router.post('/', authenticate, requirePermission('events.create'), requireFuncionario, eventsController.createEvent);
 
 /**
  * @swagger
@@ -73,8 +73,8 @@ router.post('/', authenticate, requireFuncionario, eventsController.createEvent)
  *       204:
  *         description: Deletado
  */
-router.put('/:id', authenticate, requireFuncionario, eventsController.updateEvent);
-router.delete('/:id', authenticate, requireFuncionario, eventsController.deleteEvent);
+router.put('/:id', authenticate, requirePermission('events.edit'), requireFuncionario, eventsController.updateEvent);
+router.delete('/:id', authenticate, requirePermission('events.delete'), requireFuncionario, eventsController.deleteEvent);
 
 /**
  * @swagger
@@ -112,8 +112,8 @@ router.delete('/:id', authenticate, requireFuncionario, eventsController.deleteE
  *       200:
  *         description: Ata removida
  */
-router.put('/:id/minutes', authenticate, eventsController.setMinutes);
-router.delete('/:id/minutes', authenticate, eventsController.removeMinutes);
+router.put('/:id/minutes', authenticate, requirePermission('events.edit'), eventsController.setMinutes);
+router.delete('/:id/minutes', authenticate, requirePermission('events.edit'), eventsController.removeMinutes);
 
 /**
  * @swagger
@@ -136,7 +136,7 @@ router.delete('/:id/minutes', authenticate, eventsController.removeMinutes);
  *               properties:
  *                 url: { type: string }
  */
-router.get('/:id/minutes/url', authenticate, eventsController.getMinutesUrl);
+router.get('/:id/minutes/url', authenticate, requirePermission('events.view'), eventsController.getMinutesUrl);
 
 /**
  * @swagger
@@ -182,8 +182,8 @@ router.get('/:id/minutes/url', authenticate, eventsController.getMinutesUrl);
  *     responses:
  *       200: { description: URL pré-assinada }
  */
-router.post('/:id/attachments',         authenticate, eventsController.addAttachment);
-router.delete('/:id/attachments/:idx',  authenticate, eventsController.removeAttachment);
-router.get('/:id/attachments/:idx/url', authenticate, eventsController.getAttachmentUrl);
+router.post('/:id/attachments',         authenticate, requirePermission('events.edit'), eventsController.addAttachment);
+router.delete('/:id/attachments/:idx',  authenticate, requirePermission('events.edit'), eventsController.removeAttachment);
+router.get('/:id/attachments/:idx/url', authenticate, requirePermission('events.view'), eventsController.getAttachmentUrl);
 
 export default router;

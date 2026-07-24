@@ -38,6 +38,9 @@ export interface StoredUser {
   name: string;
   role: string;
   username: string;
+  email?: string | null;
+  job_title?: string | null;
+  permissions?: Record<string, boolean>;
   must_change_password: boolean;
   directoria_id: string | null;
   directoria_name: string | null;
@@ -111,4 +114,10 @@ export function isAuthenticated(): boolean {
   } catch {
     return false;
   }
+}
+
+export function hasPermission(user: StoredUser | null | undefined, permission: string): boolean {
+  if (!user) return false;
+  if (user.role === 'Admin') return true;
+  return user.permissions?.[permission] === true;
 }

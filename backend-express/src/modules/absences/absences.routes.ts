@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { authenticate } from '../../middleware/auth.middleware';
+import { authenticate, requirePermission } from '../../middleware/auth.middleware';
 import * as ctrl from './absences.controller';
 
 const router = Router();
@@ -41,8 +41,8 @@ const router = Router();
  *       201:
  *         description: Ausência criada
  */
-router.get('/', authenticate, ctrl.listAbsences);
-router.post('/', authenticate, ctrl.createAbsence);
+router.get('/', authenticate, requirePermission('absences.view'), ctrl.listAbsences);
+router.post('/', authenticate, requirePermission('absences.create'), ctrl.createAbsence);
 
 /**
  * @swagger
@@ -70,8 +70,8 @@ router.post('/', authenticate, ctrl.createAbsence);
  *       204:
  *         description: Deletada
  */
-router.put('/:id', authenticate, ctrl.updateAbsence);
-router.delete('/:id', authenticate, ctrl.deleteAbsence);
+router.put('/:id', authenticate, requirePermission('absences.edit'), ctrl.updateAbsence);
+router.delete('/:id', authenticate, requirePermission('absences.delete'), ctrl.deleteAbsence);
 
 /**
  * @swagger
@@ -97,6 +97,6 @@ router.delete('/:id', authenticate, ctrl.deleteAbsence);
  *       200:
  *         description: Status de aprovação atualizado
  */
-router.put('/:id/approval', authenticate, ctrl.setApproval);
+router.put('/:id/approval', authenticate, requirePermission('absences.approve'), ctrl.setApproval);
 
 export default router;
